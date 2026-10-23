@@ -939,7 +939,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.10';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.11';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   var RADIX=64, CAGE=800;
   // ---- FABRIC PROFILE (parameterized per accelerator platform) ----------------------------------------
   // rails == accelerators per host. Each accelerator instance gets its own rail leaf, which is what
@@ -2961,7 +2961,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         +escHtml(feName('FE-LF'+pad(i+1)))+'</div>'
         +'<div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:3px">pair '+pairNo+side
         +' \u00b7 '+FE.nicGbps+'G host</div>'
-        +'<div style="font-family:var(--mono);font-size:10px;color:var(--muted)">'+FE.uplinksPerLeaf+'\u2191 to border</div>';
+        +'<div style="font-family:var(--mono);font-size:10px;color:var(--muted)">'+FE.uplinksPerLeaf+' \u00d7 '+(p.leafSW.uplink.gbps>=1600?'1.6T':p.leafSW.uplink.gbps+'G')+' \u2191 to '+(p.spines>0?'spine':'border')+'</div>';   // HS v1.11
       row.appendChild(d);
     }
     // ---- internet edge chain: LB/API gw -> firewalls -> border routers -> DIA ----
@@ -3002,9 +3002,10 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       +'<div style="margin-top:3px">per leaf \u00b7 access bank ('+p.leafSW.access.n+' \u00d7 '+p.leafSW.access.gbps+'G): '
       +p.hostPerLeaf+' host'+(p.storageAccessCost?' + '+p.storageAccessCost+' channelization':'')+' = '+p.accessUsedPerLeaf
       +' ('+Math.round(p.accessUtil*100)+'%), '+p.sparePerLeaf+' spare for head/mgmt</div>'
-      +'<div style="margin-top:2px">per leaf \u00b7 uplink bank ('+p.leafSW.uplink.n+' \u00d7 '+p.leafSW.uplink.gbps+'G QSFP-DD): '
+      +'<div style="margin-top:2px">per leaf \u00b7 uplink bank ('+p.leafSW.uplink.n+' \u00d7 '+p.leafSW.uplink.gbps+'G '+(function(){ var f=String(p.leafSW.uplink.ff||'').split(' ')[0]; return /SFP/.test(f)?f:'QSFP-DD'; })()+'): '
       +FE.uplinksPerLeaf+' to spine'+(p.storageUpPorts>0?' + '+p.storageUpPorts+' storage':'')
-      +(p.storagePerPort>1&&p.storageUpPorts>0?(' ('+p.storagePerPort+'\u00d7'+p.storageNicGbps+'G breakout)'):'')
+      +(p.storageUpPorts>0 && (p.leafSW.cageGbps||0)>800 && p.storageNicGbps ? (' ('+Math.round(p.leafSW.cageGbps/p.storageNicGbps)+'\u00d7'+p.storageNicGbps+'G breakout per 1.6T cage)')   // HS v1.11
+        : (p.storagePerPort>1&&p.storageUpPorts>0?(' ('+p.storagePerPort+'\u00d7'+p.storageNicGbps+'G breakout)'):''))
       +' = '+p.upBankUsed+' of '+p.leafSW.uplink.n+', '+p.upBankFree+' free</div>'
       +(p.warn.length ? p.warn.map(function(w){
           var c=w.sev==='high'?'#8A2E2E':w.sev==='med'?'#7A5A0B':'var(--muted)';
@@ -13959,10 +13960,11 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
   function _brkSet(re, txt){ var S={}, m; re.lastIndex=0; while((m=re.exec(txt||''))) S[m[1]]=1; return S; }   // HS v1.06: one scan, every cage
   function brkLines(os, cg, txt){
     var L=[], ks=Object.keys(cg).map(Number).sort(function(a,b){return a-b;}), cgG=brkCageGbps(os, txt);
-    var _bl=null, _done=null, _brace=null;   // HS v1.06: the cages facing a 400G border leaf, and the cages already channelized
+    var _bl=null, _bl6=null, _done=null, _brace=null;   // HS v1.06: the cages facing a 400G border leaf, and the cages already channelized
     ks.forEach(function(c){
       var n=cg[c], g=(XL_BE&&XL_BE.laneG)?XL_BE.laneG:cgG/n;   /* v538 */
       if(cgG>800){ if(!_bl) _bl=_brkSet(/interface ethernet-1\/(\d+)\/\d+ (?=[^\n]*description "-> [^"]*-BL\d)/g, txt); if(_bl[c]) g=400; }
+      if(cgG>800 && os==='cumulus' && blUpGbps()<g){ if(!_bl6) _bl6=_brkSet(/nv set interface swp(\d+)s\d+ link mtu \d+\s+# -> \S*-BL\d/g, txt); if(_bl6[c]) g=blUpGbps(); }   // HS v1.11
       if(os==='eos'){
         if(txt){ if(!_done) _done=_brkSet(/^interface Ethernet(\d+)\/1\b[^\n]*\n   speed /gm, txt); if(_done[c]) return; }
         for(var l=0;l<n;l++){ L.push('interface Ethernet'+c+'/'+(1+l*(8/n))); L.push('   speed '+g+'g-'+(8/n)); }
@@ -19871,9 +19873,9 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
   // the storage NIC speed -- the fePlan budgets them on that bank.
   function stoPortName(s){
     var sw=feLeafSW()||{}, lp=sw.leafPorts||{}, per=Math.max(1,(fePlan().storagePerPort)||1);
-    if(lp.uplink && lp.uplink.chan>1 && lp.uplink.cageBase!=null){   // HS v1.10: storage after the uplinks on the 1.6T cages (each 800G slot of a cage carries per ports)
-      var L=(FE.uplinksPerLeaf||16)+Math.floor(s/per), uc=lp.uplink.chan;
-      return 'et-0/0/'+(lp.uplink.cageBase+Math.floor(L/uc))+':'+((L%uc)*per+(s%per)); }
+    if(lp.uplink && lp.uplink.chan>1 && lp.uplink.cageBase!=null){   // HS v1.11: storage on the next whole 1.6T cage after the uplinks, n ports per cage
+      var _n4=Math.max(1,Math.round((sw.cageGbps||1600)/(FE.storageNicGbps||lp.uplink.gbps))), uc=lp.uplink.chan;
+      return 'et-0/0/'+(lp.uplink.cageBase+Math.ceil((FE.uplinksPerLeaf||16)/uc)+Math.floor(s/_n4))+':'+(s%_n4); }
     var base=((lp.uplink&&lp.uplink.cageBase)!=null?lp.uplink.cageBase:((sw.access&&sw.access.n)||48))+(FE.uplinksPerLeaf||16);
     var cage=base+Math.floor(s/per);
     return 'et-0/0/'+cage+(per>1?':'+(s%per):'');
@@ -28187,7 +28189,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       h+='<table class="bom"><tr><th>Item</th><th>Notes</th><th style="text-align:right">Qty</th></tr>';
       var _ffg=function(x){ return (String(x.ff).indexOf(String(x.gbps)+'G')>=0)?x.ff:(x.gbps+'G '+x.ff); };
       h+='<tr><td>'+_ffg(LS.access)+' transceiver</td><td>FE access \u2014 '+fp2.hostLinks+' host'+(fp2.storageLinks>0?' + '+fp2.storageLinks+' storage':'')+' links: AOC, optics in the assembly</td><td class="num">0</td></tr>';
-      h+='<tr><td>'+_ffg(LS.uplink)+' transceiver</td><td>FE leaf \u2194 spine/border uplinks ('+fp2.uplinkTotal+' links): AOC, optics in the assembly</td><td class="num">0</td></tr>';
+      h+='<tr><td>'+_ffg(LS.uplink)+' transceiver</td><td>FE leaf \u2194 spine/border uplinks ('+fp2.uplinks+' leaf uplinks): AOC, optics in the assembly</td><td class="num">0</td></tr>';
       h+='<tr class="tot"><td colspan="2">Total frontend transceivers</td><td class="num">0</td></tr></table>';
     }
     h+='<div class="bom-h">Optics</div><table class="bom"><tr><th>Part</th><th>Description</th><th style="text-align:right">Qty</th></tr>';

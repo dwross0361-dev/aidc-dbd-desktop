@@ -1,3 +1,14 @@
+# AIDC DBD Desktop 2.0.4 (builder HS-v1.11)
+
+- **400G border leaves on an SN6600-LD spine:** the spine's border cages now run 2 × 400G. They were set to 2 × 800G, so those links would not come up. Applies to the Arista 7280DR3A, Cisco N9332D, Nokia 7250 IXR-X3b, Juniper ACX7100 and QFX5130 border leaves.
+- **Front-end leaf tiles** read "16 × 1.6T ↑ to spine" (they said "to border" on every design).
+- **Front-end summary:**
+  - The uplink bank shows the leaf's own form factor (it said QSFP-DD on every leaf).
+  - On an SN6600-LD leaf, the storage breakout reads per 1.6T cage (4 × 400G).
+- **BoM:** the front-end transceiver line counts the uplinks in use, not the whole uplink bank.
+- **SN6600-LD leaf with 800G spines:** storage always starts on the next whole cage after the uplinks. With an odd uplink count, it could share a cage already broken out for an uplink.
+- **Build:** the Windows installer build runs on the current GitHub Actions versions.
+
 # AIDC DBD Desktop 2.0.3 (builder HS-v1.10)
 
 - **NVIDIA SN6600-LD in the front end:** now in the FE leaf and FE spine catalogs (Spectrum-6, 102.4T, 64 × 1.6T OSFP224 cages, liquid-cooled, DC busbar). The FE leaf stays 1:1.
