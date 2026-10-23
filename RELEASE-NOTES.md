@@ -1,3 +1,16 @@
+# AIDC DBD Desktop 2.0.3 (builder HS-v1.10)
+
+- **NVIDIA SN6600-LD in the front end:** now in the FE leaf and FE spine catalogs (Spectrum-6, 102.4T, 64 × 1.6T OSFP224 cages, liquid-cooled, DC busbar). The FE leaf stays 1:1.
+  - **SN6600-LD leaf:** 128 × 400G host ports (4 × 400G per cage).
+    - To an 800G spine: 64 × 800G uplinks (2 × 800G per cage).
+    - To an SN6600-LD spine: 32 × 1.6T straight uplinks, one per cage, no breakout. That's half the cables of 2 × 800G at both ends, and no fiber shuffles.
+  - **SN6600-LD spine:** 128 × 800G leaf ports (2 × 800G per cage), or 64 × 1.6T straight to SN6600-LD leaves. Border leaves take lane 0 of a broken-out cage at their own speed.
+  - **Storage cages** on a 1.6T leaf are broken out to match the storage NIC speed.
+  - The BoM lists the right assemblies: 1.6T OSFP224 AOCs, 1.6T-to-4 × 400G and 2 × 800G breakouts, and the spare leg where a border leaf uses one.
+  - The DC power shelf line names every DC model it feeds, back end and front end.
+  - The SN6800-LD stays out of the front end (2 × 200G per MPO limit).
+- **Cumulus configs: no stray breakouts.** The breakout block now ignores comments. Before, a peer's port named in a comment could channelize an unused cage. Some back-end Cumulus leaf configs lose those breakout lines. Only unused cages are affected, and the Air slice drops their stub nodes.
+
 # AIDC DBD Desktop 2.0.2 (builder HS-v1.09)
 
 - **Hover cards:** the hovered tile is magnified in place (1.8x) in dark teal with white text, so it reads clearly over its neighbors.

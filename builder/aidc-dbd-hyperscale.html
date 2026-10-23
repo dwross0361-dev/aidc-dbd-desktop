@@ -939,7 +939,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.09';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.10';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   var RADIX=64, CAGE=800;
   // ---- FABRIC PROFILE (parameterized per accelerator platform) ----------------------------------------
   // rails == accelerators per host. Each accelerator instance gets its own rail leaf, which is what
@@ -1483,6 +1483,19 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       spinePorts:{ access:{n:64, gbps:800, ff:'OSFP'}, uplink:null, chan:1 },
       confirmed:false,
       note:'Spectrum-4, 64 x 800G OSFP + 2 x 25G SFP28, 2RU, 51.2 Tbps, 900 W typical (2.08 kW with 64 optics), 4 x 2 kW PSUs (2 must be active), Cumulus Linux. Replaces the SN5600 (EoL). Cage-row map to confirm.' },
+    // HS v1.10: SN6600-LD (Spectrum-6, 102.4T): 64 x 1.6T OSFP cages (128 x 800G, 256 x 400G, 512 x 200G; NVIDIA SN6000
+    // hardware manual), 2RU, 48-60 V DC busbar, liquid-cooled, Cumulus Linux. Leaf 1:1: 32 cages 4 x 400G to the host DPUs,
+    // 32 cages 2 x 800G to the spines. Spine: every cage 2 x 800G. Rate list and cage map to CONFIRM (as the back end).
+    'NV-SN6600':{ label:'NVIDIA SN6600-LD (Spectrum-6, 102.4T, liquid, DC busbar)', role:['fe-spine','fe-leaf'], ru:2, typW:1700, maxW:3800,
+      access:{n:128, gbps:800, ff:'OSFP224'}, uplink:null,
+      breakout:{'2x800':128,'4x400':256,'8x200':512},
+      bankLayout:'uniform-channelized', chan:4,   // host ports are 4 x 400G sub-ports of a 1.6T cage: <cage>:<sub>
+      breakoutCost:null, cageGbps:1600, dc:true, cooling:'liquid',
+      leafPorts:{ access:{n:128, gbps:400, ff:'OSFP224 4x400'},
+                  uplink:{n:64, gbps:800, ff:'OSFP224 2x800', cageBase:32, chan:2} },
+      spinePorts:{ access:{n:128, gbps:800, ff:'OSFP224 2x800'}, uplink:null, chan:2 },
+      confirmed:false,
+      note:'Spectrum-6, 64 x 1.6T OSFP cages, 102.4 Tbps, 2RU, 48-60 V DC busbar (no AC PSUs), liquid-cooled (UQD8), Cumulus Linux 5.18.2 or later. Leaf 1:1: 128 x 400G host + 64 x 800G uplink. Spine: 128 x 800G. Rate list and cage-row map to CONFIRM (NVIDIA SN6000 hardware manual 1.3).' },
     'NV-SN5600':{ label:'NVIDIA SN5600 (Spectrum-4, EoL)', role:['fe-spine','fe-leaf'], ru:2, typW:940,
       access:{n:64, gbps:800, ff:'OSFP'}, uplink:null,
       breakout:{'2x400':128,'4x200':256,'8x100':512},
@@ -2224,11 +2237,14 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   // from its native port shape -- the QFX5240 is 64x800G natively but 64x400G access plus
   // 32x400G uplink once channelized. Everything downstream reads access/uplink off this, so
   // the split is applied ONCE here rather than in each consumer.
+  function fe16Pair(){ var L=FE_SW[FE.leafModel]||{}, S=FE_SW[FE.spineModel]||{};   // HS v1.10: both ends 1.6T Cumulus cages
+    return L.cageGbps>800 && S.cageGbps>800 && /^NV-/.test(FE.leafModel||'') && /^NV-/.test(FE.spineModel||''); }
   function feLeafSW(){
     var sw = FE_SW[FE.leafModel];
     if(sw && sw.leafPorts){
       var v = {}; for(var k in sw) v[k] = sw[k];
       v.access = sw.leafPorts.access; v.uplink = sw.leafPorts.uplink;
+      if(fe16Pair()){ v.uplink = {n:32, gbps:1600, ff:'OSFP224 1.6T', cageBase:32}; v.leafPorts = {access:v.access, uplink:v.uplink}; }   // HS v1.10: straight 1.6T to a 1.6T spine
       return v;
     }
     return sw;
@@ -2273,6 +2289,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       var v = {}; for(var k in sw) v[k] = sw[k];
       v.access = sw.spinePorts.access; v.uplink = sw.spinePorts.uplink;
       if(sw.spinePorts.chan) v.chan = sw.spinePorts.chan;
+      if(fe16Pair()){ v.access = {n:64, gbps:1600, ff:'OSFP224'}; v.chan = 1; }   // HS v1.10: 64 x 1.6T to 1.6T leaves
       return v;
     }
     return sw;
@@ -2280,6 +2297,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   // Interface name for a LOGICAL port index on a given SKU. On a uniform box channelized
   // 2x400 the logical index is not the cage number: port 64 is cage 32 sub-port 0. Emitting
   // et-0/0/64 there names a cage that does not exist.
+  function feBlSpIf(n){ return (n && fe16Pair() && blUpGbps()<1600 && /^et-0\/0\/\d+$/.test(n)) ? n+':0' : n; }   // HS v1.10
   function feIfName(sw, p){
     var c = (sw && sw.chan) || 1;
     if(c <= 1) return 'et-0/0/' + p;
@@ -2322,8 +2340,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   // Leaf uplink interface for spine si, link k. A bank that declares cageBase is addressed by
   // cage (unchannelized 800G): consecutive cages per spine, each a separate optic.
   function feLeafUpIf(sw, role, si, k, perSpine, nSpines){
-    if(sw && sw.uplink && sw.uplink.cageBase!=null)
-      return 'et-0/0/' + (sw.uplink.cageBase + si*perSpine + k);
+    if(sw && sw.uplink && sw.uplink.cageBase!=null){ var _u=si*perSpine + k, _uc=sw.uplink.chan||1;   // HS v1.10: chan:2 = two uplinks per 1.6T cage
+      return 'et-0/0/' + (_uc>1 ? ((sw.uplink.cageBase + Math.floor(_u/_uc)) + ':' + (_u%_uc)) : (sw.uplink.cageBase + _u)); }
     return feIfName(sw, feUplinkStripe(sw, feUplinkBase(role), si, k, perSpine, nSpines));
   }
   // ---- ACCESS LOAD ------------------------------------------------------------------------
@@ -13913,13 +13931,17 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     var cg={}, m, re;
     if(os==='eos'){ re=/^interface Ethernet(\d+)\/(\d+)\b/gm; while((m=re.exec(txt))){ var ln=+m[2]; if(ln!==1){ cg[m[1]]=Math.max(cg[m[1]]||2, (ln%2===0)?8:((ln%4!==1)?4:2)); } } }   /* v538: 8-way */   // v514: lanes 3 and 7 exist only 4-way
     else if(os==='nxos'){ re=/^interface Ethernet1\/(\d+)\/(\d+)\b/gm; while((m=re.exec(txt))) cg[m[1]]=Math.max(cg[m[1]]||2, +m[2]); }
-    else if(os==='cumulus'){ re=/\bswp(\d+)s(\d+)\b/g; while((m=re.exec(txt))) cg[m[1]]=Math.max(cg[m[1]]||2, +m[2]+1); }
+    else if(os==='cumulus'){ re=/\bswp(\d+)s(\d+)\b/g; var _tc=String(txt).replace(/[ \t]+#.*$/gm,'').replace(/^#.*$/gm,'');   // HS v1.10: commands only
+      while((m=re.exec(_tc))) cg[m[1]]=Math.max(cg[m[1]]||2, +m[2]+1); }
     else if(os==='srl'){ re=/\bethernet-1\/(\d+)\/(\d+)\b/g; while((m=re.exec(txt))) cg[m[1]]=Math.max(cg[m[1]]||2, +m[2]); }
     else if(os==='junos'){ re=/\bet-0\/0\/(\d+):(\d+)\b/g; while((m=re.exec(txt))) cg[m[1]]=Math.max(cg[m[1]]||2, +m[2]+1); }
     Object.keys(cg).forEach(function(k){ var n=cg[k]; cg[k]=(n>4?8:(n>2?4:2)); });   /* v538: 8-way on 1.6T cages */
     // v514: an FE host-leaf storage cage planned 4 x 200G is 4-way whatever lanes it uses (the last cage is often half full)
     if(/frontend plane, (?!border)[^\n]*leaf/.test(txt||'')){
       Object.keys(cg).forEach(function(k){ if(stoCage4(os==='junos'?+k:+k-1)) cg[k]=4; });
+      (function(){ var _lw=feLeafSW()||{}, _up=_lw.uplink||{}; if(!(_lw.cageGbps>800 && _up.cageBase!=null)) return;   // HS v1.10
+        var _b=_up.cageBase+Math.ceil((FE.uplinksPerLeaf||16)/(_up.chan||1)), _nic=FE.storageNicGbps||_up.gbps, _n=Math.max(1,Math.round(_lw.cageGbps/_nic));
+        Object.keys(cg).forEach(function(k){ var c=(os==='junos'?+k:+k-1); if(c>=_b) cg[k]=Math.max(cg[k], _n>4?8:(_n>2?4:2)); }); })();
       if(os==='eos'){ re=/^interface Ethernet(\d+)\/1\b/gm; while((m=re.exec(txt))){ if(!cg[m[1]] && stoCage4(+m[1]-1)) cg[m[1]]=4; } }
     }
     return cg;
@@ -13929,6 +13951,9 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
   function brkCageGbps(os, txt){
     if(XL_BE && XL_BE.cageG) return XL_BE.cageG;   // v538: a back-end device on 102.4T switches has 1.6T cages
     try{ var sw=feSpineSW(); if(os==='srl' && sw && sw.cageGbps && /frontend plane, spine/.test(txt||'')) return sw.cageGbps; }catch(e){}
+    try{ var _ls=FE_SW[FE.leafModel]||{}, _ss=FE_SW[FE.spineModel]||{};   // HS v1.10: SN6600-LD front end (1.6T cages)
+      if(_ls.cageGbps>800 && /frontend plane, (?!border)[^\n]*leaf/.test(txt||'')) return _ls.cageGbps;
+      if(_ss.cageGbps>800 && os!=='srl' && /frontend plane, (super-)?spine/.test(txt||'')) return _ss.cageGbps; }catch(e){}
     return 800;
   }
   function _brkSet(re, txt){ var S={}, m; re.lastIndex=0; while((m=re.exec(txt||''))) S[m[1]]=1; return S; }   // HS v1.06: one scan, every cage
@@ -14174,8 +14199,10 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
   // changed the configs and left every cable map in Junos.
   // v500: a front-end leaf storage cage broken out 4 x 200G (VAST CNode ports): the cages from the storage base up
   function stoCageEnd(d,P){ var e=52; try{ var S=storagePlan(P); ((S.byLeaf||{})[d.name]||[]).concat((S.resByLeaf||{})[d.name]||[]).forEach(function(x){ var m=/^et-0\/0\/(\d+):\d+$/.exec(x.ifname); if(m) e=Math.max(e,+m[1]+1);   /* channelized storage cages only */ }); }catch(x){} return e; }
+  function feUpCages(lp, n){ var c=(lp && lp.uplink && lp.uplink.chan)||1; return c>1 ? Math.ceil(n/c) : n; }   // HS v1.10: uplinks -> cages
   function stoCage4(c){ try{ if(!(FE&&FE.on) || STORAGE_PLATFORM.nicGbps!==200) return false;
-    var sw=feLeafSW()||{}, lp=sw.leafPorts||{}, base=((lp.uplink&&lp.uplink.cageBase)!=null?lp.uplink.cageBase:((sw.access&&sw.access.n)||48))+(FE.uplinksPerLeaf||16);
+    var sw=feLeafSW()||{}, lp=sw.leafPorts||{}; if(sw.cageGbps>800) return false;   // HS v1.10: a 1.6T storage cage is channelized by its own speed (below)
+    var base=((lp.uplink&&lp.uplink.cageBase)!=null?lp.uplink.cageBase:((sw.access&&sw.access.n)||48))+(FE.uplinksPerLeaf||16);
     return c>=base; }catch(e){ return false; } }
   function vendorText(s, vendor){
     if(typeof s!=='string' || !vendor || vendor==='junos') return s;
@@ -15954,7 +15981,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     var att=devs2.filter(function(d){ return d.role==='border'; });
     att.forEach(function(lf,a){ Object.keys(grp).forEach(function(g){ var G=grp[g], m=G.length, ss=G[a%m];
       var lIf=BL_UP[+g], sspPort=t3.pods*t3.linksPerSsp+Math.floor(a/m);
-      link(lf, lIf, ss, (sspPort<R?feIfName(SSW,sspPort):null), 0); }); });
+      link(lf, lIf, ss, (sspPort<R?feBlSpIf(feIfName(SSW,sspPort)):null), 0); }); });   // HS v1.10: lane 0 of a 1.6T cage
     return n;
   }
   // v484: the spines a DPU peers EVPN with -- its own pod's spines in three tiers, every spine otherwise
@@ -16015,7 +16042,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
           var _LSW=feLeafSW(), _SSW=feSpineSW();
           var lIf=(lf.role==='border') ? BL_UP[si*lfPer + k]
                                        : feLeafUpIf(_LSW, lf.role, si, k, perSpine, spines.length),
-              sIf=feIfName(_SSW, leaves.indexOf(lf)+k*spineBank);
+              sIf=feIfName(_SSW, leaves.indexOf(lf)+k*spineBank); if(lf.role==='border') sIf=feBlSpIf(sIf);   // HS v1.10
           if(lIf==null || sIf==null){ _feOver.push(lf.name+' -> '+sp.name); continue; }   // v480: no port left at one end
           lf.ifaces.push({name:lIf, ip:_un?null:net.a, unnumbered:_un, peer:sp.name, peerIp:_un?null:net.b, peerIf:sIf, peerAsn:sp.asn});
           sp.ifaces.push({name:sIf, ip:_un?null:net.b, unnumbered:_un, peer:lf.name, peerIp:_un?null:net.a, peerIf:lIf, peerAsn:lf.asn});
@@ -19844,6 +19871,9 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
   // the storage NIC speed -- the fePlan budgets them on that bank.
   function stoPortName(s){
     var sw=feLeafSW()||{}, lp=sw.leafPorts||{}, per=Math.max(1,(fePlan().storagePerPort)||1);
+    if(lp.uplink && lp.uplink.chan>1 && lp.uplink.cageBase!=null){   // HS v1.10: storage after the uplinks on the 1.6T cages (each 800G slot of a cage carries per ports)
+      var L=(FE.uplinksPerLeaf||16)+Math.floor(s/per), uc=lp.uplink.chan;
+      return 'et-0/0/'+(lp.uplink.cageBase+Math.floor(L/uc))+':'+((L%uc)*per+(s%per)); }
     var base=((lp.uplink&&lp.uplink.cageBase)!=null?lp.uplink.cageBase:((sw.access&&sw.access.n)||48))+(FE.uplinksPerLeaf||16);
     var cage=base+Math.floor(s/per);
     return 'et-0/0/'+cage+(per>1?':'+(s%per):'');
@@ -20878,7 +20908,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     }
     L.push('nv set interface lo ip address '+d.lo+'/32');
     // port shape: 800G cages to the other tier; host cages broken out 2x400G on a leaf
-    if(d.role==='leaf'){ for(var c=1;c<=32;c++) L.push('nv set interface swp'+c+' link breakout 2x400G'); }
+    if(d.role==='leaf'){ var _lw=feLeafSW()||{}, _hc=(_lw.chan||2), _hg=((_lw.access||{}).gbps||400), _hn=Math.ceil((((_lw.access||{}).n)||64)/_hc);   // HS v1.10
+      for(var c=1;c<=_hn;c++) L.push('nv set interface swp'+c+' link breakout '+_hc+'x'+_hg+'G'); }
     (d.ifaces||[]).forEach(function(f){
       var i=xlateIf(f.name,'cumulus');
       L.push('nv set interface '+i+' link mtu 9216   # '+ifDesc(f));
@@ -28406,7 +28437,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       var rows=Object.keys(cab[sec]).filter(function(k){ return k!=='__cages' && k!=='__dr4'; }).sort().map(function(k){ var p=k.split('|'), n=cab[sec][k];
         return ['Cable', p[0], p[2]>1?'Breakout assemblies, one per leaf cage (2 links each)':'', p[1], sec==='power'?'':'\u2020', Math.ceil(n/(+p[2]||1))]; });
       var cg=cab[sec]['__cages']||{};
-      Object.keys(cg).sort().forEach(function(k){ var p=k.split('|'); rows.push(['Cable', p[0], 'Breakout assemblies, one per channelized cage ('+(/4\u00d7/.test(p[0])?4:2)+' links each)', p[1], '\u2020', Object.keys(cg[k]).length]); });
+      Object.keys(cg).sort().forEach(function(k){ var p=k.split('|'); rows.push(['Cable', p[0], 'Breakout assemblies, one per channelized cage ('+(/leg spare/.test(p[0])?'1 link each':(/4\u00d7/.test(p[0])?4:2)+' links each')+')', p[1], '\u2020', Object.keys(cg[k]).length]); });
       var dr=cab[sec]['__dr4'];
       if(dr){   // WEKApod Nitro gen 2: single OSFP cage per node, split to two leaves over single-mode jumpers
         rows.push(['Cable','MPO-12 APC single-mode jumper (OS2)','One per 400G leg, WEKA node cage to leaf cage (an AOC cannot split one node cage across two leaves)','MPO-12 APC','\u2020',dr.legs]);
@@ -28482,7 +28513,9 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     var _mg=[]; try{ _mg=physModel().cabinets.filter(function(c){ return c.mgx; }); }catch(e){}   // v551
     if(_mg.length){ out.push(['Rack',MGX_RACK.model,'Network cabinets holding the SN6000-LD switches: 600 x 1,321 mm, DC busbar, liquid manifolds','','',_mg.length]);
       out.push(['Cooling','UQD8 v2 quick-disconnect pair (switch to rack manifold)','One cold + one hot coupler per pair; '+(+_mg.reduce(function(a,c){ return a+c.mgx.liquidLpm; },0).toFixed(1))+' lpm of PG-25 across the network racks','','',_mg.reduce(function(a,c){ return a+c.mgx.uqdPairs; },0)]); }
-    if(nshN){ out.push(['Power shelf','Network 48 V DC power shelf ('+NET_SHELF.kw+' kW, MGX v1.2)','Feeds the DC busbar switches ('+((BE_MODELS[beModel]||{}).label||beModel)+'), N+1 per cabinet; 3U placeholder, model CONFIRM','','',nshN]);
+    if(nshN){ out.push(['Power shelf','Network 48 V DC power shelf ('+NET_SHELF.kw+' kW, MGX v1.2)','Feeds the DC busbar switches ('+(function(){ var L=[], add=function(m, lab){ if(m && swDc(m) && L.indexOf(lab)<0) L.push(lab); };   // HS v1.10
+      add(beModel, (BE_MODELS[beModel]||{}).label||beModel); if(FE&&FE.on){ add(FE.leafModel, ((FE_SW[FE.leafModel]||{}).label||FE.leafModel)+' FE leaf'); add(FE.spineModel, ((FE_SW[FE.spineModel]||{}).label||FE.spineModel)+' FE spine'); }
+      return L.length?L.join('; '):((BE_MODELS[beModel]||{}).label||beModel); })()+'), N+1 per cabinet; 3U placeholder, model CONFIRM','','',nshN]);
       out.push(['Circuit','Network power-shelf input','One per shelf, A and B shelves on separate feeds -- CONFIRM rating','','',nshN]); }
     if(shN && _RSb){ out.push(['Power shelf','NVL72 power shelf ('+_RSb.shelfKw+' kW)','Included in the vendor rack; listed for space, power and management','','',shN]);
              out.push(['Circuit','Rack facility feed','Per the vendor\u2019s NVL72 rack specification -- CONFIRM count and rating','','','TBD']); }
@@ -30717,11 +30750,19 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     var md=String(l.media||''), sp=String(l.speed||'');
     var subA=/:\d+$/.test(l.ap||''), subB=/:\d+$/.test(l.bp||'');
     var _h6=(FE_SW[FE.spineModel]||{}).cageGbps>800, _spA=(ra==='fe-spine'), _spB=(rb==='fe-spine'), _sub=function(p){ return /:\d+$|^ethernet-\d+\/\d+\/\d+$/.test(p||''); };
-    if(_h6 && ((_spA&&_sub(l.ap))||(_spB&&_sub(l.bp)))){
-      var _far=_spA?rb:ra;
-      return {k:(_far==='fe-border'?'1.6T OSFP224 to 2\u00d7400G QSFP-DD AOC breakout (H6 spine cage to two border-leaf ports)':'1.6T OSFP224 to 2\u00d7800G OSFP AOC breakout (H6 spine cage to two leaf ports)'), conn:'AOC',
-              cage:(_spA?l.a:l.b)+'|'+String(_spA?l.ap:l.bp).replace(/(:\d+|\/\d+)$/,'')};
+    var _sn66=(FE.spineModel==='NV-SN6600'), _subX=function(p){ return _sub(p) || (_sn66 && /swp\d+s\d+$/.test(p||'')); };   // HS v1.10
+    if(_h6 && ((_spA&&_subX(l.ap))||(_spB&&_subX(l.bp)))){
+      var _far=_spA?rb:ra, _nm=_sn66?'SN6600-LD':'H6';
+      return {k:(_far==='fe-border'?(_sn66?('1.6T OSFP224 to 2\u00d7'+(sp||'800G')+' '+(/^400G$/.test(sp)?'QSFP-DD':'OSFP')+' AOC breakout (SN6600-LD spine cage to '+(fe16Pair()?'one border-leaf port, second leg spare':'two border-leaf ports')+')'):'1.6T OSFP224 to 2\u00d7400G QSFP-DD AOC breakout (H6 spine cage to two border-leaf ports)'):'1.6T OSFP224 to 2\u00d7800G OSFP AOC breakout ('+_nm+' spine cage to two leaf ports)'), conn:'AOC',
+              cage:(_spA?l.a:l.b)+'|'+String(_spA?l.ap:l.bp).replace(/(:\d+|s\d+|\/\d+)$/,'')};
     }
+    var _cg=function(r){ return r==='fe-leaf'?((FE_SW[FE.leafModel]||{}).cageGbps||0):r==='fe-spine'?((FE_SW[FE.spineModel]||{}).cageGbps||0):0; };   // HS v1.10
+    var _sb=function(p){ return /:\d+$|swp\d+s\d+$|^ethernet-\d+\/\d+\/\d+$/.test(p||''); };
+    var _sideA=(_cg(ra)>800 && _sb(l.ap)), _sideB=(_cg(rb)>800 && _sb(l.bp)), _gS=+(/(\d+)G/.exec(sp)||[0,0])[1];
+    if((_sideA||_sideB) && _gS>0 && !(_h6 && (_spA||_spB))){ var _sr=_sideA?ra:rb, _fr=_sideA?rb:ra, _n=Math.max(1,Math.round(_cg(_sr)/_gS)), _mdl=(FE_SW[_sr==='fe-leaf'?FE.leafModel:FE.spineModel]||{}).label||'';
+      var _what=_fr==='fe-spine'?'spine ports':_fr==='fe-leaf'?'leaf ports':_fr==='fe-border'?'border-leaf ports':/^storage/.test(_fr||'')?'storage ports':'host DPU ports';
+      return {k:'1.6T OSFP224 to '+_n+'\u00d7'+_gS+'G AOC breakout ('+(/SN6600/.test(_mdl)?'SN6600-LD ':'')+(_sr==='fe-leaf'?'leaf':'spine')+' cage to '+_n+' '+_what+')', conn:'AOC',
+              cage:(_sideA?l.a:l.b)+'|'+String(_sideA?l.ap:l.bp).replace(/(:\d+|s\d+|\/\d+)$/,'')}; }
     if(/ZR/.test(sp)) return {k:'Duplex single-mode jumper to the line system (400G ZR/ZR+ coherent optic in the gateway, MACsec)', conn:'LC duplex OS2'};   // v560: a DCI wave was costed as an AOC
     if(/^200G$/.test(sp) && ra!=='edg-lb' && rb!=='edg-lb')   // v500: 200G storage ports ride 4 x 200G breakouts (v560: not the load balancer DPU links)
       return {k:(l.plane==='sto-int'?'800G OSFP to 4\u00d7200G QSFP112 AOC breakout (VAST internal switch cage to four node ports)':'800G OSFP to 4\u00d7200G QSFP112 AOC breakout (leaf cage to four storage node ports)'), conn:'AOC',
@@ -30753,6 +30794,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     if(/DAC/i.test(md)) return {k:(md.match(/[\w.]+G [\w+]+ DAC/)||[sp+' DAC'])[0], conn:'DAC'};
     if(/dedicated 1G SFP|1G SFP/i.test(md)) return {k:'1G SFP cluster control link', conn:'SFP'};
     if(/AOC/i.test(md)) return {k:(md.match(/[\w.]+G [\w+]+ AOC/)||[sp+' AOC'])[0], conn:'AOC'};
+    if(/^(1600G|1\.6T)$/.test(sp)) return {k:'1.6T OSFP224 AOC', conn:'AOC'};   // HS v1.10: SN6600-LD leaf to SN6600-LD spine
     var ff={'800G':'OSFP','400G':'QSFP-DD','200G':'QSFP112','100G':'QSFP28','25G':'SFP28','10G':'SFP+','1G':'SFP'}[sp]||'';
     return {k:sp+(ff?' '+ff:'')+' AOC', conn:'AOC'};
   }
