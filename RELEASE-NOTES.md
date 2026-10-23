@@ -1,3 +1,11 @@
+# AIDC DBD Desktop 2.0.7 (builder HS-v1.14)
+
+- **Floor columns (1 to 4):** a new **Floor** selector lays the rows out in side-by-side columns (vertical stacks of rows), with a 3 m aisle between columns.
+  - Rows fill each column in order, so a pod may span two columns.
+  - The DC Layout Builder, cable run lengths, the Cable Matrix and the package floor-plan drawing all follow it.
+  - In the DC Layout Builder, the column count and the aisle between columns are editable with the other geometry.
+- **Row network:** the "block, 2/3/4 columns" options are removed; it's one block or MoR + EoR again. Saved designs that used them load as one block.
+
 # AIDC DBD Desktop 2.0.6 (builder HS-v1.13)
 
 - **Load progress meter:** shows each step (reading, parsing, building, applying, drawing) with the percentage read and the time each step took.
