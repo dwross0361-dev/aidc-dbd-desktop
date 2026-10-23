@@ -1,0 +1,54 @@
+# Builds the unsigned Windows installer: AIDC-DBD-Setup-<version>.exe
+# Runs on every push to main, on a v* tag, and on demand (Actions > Build Windows installer > Run workflow).
+# The installer is attached to the run as an artifact; a v* tag also publishes it as a GitHub release (private repo: private release).
+name: Build Windows installer
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  windows:
+    runs-on: windows-latest
+    env:
+      NODE_RUNNER_VERSION: '22.11.0'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: App dependencies
+        run: npm ci
+      - name: Site runner dependencies (jsdom, canvas for Windows)
+        run: npm ci --prefix runner --omit=dev
+      - name: Node for the built-in site runner
+        shell: pwsh
+        run: |
+          $v = $env:NODE_RUNNER_VERSION
+          Invoke-WebRequest "https://nodejs.org/dist/v$v/node-v$v-win-x64.zip" -OutFile node.zip
+          Expand-Archive node.zip -DestinationPath nodezip
+          New-Item -ItemType Directory -Force vendor/node | Out-Null
+          Copy-Item "nodezip/node-v$v-win-x64/node.exe" vendor/node/node.exe
+          Copy-Item "nodezip/node-v$v-win-x64/LICENSE" vendor/node/LICENSE
+      - name: Check the site runner starts
+        shell: pwsh
+        run: |
+          vendor/node/node.exe -e "require('./runner/node_modules/jsdom'); require('./runner/node_modules/@napi-rs/canvas'); console.log('runner modules ok')"
+      - name: Build the installer (unsigned)
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: npx electron-builder --win nsis --x64 --publish never
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AIDC-DBD-Windows
+          path: dist/*.exe
+          if-no-files-found: error
+      - name: Release (v* tags)
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: gh release create "${{ github.ref_name }}" (Get-ChildItem dist/*.exe).FullName --title "AIDC DBD ${{ github.ref_name }}" --notes-file RELEASE-NOTES.md

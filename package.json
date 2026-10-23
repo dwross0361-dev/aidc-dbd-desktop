@@ -1,0 +1,32 @@
+{
+  "name": "aidc-dbd-desktop",
+  "productName": "AIDC DBD",
+  "version": "2.0.0",
+  "description": "DWR Networking AIDC DBD Hyperscale builder, desktop edition: the builder with the site runner built in",
+  "author": "DWR Networking",
+  "license": "UNLICENSED",
+  "private": true,
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist:win": "electron-builder --win nsis --x64 --publish never"
+  },
+  "devDependencies": {
+    "electron": "33.4.11",
+    "electron-builder": "25.1.8"
+  },
+  "build": {
+    "appId": "com.dwrnetworking.aidcdbd",
+    "productName": "AIDC DBD",
+    "copyright": "DWR Networking",
+    "directories": { "output": "dist" },
+    "files": ["src/**", "package.json"],
+    "extraResources": [
+      { "from": "builder", "to": "builder" },
+      { "from": "runner", "to": "runner", "filter": ["**/*"] },
+      { "from": "vendor/node", "to": "node" }
+    ],
+    "win": { "target": [{ "target": "nsis", "arch": ["x64"] }], "artifactName": "AIDC-DBD-Setup-${version}.exe" },
+    "nsis": { "oneClick": false, "perMachine": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true, "shortcutName": "AIDC DBD" }
+  }
+}

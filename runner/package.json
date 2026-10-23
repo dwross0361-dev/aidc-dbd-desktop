@@ -1,0 +1,10 @@
+{
+  "name": "aidc-dbd-site-runner",
+  "version": "1.2.0",
+  "description": "DWR Networking: builds an AIDC DBD design's Final Blueprint package and .run off the browser",
+  "private": true,
+  "license": "UNLICENSED",
+  "bin": { "aidc-runner": "aidc-runner.js" },
+  "engines": { "node": ">=20" },
+  "dependencies": { "jsdom": "24.1.3", "@napi-rs/canvas": "0.1.65" }
+}
