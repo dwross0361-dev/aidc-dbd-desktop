@@ -520,8 +520,15 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   .canvas.compact .dev.rack .rail-ports,.canvas.compact .dev.rack .pgrid{gap:1px}
   .canvas.compact .dev.rack .sp-dual{min-width:0;aspect-ratio:auto;gap:0}
   .canvas.compact .dev.rack .sp{min-width:0;aspect-ratio:auto;height:5px;border-radius:1px}
-  .devpop{position:fixed;z-index:9999;pointer-events:none;filter:drop-shadow(0 6px 18px rgba(0,0,0,.2))}
-  .devpop .dev,.devpop .netrack{min-width:230px;background:#fff}
+  .devpop{position:fixed;z-index:9999;pointer-events:none;transform-origin:0 0;filter:drop-shadow(0 10px 26px rgba(0,0,0,.38))}
+  .devpop .canvas{background:none;border:0;padding:0;border-radius:0;overflow:visible}
+  .devpop .dev,.devpop .netrack{background:#0F4C47 !important;border:2px solid #062B28 !important;color:#fff !important}
+  .devpop .dev *,.devpop .netrack *{color:#fff !important}
+  .devpop .del{display:none !important}
+  .devpop .leaf-face,.devpop .nr-slots,.devpop .rail-ports,.devpop .pgrid{background:#EAF4F2;border-radius:4px;padding:2px}
+  .devpop .leaf-face *,.devpop .nr-slots *,.devpop .rail-ports *,.devpop .pgrid *,.devpop .os{color:#0F2A28 !important}
+  .devpop .dev-h span:first-child,.devpop .netrack *,.devpop .mini{white-space:normal !important;overflow:visible !important;text-overflow:clip !important;overflow-wrap:anywhere}
+  .devpop .dev-h .os{position:static}
   .tier{margin-bottom:14px}
   .canvas .row{zoom:var(--card-z,1)}   /* v487: cards scale with the build */
   .tier-lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
@@ -932,7 +939,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.08';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.09';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   var RADIX=64, CAGE=800;
   // ---- FABRIC PROFILE (parameterized per accelerator platform) ----------------------------------------
   // rails == accelerators per host. Each accelerator instance gets its own rail leaf, which is what
@@ -4078,14 +4085,16 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       if(!el){ if(src) hide(); return; }
       if(el===src) return;
       hide(); src=el;
-      tm=setTimeout(function(){
+      tm=setTimeout(function(){   // HS v1.09: the tile magnified in place, in its own colors reversed
         if(src!==el || !document.body.contains(el)) return;
-        var r=el.getBoundingClientRect(); pop=document.createElement('div'); pop.className='devpop';
-        pop.appendChild(el.cloneNode(true)); document.body.appendChild(pop);
-        var w=pop.offsetWidth, h=pop.offsetHeight, x=Math.max(8, Math.min(r.left, innerWidth-w-8)), y=r.bottom+8;   // HS v1.08: below, not over the next tile
-        if(y+h>innerHeight-8) y=r.top-h-8; if(y<8) y=Math.max(8, innerHeight-h-8);
-        pop.style.left=x+'px'; pop.style.top=y+'px';
-      }, 450);
+        var r=el.getBoundingClientRect(), Z=1.8; pop=document.createElement('div'); pop.className='devpop';
+        var wrap=document.createElement('div'); wrap.className='canvas compact';   // the tile exactly as drawn (compact layout)
+        var cl=el.cloneNode(true); cl.removeAttribute('id'); cl.style.width=r.width+'px'; cl.style.maxWidth=r.width+'px'; cl.style.margin='0';
+        wrap.appendChild(cl); pop.appendChild(wrap); document.body.appendChild(pop);
+        var w=pop.offsetWidth*Z, h=pop.offsetHeight*Z, cx=r.left+r.width/2, cy=r.top+r.height/2;
+        var x=Math.max(8, Math.min(cx-w/2, innerWidth-w-8)), y=Math.max(8, Math.min(cy-h/2, innerHeight-h-8));
+        pop.style.left=x+'px'; pop.style.top=y+'px'; pop.style.transform='scale('+Z+')';
+      }, 250);
     });
     document.addEventListener('scroll', hide, true);
     document.addEventListener('mousedown', hide, true);

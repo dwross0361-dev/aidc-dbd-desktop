@@ -1,3 +1,10 @@
+# AIDC DBD Desktop 2.0.2 (builder HS-v1.09)
+
+- **Hover cards:** the hovered tile is magnified in place (1.8x) in dark teal with white text, so it reads clearly over its neighbors.
+  - Names and labels show in full (no "...").
+  - Port and cage faceplates sit on a light inset, so their colors still read.
+  - It opens after 250 ms and closes when the pointer leaves.
+
 # AIDC DBD Desktop 2.0.1 (builder HS-v1.08)
 
 - **Responsive at mega scale:**
@@ -7,7 +14,6 @@
 - **Row network: block, 2, 3 or 4 columns.** Sets the width of each row's network block up front.
 - **Network cabinets that fit at 4,096 racks:** OOB spines and front-end super-spines now spread over more cabinets (OOB 8 → 18, front end 180 → 208). No cabinet is over-full.
 - **Back-end topology (condensed):** where several leaf groups feed the same rack boxes, each group gets one label under it, so the labels no longer pile up at the rack row.
-- **Hover cards** open below the tile instead of over the next one.
 - **Save and close:**
   - Save opens a native Save dialog.
   - Closing the app offers to save the design first (Save…, Don't save, Cancel), and warns if a site-runner job is still running.
