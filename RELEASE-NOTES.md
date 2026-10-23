@@ -1,3 +1,7 @@
+# AIDC DBD Desktop 2.0.5 (builder HS-v1.12)
+
+- **Load takes a site-runner file.** The design is rebuilt from the file's settings, and the status line reports the rack and device counts. It also reports whether the design fingerprint matches the file; a mismatch means the exported design had canvas edits its settings don't carry.
+
 # AIDC DBD Desktop 2.0.4 (builder HS-v1.11)
 
 - **400G border leaves on an SN6600-LD spine:** the spine's border cages now run 2 × 400G. They were set to 2 × 800G, so those links would not come up. Applies to the Arista 7280DR3A, Cisco N9332D, Nokia 7250 IXR-X3b, Juniper ACX7100 and QFX5130 border leaves.

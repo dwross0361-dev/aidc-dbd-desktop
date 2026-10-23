@@ -939,7 +939,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.11';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.12';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   var RADIX=64, CAGE=800;
   // ---- FABRIC PROFILE (parameterized per accelerator platform) ----------------------------------------
   // rails == accelerators per host. Each accelerator instance gets its own rail leaf, which is what
@@ -6704,6 +6704,13 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       var rd=new FileReader();
       rd.onload=function(){
         var b; try{ b=JSON.parse(rd.result); }catch(e){ setStatus('Load failed: '+file.name+' is not valid JSON'); return; }
+        if(b && b.format===SITE_RUNNER_FORMAT){   // HS v1.12: a site-runner file -- rebuild from its settings
+          setStatus('Loading '+file.name+': rebuilding '+Number(b.racks||0).toLocaleString('en-US')+' racks from its settings\u2026');
+          setTimeout(function(){ try{ var r=window.__aidcRunner.load(b,{settings:true});
+            setStatus('Loaded '+file.name+' (site-runner file, built from its settings): '+r.racks.toLocaleString('en-US')+' racks, '+r.devices.toLocaleString('en-US')+' devices. '
+              +(r.match?'Design fingerprint matches the file.':'Design fingerprint differs from the file ('+r.fingerprint+' vs '+r.expected+'): the exported design had changes its settings do not carry.')); }
+            catch(e){ setStatus('Load failed: '+e.message); } }, 50);
+          return; }
         try{ loadDesignObject(b); setStatus('Loaded '+file.name+registryNoticeTake()); try{ registryBadge(); }catch(e){} }
         catch(e){ setStatus('Load failed: '+e.message); }
       };
