@@ -1,10 +1,14 @@
-# AIDC DBD Desktop 2.0.0
+# AIDC DBD Desktop 2.0.1 (builder HS-v1.08)
 
-- **The builder:** HS-v1.07, which is HS-v1.06 plus the desktop hooks. In a browser it behaves like v1.06.
-- **The site runner, built in** (runner 1.2.0 on Node 22):
-  - Past 512 racks, the Final package, the Review package and the .run are built off the window.
-  - Every job has a progress panel and a Cancel button.
-  - **Final package and .run** runs the parity check.
-- **The DC Layout Builder** opens in its own window with its own memory past 512 racks.
-- **Saves** go straight to the project folder, every version kept.
-- **Unsigned:** Windows SmartScreen asks once (More info, then Run anyway).
+- **Responsive at mega scale:**
+  - The physical model is built once per design state and reused. At 512 racks the BoM opens in 2–10 s (was about 30), and Config and Infra in under a second.
+  - Front-end settings (N-S Gbps, Ingress Gbps, spine target and auto-scale) redraw only. They no longer rebuild the back end, so hand edits on the canvas are kept.
+  - Restoring a design draws the canvas once, at the end. A 512-rack restore takes 15 s (was 39) in testing.
+- **Row network: block, 2, 3 or 4 columns.** Sets the width of each row's network block up front.
+- **Network cabinets that fit at 4,096 racks:** OOB spines and front-end super-spines now spread over more cabinets (OOB 8 → 18, front end 180 → 208). No cabinet is over-full.
+- **Back-end topology (condensed):** where several leaf groups feed the same rack boxes, each group gets one label under it, so the labels no longer pile up at the rack row.
+- **Hover cards** open below the tile instead of over the next one.
+- **Save and close:**
+  - Save opens a native Save dialog.
+  - Closing the app offers to save the design first (Save…, Don't save, Cancel), and warns if a site-runner job is still running.
+  - Site names and other prompts work in the app.

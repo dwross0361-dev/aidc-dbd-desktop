@@ -35,7 +35,7 @@ function uniquePath(dir, name) {   // every version kept: name, name (2), name (
 }
 const stamp = () => new Date().toISOString().replace(/[-:]/g, '').replace('T', '-').slice(0, 15);
 
-let main = null; const layouts = new Map();
+let main = null, closing = false; const layouts = new Map();
 function send(ch, v) { if (main && !main.isDestroyed()) main.webContents.send(ch, v); }
 
 function createMain() {
@@ -43,8 +43,53 @@ function createMain() {
     webPreferences: { preload: path.join(__dirname, 'preload-designer.js'), contextIsolation: true, nodeIntegration: false,
       additionalArguments: process.env.AIDC_DESK_BIG ? ['--aidc-big=' + process.env.AIDC_DESK_BIG] : [] } });
   main.webContents.setWindowOpenHandler(() => ({ action: 'allow', overrideBrowserWindowOptions: { width: 1500, height: 950 } }));   // up to 512 racks the builder opens its own tabs
+  main.on('close', (e) => { if (closing) return; e.preventDefault(); askBeforeClose(); });   // the design is offered for saving first
   main.on('closed', () => { main = null; for (const w of layouts.values()) { try { w.close(); } catch (e) {} } });
   main.loadFile(BUILDER);
+}
+
+// ---- window.prompt for the builder (Electron has none): a small modal window, answered synchronously
+ipcMain.on('prompt-sync', (e, message, def) => {
+  const parent = BrowserWindow.fromWebContents(e.sender) || main;
+  const w = new BrowserWindow({ parent, modal: true, width: 520, height: 190, resizable: false, minimizable: false, maximizable: false, title: 'AIDC DBD', autoHideMenuBar: true,
+    webPreferences: { contextIsolation: true, nodeIntegration: false, preload: path.join(__dirname, 'preload-prompt.js') } });
+  let answered = false; const done = (v) => { if (answered) return; answered = true; e.returnValue = v; try { w.close(); } catch (err) {} };
+  const onAns = (ev, v) => { if (ev.sender === w.webContents) { ipcMain.removeListener('prompt-answer', onAns); done(v); } };
+  ipcMain.on('prompt-answer', onAns);
+  w.on('closed', () => { ipcMain.removeListener('prompt-answer', onAns); done(null); });
+  const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+  const html = '<!doctype html><meta charset="utf-8"><body style="font:13px system-ui,Segoe UI,sans-serif;margin:14px"><div style="margin-bottom:8px;white-space:pre-wrap">' + esc(message) + '</div>'
+    + '<input id="v" style="width:100%;box-sizing:border-box;height:28px;font:inherit" value="' + esc(def) + '"><div style="margin-top:12px;text-align:right">'
+    + '<button id="c" style="height:28px;padding:0 14px;margin-right:6px">Cancel</button><button id="o" style="height:28px;padding:0 18px">OK</button></div>'
+    + '<script>var v=document.getElementById("v");v.focus();v.select();document.getElementById("o").onclick=function(){aidcPrompt.answer(v.value)};document.getElementById("c").onclick=function(){aidcPrompt.answer(null)};'
+    + 'document.addEventListener("keydown",function(k){if(k.key==="Enter")aidcPrompt.answer(v.value);if(k.key==="Escape")aidcPrompt.answer(null);});<\/script></body>';
+  w.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(html));
+});
+
+// ---- Save: a native dialog; and the same offer when the app closes
+async function saveDesignFile(o) {
+  if (!o || !o.text) return null;
+  const r = await dialog.showSaveDialog(main, { title: 'Save the design', defaultPath: path.join(CFG.projectDir || app.getPath('documents'), o.name || 'design.json'), filters: [{ name: 'AIDC DBD design', extensions: ['json'] }] });
+  if (r.canceled || !r.filePath) return null;
+  fs.writeFileSync(r.filePath, o.text); return r.filePath;
+}
+ipcMain.handle('save-design', (e, o) => saveDesignFile(o));
+let saveSeq = 0; const saveWait = new Map();
+ipcMain.on('save-reply', (e, id, r) => { const f = saveWait.get(id); if (f) { saveWait.delete(id); f(r); } });
+function requestSave() { return new Promise((resolve) => { if (!main || main.isDestroyed()) { resolve(null); return; } const id = ++saveSeq; saveWait.set(id, resolve); main.webContents.send('save-request', id); }); }
+async function askBeforeClose() {
+  const o = await requestSave();
+  const busy = jobs.size ? '\n\nA site-runner job is still running; closing the app stops it.' : '';
+  if (o && !o.error) {
+    const r = await dialog.showMessageBox(main, { type: 'question', buttons: ['Save\u2026', "Don't save", 'Cancel'], defaultId: 0, cancelId: 2, noLink: true,
+      title: 'AIDC DBD', message: 'Save the current design before closing?', detail: (o.racks ? o.racks.toLocaleString('en-US') + ' racks. ' : '') + 'The design file can be opened again with Load.' + busy });
+    if (r.response === 2) return;
+    if (r.response === 0) { const p = await saveDesignFile(o); if (!p) return; }
+  } else if (busy) {
+    const r = await dialog.showMessageBox(main, { type: 'warning', buttons: ['Close', 'Cancel'], defaultId: 1, cancelId: 1, title: 'AIDC DBD', message: 'Close AIDC DBD?', detail: busy.trim() });
+    if (r.response === 1) return;
+  }
+  closing = true; if (main && !main.isDestroyed()) main.close();
 }
 
 // ---- downloads: straight into the project folder

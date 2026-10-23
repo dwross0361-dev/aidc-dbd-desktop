@@ -2,7 +2,7 @@
 'use strict';
 const { contextBridge, ipcRenderer } = require('electron');
 
-let layoutFn = null, menuFn = null;
+let layoutFn = null, menuFn = null, saveFn = null;
 contextBridge.exposeInMainWorld('aidcDesktop', {
   version: 'desktop',
   big: (process.argv.find((a) => a.indexOf('--aidc-big=') === 0) || '').slice(11) || '',
@@ -10,9 +10,13 @@ contextBridge.exposeInMainWorld('aidcDesktop', {
   openLayout: (req) => ipcRenderer.send('open-layout', req),
   onLayoutRequest: (fn) => { layoutFn = fn; },
   onMenu: (fn) => { menuFn = fn; },
-  ready: (info) => ipcRenderer.send('ready', info)
+  ready: (info) => ipcRenderer.send('ready', info),
+  saveDesign: (o) => ipcRenderer.invoke('save-design', o),
+  promptSync: (m, d) => ipcRenderer.sendSync('prompt-sync', m, d),
+  onSaveRequest: (fn) => { saveFn = fn; }
 });
 ipcRenderer.on('menu', (e, a) => { if (menuFn) menuFn(a); });
+ipcRenderer.on('save-request', async (e, id) => { let r = null; try { r = saveFn ? await saveFn() : null; } catch (err) { r = { error: String(err && err.message || err) }; } ipcRenderer.send('save-reply', id, r); });
 ipcRenderer.on('layout-request', async (e, id) => {
   let res;
   try { if (!layoutFn) throw new Error('the builder is not ready'); res = await layoutFn((part) => ipcRenderer.send('layout-chunk', id, part)); }

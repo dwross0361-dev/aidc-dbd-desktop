@@ -739,7 +739,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   <span style="position:relative;display:inline-block"><button class="btn" id="xlsx" aria-haspopup="true" aria-expanded="false" title="Cable matrix: every cable by device -- back end, front end and out-of-band -- with the port mapping">&#8681; Cable Matrix &#9662;</button><span id="cmmenu" role="menu" hidden style="position:absolute;left:0;top:calc(100% + 4px);z-index:60;background:#fff;border:1px solid var(--line-strong);border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.16);padding:4px;min-width:160px"><button class="btn" id="cmxlsx" role="menuitem" style="display:block;width:100%;margin:2px 0;text-align:left">&#8681; Excel (.xlsx)</button><button class="btn" id="cmpdf" role="menuitem" style="display:block;width:100%;margin:2px 0;text-align:left">&#8681; PDF</button></span></span><button class="btn" id="sotbtn" title="Day-2 source of truth: NetBox import files, an Ansible inventory and a JSON model of the whole design">&#8681; Day-2 SoT</button><button class="btn" id="physjson" title="Physical model for the DC Layout Builder: cabinets, contents and every link">&#8681; Physical model</button>
   <button class="btn gold" id="pkgbtn" title="Blueprint package for the customer: Review (watermarked) or Final">&#128230; Blueprint package</button>
   <span style="width:1px;height:24px;background:var(--line-strong);margin:0 3px"></span>
-  <select id="cabu" title="Network cabinet height for every MoR, EoR, FE/edge and OOB cabinet. 2U at the top is kept for cable entry; each device takes a cable manager and each cabinet a patch field sized to its cross-row links" style="height:30px;margin-left:4px" autocomplete="off"><option value="42">Net cabinets 42U</option><option value="45">Net cabinets 45U</option><option value="48" selected>Net cabinets 48U</option><option value="52">Net cabinets 52U</option></select><select id="rownet" title="Row network: one block of cabinets in the middle of the row (leaves, spines, OOB access, consoles and storage together), or a middle-of-row pair for the leaves plus end-of-row cabinets for the spines" style="height:30px;margin-left:4px" autocomplete="off"><option value="block" selected>Row network: one block</option><option value="split">Row network: MoR + EoR</option></select><select id="netfeed" title="Network-cabinet feed per side: sets the MoR/EoR/FE/OOB power budget" style="height:30px;margin-left:4px" autocomplete="off"><option value="208/30">Net feed 208V 30A</option><option value="208/50" selected>Net feed 208V 50A</option><option value="415/16">Net feed 415V 16A</option><option value="415/32">Net feed 415V 32A</option><option value="415/60">Net feed 415V 60A</option></select><select id="oobspine" title="OOB spine layer for rack-scale (NVL72) in-rack SN2201s: Auto adds it only when the OOB core runs out of ports" style="height:30px;margin-left:4px" autocomplete="off"><option value="auto">OOB spine: auto</option><option value="always">OOB spine: always</option><option value="off">OOB spine: off</option></select><select id="cpower" title="Compute-rack power: ORv3 HPR busbar with power shelves (split = two 1,400 A segments of four hosts, vendor-certified), or AC rack PDUs" style="height:30px;margin-left:4px" autocomplete="off"><option value="busbar-split">Compute: split busbar 2x1400A</option><option value="busbar-single">Compute: single busbar 1400A</option><option value="ac">Compute: AC PDUs</option></select><select id="rowfeed" title="How compute rows are fed: overhead busway A/B (half-row runs, 480 V in North America, 415 V elsewhere) or home-run circuits per power shelf / PDU" style="height:30px;margin-left:4px" autocomplete="off"><option value="busway">Rows: busway A/B</option><option value="circuits">Rows: home-run circuits</option></select><select id="netfoot" title="FE / Edge PoP cabinet footprint in the physical model" style="height:30px;margin-left:4px" autocomplete="off"><option value="consolidated">FE+EDG: 1 cabinet pair</option><option value="separate">FE+EDG: separate pairs</option></select>
+  <select id="cabu" title="Network cabinet height for every MoR, EoR, FE/edge and OOB cabinet. 2U at the top is kept for cable entry; each device takes a cable manager and each cabinet a patch field sized to its cross-row links" style="height:30px;margin-left:4px" autocomplete="off"><option value="42">Net cabinets 42U</option><option value="45">Net cabinets 45U</option><option value="48" selected>Net cabinets 48U</option><option value="52">Net cabinets 52U</option></select><select id="rownet" title="Row network: one block of cabinets in the middle of the row (leaves, spines, OOB access, consoles and storage together), or a middle-of-row pair for the leaves plus end-of-row cabinets for the spines" style="height:30px;margin-left:4px" autocomplete="off"><option value="block" selected>Row network: one block</option><option value="block2">Row network: block, 2 columns</option><option value="block3">Row network: block, 3 columns</option><option value="block4">Row network: block, 4 columns</option><option value="split">Row network: MoR + EoR</option></select><select id="netfeed" title="Network-cabinet feed per side: sets the MoR/EoR/FE/OOB power budget" style="height:30px;margin-left:4px" autocomplete="off"><option value="208/30">Net feed 208V 30A</option><option value="208/50" selected>Net feed 208V 50A</option><option value="415/16">Net feed 415V 16A</option><option value="415/32">Net feed 415V 32A</option><option value="415/60">Net feed 415V 60A</option></select><select id="oobspine" title="OOB spine layer for rack-scale (NVL72) in-rack SN2201s: Auto adds it only when the OOB core runs out of ports" style="height:30px;margin-left:4px" autocomplete="off"><option value="auto">OOB spine: auto</option><option value="always">OOB spine: always</option><option value="off">OOB spine: off</option></select><select id="cpower" title="Compute-rack power: ORv3 HPR busbar with power shelves (split = two 1,400 A segments of four hosts, vendor-certified), or AC rack PDUs" style="height:30px;margin-left:4px" autocomplete="off"><option value="busbar-split">Compute: split busbar 2x1400A</option><option value="busbar-single">Compute: single busbar 1400A</option><option value="ac">Compute: AC PDUs</option></select><select id="rowfeed" title="How compute rows are fed: overhead busway A/B (half-row runs, 480 V in North America, 415 V elsewhere) or home-run circuits per power shelf / PDU" style="height:30px;margin-left:4px" autocomplete="off"><option value="busway">Rows: busway A/B</option><option value="circuits">Rows: home-run circuits</option></select><select id="netfoot" title="FE / Edge PoP cabinet footprint in the physical model" style="height:30px;margin-left:4px" autocomplete="off"><option value="consolidated">FE+EDG: 1 cabinet pair</option><option value="separate">FE+EDG: separate pairs</option></select>
   <span style="width:1px;height:24px;background:var(--line-strong);margin:0 3px"></span>
   <button class="btn" id="sharelink" title="Copy a link that reproduces this exact design &mdash; paste it to a teammate">&#128279; Share link</button>
   <button class="btn" id="registerbtn" title="Click: register this site and download the registry &#183; Shift-click: import a registry &#183; Alt-click: copy the source snippet">Register site</button>
@@ -932,7 +932,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.07';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.08';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   var RADIX=64, CAGE=800;
   // ---- FABRIC PROFILE (parameterized per accelerator platform) ----------------------------------------
   // rails == accelerators per host. Each accelerator instance gets its own rail leaf, which is what
@@ -4082,8 +4082,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         if(src!==el || !document.body.contains(el)) return;
         var r=el.getBoundingClientRect(); pop=document.createElement('div'); pop.className='devpop';
         pop.appendChild(el.cloneNode(true)); document.body.appendChild(pop);
-        var w=pop.offsetWidth, h=pop.offsetHeight, x=r.right+8; if(x+w>innerWidth-8) x=Math.max(8, r.left-w-8);
-        pop.style.left=x+'px'; pop.style.top=Math.max(8, Math.min(r.top, innerHeight-h-8))+'px';
+        var w=pop.offsetWidth, h=pop.offsetHeight, x=Math.max(8, Math.min(r.left, innerWidth-w-8)), y=r.bottom+8;   // HS v1.08: below, not over the next tile
+        if(y+h>innerHeight-8) y=r.top-h-8; if(y<8) y=Math.max(8, innerHeight-h-8);
+        pop.style.left=x+'px'; pop.style.top=y+'px';
       }, 450);
     });
     document.addEventListener('scroll', hide, true);
@@ -6167,6 +6168,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       var key=(loPos.cx+','+loPos.top)+'>'+(hiPos.cx+','+hiPos.bot)+'>'+dev(hi).type+'>'+dev(lo).type+(dev(hi).type==='leaf'&&dev(lo).type==='rack'&&pos[hi]&&!grpAnchor[hi]?'>'+dev(hi).rail:'');   // a leaf GROUP takes one bundle per rack box
       if(!bundles[key])bundles[key]={loP:loPos,hiP:hiPos,hi:hi,lo:lo,n:0}; bundles[key].n++;
     });
+    var _dnAt={}, _dnTot={}, _dnOrd=[], _dnMax=0; Object.keys(bundles).forEach(function(k){ var b=bundles[k]; if(dev(b.hi).type!=='leaf' || dev(b.lo).type!=='rack') return;
+      var q=b.loP.cx+','+b.loP.top, m=_dnAt[q]||(_dnAt[q]={}); m[b.hi]=1; _dnMax=Math.max(_dnMax, Object.keys(m).length); });
+    var _aggDn=RENDER_CONDENSE && _dnMax>2;   // HS v1.08: more than two leaf groups meet at a rack box
     Object.keys(bundles).forEach(function(k){
       var b=bundles[k], P=b.loP, Q=b.hiP;
       var x1=P.cx, y1=P.top, x2=Q.cx, y2=Q.bot, midY=(y1+y2)/2;
@@ -6182,7 +6186,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       }
       var w=Math.max(1.1, Math.min(6, 0.7+b.n*0.32));
       s+='<path d="M'+x1+' '+y1+' C '+x1+' '+midY+' '+x2+' '+midY+' '+x2+' '+y2+'" fill="none" stroke="'+col+'" stroke-width="'+w+'" opacity="0.55" stroke-linecap="round"/>';
-      if(b.n>1 && RENDER_CONDENSE){
+      if(_aggDn && upType==='leaf' && loType==='rack'){ var _t=_dnTot[b.hi]; if(!_t){ _t=_dnTot[b.hi]={n:0, x:x2, y:y2, col:col}; _dnOrd.push(b.hi); } _t.n+=b.n; }   // HS v1.08: one label per leaf group
+      else if(b.n>1 && RENDER_CONDENSE){
         // count x speed, so capacity (and 1:1) reads straight off the drawing
         var spd=(upType==='leaf'&&loType==='rack') ? laneG() : (upLanes()>1?laneG():beCageG());   /* v538 */
         var lbl=b.n+' \u00d7 '+spd+'G', bw=lbl.length*8.2+18;
@@ -6198,6 +6203,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
           +'<text x="'+mx+'" y="'+(my+_cf*0.36)+'" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="'+_cf+'" font-weight="700" fill="'+col+'">'+b.n+'</text>';
       }
     });
+    _dnOrd.forEach(function(h){ var t=_dnTot[h], lbl=t.n.toLocaleString('en-US')+' × '+laneG()+'G', bw=lbl.length*8.2+18, ly=t.y+34;   // HS v1.08
+      s+='<rect x="'+(t.x-bw/2)+'" y="'+(ly-13)+'" width="'+bw+'" height="26" rx="13" fill="#FFFFFF" stroke="'+t.col+'" stroke-width="1.6"/>'
+        +'<text x="'+t.x+'" y="'+(ly+4.6)+'" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="13" font-weight="700" fill="'+t.col+'">'+lbl+'</text>'; });
     {   // pod brackets under the compute row, in both views (plane bands are off: one fabric)
       var rk=present.filter(function(t){return t.k==='rack';})[0];
       if(rk){ var podX={}; dispLists.rack.forEach(function(e){ var pp=e.dev?e.dev.pod:e.pod, P0=e.dev?pos[e.dev.id]:null;
@@ -6601,7 +6609,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
             p[0].forEach(function(x){ if(!x||typeof x!=='object'||!x.id) return; var hit=false;
               for(var i=0;i<p[1].length;i++) if(p[1][i].id===x.id){ p[1][i]=x; hit=true; }
               if(!hit) p[1].push(x); }); });
-          if(b.rowNet==='block'||b.rowNet==='split'){ ROW_NET=b.rowNet; var _rn=document.getElementById('rownet'); if(_rn)_rn.value=ROW_NET; }
+          if(/^(block[234]?|split)$/.test(b.rowNet||'')){ ROW_NET=b.rowNet; var _rn=document.getElementById('rownet'); if(_rn)_rn.value=ROW_NET; }
           if([42,45,48,52].indexOf(+b.cabU)>=0){ CAB_U=+b.cabU; applyCabU(); var _cu=document.getElementById('cabu'); if(_cu)_cu.value=String(CAB_U); }   // v487
           if(typeof b.netFeed==='string' && /^\d+\/\d+$/.test(b.netFeed)){ NET_FEED=b.netFeed; applyNetFeed(); var _nfd=document.getElementById('netfeed'); if(_nfd)_nfd.value=NET_FEED; }
           if(b.netFootprint==='consolidated'||b.netFootprint==='separate'){ NET_FOOTPRINT=b.netFootprint; var _nf=document.getElementById('netfoot'); if(_nf)_nf.value=NET_FOOTPRINT; }
@@ -7573,7 +7581,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       var fam=function(c){ return c.cls+'|'+String(c.id).replace(/NR\d+[A-Z]$/,'')+'|'+c.side; };
       var num=function(c){ var m=/NR(\d+)[A-Z]$/.exec(c.id); return m?+m[1]:1; };
       cab.filter(isNet).forEach(function(c){ c.reserveTopU=TOP; c.growthU=0; });
-      if(ROW_NET==='block') rows.forEach(function(r){ if(r.id==='NET') return;   // v487: the EoR content joins the row's MoR block
+      if(/^block/.test(ROW_NET)) rows.forEach(function(r){ if(r.id==='NET') return;   // v487: the EoR content joins the row's MoR block (HS v1.08: block2-4 = columns)
         var E=cab.filter(function(c){ return c.cls==='eor' && c.row===r.id; }), M=cab.filter(function(c){ return c.cls==='mor' && c.row===r.id; });
         if(!E.length || !M.length) return;
         var mv=[]; E.forEach(function(c){ c.items.forEach(function(it){ if(it.role!=='pdu') mv.push(it); }); });
@@ -7581,7 +7589,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
         var load=function(c){ return devsOf(c).reduce(function(a,it){ return a+uOf(it); },0); };
         var pEst=mv.reduce(function(a,it){ return a+(it.role==='be-superspine'?RADIX:(it.role==='be-spine'?RADIX*0.75:(it.role==='oob-access'?4:0))); },0);
         var tot=M.reduce(function(a,c){ return a+load(c)+(c.patchU||1); },0)+mv.reduce(function(a,it){ return a+uOf(it); },0)+Math.ceil(pEst/FE_RACK.mpoPerU);
-        var famM=String(M[0].id).replace(/[A-Z]$/,''), n=Math.max(M.length, Math.ceil(tot/usableM));
+        var famM=String(M[0].id).replace(/[A-Z]$/,''), n=Math.max(M.length, Math.ceil(tot/usableM), +(/^block(\d)$/.exec(ROW_NET)||[0,0])[1]);   // HS v1.08: the chosen width
         while(M.length<n){ var nc=C({id:famM+String.fromCharCode(65+M.length), cls:'mor', row:r.id, side:(M.length%2)?'B':'A', pod:M[0].pod, morPair:true, uHeight:M[0].uHeight, reserveTopU:M[0].reserveTopU, kwBudget:M[0].kwBudget});
           addPdus(nc); var _li=-1; r.cabinets.forEach(function(id,ix){ if(String(id).replace(/[A-Z]$/,'')===famM) _li=ix; }); r.cabinets.splice(_li+1,0,nc.id); M.push(nc); }
         mv.forEach(function(it){
@@ -7596,7 +7604,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
         rows.forEach(function(r){ if(r.id==='NET') return;
           ['mor','eor'].forEach(function(cl){
             var F=cab.filter(function(c){ return c.cls===cl && c.row===r.id && c.kwBudget!=null && !c.floorUnit; }); if(!F.length) return;
-            for(var g=0; g<400; g++){
+            for(var g=0; g<20000; g++){   // HS v1.08: was 400
               var bad=F.filter(function(c){ return kwOf(c)>c.kwBudget+1e-9; })[0]; if(!bad) break;
               var mvs=bad.items.filter(function(it){ return /^be-(leaf|spine|superspine)$/.test(it.role) && (it.kw||0)>0; }).sort(function(a,b){ return (b.kw||0)-(a.kw||0); }); if(!mvs.length) break;
               var mv=mvs[0], dst=F.filter(function(c){ return c!==bad && kwOf(c)+(mv.kw||0)<=c.kwBudget+1e-9 && uFree(c)>=(mv.ru||0)+FE_RACK.mgrU; }).sort(function(a,b){ return kwOf(a)-kwOf(b); })[0];
@@ -7605,7 +7613,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
                 addPdus(dst); var li=-1; r.cabinets.forEach(function(id,ix){ if(String(id).replace(/[A-Z]$/,'')===famM) li=ix; }); r.cabinets.splice(li+1,0,dst.id); F.push(dst); }
               bad.items.splice(bad.items.indexOf(mv),1); dst.items.push(mv); } }); });
       })();
-      for(var guard=0; guard<400; guard++){
+      for(var guard=0; guard<20000; guard++){   // HS v1.08: was 400 (OOB spines and super-spines left in full cabinets at 4,096 racks)
         var bad=cab.filter(function(c){ return isNet(c) && !fits(c); })[0]; if(!bad) break;
         var mates=cab.filter(function(c){ return isNet(c) && fam(c)===fam(bad) && num(c)>num(bad); }).sort(function(a,b){ return num(a)-num(b); });
         var mv=devsOf(bad).slice(-1)[0], dst=null;
@@ -7649,7 +7657,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
         bad2.items.splice(bad2.items.indexOf(mv2),1); dst2.items.push(mv2); sizePatch();
       }
       var fitsX=function(c){ return room(c)>=0 && devsOf(c).length*2<=cordCap && (c.kwBudget==null || dK(c)<=c.kwBudget+1e-9); };   // v521
-      for(var g3=0; g3<200; g3++){
+      for(var g3=0; g3<20000; g3++){   // HS v1.08: was 200
         var bad3=cab.filter(function(c){ return isNet(c) && devsOf(c).length>1 && room(c)<0; })[0]; if(!bad3) break;
         var mv3=devsOf(bad3).slice(-1)[0], dst3=null;
         bad3.items.splice(bad3.items.indexOf(mv3),1);
@@ -30124,8 +30132,28 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     try{ return fn.apply(this, arguments); } finally{ __MEMO=null; } }; }
   sotExport=__memoScope(sotExport); viewerHtml=__memoScope(viewerHtml); designDocPdf=__memoScope(designDocPdf);
   fePairMap=__memo('fePairMap', fePairMap);   // HS v1.06
-  render=(function(f){ var g=__memoScope(f); return function(){ return (byType('rack').length>512 ? g : f).apply(this, arguments); }; })(render);   // HS v1.06: one drawing pass, each plan derived once
+  render=(function(f){ var g=function(){ if(__MEMO) return f.apply(this, arguments); __MEMO={}; window.__UISCOPE=true; try{ return f.apply(this, arguments); } finally{ __MEMO=null; window.__UISCOPE=false; } };   // HS v1.08: a page scope
+    return function(){ return (byType('rack').length>512 ? g : f).apply(this, arguments); }; })(render);   // HS v1.06: one drawing pass, each plan derived once
+  render=(function(f){ var pend=false; return function(){   // HS v1.08: one drawing pass after a restore
+    if(RESTORING){ if(!pend){ pend=true; setTimeout(function again(){ if(RESTORING){ setTimeout(again, 50); return; } pend=false; render(); }, 0); } return; }
+    return f.apply(this, arguments); }; })(render);
   physModel=__memoScope(physModel);
+  // HS v1.08: the key is the whole saved design without its graph, the front-end settings, every device and a sample
+  // of the links (with their count and the array itself); a change to any of them derives the model again
+  var _PHY={key:null, devs:null, links:null, v:null};
+  function _physKey(){ var d=designSaveObject((document.getElementById('clientname')||{}).value||''); delete d.devs; delete d.links; delete d.seq; delete d.siteRegistry; if(d.ctrls){ d.ctrls=Object.assign({}, d.ctrls); delete d.ctrls.cfgstyle; delete d.ctrls.cfgtier; }   // config text style: not a cabinet
+    var h1=0x811c9dc5, h2=0, feed=function(s){ for(var i=0;i<s.length;i++){ var c=s.charCodeAt(i); h1=Math.imul(h1^c,0x01000193)>>>0; h2=(Math.imul(h2,31)+c)|0; } };
+    feed(JSON.stringify(d)); feed(JSON.stringify(FE)); feed(String(mgmtVendorSel)+'|'+String(mgmtSecVendorSel)+'|'+String(cfgVendor));
+    for(var i=0;i<devs.length;i++) feed(JSON.stringify(devs[i]));
+    var L=links, n=L.length, st=Math.max(1, Math.floor(n/4000));
+    for(var j=0;j<n;j+=st) feed(L[j].a+'>'+L[j].b); for(var k=Math.max(0,n-200);k<n;k++) feed(L[k].a+'>'+L[k].b);
+    return n+'|'+devs.length+'|'+h1+'|'+h2; }
+  window.__aidcPhysKey=function(){ return [_physKey(), _PHY.key, _PHY.devs===devs, _PHY.links===links, !!_PHY.v, !!__MEMO]; };
+  physModel=(function(f){ return function(){
+    if((__MEMO && !window.__UISCOPE) || window.__PHYS_NOCACHE) return f.apply(this, arguments);   // a package derives its own; a page reuses
+    var k; try{ k=_physKey(); }catch(e){ return f.apply(this, arguments); }
+    if(_PHY.v && _PHY.key===k && _PHY.devs===devs && _PHY.links===links) return _PHY.v;
+    var v=f.apply(this, arguments); _PHY={key:k, devs:devs, links:links, v:v}; return v; }; })(physModel);
   renderConfigModal=__memoScope(renderConfigModal);   // v527: one derivation per render of the configs page   // v521: one derivation per model, not one per lookup (256 racks: ~20 s to ~2 s)
   provPlan=(function(fn){ return function(){ var P=fn.apply(this, arguments);   // v510: the design digest
     try{ if(P && P.site){ delete P.site.plan_digest; var c=JSON.parse(JSON.stringify(P)); delete c.generated; delete c.builder; if(c.site) delete c.site.builder;
@@ -30947,6 +30975,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     if(!win){ alert('The browser blocked the new tab. Allow pop-ups for this page and try again.'); return; }
     DCT_WINS.push(win); setTimeout(function(){ URL.revokeObjectURL(url); }, 60000);
     setStatus('DC Layout Builder opened ('+nR.toLocaleString()+' racks): it is asking this tab for the physical model…'); }; })(openDct);
+  if(window.aidcDesktop && window.aidcDesktop.promptSync) window.prompt=function(m, d){ return window.aidcDesktop.promptSync(String(m==null?'':m), d==null?'':String(d)); };   // HS v1.08
   // HS v1.07: AIDC DBD Desktop -- the app's site runner and its own Layout Builder window past 512 racks
   (function(){
     var D=function(){ return window.aidcDesktop || null; }, BIG=(window.aidcDesktop && +window.aidcDesktop.big)||512;   // the app may lower it (testing)
@@ -30978,11 +31007,22 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       return {head:hb}; }
     function hook(){ var d=D(); if(!d) return;
       d.onLayoutRequest(function(emit){ return layoutParts(emit); });
+      var deskSave=function(){ if(!byType('rack').length) return null;   // HS v1.08
+        var cli=(document.getElementById('clientname').value||''), c2=cli.trim().replace(/[^A-Za-z0-9]/g,''), n=byType('rack').length;
+        return {name:(c2||'gpu-fabric')+(n?'-'+n+'rack':'')+'.json', text:JSON.stringify(designSaveObject(cli),null,2), racks:n}; };
+      if(d.onSaveRequest) d.onSaveRequest(function(){ return deskSave(); });
+      var _sb=document.getElementById('save');
+      if(_sb && d.saveDesign) _sb.onclick=function(){ var o=deskSave(); if(!o){ setStatus('Build a fabric first'); return; }
+        setStatus('Saving the design…'); d.saveDesign(o).then(function(p){ setStatus(p?('Saved the design to '+p):'Save canceled'); }, function(e){ setStatus('⚠ Save failed: '+(e&&e.message||e)); }); };
       d.onMenu(function(a){ if(a==='job-both') deskJob('both'); else if(a==='job-package') deskJob('package','final'); else if(a==='job-review') deskJob('package','review'); else if(a==='job-run') deskJob('run');
         else if(a==='site-runner') document.getElementById('runnerexp').click(); else if(a==='layout') openDct(); });
       d.ready({builder:BUILDER_VER, app:APP_NAME}); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', hook); else setTimeout(hook, 0);
   })();
+  (function(){ function uiScope(fn){ return function(){ if(__MEMO) return fn.apply(this, arguments); __MEMO={}; window.__UISCOPE=true;   // HS v1.08
+      try{ return fn.apply(this, arguments); } finally{ __MEMO=null; window.__UISCOPE=false; } }; }
+    renderBoM=uiScope(renderBoM); renderConfigModal=uiScope(renderConfigModal); renderMgmtModal=uiScope(renderMgmtModal); renderFacility=uiScope(renderFacility); renderRelease=uiScope(renderRelease);
+    document.getElementById('bombtn').onclick=renderBoM; document.getElementById('relbtn').onclick=renderRelease; window.__aidcUiScope=uiScope; })();
   var _od=document.getElementById('opendct'); if(_od) _od.onclick=openDct;
   (function(){   // v492: downloads green
     function mark(){ var b=document.querySelectorAll('button.btn'); for(var i=0;i<b.length;i++){ var t=b[i].textContent||'';
@@ -31066,7 +31106,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
   document.getElementById('closefac').onclick=function(){ document.getElementById('fac-modal').classList.remove('on'); };
   document.getElementById('faccsv').onclick=function(){ var cli=(document.getElementById('clientname').value||'site').trim().replace(/[^A-Za-z0-9]/g,'')||'site'; dlText(facilityCsv(), cli+'-busway-schedule.csv', 'Downloaded the busway schedule'); };
   (function(){ var r=document.getElementById('rownet'); if(r){ r.value=ROW_NET; r.onchange=function(){ ROW_NET=this.value; try{ render(); }catch(e){}   // v487
-    setStatus('Row network \u2192 '+(ROW_NET==='block'?'one block in the middle of each row':'middle-of-row leaves, end-of-row spines')); }; } })();
+    setStatus('Row network \u2192 '+(ROW_NET==='block'?'one block in the middle of each row':/^block\d$/.test(ROW_NET)?('one block '+ROW_NET.slice(5)+' cabinets wide in the middle of each row'):'middle-of-row leaves, end-of-row spines')); }; } })();
   (function(){ var c=document.getElementById('cabu'); if(c){ c.value=String(CAB_U); c.onchange=function(){ CAB_U=+this.value; applyCabU(); try{ render(); }catch(e){}   // v487
     setStatus('Network cabinets \u2192 '+CAB_U+'U ('+(CAB_U-FE_RACK.reserveU)+'U below the top reserve)'); }; } })();
   (function(){ var s=document.getElementById('netfeed'); if(s){ s.value=NET_FEED; s.onchange=function(){ NET_FEED=this.value; applyNetFeed(); try{ render(); }catch(e){} }; } })();   // v514: renderAll never existed
@@ -31202,7 +31242,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     var spAuto=document.getElementById('fe-spine-auto');
     if(spAuto)spAuto.onchange=function(){
       FE.spineAutoScale=this.checked;
-      if(byType('rack').length)buildFromRacks(); else render();
+      resetCablePlan(); _feSummaryCache=null; render();   // HS v1.08: a front-end setting -- redraw, not a rebuild
       var S=feSpineSizing();
       setStatus(FE.spineAutoScale
         ? ('Spine tier auto-sized \u2014 '+S.spines+' spines, '+S.uplinksPerLeaf+' uplinks/leaf'+(S.limitedBy?(' (capped by '+S.limitedBy+')'):''))
@@ -31211,7 +31251,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     var spTgt=document.getElementById('fe-spine-target');
     if(spTgt)spTgt.onchange=function(){
       FE.targetOversub=+this.value||4;
-      if(byType('rack').length)buildFromRacks(); else render();
+      resetCablePlan(); _feSummaryCache=null; render();   // HS v1.08
       var S=feSpineSizing();
       setStatus('Target '+FE.targetOversub+':1 \u2192 '+S.spines+' spines'+(S.limitedBy?(' (capped by '+S.limitedBy+')'):''));
     };
@@ -31227,8 +31267,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     if(f)f.onchange=function(){FE.on=this.checked;syncSkuVis();render();setStatus(FE.on?'Frontend plane shown \u2014 users and egress live here; backend stays isolated':'Frontend plane hidden');};
     var t=document.getElementById('fe-tenants');
     if(t)t.onchange=function(){FE.tenants=Math.max(1,Math.min(edgeTenantMax(),+this.value||1)); this.value=FE.tenants; render();};   // v514: 120 (FT-602); HS v1.04: per edge block
-    var _nsI=document.getElementById('fe-nsgbps'); if(_nsI)_nsI.onchange=function(){ var v=+this.value||0; FE.nsGbps=v>0?v:null; this.value=FE.nsGbps||''; if(byType('rack').length) buildFromRacks(); else render(); };
-    var _igI=document.getElementById('fe-inggbps'); if(_igI)_igI.onchange=function(){ var v=+this.value||0; FE.ingressGbps=v>0?v:null; this.value=FE.ingressGbps||''; if(byType('rack').length) buildFromRacks(); else render(); };
+    var _nsI=document.getElementById('fe-nsgbps'); if(_nsI)_nsI.onchange=function(){ var v=+this.value||0; FE.nsGbps=v>0?v:null; this.value=FE.nsGbps||''; resetCablePlan(); _feSummaryCache=null; render(); };   // HS v1.08
+    var _igI=document.getElementById('fe-inggbps'); if(_igI)_igI.onchange=function(){ var v=+this.value||0; FE.ingressGbps=v>0?v:null; this.value=FE.ingressGbps||''; resetCablePlan(); _feSummaryCache=null; render(); };   // HS v1.08
     function applySite(){
       if(byType('rack').length)buildFromRacks(); else render();
       var chk=siteSchemeCheck();
