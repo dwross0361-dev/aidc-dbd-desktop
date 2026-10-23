@@ -1,3 +1,16 @@
+# AIDC DBD Desktop 2.0.6 (builder HS-v1.13)
+
+- **Load progress meter:** shows each step (reading, parsing, building, applying, drawing) with the percentage read and the time each step took.
+- **Fabric health, device counts per plane:**
+  - Back end: leaves, spines, super-spines and platform.
+  - Front end: leaves (pairs), spines, super-spines, border leaves, platforms, leaf oversubscription, spine port use, and DPU links per leaf.
+  - OOB: leaves, spines and super-spines.
+  - Edge PoP devices and the OOB MCS pair, firewalls and edge routers are not counted.
+- **DC Layout Builder, Refresh from the builder:**
+  - A cabinet new to a row lands where the builder places it (it used to land at the end of the row).
+  - The message counts devices apart from cabinet power items (PDUs, power shelves).
+- **Arista 7280DR3A border leaf on an SN6600-LD spine** is flagged as unconfirmed (400G-8 lane mismatch), pending NVIDIA confirmation.
+
 # AIDC DBD Desktop 2.0.5 (builder HS-v1.12)
 
 - **Load takes a site-runner file.** The design is rebuilt from the file's settings, and the status line reports the rack and device counts. It also reports whether the design fingerprint matches the file; a mismatch means the exported design had canvas edits its settings don't carry.
