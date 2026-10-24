@@ -803,6 +803,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       <div id="m-loadbreak" style="font-size:10.5px;color:var(--ink-soft);font-family:var(--mono);margin:-2px 0 4px"></div>
       <div id="m-powerwarn" style="font-size:11px;line-height:1.45;margin:4px 0 2px"></div>
       <div style="border-top:1px solid var(--line);margin:9px 0 7px"></div>
+      <div style="font-family:var(--mono);font-size:10px;letter-spacing:1px;color:var(--muted);margin:0 0 3px">BACK END</div>
       <div class="metric"><span id="m-rdu-lbl">accelerators deployed</span><b id="m-rdu">0</b></div>
       <div class="metric"><span>Links</span><b id="m-links">0</b></div>
       <div class="metric"><span>Worst leaf sub.</span><b id="m-sub">&mdash;</b></div>
@@ -813,6 +814,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       <div class="metric" id="m-resil-row" style="display:none"><span>Lost uplink paths</span><b id="m-resil" style="color:var(--coral)">&mdash;</b></div>
       <div class="metric" id="m-railsym-row" style="display:none"><span>Rail symmetry</span><b id="m-railsym">&mdash;</b></div>
       <div class="metric" id="m-fe-row" style="display:none"><span>Frontend leaves</span><b id="m-fe">&mdash;</b></div>
+      <div id="m-planeh"></div>
       <div class="metric" id="m-fetenant-row" style="display:none"><span>Tenant VRFs</span><b id="m-fetenant">&mdash;</b></div>
       <div id="ipasn" style="margin-top:9px;padding-top:8px;border-top:1px solid var(--line)"></div>
       <div id="advice" style="margin-top:7px;font-size:12px;line-height:1.5"></div>
@@ -940,7 +942,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.18';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.19';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   var RADIX=64, CAGE=800;
   // ---- FABRIC PROFILE (parameterized per accelerator platform) ----------------------------------------
   // rails == accelerators per host. Each accelerator instance gets its own rail leaf, which is what
@@ -3015,7 +3017,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
           var c=w.sev==='high'?'#8A2E2E':w.sev==='med'?'#7A5A0B':'var(--muted)';
           return '<div style="color:'+c+';margin-top:3px">['+w.sev.toUpperCase()+'] '+w.msg+'</div>';}).join('') : '');
     if(feRow){document.getElementById('m-fe').textContent=p.leaves+' ('+p.pairs+' pair'+(p.pairs>1?'s':'')+')'+(p.spines>0?' + '+p.spines+' spine':'');feRow.style.display='none';   /* HS v1.13: in the per-plane counts */}
-    if(tRow){document.getElementById('m-fetenant').textContent=p.tenants;tRow.style.display='';}
+    if(tRow){document.getElementById('m-fetenant').textContent=p.tenants;tRow.style.display='none';   /* HS v1.19: in the FRONT END block */}
   }
   // ---- PHYSICAL ROW LAYOUT (independent of pod size) -------------------------------------
   // A pod is a logical rail domain; a ROW is a physical aisle. They coincided on the accelerator profile
@@ -3494,6 +3496,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   function planeInfraKW(){
     var fe = 0, mg = 0;
     try {
+      if(!FE.on) throw 0;   // HS v1.19: no Front end plane, no Front end power
       var fp = fePlan();
       // v500: the FE leaf pairs are in the end-of-row cabinets (netRackPlan) already
       var _dw=function(k,d){ try{ return (FE_RACK.dev[k]&&FE_RACK.dev[k].w)||d; }catch(e){ return d; } };
@@ -4642,22 +4645,23 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     try{ var L=byType('leaf').length, S=byType('spine').length, X=byType('ssp').length;
       if(L||S) row('Back end', f(L)+' LF \u00b7 '+f(S)+' SP'+(X?' \u00b7 '+f(X)+' SSP':''));
       if(L||S) row('', escHtml(beModel||''), 1); }catch(e){}
-    try{ if(FE && FE.on){ var p=fePlan(), t3=p.tier3, sp=t3?(t3.spinesPerPod*t3.pods):p.spines, ss=t3?t3.ssps:0, bl=feBlCount(), SW=feSpineSW()||{};
+    try{ if(!(FE && FE.on)) row('Front end', 'off'); else { var p=fePlan(), t3=p.tier3, sp=t3?(t3.spinesPerPod*t3.pods):p.spines, ss=t3?t3.ssps:0, bl=feBlCount(), SW=feSpineSW()||{};
       row('Front end', f(p.leaves)+' LF ('+f(p.pairs)+' pairs) \u00b7 '+f(sp)+' SP'+(ss?' \u00b7 '+f(ss)+' SSP':'')+' \u00b7 '+f(bl)+' BL');
       row('', escHtml(FE.leafModel)+(FE.spineModel!==FE.leafModel?' / '+escHtml(FE.spineModel):'')+' \u00b7 '+(+p.oversub||0).toFixed(2)+':1', 1);
       var sn=(SW.access||{}).n||0; row('', 'spine ports '+f(Math.round(p.spinePorts||0))+'/'+f(sn)+' ('+Math.round(100*(p.spineUtil||0))+'%)', 1);
-      row('', 'DPU links '+f((p.hostPerLeaf||0)*(p.leaves||0))+' \u00b7 '+f(p.hostPerLeaf)+'/'+f(((p.leafSW||{}).access||{}).n)+' per LF', 1); } }catch(e){}
-    try{ var mp=mgmtPlan(), lv=allMgtSw(mp).length+(PROFILES[profileKey].rackScale?byType('rack').length*2:0), osp=(mp.oobSpines||[]).length, osx=(mp.oobAggs||[]).length;
+      row('', 'DPU links '+f((p.hostPerLeaf||0)*(p.leaves||0))+' \u00b7 '+f(p.hostPerLeaf)+'/'+f(((p.leafSW||{}).access||{}).n)+' per LF', 1); } }catch(e){ row('Front end', 'not available: '+escHtml(e.message||e)); }
+    try{ var mp=_phMp(), lv=allMgtSw(mp).length+(PROFILES[profileKey].rackScale?byType('rack').length*2:0), osp=(mp.oobSpines||[]).length, osx=(mp.oobAggs||[]).length;
       if(lv) row('OOB', f(lv)+' LF \u00b7 '+f(osp)+' SP'+(osx?' \u00b7 '+f(osx)+' SSP':'')); }catch(e){}
     el.innerHTML=h.join('');
   }
   function renderHealth(){
     document.getElementById('m-dev').textContent=devs.filter(function(d){return d.type!=='rack';}).length;
     try{ renderPlanes(); }catch(e){}   // HS v1.13
+    _phSchedule();   // HS v1.19: Front end and OOB stats, once the build settles
     document.getElementById('m-racks').textContent=byType('rack').length;
     document.getElementById('m-hosts').textContent=byType('rack').reduce(function(a,r){return a+r.hosts;},0).toLocaleString();
     document.getElementById('m-rdu').textContent=byType('rack').reduce(function(a,r){return a+r.hosts*ACC_PER_HOST;},0).toLocaleString();
-    document.getElementById('m-links').textContent=links.length;
+    document.getElementById('m-links').textContent=_phF(links.length);
     // Rack power, shown as a metric beside the others rather than buried in a warning: the
     // number is worth seeing on every build, not only when it breaches.
     (function(){
@@ -4815,7 +4819,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     }
     var sp=byType('spine'),spTot=sp.reduce(function(a,s){ return a+(s.ports||RADIX); },0),spUsed=0;   // v544: a lane-fabric spine has 64 x lanes ports
     links.forEach(function(l){[l.a,l.b].forEach(function(p){if(dev(p.split('|')[0])&&dev(p.split('|')[0]).type==='spine')spUsed++;});});
-    document.getElementById('m-spine').textContent=sp.length?(spUsed+'/'+spTot):'\u2014';
+    document.getElementById('m-spine').textContent=sp.length?_phUT(spUsed,spTot):'\u2014';
     // spine oversubscription (3-tier only): worst leaf-side:SSP-side ratio across spines
     var spSubRow=document.getElementById('m-spinesub-row');
     if(byType('ssp').length){
@@ -4825,12 +4829,12 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     } else { spSubRow.style.display='none'; }
     var lf=byType('leaf'),lfTot=lf.length*RADIX,lfUsed=0;
     lf.forEach(function(leaf){for(var i=0;i<leaf.cages.length;i++){if(leaf.cages[i].role!=='un'&&cageWired(leaf.id,i))lfUsed++;}});
-    document.getElementById('m-leaf').textContent=lf.length?(lfUsed+'/'+lfTot):'\u2014';
+    document.getElementById('m-leaf').textContent=lf.length?_phUT(lfUsed,lfTot):'\u2014';
     var ssp=byType('ssp'),sspRow=document.getElementById('m-ssp-row');
     if(ssp.length){
       var sspTot=ssp.reduce(function(a,s){ return a+(s.ports||RADIX); },0),sspUsed=0;   // v544
       links.forEach(function(l){[l.a,l.b].forEach(function(p){if(dev(p.split('|')[0])&&dev(p.split('|')[0]).type==='ssp')sspUsed++;});});
-      document.getElementById('m-ssp').textContent=sspUsed+'/'+sspTot;
+      document.getElementById('m-ssp').textContent=_phUT(sspUsed,sspTot);
       sspRow.style.display='';
     } else { sspRow.style.display='none'; }
     renderIpAsn();
@@ -4994,7 +4998,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   function renderIpAsn(){
     var el=document.getElementById('ipasn'); if(!el)return;
     var nLeaf=byType('leaf').length, nSpine=byType('spine').length, nSSP=byType('ssp').length;
-    if(!nLeaf&&!nSpine){el.innerHTML='';return;}
+    if(!nLeaf&&!nSpine){el.innerHTML=planeIpHtml();return;}   // HS v1.19
     // count links by category for /31 subnet assignment
     var c={ls:0,ss:0,dn:0};
     links.forEach(function(l){
@@ -5052,23 +5056,185 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       var p2p=r.nets-r.sw;                            // subnets excluding loopbacks
       r.p2p=(p2p>0 && BE_UNDERLAY!=='unnumbered')?alloc(p2pBase,p2p*2):null;         // /31 links -> 2 addrs each (none when unnumbered, v482)
     });
-    var h='<div style="font-family:var(--mono);font-size:10px;letter-spacing:1px;color:var(--muted);margin-bottom:5px">IP &amp; BGP PLAN <span style="color:var(--muted)">(ASN per leaf &middot; one per spine tier/pod &middot; 10/8)</span></div>';
+    var h='<div style="font-family:var(--mono);font-size:10px;letter-spacing:1px;color:var(--muted);margin-bottom:5px">BACK END IP &amp; BGP PLAN <span style="color:var(--muted)">(ASN per leaf &middot; one per spine tier/pod &middot; 10/8)</span></div>';
     h+='<table style="width:100%;border-collapse:collapse;font-size:11.5px">';
     h+='<tr style="color:var(--muted);font-family:var(--mono);font-size:10px"><td></td><td style="text-align:right">switches</td><td style="text-align:right">/32</td><td style="text-align:right">subnets</td></tr>';
     rows.forEach(function(r){
       h+='<tr><td style="padding:2px 0">'+r.t+'</td>'
-        +'<td style="text-align:right;font-family:var(--mono)">'+r.sw+'</td>'
-        +'<td style="text-align:right;font-family:var(--mono)">'+r.sw+'</td>'
-        +'<td style="text-align:right;font-family:var(--mono)">'+r.nets+'</td></tr>';
+        +'<td style="text-align:right;font-family:var(--mono)">'+_phF(r.sw)+'</td>'
+        +'<td style="text-align:right;font-family:var(--mono)">'+_phF(r.sw)+'</td>'
+        +'<td style="text-align:right;font-family:var(--mono)">'+_phF(r.nets)+'</td></tr>';
       h+='<tr><td colspan="4" style="padding:0 0 4px 8px;font-family:var(--mono);font-size:10px;color:var(--ink-soft)">AS '+r.asn+' &middot; lo '+r.lbRange+'/32'+(r.p2p?' &middot; p2p '+r.p2p.cidr:'')+'</td></tr>';
     });
     h+='<tr style="border-top:1px solid var(--line);font-weight:600"><td style="padding-top:3px">Total</td>'
-      +'<td style="text-align:right;font-family:var(--mono);padding-top:3px">'+(nLeaf+nSpine+nSSP)+'</td>'
-      +'<td style="text-align:right;font-family:var(--mono);padding-top:3px">'+(nLeaf+nSpine+nSSP)+'</td>'
-      +'<td style="text-align:right;font-family:var(--mono);padding-top:3px">'+totNets+'</td></tr>';
+      +'<td style="text-align:right;font-family:var(--mono);padding-top:3px">'+_phF(nLeaf+nSpine+nSSP)+'</td>'
+      +'<td style="text-align:right;font-family:var(--mono);padding-top:3px">'+_phF(nLeaf+nSpine+nSSP)+'</td>'
+      +'<td style="text-align:right;font-family:var(--mono);padding-top:3px">'+_phF(totNets)+'</td></tr>';
     h+='</table>';
     h+='<div style="font-size:10px;color:var(--muted);margin-top:3px;line-height:1.4">Example allocation &mdash; site '+SITE_INDEX+': loopbacks from 10.'+beSecondOctet()+'.'+siteOctet()+'.0, '+(BE_UNDERLAY==='unnumbered'?'switch links unnumbered (IPv6 link-local, no addresses)':'P2P /31s from 10.'+beSecondOctet()+'.'+(siteOctet()+1)+'.0')+'.</div>';   // v482
-    el.innerHTML=h;
+    el.innerHTML=h+planeIpHtml();   // HS v1.19
+  }
+  // ---------------------------------------------------------------- HS v1.19: Front end and OOB stats and IP plans
+  function _phKey(){ return [devs.length, links.length, profileKey, beModel, JSON.stringify(FE), FE_UNDERLAY, SITE_INDEX, REGION_CODE, clientCode, typeof OOB_SPINE_MODE!=='undefined'?OOB_SPINE_MODE:'', mgmtVendor(), OOB_TRANSPORT, siteHyper()].join('|'); }
+  function _phF(n){ return Number(n||0).toLocaleString('en-US'); }
+  function _phUT(u,t){ return _phF(u)+'/'+_phF(t); }
+  function _phSub(x){ return (x==null||!isFinite(x)) ? '—' : (Math.round(x*100)/100)+':1'; }
+  function _phIpn(s){ var q=String(s||'').split('.'); return q.length!==4 ? null : ((((+q[0])<<24)>>>0)+((+q[1])<<16)+((+q[2])<<8)+(+q[3])); }
+  function _phIp(n){ return ((n>>>24)&255)+'.'+((n>>>16)&255)+'.'+((n>>>8)&255)+'.'+(n&255); }
+  function _phRange(a,b){ return a==null ? '—' : (b>a ? _phIp(a)+'–'+_phIp(b) : _phIp(a)); }
+  function _phAsn(list){   // contiguous ASN runs: 16000-19999, 40000-40095
+    var a=Object.keys(list).map(Number).sort(function(x,y){ return x-y; }); if(!a.length) return '—';
+    var out=[], s=a[0], p=a[0];
+    for(var i=1;i<=a.length;i++){ if(i<a.length && a[i]===p+1){ p=a[i]; continue; } out.push(s===p?String(s):(s+'–'+p)); if(i<a.length){ s=p=a[i]; } }
+    return out.join(', ');
+  }
+  function _phCage(n){ return String(n||'').replace(/(:\d+|s\d+)$/,''); }   // a breakout lane is its cage
+  function _phGbps(s){ var m=String(s||'').match(/([\d.]+)\s*([GT])/i); return m ? (+m[1])*(/t/i.test(m[2])?1000:1) : 0; }
+  var _feHM={k:null, v:null}, _oobHM={k:null, v:null};
+  function feHealthData(){
+    if(!(FE && FE.on) || !byType('rack').length) return null;
+    var k=_phKey(); if(_feHM.k===k) return _feHM.v;
+    var p=fePlan(), pl=feCfgPlan(), SSW=feSpineSW()||{}, R=(SSW.access||{}).n||0, by={};
+    pl.devices.forEach(function(d){ by[d.name]=d; });
+    var tier=function(d){ return !d ? -1 : d.role==='gw' ? 3 : d.role==='spine' ? (d.ssp?2:1) : 0; };
+    var cages=function(d){ var m={}; (d.ifaces||[]).forEach(function(f){ m[_phCage(f.name)]=1; }); return Object.keys(m).length; };
+    var sp=pl.devices.filter(function(d){ return d.role==='spine' && !d.ssp; }), ss=pl.devices.filter(function(d){ return d.ssp; });
+    var spU=0, ssU=0, wSp=null;
+    sp.forEach(function(d){ spU+=cages(d); var dn=0, up=0, t=tier(d);
+      (d.ifaces||[]).forEach(function(f){ var q=tier(by[f.peer]); if(q>t) up++; else if(q<t) dn++; });
+      if(up>0){ var r=dn/up; if(wSp==null||r>wSp) wSp=r; } });   // a uniform-radix spine: port count is bandwidth
+    ss.forEach(function(d){ ssU+=cages(d); });
+    // IP plan rows
+    var T={}, order=['leaf','spine','ssp','border','gw'], lbl={leaf:'Leaf', spine:'Spine', ssp:'SSP', border:'Border leaf', gw:'Border gateway'};
+    var key=function(d){ return d.ssp ? 'ssp' : d.role; };
+    pl.devices.forEach(function(d){ var e=T[key(d)]||(T[key(d)]={sw:0, lo0:null, lo1:null, asn:{}, links:0, p0:null, p1:null}), n=_phIpn(d.lo);
+      e.sw++; e.asn[d.asn]=1; if(n!=null){ if(e.lo0==null||n<e.lo0) e.lo0=n; if(e.lo1==null||n>e.lo1) e.lo1=n; } });
+    (pl.p2p||[]).forEach(function(r){ var A=by[r.a], B=by[r.b]; if(!A||!B) return; var U=tier(B)>tier(A)?B:A, e=T[key(U)]; if(!e) return; e.links++;
+      if(r.net && r.net.a){ var a=_phIpn(r.net.a), b=_phIpn(r.net.b); if(a!=null){ if(e.p0==null||a<e.p0) e.p0=a; if(e.p1==null||b>e.p1) e.p1=b; } } });
+    var rows=[];
+    order.forEach(function(t){ var e=T[t]; if(!e||!e.sw) return;
+      rows.push({t:lbl[t], sw:e.sw, lo:e.sw, nets:e.sw+e.links, asn:_phAsn(e.asn), lb:_phRange(e.lo0,e.lo1), p2p:e.p0!=null?_phRange(e.p0,e.p1):(e.links?'unnumbered':null)}); });
+    var nd=0; try{ nd=feDpuMode()?oobDpuNeed():0; }catch(e){}   // one DPU per host
+    if(nd){ var as={}, sp2=asnSpans('feDpu',nd); rows.push({t:'Host DPU', sw:nd, lo:nd, nets:nd, asn:sp2.map(function(r){ return r[0]===r[1]?String(r[0]):(r[0]+'–'+r[1]); }).join(', ')||'—',
+      lb:_phRange(_phIpn(dpuLo(0)), _phIpn(dpuLo(nd-1))), p2p:'unnumbered (link-local)'}); }
+    var v={p:p, spN:sp.length, spU:spU, spT:sp.length*R, wSp:(p.tier3?wSp:null), ssN:ss.length, ssU:ssU, ssT:ss.length*R, dpus:nd, rows:rows};
+    _feHM={k:k, v:v}; return v;
+  }
+  // The OOB switch-to-switch links live in the physical model (seconds to tens of seconds to derive at hyperscale). The
+  // OOB stats use it when it is already built (Layout, BoM, Cable Matrix or a package built it); otherwise the panel shows
+  // what the management plan alone gives and offers to count the links.
+  function _phWarm(){ if(byType('rack').length<=128 && !_phWarm.busy){ _phWarm.busy=true; try{ physModel(); }catch(e){} finally{ _phWarm.busy=false; } }   // small sites: cheap enough to count now
+    try{ var q=window.__aidcPhysKey(); return q[0]===q[1] && !!q[2] && !!q[3] && !!q[4]; }catch(e){ return false; } }
+  function oobHealthData(){
+    var w=_phWarm(), b=_phKey(), k=b+'|'+(w?1:0); if(_oobHM.k===k) return _oobHM.v;
+    var mp=_phMp(), mg=allMgtSw(mp), MP=MGMT_PORTS_PER_SW||48, aU=0, wLf=null, lo=mp.fabLo||{}, f=w?_phFab(mp, b):null, N=f?f.nodes:{};
+    var nodes=[], cl={};
+    var add=function(nm, c, ip, model){ nodes.push({name:nm, c:c, lo:lo[nm]||ip||'', model:model||''}); cl[nm]=c; };
+    mg.forEach(function(s){ add(s.name, 'leaf', s.ip); });
+    if(PROFILES[profileKey].rackScale) byType('rack').forEach(function(rk){ ['A','B'].forEach(function(sd){ add(rk.name+'-MGT-'+sd, 'rsn'); }); });
+    (mp.oobSpines||[]).forEach(function(s){ add(s.name, 'spine', s.ip, s.model); });
+    (mp.oobAggs||[]).forEach(function(s){ add(s.name, 'ssp', s.ip, s.model); });
+    var radix=function(m){ for(var x in OOB_SPINE_MODELS){ if(OOB_SPINE_MODELS[x].model===m) return OOB_SPINE_MODELS[x].n; } return (OOB_SPINE_MODELS[mgmtVendor()]||{}).n||32; };
+    mg.forEach(function(s){ var u=0; (s.bands||[]).forEach(function(x){ if(x.k!=='spare') u+=(x.used||0); }); aU+=u;
+      if(!f) return; var o=N[s.name], up=0; ((o&&o.links)||[]).forEach(function(l){ if(!l.down && !l.same) up+=_phGbps(l.speed); });
+      if(up>0){ var r=u/up; if(wLf==null||r>wLf) wLf=r; } });   // access ports are 1G copper on every MGT catalog entry
+    var st={spine:{n:0,u:0,t:0,w:null}, ssp:{n:0,u:0,t:0,w:null}};
+    nodes.forEach(function(x){ var S=st[x.c]; if(!S) return; S.n++; S.t+=radix(x.model); if(!f) return; var o=N[x.name], m={}, dn=0, up=0;
+      ((o&&o.links)||[]).forEach(function(l){ m[_phCage(l.port)]=1; if(l.same) return; if(l.down) dn+=_phGbps(l.speed); else up+=_phGbps(l.speed); });
+      S.u+=Object.keys(m).length; if(up>0){ var r=dn/up; if(S.w==null||r>S.w) S.w=r; } });
+    // IP plan rows (the MCS pair, firewalls and edge routers are not in these counts)
+    var T={}, lbl={leaf:'Leaf', rsn:'In-rack leaf', spine:'Spine', ssp:'SSP'};
+    nodes.forEach(function(x){ var e=T[x.c]||(T[x.c]={sw:0, lo0:null, lo1:null, links:0, p0:null, p1:null}), n=_phIpn(x.lo);
+      e.sw++; if(n!=null){ if(e.lo0==null||n<e.lo0) e.lo0=n; if(e.lo1==null||n>e.lo1) e.lo1=n; } });
+    if(f) (f.links||[]).forEach(function(x){ var e=T[cl[x.up]]; if(!e) return; e.links++; var a=_phIpn(String(x.net).split('/')[0]); if(a!=null){ if(e.p0==null||a<e.p0) e.p0=a; if(e.p1==null||a+3>e.p1) e.p1=a+3; } });
+    var asn=(typeof OOB_EVPN_ASN!=='undefined')?String(OOB_EVPN_ASN):'—', rows=[];
+    ['leaf','rsn','spine','ssp'].forEach(function(c){ var e=T[c]; if(!e||!e.sw) return;
+      rows.push({t:lbl[c], sw:e.sw, lo:e.sw, nets:e.sw+e.links, asn:asn, lb:_phRange(e.lo0,e.lo1), p2p:e.p0!=null?_phRange(e.p0,e.p1):null}); });
+    var v={fab:!!f, mgN:mg.length, aU:aU, aT:mg.length*MP, wLf:wLf, sp:st.spine, ssp:st.ssp, rows:rows};
+    _oobHM={k:k, v:v}; return v;
+  }
+  window.__aidcCountOob=function(){   // builds the physical model once, then fills in the OOB link stats
+    setStatus('Counting OOB links: building the layout model…');
+    setTimeout(function(){ try{ physModel(); }catch(e){} renderPlaneHealth._k=null; planeIpHtml0._k=null; _phRun(); setStatus('OOB links counted.'); }, 30);
+    return false;
+  };
+  function renderPlaneHealth(){
+    var el=document.getElementById('m-planeh'); if(!el) return;
+    var k=_phKey()+'|'+(_phWarm()?1:0); if(renderPlaneHealth._k===k) return; renderPlaneHealth._k=k;
+    var h=[], hd=function(t){ h.push('<div style="font-family:var(--mono);font-size:10px;letter-spacing:1px;color:var(--muted);margin:8px 0 3px;padding-top:6px;border-top:1px solid var(--line)">'+t+'</div>'); },
+        m=function(t,v){ h.push('<div class="metric"><span>'+t+'</span><b>'+v+'</b></div>'); };
+    try{ var F=feHealthData();
+      if(F){ var p=F.p; hd('FRONT END');
+        m('DPU links', _phF(p.hostLinks)+(F.dpus?' · '+_phF(F.dpus)+' DPUs':''));
+        m('Worst leaf sub.', _phSub(p.oversub));
+        m('Leaf ports', _phUT(p.ports, p.portsTotal));
+        m('Leaf uplinks', _phUT(p.uplinks, p.uplinkTotal));
+        if(F.spN) m('Spine ports', _phUT(F.spU, F.spT));
+        if(F.wSp!=null) m('Worst spine sub.', _phSub(F.wSp));
+        if(F.ssN) m('SSP ports', _phUT(F.ssU, F.ssT));
+        if(p.tenants!=null) m('Tenant VRFs', _phF(p.tenants)); } }
+    catch(e){ hd('FRONT END'); m('Stats', 'not available: '+escHtml(e.message||e)); }
+    try{ var O=oobHealthData();
+      if(O && (O.mgN || O.sp.n)){ hd('OOB');
+        if(O.mgN) m('Leaf ports', _phUT(O.aU, O.aT));
+        if(O.fab){
+          if(O.mgN) m('Worst leaf sub.', _phSub(O.wLf));
+          if(O.sp.n){ m('Spine ports', _phUT(O.sp.u, O.sp.t)); if(O.sp.w!=null) m('Worst spine sub.', _phSub(O.sp.w)); }
+          if(O.ssp.n) m('SSP ports', _phUT(O.ssp.u, O.ssp.t));
+        } else h.push('<div class="metric"><span>Spine and SSP ports, subs.</span><b><a href="#" onclick="return window.__aidcCountOob()" title="Builds the layout model (the same one Layout and the BoM use), then counts the OOB switch links">count links</a></b></div>'); } }
+    catch(e){ hd('OOB'); m('Stats', 'not available: '+escHtml(e.message||e)); }
+    el.innerHTML=h.join('');
+  }
+  function _ipPlanTable(title, sub, rows, note){
+    if(!rows.length) return '';
+    var h='<div style="font-family:var(--mono);font-size:10px;letter-spacing:1px;color:var(--muted);margin:10px 0 5px;padding-top:8px;border-top:1px solid var(--line)">'+title+' <span style="color:var(--muted)">('+sub+')</span></div>';
+    h+='<table style="width:100%;border-collapse:collapse;font-size:11.5px">';
+    h+='<tr style="color:var(--muted);font-family:var(--mono);font-size:10px"><td></td><td style="text-align:right">switches</td><td style="text-align:right">/32</td><td style="text-align:right">subnets</td></tr>';
+    var sw=0, lo=0, nets=0;
+    rows.forEach(function(r){ sw+=r.sw; lo+=r.lo; nets+=r.nets;
+      h+='<tr><td style="padding:2px 0">'+r.t+'</td><td style="text-align:right;font-family:var(--mono)">'+_phF(r.sw)+'</td><td style="text-align:right;font-family:var(--mono)">'+_phF(r.lo)+'</td><td style="text-align:right;font-family:var(--mono)">'+_phF(r.nets)+'</td></tr>';
+      h+='<tr><td colspan="4" style="padding:0 0 4px 8px;font-family:var(--mono);font-size:10px;color:var(--ink-soft)">AS '+r.asn+' &middot; lo '+r.lb+'/32'+(r.p2p?' &middot; p2p '+r.p2p:'')+'</td></tr>'; });
+    h+='<tr style="border-top:1px solid var(--line);font-weight:600"><td style="padding-top:3px">Total</td><td style="text-align:right;font-family:var(--mono);padding-top:3px">'+_phF(sw)+'</td><td style="text-align:right;font-family:var(--mono);padding-top:3px">'+_phF(lo)+'</td><td style="text-align:right;font-family:var(--mono);padding-top:3px">'+_phF(nets)+'</td></tr>';
+    h+='</table>';
+    if(note) h+='<div style="font-size:10px;color:var(--muted);margin-top:3px;line-height:1.4">'+note+'</div>';
+    return h;
+  }
+  // The Front end and OOB numbers need the management plan (seconds at hyperscale), so they are computed once the build
+  // settles, after the Back end numbers are on screen, and only again when the design changes.
+  var _phT=null, _phMpM={k:null, v:null};
+  function _phMp(){ var k=_phKey(); if(_phMpM.k!==k){ var mp=mgmtPlan(); try{ oobEvpnRebase(mp); }catch(e){} _phMpM={k:k, v:mp}; } return _phMpM.v; }
+  function _phFab(mp, k){   // the OOB fabric from this plan, without a second mgmtPlan() and without disturbing oobFab()'s memo
+    if(_phFab._k===k && _phFab._v) return _phFab._v;
+    var keep=_fabMemo, v; if(_fabBusy) return {nodes:{}, order:[], links:[]};
+    _fabBusy=true; try{ v=_oobFab0(mp, 'ph|'+k); } finally{ _fabBusy=false; _fabMemo=keep; }
+    _phFab._k=k; _phFab._v=v; return v;
+  }
+  function _phSchedule(){
+    var el=document.getElementById('m-planeh');
+    if(el && renderPlaneHealth._k!==_phKey() && !el.innerHTML) el.innerHTML='<div style="font-size:10px;color:var(--muted);margin-top:8px">Front end and OOB stats\u2026</div>';
+    if(_phT) clearTimeout(_phT);
+    _phT=setTimeout(function(){ _phT=null; if(RESTORING){ _phSchedule(); return; } _phRun(); }, 400);
+  }
+  function _phRun(){   // one pass: each plan derived once (the same page scope a large render uses)
+    var own=!__MEMO; if(own){ __MEMO={}; window.__UISCOPE=true; }
+    try{
+      try{ renderPlaneHealth(); }catch(e){ var _ph=document.getElementById('m-planeh'); if(_ph) _ph.textContent='Plane stats: '+(e.message||e); }
+      var c=document.getElementById('ipasn-planes'); if(c){ try{ c.innerHTML=planeIpHtml0(); }catch(e){} }
+    } finally{ if(own){ __MEMO=null; window.__UISCOPE=false; } }
+  }
+  function planeIpHtml(){ var k=_phKey(); _phSchedule(); return '<div id="ipasn-planes">'+(planeIpHtml0._b===k?planeIpHtml0._v:'')+'</div>'; }
+  function planeIpHtml0(){
+    var b=_phKey(), k=b+'|'+(_phWarm()?1:0); if(planeIpHtml0._k===k) return planeIpHtml0._v;
+    var h='';
+    try{ var F=feHealthData();
+      if(F) h+=_ipPlanTable('FRONT END IP &amp; BGP PLAN', 'ASN per leaf &middot; one per spine tier/pod &middot; ASN per host DPU', F.rows,
+        'Switch links '+(FE_UNDERLAY==='unnumbered'?'unnumbered (IPv6 link-local, no addresses)':'P2P /31s from '+feBlock(8))+'; DPU sessions unnumbered. The Host DPU row counts DPUs, not switches.'); }
+    catch(e){ h+='<div style="font-size:10px;color:var(--muted);margin-top:8px">Front end IP plan not available: '+escHtml(e.message||e)+'</div>'; }
+    try{ var O=oobHealthData();
+      if(O) h+=_ipPlanTable('OOB IP &amp; BGP PLAN', 'one fabric AS &middot; /30 per switch link', O.rows,
+        'Loopbacks from '+oobFabLoBlock()+', P2P /30s from '+oobFabP2PBlock()+'.'+(O.fab?'':' Subnets count loopbacks only until the links are counted (<a href="#" onclick="return window.__aidcCountOob()">count links</a>).')+' The MCS pair, firewalls and edge routers are not in these counts.'); }
+    catch(e){ h+='<div style="font-size:10px;color:var(--muted);margin-top:8px">OOB IP plan not available: '+escHtml(e.message||e)+'</div>'; }
+    planeIpHtml0._k=k; planeIpHtml0._b=b; planeIpHtml0._v=h; return h;
   }
 
   // ---------- auto-wire from paint ----------
@@ -16012,12 +16178,12 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     function add(role,name,asn){ out.push({key:role+'-'+name, name:feName(name), role:role, asn:asn, lo:feLo(loN++)}); }
     if(p.tier3){   // v484: pod spines (ASN per pod, so pod-to-pod routes over the super-spines are not loops) and super-spines
       for(var _pp=0;_pp<p.tier3.pods;_pp++) for(var _ss=0;_ss<p.spinesPerPod;_ss++){
-        add('spine','FEF-Pod'+(_pp+1)+'-SP'+pad(_ss+1), FE_ASN.spine+_pp); var _o=out[out.length-1]; _o.fePod=_pp; _o.spIdx=_ss; }
+        add('spine','FEF-Pod'+(_pp+1)+'-SP'+pad(_ss+1), asnFor('feSpine',_pp)); var _o=out[out.length-1]; _o.fePod=_pp; _o.spIdx=_ss; }
       for(var _g=0;_g<p.tier3.groups;_g++) for(var _k=0;_k<p.tier3.sspPerGroup;_k++){
         add('spine','FEF-SSP'+pad(_g*p.tier3.sspPerGroup+_k+1), asnFor('feSsp')); var _q=out[out.length-1]; _q.ssp=true; _q.sspGroup=_g; _q.sspIdx=_k; }
     } else
     for(var s=0;s<p.spines;s++)      add('spine','FE-SP'+pad(s+1),      FE_ASN.spine);   // v229: one ASN for the FE spine tier (RFC 7938)
-    for(var l=0;l<p.leaves;l++){     add('leaf','FE-LF'+pad(l+1),       FE_ASN.leaf+l); if(p.tier3) out[out.length-1].fePod=Math.floor(Math.floor(l/2)/p.tier3.pairsPerPod); }
+    for(var l=0;l<p.leaves;l++){     add('leaf','FE-LF'+pad(l+1),       asnFor('feLeaf',l));   /* HS v1.19: the mega band past 1,000 */ if(p.tier3) out[out.length-1].fePod=Math.floor(Math.floor(l/2)/p.tier3.pairsPerPod); }
     for(var b=0;b<p.cores;b++)       add('border','FE-BL'+pad(b+1),     FE_ASN.border+b);
     // BORDER GATEWAYS. A tier in their own right, not leaf-role: they attach to no spine, and
     // every leaf-role loop below would wire them into the fabric if they carried that role.

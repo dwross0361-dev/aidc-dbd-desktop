@@ -1,3 +1,17 @@
+# AIDC DBD Desktop 2.0.12 (builder HS-v1.19)
+
+- **Front end and OOB health stats, like the Back end's:** the Fabric health panel now has BACK END, FRONT END and OOB blocks.
+  - **Front end:** DPU links, worst leaf sub., leaf ports, leaf uplinks, spine ports, worst spine sub. (three tiers), SSP ports and tenant VRFs.
+  - **OOB:** leaf ports, worst leaf sub., spine ports, worst spine sub. and SSP ports. The MCS pair, firewalls and edge routers are not counted.
+- **IP & BGP plan per plane:** Front end and OOB tables now follow the Back end table, in the same format (switches, /32, subnets, AS, loopback and P2P ranges).
+  - **Front end rows:** Leaf, Spine, SSP, Border leaf, Border gateway and Host DPU.
+  - **OOB rows:** Leaf, In-rack leaf, Spine and SSP, all in AS 65100.
+- **The Front end line always shows** in the per-plane device counts. It reads "off" when the plane is off, or names the problem when the plan can't be built, instead of disappearing.
+- **Front end power counts only when the plane is on.**
+- Numbers on the health panel use thousands separators.
+- **Front end ASNs at mega scale:** past 1,000 front end leaves, leaf ASNs now continue in the mega-site band. Before, FE-LF2001 and up took the FE spine, super-spine and border leaf ASNs (a 4,096-rack site). Sites with 1,000 FE leaves or fewer keep every ASN. Rebuild and retest any 4,096-rack package.
+- **OOB link stats:** the OOB spine and SSP port counts and subs need the layout model. Up to 128 racks they show right away; on larger sites, click **count links** (or open Layout, the BoM or the Cable Matrix first).
+
 # AIDC DBD Desktop 2.0.11 (builder HS-v1.18)
 
 - **No rebuild until you click Build:** a setting that reshapes the fabric (profile, planes, BE platform, pod size and the like) no longer rebuilds it on its own. The Build button is ringed in amber and the status line says the settings changed; nothing rebuilds until **Build from rack count** is clicked. Loading a file, restoring and share links still build.
