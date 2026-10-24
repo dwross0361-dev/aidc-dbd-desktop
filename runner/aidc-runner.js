@@ -63,6 +63,15 @@ function shim(w) {
         catch (e) { setTimeout(() => { if (self.onerror) self.onerror(e); }, 0); } })(); }
     get src() { return this._src; } }
   w.Image = RImage;
+  // runner 1.3.0: the cable-run measurement. The builder runs the DC Layout Builder in a hidden frame to measure every run; the
+  // runner has no frames, so the Layout Builder gets a page of its own here (headless: it measures, it draws nothing).
+  w.__aidcMeasure = (html, model) => {
+    const lvc = new VirtualConsole(); lvc.on('jsdomError', () => {});
+    const d = new JSDOM(html, { runScripts: 'dangerously', pretendToBeVisual: true, url: 'file:///aidc-runner/layout.html', virtualConsole: lvc });
+    try { const lw = d.window; if (typeof lw.__dctMeasureModel !== 'function') return null; return lw.__dctMeasureModel(model); }
+    catch (e) { pageErr.push('layout measurement: ' + String(e && e.message || e).slice(0, 200)); return null; }
+    finally { try { d.window.close(); } catch (e) {} }
+  };
 }
 const vc = new VirtualConsole(); const pageErr = [];
 vc.on('jsdomError', (e) => { const m = String(e && e.message || e); if (/Not implemented: (navigation|window\.scrollTo|HTMLCanvasElement\.prototype\.getContext)/.test(m)) return; pageErr.push(m.slice(0, 300)); });

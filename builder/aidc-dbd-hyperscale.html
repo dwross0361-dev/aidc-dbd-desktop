@@ -940,7 +940,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.15';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.16';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   var RADIX=64, CAGE=800;
   // ---- FABRIC PROFILE (parameterized per accelerator platform) ----------------------------------------
   // rails == accelerators per host. Each accelerator instance gets its own rail leaf, which is what
@@ -30871,6 +30871,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
   function dctMeasure(m){   // v555: run the Layout Builder hidden; resolve {lens (per m.links index), pos, geoDefaults} or null
     return new Promise(function(res){
       var html=dctHtml(m, true); if(!html){ res(null); return; }
+      if(typeof window.__aidcMeasure==='function'){ try{ Promise.resolve(window.__aidcMeasure(html, m)).then(function(r){ m=null; res(r||null); }, function(){ res(null); }); }catch(e){ res(null); } return; }   // HS v1.16: the site runner
       var f=document.createElement('iframe'), done=false, fin=function(v){ if(done) return; done=true; try{ f.remove(); }catch(e){} res(v); };
       f.setAttribute('aria-hidden','true'); f.tabIndex=-1; f.style.cssText='position:fixed;left:-10000px;top:0;width:1200px;height:800px;border:0;visibility:hidden';
       f.onload=function(){ try{ var w=f.contentWindow; if(!w || !w.__dctMeasureModel){ fin(null); return; } var r=w.__dctMeasureModel(m); m=null; fin(r); }catch(e){ fin(null); } };

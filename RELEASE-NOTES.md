@@ -1,3 +1,7 @@
+# AIDC DBD Desktop 2.0.9 (builder HS-v1.16, site runner 1.3.0)
+
+- **Cable Matrix lengths in runner-built packages:** packages built by the site runner (past 512 racks) now carry measured run lengths, the same as packages built in the window. They used to show "not placed".
+
 # AIDC DBD Desktop 2.0.8 (builder HS-v1.15)
 
 - **Cross-column cabling:**

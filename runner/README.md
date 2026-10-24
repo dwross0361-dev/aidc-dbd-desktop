@@ -44,6 +44,8 @@ Options:
 - **Failed exports:** if any export in the Final package fails, the package is written but the run stops with "must not be delivered".
 - **Parity:** every device configuration in the package must be byte-identical to the one the .run installs.
 
+**Cable run lengths (1.3.0):** the Cable Matrix in the package is measured by the DC Layout Builder, run headless in its own page, the same measurement the browser makes. Earlier runners left the lengths blank ("not placed").
+
 The output folder receives the package zip, the .run and `site-runner.log`. The log records each step, the build number, the fingerprint, the plan digest (the one the package README and the Deployment Console show) and the parity result.
 
 The .run is never handed to customers. The Final package is delivered the usual way.
