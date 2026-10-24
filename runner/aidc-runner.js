@@ -57,6 +57,10 @@ const captured = [];   // {name, blob}
 function shim(w) {
   const store = new Map(); let n = 0;
   w.__AIDC_HEADLESS = true;   // the builder skips drawing its main canvas
+  // native hashes for the package manifest, the .run checksums and the zip CRCs (1.5.0; builder HS-v1.20 uses them, older ones ignore them)
+  const crypto = require('crypto');
+  w.__aidcSha256 = (b) => crypto.createHash('sha256').update(b).digest('hex');
+  if (typeof zlib.crc32 === 'function') w.__aidcCrc32 = (u) => zlib.crc32(u) >>> 0;
   w.Blob = Blob; w.Response = Response; w.CompressionStream = CompressionStream; w.DecompressionStream = DecompressionStream;
   w.TextEncoder = TextEncoder; w.TextDecoder = TextDecoder; w.ReadableStream = ReadableStream; w.WritableStream = WritableStream; w.TransformStream = TransformStream;
   w.URL.createObjectURL = (b) => { const u = 'blob:aidc-runner/' + (++n); store.set(u, b); return u; };

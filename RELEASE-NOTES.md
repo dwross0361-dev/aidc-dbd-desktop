@@ -1,3 +1,12 @@
+# AIDC DBD Desktop 2.0.14 (builder HS-v1.20, site runner 1.5.0)
+
+- **Faster packages and .run files:** about 20% faster (1,024 racks: 944 s to 742 s; the Final package 519 s to 416 s, the .run 425 s to 326 s), with less memory. The package and the .run no longer rebuild the physical model, management plan and deploy plan at each step. Output is unchanged: every file matches HS-v1.19 except the version and date, and parity passes.
+- **Front end off: no front-end edge.** The package used to write edge router and firewall configurations that the .run never shipped, so parity failed. Both now leave them out.
+- **DC Layout Builder scrolls inside the window:** on a wide floor (3 or 4 columns) the horizontal scroll bar is at the bottom of the window, not below the whole floor.
+- **A crashed window says so:** if the builder or Layout window stops (for example out of memory), the app names the reason, offers Reload and writes it to crash-log.txt (in the app's settings folder). Before, the window went white.
+- **Memory split:** the site runner gets what the builder window and Windows leave (32 GB: 13.0 GB builder window, 15.4 GB runner, was 24.4 GB). The two limits no longer add up to more than the machine.
+- **Workstation guidance** in the README: 32 GB up to 2,048 racks, 64 GB recommended for 4,096; single-core speed decides build time.
+
 # AIDC DBD Desktop 2.0.13 (builder HS-v1.19)
 
 - **No sleep while building:** the app asks Windows not to sleep while a build holds the builder window (and for two minutes after) and while a site-runner job runs. The window title reads "sleep blocked while building" while it holds; the job card logs "Sleep blocked" and "Sleep released". The display may still turn off. A lid close or a manual Sleep still sleeps.

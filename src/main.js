@@ -9,7 +9,9 @@ const path = require('path'), fs = require('fs'), os = require('os'), { spawn } 
 
 const RAM_MB = Math.floor(os.totalmem() / 1048576);
 const RENDER_HEAP = Math.max(4096, Math.min(16384, Math.floor(RAM_MB * 0.4)));   // the builder window (design build)
-const RUNNER_HEAP = Math.max(8192, Math.floor(RAM_MB * 0.75));                   // the site runner (package and .run)
+// the site runner (package and .run): what the builder window and Windows leave (2.0.14). It ran at 75% of RAM, so the two
+// limits together passed the machine (32 GB: 13.0 + 24.4 GB) and a large build beside a runner job could run Windows short.
+const RUNNER_HEAP = Math.max(8192, Math.min(Math.floor(RAM_MB * 0.75), RAM_MB - RENDER_HEAP - 4096));
 app.commandLine.appendSwitch('js-flags', '--max-old-space-size=' + RENDER_HEAP);
 
 const RES = app.isPackaged ? process.resourcesPath : path.join(__dirname, '..');
@@ -46,6 +48,7 @@ function createMain() {
   main.on('close', (e) => { if (closing) return; e.preventDefault(); askBeforeClose(); });   // the design is offered for saving first
   main.on('unresponsive', () => { clearTimeout(builderIdle); builderBusy = true; keepAwake(); });   // a build holds the window: keep the machine up
   main.on('responsive', () => { clearTimeout(builderIdle); builderIdle = setTimeout(() => { builderBusy = false; keepAwake(); }, AWAKE_GRACE_MS); });
+  watchCrash(main, 'builder window');
   main.on('closed', () => { main = null; for (const w of layouts.values()) { try { w.close(); } catch (e) {} } });
   main.loadFile(BUILDER);
 }
@@ -100,6 +103,26 @@ function hookDownloads() {
     const dir = projectDir(main); if (!dir) { item.cancel(); return; }
     const p = uniquePath(dir, item.getFilename()); item.setSavePath(p);
     item.once('done', (ev, state) => send('saved', { path: p, name: path.basename(p), ok: state === 'completed', state }));
+  });
+}
+
+// ---- a crashed window says so (2.0.14): reason, a crash log, and Reload -- instead of a blank white page
+const CRASH_WHY = { oom: 'it ran out of memory', crashed: 'it crashed', killed: 'it was stopped by Windows or another program', 'launch-failed': 'it failed to start', 'integrity-failure': 'a code integrity check failed', 'abnormal-exit': 'it exited abnormally' };
+function watchCrash(w, label) {
+  w.webContents.on('render-process-gone', async (e, d) => {
+    const why = CRASH_WHY[d.reason] || ('it stopped (' + d.reason + ')');
+    const line = new Date().toISOString() + '  ' + label + ': ' + d.reason + ' (exit ' + d.exitCode + '), RAM ' + RAM_MB + ' MB, builder window limit ' + RENDER_HEAP + ' MB, site runner limit ' + RUNNER_HEAP + ' MB, runner jobs running ' + jobs.size;
+    const log = path.join(app.getPath('userData'), 'crash-log.txt');
+    try { fs.appendFileSync(log, line + '\n'); } catch (err) {}
+    if (label === 'builder window') { builderBusy = false; clearTimeout(builderIdle); keepAwake(); }
+    if (w.isDestroyed()) return;
+    const r = await dialog.showMessageBox(w, { type: 'error', buttons: ['Reload', 'Close'], defaultId: 0, cancelId: 1, noLink: true, title: 'AIDC DBD',
+      message: 'The ' + label + ' stopped: ' + why + '.',
+      detail: (d.reason === 'oom' ? 'Close other programs, or wait for a running site-runner job to finish, then reload. ' : '') +
+        (label === 'builder window' ? 'After Reload, open your last saved design with File > Load if it does not come back on its own. ' : '') +
+        (jobs.size ? 'Site-runner jobs keep running; they are separate. ' : '') + 'Logged to ' + log });
+    if (w.isDestroyed()) return;
+    if (r.response === 0) w.webContents.reload(); else if (w !== main) w.close();
   });
 }
 
@@ -163,7 +186,7 @@ ipcMain.on('open-layout', (e, req) => {
   fs.writeFileSync(file, req.html);
   const w = new BrowserWindow({ width: 1500, height: 950, title: 'DC Layout Builder (' + Number(req.racks || 0).toLocaleString('en-US') + ' racks)',
     webPreferences: { preload: path.join(__dirname, 'preload-layout.js'), contextIsolation: true, nodeIntegration: false } });
-  layouts.set(w.id, w);
+  layouts.set(w.id, w); watchCrash(w, 'DC Layout Builder (' + Number(req.racks || 0).toLocaleString('en-US') + ' racks)');
   w.on('closed', () => { layouts.delete(w.id); try { fs.unlinkSync(file); } catch (err) {} });
   w.loadFile(file);
 });
