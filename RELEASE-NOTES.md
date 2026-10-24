@@ -1,3 +1,16 @@
+# AIDC DBD Desktop 2.0.8 (builder HS-v1.15)
+
+- **Cross-column cabling:**
+  - Runs between columns route through a cross tray at the head or the foot of the columns, whichever is shorter. The builder, the DC Layout Builder and the Cable Matrix all use this routing.
+  - The BoM counts cross-column links per plane.
+- **AOC reach (default 30 m, editable next to Floor):** a longer run becomes structured cabling, in the BoM and the Cable Matrix:
+  - a transceiver at each end (one per breakout cage);
+  - two patch cords per run, and a trunk lane between the column-head patch panels;
+  - the patch panels themselves.
+  - MPO-16 for 800G and 1.6T, MPO-12 for 200G and 400G, LC duplex for 100G and below.
+  - This applies to any run past the reach, within a column as well as across columns.
+- **Keep pods in one column (off by default):** columns break at pod boundaries where the row counts allow. Each pod goes to the column its middle row falls in.
+
 # AIDC DBD Desktop 2.0.7 (builder HS-v1.14)
 
 - **Floor columns (1 to 4):** a new **Floor** selector lays the rows out in side-by-side columns (vertical stacks of rows), with a 3 m aisle between columns.
