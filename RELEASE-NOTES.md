@@ -1,3 +1,14 @@
+# AIDC DBD Desktop 2.0.10 (builder HS-v1.17)
+
+- **Data halls:** a site with more than one data hall (about 10 MW each; editable next to Floor) is laid out as a grid of halls with 6 m corridors between them.
+  - **Each hall gets its own network row.** Every network cabinet goes to the hall that holds most of the devices it connects to (FE pod spines with their leaves, OOB spines with their racks).
+  - **The core sits in a CORE block in the middle of the grid:** FE super-spines, border leaves, Edge PoP, firewalls and OOB core.
+  - **Placement only:** devices, links and configurations are unchanged.
+  - **Runs between halls go through the corridors.** In the BoM, structured cabling terminates on hall patch panels, and the cross-hall link counts are listed.
+  - **The DC Layout Builder and the package floor plan both draw the halls.** Single-hall sites are laid out as before.
+- **Rows spread evenly across halls:** the facility plan now uses the same hall count with the rows spread evenly (512 racks: 8 halls of 8 rows, was 7 of 9 and 1 of 1).
+- **Hover card above the tile:** it opens above the tile (below it near the top of the window), so the tile's ports stay clickable.
+
 # AIDC DBD Desktop 2.0.9 (builder HS-v1.16, site runner 1.3.0)
 
 - **Cable Matrix lengths in runner-built packages:** packages built by the site runner (past 512 racks) now carry measured run lengths, the same as packages built in the window. They used to show "not placed".
