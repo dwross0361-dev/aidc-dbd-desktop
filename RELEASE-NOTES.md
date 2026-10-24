@@ -1,3 +1,8 @@
+# AIDC DBD Desktop 2.0.11 (builder HS-v1.18)
+
+- **No rebuild until you click Build:** a setting that reshapes the fabric (profile, planes, BE platform, pod size and the like) no longer rebuilds it on its own. The Build button is ringed in amber and the status line says the settings changed; nothing rebuilds until **Build from rack count** is clicked. Loading a file, restoring and share links still build.
+- **GPU rows edge-aligned:** every pod row starts at the same left edge, instead of being centered.
+
 # AIDC DBD Desktop 2.0.10 (builder HS-v1.17)
 
 - **Data halls:** a site with more than one data hall (about 10 MW each; editable next to Floor) is laid out as a grid of halls with 6 m corridors between them.

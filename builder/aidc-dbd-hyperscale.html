@@ -512,8 +512,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   .canvas.compact .cagerow{gap:1px}
   .canvas.compact .cage{min-width:0;border-radius:1px}
   .canvas.compact .mini{font-size:8.5px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .canvas.compact #row-rack{flex-direction:column;align-items:center;flex-wrap:nowrap}
-  .canvas.compact .pod-row{gap:8px;margin:0 auto 10px;align-items:flex-start}
+  .canvas.compact #row-rack{flex-direction:column;align-items:flex-start;flex-wrap:nowrap}
+  .canvas.compact .pod-row{gap:8px;margin:0 0 10px;align-items:flex-start}
   .canvas.compact .pod-tag{min-width:0;width:52px;flex:0 0 52px}
   .canvas.compact .netrack{min-width:0;width:84px;max-width:84px;padding:5px;box-sizing:border-box;font-size:9px}
   .canvas.compact .netrack *{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -940,7 +940,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.17';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.18';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   var RADIX=64, CAGE=800;
   // ---- FABRIC PROFILE (parameterized per accelerator platform) ----------------------------------------
   // rails == accelerators per host. Each accelerator instance gets its own rail leaf, which is what
@@ -31507,7 +31507,13 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
   };
   document.getElementById('mgmtview').onchange=function(){ mgmtView=this.value; renderMgmtModal(); mgmtButtons(); };
   document.getElementById('reset').onclick=seed;
-  document.getElementById('buildfab').onclick=function(){ var r=buildFromRacks.apply(this, arguments); try{ identBarRefresh(); }catch(e){}
+  var BUILD_STALE=false, _UCHG=0;   // HS v1.18: a change the user is making right now (trusted change/input event, until its handlers return)
+  ['change','input'].forEach(function(t){ document.addEventListener(t, function(e){ if(e.isTrusted){ _UCHG++; setTimeout(function(){ _UCHG=Math.max(0,_UCHG-1); }, 0); } }, true); });
+  function buildStale(on){ BUILD_STALE=!!on; var b=document.getElementById('buildfab'); if(!b) return;
+    if(on){ b.style.boxShadow='0 0 0 3px #F2B33D'; b.title='Settings changed: click to rebuild the fabric with them'; setStatus('Settings changed: click Build from rack count to rebuild the fabric. Nothing rebuilds until then.'); }
+    else { b.style.boxShadow=''; b.title=''; } }
+  buildFromRacks=(function(f){ return function(){ if(_UCHG>0 && !RESTORING){ buildStale(true); return; } buildStale(false); return f.apply(this, arguments); }; })(buildFromRacks);
+  document.getElementById('buildfab').onclick=function(){ _UCHG=0; /* the Build button always builds (a field left by this click fires its change first) */ var r=buildFromRacks.apply(this, arguments); try{ identBarRefresh(); }catch(e){}
     try{ var _ab=asnBandCheck(); if(_ab.length) setStatus('\u26a0 '+_ab[0]); }catch(e){} try{ if(spxMode()){ var _sx=spxPlan(); if(!_sx.fits) setStatus('\u26a0 Spectrum-X rail pools: '+_sx.hosts+' hosts x '+_sx.perHost+' rails do not fit '+_sx.supernet+' -- the back-end addressing would repeat; reduce the build or widen the block'); } }catch(e){} return r; };   // v510; v514: ASN bands (A7-2)
   (function(){
     var skuWrap=document.getElementById('fe-sku-wrap');
