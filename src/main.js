@@ -4,7 +4,7 @@
 //    workstation's memory (the builder hands it the design as a site-runner file, fingerprint and all).
 //  - The DC Layout Builder opens in its own window with its own memory, and fetches the model from the builder.
 'use strict';
-const { app, BrowserWindow, ipcMain, dialog, Menu, shell, session } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Menu, shell, session, powerSaveBlocker } = require('electron');
 const path = require('path'), fs = require('fs'), os = require('os'), { spawn } = require('child_process');
 
 const RAM_MB = Math.floor(os.totalmem() / 1048576);
@@ -44,6 +44,8 @@ function createMain() {
       additionalArguments: process.env.AIDC_DESK_BIG ? ['--aidc-big=' + process.env.AIDC_DESK_BIG] : [] } });
   main.webContents.setWindowOpenHandler(() => ({ action: 'allow', overrideBrowserWindowOptions: { width: 1500, height: 950 } }));   // up to 512 racks the builder opens its own tabs
   main.on('close', (e) => { if (closing) return; e.preventDefault(); askBeforeClose(); });   // the design is offered for saving first
+  main.on('unresponsive', () => { clearTimeout(builderIdle); builderBusy = true; keepAwake(); });   // a build holds the window: keep the machine up
+  main.on('responsive', () => { clearTimeout(builderIdle); builderIdle = setTimeout(() => { builderBusy = false; keepAwake(); }, AWAKE_GRACE_MS); });
   main.on('closed', () => { main = null; for (const w of layouts.values()) { try { w.close(); } catch (e) {} } });
   main.loadFile(BUILDER);
 }
@@ -101,6 +103,27 @@ function hookDownloads() {
   });
 }
 
+// ---- keep the machine awake while work is running (2.0.13)
+// System sleep suspends the builder and the site runner mid-build. While a site-runner job runs, or while a build holds
+// the builder window (and for two minutes after, which covers the plan and health work that follows a build), the app
+// asks the OS not to sleep. The display may still turn off. A lid close or a manual Sleep still sleeps.
+const AWAKE_GRACE_MS = 120000;
+let awakeId = -1, builderBusy = false, builderIdle = null, baseTitle = null;
+function keepAwake() {
+  const want = jobs.size > 0 || builderBusy;
+  if (want && awakeId < 0) {
+    try { awakeId = powerSaveBlocker.start('prevent-app-suspension'); } catch (e) { awakeId = -1; return; }
+    if (main && !main.isDestroyed()) { baseTitle = main.getTitle(); main.setTitle(baseTitle + '  ·  sleep blocked while building'); }
+    for (const id of jobs.keys()) send('job-log', { id, line: 'Sleep blocked while this job runs.' });
+  } else if (!want && awakeId >= 0) {
+    try { powerSaveBlocker.stop(awakeId); } catch (e) {}
+    awakeId = -1;
+    if (main && !main.isDestroyed() && baseTitle != null) main.setTitle(baseTitle);
+    baseTitle = null;
+  }
+}
+app.on('will-quit', () => { if (awakeId >= 0) { try { powerSaveBlocker.stop(awakeId); } catch (e) {} } });
+
 // ---- the site runner jobs
 const jobs = new Map(); let jobSeq = 0;
 ipcMain.handle('job', async (e, req) => {
@@ -117,12 +140,13 @@ ipcMain.handle('job', async (e, req) => {
   try { child = spawn(NODE, args, { env: Object.assign({}, process.env, { AIDC_RUNNER_CHILD: '1' }), windowsHide: true }); }
   catch (err) { return { error: 'the site runner did not start: ' + err.message }; }
   jobs.set(id, child);
+  if (awakeId >= 0) send('job-log', { id, line: 'Sleep blocked while this job runs.' }); keepAwake();
   send('job-start', { id, kind, mode: req.mode || 'final', build: f.build, racks: f.racks, out });
   let buf = '';
   const onData = (d) => { buf += d.toString(); let i; while ((i = buf.indexOf('\n')) >= 0) { const line = buf.slice(0, i).replace(/\r$/, ''); buf = buf.slice(i + 1); if (line.trim()) send('job-log', { id, line }); } };
   child.stdout.on('data', onData); child.stderr.on('data', onData);
   child.on('error', (err) => send('job-log', { id, line: 'STOPPED: the site runner did not start: ' + err.message }));
-  child.on('close', (code) => { jobs.delete(id); if (buf.trim()) send('job-log', { id, line: buf.trim() }); send('job-done', { id, code, out }); });
+  child.on('close', (code) => { jobs.delete(id); keepAwake(); if (!jobs.size && !builderBusy) send('job-log', { id, line: 'Sleep released.' }); if (buf.trim()) send('job-log', { id, line: buf.trim() }); send('job-done', { id, code, out }); });
   return { id, out };
 });
 ipcMain.on('job-cancel', (e, id) => { const c = jobs.get(id); if (c) { try { c.kill(); } catch (err) {} } });

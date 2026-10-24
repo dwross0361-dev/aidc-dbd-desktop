@@ -1,3 +1,8 @@
+# AIDC DBD Desktop 2.0.13 (builder HS-v1.19)
+
+- **No sleep while building:** the app asks Windows not to sleep while a build holds the builder window (and for two minutes after) and while a site-runner job runs. The window title reads "sleep blocked while building" while it holds; the job card logs "Sleep blocked" and "Sleep released". The display may still turn off. A lid close or a manual Sleep still sleeps.
+- **Site runner 1.4.0:** run on its own (lab server or command line), the runner holds sleep off for the length of the run (Windows, macOS, Linux with logind) and says so in its first line. `--no-sleep-hold` turns it off.
+
 # AIDC DBD Desktop 2.0.12 (builder HS-v1.19)
 
 - **Front end and OOB health stats, like the Back end's:** the Fabric health panel now has BACK END, FRONT END and OOB blocks.

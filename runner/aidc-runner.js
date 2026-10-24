@@ -13,13 +13,33 @@ const fs = require('fs'), path = require('path'), zlib = require('zlib'), { spaw
 // ---- arguments; re-exec with the heap the workstation allows (the reason this runs off the browser)
 const argv = process.argv.slice(2), arg = (k, d) => { const i = argv.indexOf('--' + k); return i >= 0 ? argv[i + 1] : d; };
 const HEAP = +arg('heap', 0) || Math.max(8192, Math.floor(require('os').totalmem() / 1048576 * 0.75));
+// Keep the machine awake for the length of the run (2.0.13 / runner 1.4.0): system sleep suspends the build. The holder is a
+// separate process that watches this one, so the hold ends when the runner ends, however it ends. Run from the desktop app,
+// the app holds it instead (AIDC_RUNNER_CHILD is set there).
+function holdSleep(pid) {
+  const { spawn } = require('child_process');
+  try {
+    if (process.platform === 'win32') {
+      const ps = "$k=Add-Type -PassThru -Name K -Namespace AidcDbd -MemberDefinition '[DllImport(\"kernel32.dll\")] public static extern uint SetThreadExecutionState(uint f);';" +
+        " [void]$k::SetThreadExecutionState(0x80000001); while (Get-Process -Id " + pid + " -ErrorAction SilentlyContinue) { Start-Sleep -Seconds 15 }";
+      return { how: 'Windows execution state', c: spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', ps], { stdio: 'ignore', windowsHide: true }) };
+    }
+    if (process.platform === 'darwin') return { how: 'caffeinate', c: spawn('caffeinate', ['-i', '-w', String(pid)], { stdio: 'ignore' }) };
+    if (spawnSync('systemd-inhibit', ['--what=sleep', '--mode=block', 'true'], { stdio: 'ignore' }).status !== 0) return null;   // present AND permitted (logind reachable)
+    return { how: 'systemd-inhibit', c: spawn('systemd-inhibit', ['--what=sleep:idle', '--who=AIDC DBD site runner', '--why=building a site package', '--mode=block', 'tail', '--pid=' + pid, '-f', '/dev/null'], { stdio: 'ignore' }) };
+  } catch (e) { return null; }
+}
 if (!process.env.AIDC_RUNNER_CHILD) {
+  const hold = argv.includes('--no-sleep-hold') ? null : holdSleep(process.pid);
+  if (hold) { hold.c.on('error', () => {}); console.log('Sleep blocked for the length of the run (' + hold.how + ').'); }
+  else console.log('Sleep not blocked' + (argv.includes('--no-sleep-hold') ? ' (--no-sleep-hold).' : ': no sleep inhibitor available on this host.'));
   const r = spawnSync(process.execPath, ['--max-old-space-size=' + HEAP, __filename].concat(argv), { stdio: 'inherit', env: Object.assign({}, process.env, { AIDC_RUNNER_CHILD: '1' }) });
+  if (hold) { try { hold.c.kill(); } catch (e) {} console.log('Sleep released.'); }
   process.exit(r.status == null ? 1 : r.status);
 }
 const HTML = arg('html'), DESIGN = arg('design'), OUT = arg('out', '.');
 const PARITY_ONLY = argv.includes('--parity-only');
-if (!PARITY_ONLY && (!HTML || !DESIGN)) { console.error('usage: node aidc-runner.js --html <builder .html> --design <site-runner .json> --out <folder> [--heap MB] [--package-only|--run-only|--parity-only] [--review] [--settings [--racks N]]'); process.exit(2); }
+if (!PARITY_ONLY && (!HTML || !DESIGN)) { console.error('usage: node aidc-runner.js --html <builder .html> --design <site-runner .json> --out <folder> [--heap MB] [--package-only|--run-only|--parity-only] [--review] [--settings [--racks N]] [--no-sleep-hold]'); process.exit(2); }
 const RACKS = +arg('racks', 0) || 0, SETTINGS = argv.includes('--settings') || RACKS > 0;
 const REVIEW = argv.includes('--review');
 const ONLY = argv.includes('--package-only') ? 'package' : argv.includes('--run-only') ? 'run' : 'both';
