@@ -942,7 +942,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.21';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.22';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   var RADIX=64, CAGE=800;
   // ---- FABRIC PROFILE (parameterized per accelerator platform) ----------------------------------------
   // rails == accelerators per host. Each accelerator instance gets its own rail leaf, which is what
@@ -9519,7 +9519,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       '[ -n "$NVL" ] && ! echo "$NVL" | grep "^nv set system dns" >/dev/null && NVOLD=1',
       'echo "running Cumulus Linux ${CUR:-unknown} (NVUE ${NVR:-unknown}), target $TARGET, baseline $BASELINE"',
       'if [ "$(vnum "$CUR")" != "$(vnum "$TARGET")" ] || [ $NVOLD -eq 1 ]; then',
-      '  if curl -sfI "$IMAGE_URL" >/dev/null; then',
+      '  if ccurl -sfI "$IMAGE_URL" >/dev/null; then',
       '    echo "installing $IMAGE_URL; ZTP runs again on the new release"',
       '    /usr/cumulus/bin/onie-install -fa -i "$IMAGE_URL" -z "$ZTP_URL" || ci_fail "onie-install of the target image failed"',
       '    reboot; exit 0',
@@ -9607,14 +9607,15 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       '# any failure checks in with the estate service (the card shows Failed and why; it used to sit at Bootstrap)',
       'CI="http://'+mp.prov+'/ci/'+host+'"',
       'ciq(){ printf "%s" "$1" | tr -c "A-Za-z0-9._~:/=,()-" " " | tr -s " " | head -c 300 | sed "s/ /%20/g"; }',
-      'ci_fail(){ trap - ERR; echo "FAIL: $1"; curl -fs -m 5 "$CI/fail?msg=$(ciq "$1")" >/dev/null 2>&1 || true; exit 1; }',
+      'ccurl(){ curl "$@" 2>/dev/null || ip vrf exec mgmt curl "$@"; }   # HS v1.22: eth0 is in the management VRF',
+      'ci_fail(){ trap - ERR; echo "FAIL: $1"; ccurl -fs -m 5 "$CI/fail?msg=$(ciq "$1")" >/dev/null 2>&1 || true; exit 1; }',
       "trap 'ci_fail \"line $LINENO ($(echo \"$BASH_COMMAND\" | cut -d\" \" -f1-4)): $(tail -n 1 /var/log/ztp-"+host+".log)\"' ERR"];
     osZtpCumulus(d, host, mp).forEach(function(l){ L.push(l); });
     cfg.split('\n').forEach(function(l){ if(/^\s*nv config apply/.test(l)) return; L.push(l); });
     L.push('nv config apply -y');
     L.push('# HS v1.21: the factory account (cumulus, default password) is locked and expired; the switch is managed as '+ADMIN_USER+' (secrets.env)');
     L.push('passwd -l cumulus >/dev/null && chage -E 0 cumulus');
-    L.push('curl -fsS -m 5 "http://'+mp.prov+'/ci/'+host+'/config" >/dev/null 2>&1 || true   # check-in: estate service (provision/)');
+    L.push('ccurl -fsS -m 5 "http://'+mp.prov+'/ci/'+host+'/config" >/dev/null 2>&1 || true   # check-in: estate service (provision/)');
     L.push('echo "ZTP complete: $(date)"');
     L.push('exit 0');
     return L.join('\n');
@@ -24290,7 +24291,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
   }
   // v537: the DSX Air Cumulus test kit (Captain, 19 Oct 2026)
   var AIR_FIRSTLOGIN=['#!/usr/bin/env python3',   // HS v1.21
-    '# firstlogin.py NODE OLD NEW -- DSX Air lab only: signs in to a Cumulus VX switch with its factory password and answers the',
+    '# firstlogin.py NODE OLD NEW -- DSX Air lab only (run-tests.sh, ztp-kick.sh): signs in to a Cumulus VX switch with its factory password and answers the',
     '# forced change at first login with NEW. A switch that already takes NEW (or has no forced change) just signs in and out.',
     'import os, pty, select, sys, time',
     'node, old, new = sys.argv[1:4]',
@@ -24320,6 +24321,80 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     "echo 'cumulus:CumulusLinux!' | chpasswd",
     'passwd -x 99999 cumulus',
     'exit 0'].join('\n')+'\n';
+  var AIR_ZTPHOST=['#!/bin/bash',   // HS v1.22
+    '# air/ztp-host.sh -- TC-202, DSX Air lab only: makes oob-mgmt-server the provisioning host for the slice.',
+    '#   1. stops Air’s own DHCP (and web) server, so the switches take their leases and option 239 from this host',
+    '#   2. puts the provisioning address and each slice subnet’s gateway on the Air OOB interface (flat L2: in Air there are',
+    '#      no OOB cores to relay DHCP)',
+    '#   3. writes test secrets (the switch admin login is the password you give), runs setup.sh, sets aside every device',
+    '#      outside the slice (estate_build.py lab-slice) and starts the run',
+    '# Run from the unpacked deploy folder:  sudo bash air/ztp-host.sh [interface]',
+    'set -euo pipefail',
+    '[[ $EUID -eq 0 ]] || { echo "[!] run as root: sudo bash air/ztp-host.sh"; exit 1; }',
+    'cd "$(dirname "$0")/.."',
+    '[[ -f setup.sh && -f air/slice.csv && -f provision/estate.json ]] || { echo "[!] run from the unpacked deploy folder"; exit 1; }',
+    'NIC=${1:-$(ip -o -4 addr show | awk \'$4 ~ /^192\\.168\\.200\\./ {print $2; exit}\')}',
+    '[[ -n "$NIC" ]] || { echo "[!] no interface on Air’s OOB network (192.168.200.0/24): give it as the first argument"; exit 1; }',
+    'echo "[ok] Air OOB interface: $NIC"',
+    'python3 -c "import sys; sys.exit(0 if sys.version_info >= (3, 7) else 1)" || { echo "[!] python3 3.7 or later is needed"; exit 1; }',
+    'for s in isc-dhcp-server dnsmasq nginx apache2; do',
+    '  if systemctl is-active --quiet "$s" 2>/dev/null; then systemctl disable --now "$s" >/dev/null 2>&1 || true; echo "[ok] stopped $s (Air’s)"; fi',
+    'done',
+    'ADDRS=$(python3 - <<\'PYEOF\'',
+    'import csv, ipaddress, json',
+    'e = json.load(open("provision/estate.json")); k = json.load(open("provision/kea-dhcp4.json"))["Dhcp4"]',
+    'subs = list(k.get("subnet4", [])) + [x for sn in k.get("shared-networks", []) for x in sn.get("subnet4", [])]',
+    'nets = [(ipaddress.ip_network(x["subnet"]), x) for x in subs]',
+    'def sub(ip):',
+    '    for n, x in nets:',
+    '        if ipaddress.ip_address(ip) in n: return n, x',
+    '    return None, None',
+    'out = []',
+    'n, x = sub(e["site"]["prov_ip"]); out.append("%s/%d" % (e["site"]["prov_ip"], n.prefixlen if n else 24))',
+    'D = {d["name"]: d for d in e["devices"]}',
+    'for r in csv.DictReader(open("air/slice.csv")):',
+    '    d = D.get(r["node"])',
+    '    if not d or d.get("ztp_links") or not d.get("ip"): continue',
+    '    n, x = sub(d["ip"])',
+    '    gw = [o["data"] for o in (x or {}).get("option-data", []) if o.get("name") == "routers"]',
+    '    if n and gw: out.append("%s/%d" % (gw[0], n.prefixlen))',
+    'print(" ".join(sorted(set(out), key=out.index)))',
+    'PYEOF',
+    ')',
+    'for a in $ADDRS; do ip addr replace "$a" dev "$NIC"; echo "[ok] $a on $NIC"; done',
+    'if [[ ! -s /etc/fabric/secrets.env ]] || grep -qE "^[A-Z][A-Z0-9_]*=$" /etc/fabric/secrets.env; then',
+    '  read -rsp "Admin password for the switches after ZTP (user netadmin; 8+ characters, upper, lower, digit, symbol): " APW; echo',
+    '  H=$(openssl passwd -6 "$APW"); mkdir -p /etc/fabric; umask 077',
+    '  awk -F= -v h="$H" \'/^[A-Z][A-Z0-9_]*=/{k=$1; v=substr($0,index($0,"=")+1); if(v==""){ if(k ~ /HASH/) v=h; else if(k ~ /_FILE$/) v="/etc/hostname"; else if(k ~ /ASN/) v="64999"; else if(k ~ /FREQ/) v="193100000"; else v="AirTest1"} print k"="v; next} {print}\' secrets.env.template > /etc/fabric/secrets.env',
+    '  chmod 600 /etc/fabric/secrets.env; echo "[ok] test secrets written to /etc/fabric/secrets.env (lab only)"',
+    'fi',
+    'bash ./setup.sh',
+    'python3 /opt/estate-build/estate_build.py lab-slice air/slice.csv --conf /etc/fabric/estate.conf',
+    'python3 /opt/estate-build/estate_build.py start --plane all --conf /etc/fabric/estate.conf',
+    'echo',
+    'echo "[next] bash air/ztp-kick.sh  -- restarts ZTP on the slice switches and lists their eth0 MACs for binding"'].join('\n')+'\n';
+  var AIR_ZTPKICK=['#!/bin/bash',   // HS v1.22
+    '# air/ztp-kick.sh -- TC-202, DSX Air lab only, after air/ztp-host.sh: restarts ZTP on each slice switch (they booted on',
+    '# Air’s DHCP before this host took over) and prints each switch’s eth0 MAC, to bind it from Unclaimed in the console.',
+    '# The SN2201 is skipped: its ZTP runs in-band through its OOB spine, which is outside the slice.',
+    'set -u',
+    'cd "$(dirname "$0")/.."',
+    'command -v sshpass >/dev/null || { echo "[i] installing sshpass"; sudo apt-get install -y -qq --no-install-recommends sshpass >/dev/null 2>&1 || { echo "[!] sshpass is needed"; exit 1; }; }',
+    'read -rsp "Password for user cumulus on the switches (a switch still on the factory login is set to it first): " PW; echo',
+    'export SSHPASS="$PW"',
+    'SSH="sshpass -e ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR"',
+    'printf "%-40s %s\\n" SWITCH "eth0 MAC (bind this one)"',
+    'while IFS=, read -r node role cfg peers; do',
+    '  [ "$node" = node ] && continue',
+    '  case "$role" in *SN2201*) printf "%-40s %s\\n" "$node" "skipped: in-band ZTP through the OOB spine (set aside by lab-slice)"; continue;; esac',
+    '  { $SSH -n "cumulus@$node" true 2>/dev/null || python3 air/firstlogin.py "$node" cumulus "$PW" >/dev/null; } || { printf "%-40s %s\\n" "$node" "cannot sign in"; continue; }',
+    '  MAC=$($SSH -n "cumulus@$node" cat /sys/class/net/eth0/address 2>/dev/null)',
+    '  $SSH -n "cumulus@$node" "echo \'$PW\' | sudo -S -p \'\' sh -c \'ztp -R </dev/null >/dev/null 2>&1; nohup sh -c \\"sleep 2; reboot\\" >/dev/null 2>&1 &\'" >/dev/null 2>&1',
+    '  printf "%-40s %s\\n" "$node" "${MAC:-?}"',
+    'done < air/slice.csv',
+    'echo',
+    'echo "[next] in the Deployment Console (https://172.16.16.10:8443 from this host): bind each MAC from Unclaimed to its switch."',
+    'echo "       Each switch takes its address and ZTP script when its wave opens; override a gate that waits on absent devices."'].join('\n')+'\n';
   var AIR_NVTEST="#!/bin/bash\n# nvtest.sh CONFIG OUTDIR [EXPECTED] -- runs ON a Cumulus VX node in DSX Air, as root.\n# Pass 1 (syntax): stages every \"nv set\"/\"nv unset\" line one at a time and records each line NVUE rejects, with its\n#   message; the staged changes are then discarded (nv config detach). Nothing is applied.\n# Pass 2 (apply): stages every line again EXCEPT the out-of-band access lines (eth0 address and DHCP, the management\n#   default route, the eth0 control-plane ACL) -- those would cut the Air OOB session -- then applies once and\n#   records the result, the BGP neighbors and the interfaces.\nset -u\nCFG=${1:-}; OUT=${2:-/tmp/nvtest}\n[ -f \"$CFG\" ] || { echo \"nvtest: no configuration file: $CFG\"; exit 2; }\nrm -rf \"$OUT\"; mkdir -p \"$OUT\"; : > \"$OUT/rejected.tsv\"\nOOB='nv set interface eth0 |acl MGMT-IN|nv set vrf mgmt router static'\nstage(){   # $1 = 1 (every line) or 2 (skip the OOB access lines); prints \"<accepted> <rejected> <skipped>\"\n  local n=0 ok=0 bad=0 skip=0 line msg\n  while IFS= read -r line || [ -n \"$line\" ]; do n=$((n+1))\n    case \"$line\" in \"nv set \"*|\"nv unset \"*) ;; *) continue;; esac\n    if [ \"$1\" = 2 ] && printf '%s' \"$line\" | grep -Eq \"$OOB\"; then skip=$((skip+1)); continue; fi\n    if msg=$(eval \"$line\" </dev/null 2>&1); then ok=$((ok+1))\n    else bad=$((bad+1)); [ \"$1\" = 1 ] && printf '%s\\t%s\\t%s\\n' \"$n\" \"$line\" \"$(printf '%s' \"$msg\" | tr '\\n\\t' '  ' | cut -c1-400)\" >> \"$OUT/rejected.tsv\"; fi\n  done < \"$CFG\"\n  echo \"$ok $bad $skip\"\n}\nnv config detach >/dev/null 2>&1\nT0=$(date +%s)\nread -r ok1 bad1 sk1 < <(stage 1)\nnv config detach >/dev/null 2>&1\nread -r ok2 bad2 sk2 < <(stage 2)\nnv config apply -y > \"$OUT/apply.txt\" 2>&1; rc=$?; echo \"exit $rc\" >> \"$OUT/apply.txt\"\nEXP=${3:-0}; i=0   # HS v1.21: wait up to 5 minutes for the expected sessions on the cabled ports (BFD restarts FRR)\nwhile [ $i -lt 20 ]; do sleep 15; i=$((i+1)); n=$(nv show vrf default router bgp neighbor 2>/dev/null | grep -Ec '^swp[0-9s]+ .* established '); [ $i -ge 3 ] && [ \"${n:-0}\" -ge \"$EXP\" ] && break; done\nnv show vrf default router bgp neighbor > \"$OUT/bgp.txt\" 2>&1\nvtysh -c 'show bgp summary' > \"$OUT/bgp-summary.txt\" 2>&1\nnv show interface > \"$OUT/interfaces.txt\" 2>&1\nnv config history > \"$OUT/history.txt\" 2>&1\n{ echo \"config $(basename \"$CFG\")\"; echo \"release $(grep -m1 DISTRIB_RELEASE /etc/lsb-release 2>/dev/null | cut -d= -f2)\";\n  echo \"pass1 accepted $ok1 rejected $bad1\"; echo \"pass2 accepted $ok2 rejected $bad2 skipped-oob $sk2\"; echo \"apply exit $rc\";\n  echo \"seconds $(( $(date +%s) - T0 ))\"; } > \"$OUT/summary.txt\"\ncat \"$OUT/summary.txt\"\n", AIR_RUNTESTS="#!/bin/bash\n# run-tests.sh -- runs on the DSX Air oob-mgmt-server, from the unpacked deploy folder:  bash air/run-tests.sh\n# 1. Renders a throwaway copy of the package with test secrets (every key filled; password hashes are real SHA-512\n#    hashes of a test password), using setup.sh's own render step -- the files the switches get are the real ones.\n# 2. Copies each slice switch's configuration and air/nvtest.sh to it, runs the test on all switches in parallel.\n# 3. Collects the results into air-results/ and air-results.tgz, and writes air-results/REPORT.md.\nset -u\nHERE=$(cd \"$(dirname \"$0\")/..\" && pwd); cd \"$HERE\"\n[ -f setup.sh ] && [ -f air/slice.csv ] || { echo \"[!] run from the unpacked deploy folder: bash air/run-tests.sh\"; exit 1; }\nW=$(mktemp -d); cp -r \"$HERE/.\" \"$W/\"\nH=$(openssl passwd -6 'AirTest-1')\nawk -F= -v h=\"$H\" '/^[A-Z][A-Z0-9_]*=/{k=$1; v=substr($0,index($0,\"=\")+1); if(v==\"\"){ if(k ~ /HASH/) v=h; else if(k ~ /_FILE$/) v=\"/etc/hostname\"; else if(k ~ /ASN/) v=\"64999\"; else if(k ~ /FREQ/) v=\"193100000\"; else v=\"AirTest1\"} print k\"=\"v; next} {print}' \"$W/secrets.env.template\" > \"$W/secrets.env\"\nsed -n \"/^python3 - \\\"\\$SECRETS\\\" <<'PYEOF'/,/^PYEOF/p\" \"$W/setup.sh\" | sed '1d;$d' > \"$W/.render.py\"\n( cd \"$W\" && python3 .render.py secrets.env | tail -2 )\ncommand -v sshpass >/dev/null || { echo \"[i] installing sshpass\"; sudo apt-get install -y sshpass >/dev/null 2>&1 || { echo \"[!] sshpass is needed\"; exit 1; }; }\nread -rsp \"Password for user cumulus on the switches (the simulation's switch login): \" PW; echo\nexport SSHPASS=\"$PW\"\nSSH=\"sshpass -e ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR\"\nSCP=\"sshpass -e scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR\"\nRES=\"$HERE/air-results\"; rm -rf \"$RES\"; mkdir -p \"$RES\"\nwhile IFS=, read -r node role cfg peers; do\n  [ \"$node\" = node ] && continue\n  f=$(basename \"$cfg\")\n  getent hosts \"$node\" >/dev/null || echo \"[!] $node does not resolve here -- check the node name in the simulation (see air/README.md)\"\n  ( { $SSH -o BatchMode=no \"cumulus@$node\" true 2>/dev/null || python3 \"$W/air/firstlogin.py\" \"$node\" cumulus \"$PW\"; } &&   # HS v1.21: the factory login's forced change\n    $SCP \"$W/$cfg\" \"$W/air/nvtest.sh\" \"cumulus@$node:/tmp/\" &&\n    $SSH \"cumulus@$node\" \"sudo -S -p '' bash /tmp/nvtest.sh /tmp/$f /tmp/nvtest $peers\" <<< \"$PW\" &&\n    $SCP -r \"cumulus@$node:/tmp/nvtest\" \"$RES/$node\" ) > \"$RES/$node.log\" 2>&1 &\n  echo \"[..] $node ($role) started\"\ndone < air/slice.csv\necho \"[..] testing in parallel; each switch takes about 10-20 minutes\"\nwait\npython3 air/report.py \"$RES\" air/slice.csv > \"$RES/REPORT.md\"\ntar czf \"$HERE/air-results.tgz\" -C \"$HERE\" air-results\nrm -rf \"$W\"\necho \"[ok] $RES/REPORT.md  and  $HERE/air-results.tgz\"\n", AIR_REPORT="#!/usr/bin/env python3\n# report.py RESULTS_DIR SLICE_CSV -- one Markdown report from the per-switch nvtest results.\nimport os, re, sys, csv, collections\nres, sl = sys.argv[1], sys.argv[2]\n# NVUE lines Cumulus VX cannot honor: it has no Spectrum ASIC, so these are expected to fail in Air and are checked\n# on hardware instead. Anything else that fails is a finding.\nVX = re.compile(r\"link breakout|link speed|nv set qos|telemetry|wjh|roce|histogram|buffer|adaptive-routing|pfc|ecn|ptp\")\nrows = list(csv.DictReader(open(sl)))\nout = [\"# DSX Air Cumulus test\", \"\", \"| Switch | Role | Pass 1 accepted / rejected | Apply | BGP Established on cabled ports / expected |\", \"|---|---|---|---|---|\"]\nfind, vx = collections.OrderedDict(), collections.OrderedDict()\nfor r in rows:\n    n = r[\"node\"]; d = os.path.join(res, n); s = {}\n    try:\n        for ln in open(os.path.join(d, \"summary.txt\")):\n            k, _, v = ln.strip().partition(\" \"); s[k] = v\n    except OSError:\n        out.append(\"| %s | %s | no result (see %s.log) | | |\" % (n, r[\"role\"], n)); continue\n    est = evpn = 0   # HS v1.21: sessions on cabled ports (unnumbered, swpN) against the expected count; EVPN loopback sessions apart\n    try:\n        for ln in open(os.path.join(d, \"bgp.txt\")):\n            if re.search(r\"\\sestablished\\s\", ln, re.I):\n                if re.match(r\"swp\\d\", ln): est += 1\n                else: evpn += 1\n    except OSError: pass\n    out.append(\"| %s | %s | %s | %s | %s / %s |\" % (n, r[\"role\"], s.get(\"pass1\", \"\").replace(\"accepted \", \"\").replace(\" rejected \", \" / \"),\n               \"ok\" if s.get(\"apply\") == \"exit 0\" else s.get(\"apply\", \"?\"), est, r.get(\"peers\", \"\") + (\" (+%d EVPN)\" % evpn if evpn else \"\")))\n    try:\n        for ln in open(os.path.join(d, \"rejected.tsv\")):\n            p = ln.rstrip(\"\\n\").split(\"\\t\")\n            if len(p) < 3: continue\n            key = re.sub(r\"\\b(swp\\d+(s\\d+)?|\\d+(\\.\\d+){3}(/\\d+)?|\\d+)\\b\", \"#\", p[1])\n            bucket = vx if VX.search(p[1]) else find\n            e = bucket.setdefault(key, {\"line\": p[1], \"msg\": p[2], \"where\": []}); e[\"where\"].append(\"%s:%s\" % (n, p[0]))\n    except OSError: pass\ndef sect(title, b):\n    out.extend([\"\", \"## \" + title + \" (%d distinct)\" % len(b), \"\"])\n    for k, e in b.items():\n        out.append(\"- `%s`  \\n  %s  \\n  %s\" % (e[\"line\"], e[\"msg\"][:300], \", \".join(e[\"where\"][:6]) + (\" ...\" if len(e[\"where\"]) > 6 else \"\")))\nsect(\"Rejected lines to fix\", find)\nsect(\"Rejected lines Cumulus VX cannot run (check on Spectrum hardware)\", vx)\nfor r in rows:\n    try: out.extend([\"\", \"### Apply: \" + r[\"node\"], \"\", \"```\", open(os.path.join(res, r[\"node\"], \"apply.txt\")).read()[-1500:], \"```\"])\n    except OSError: pass\nprint(\"\\n\".join(out))\n";
   var AIR_VX='cumulus-vx-5.18.3', AIR_STUB_PORTS=64, AIR_MEM=4096, AIR_DISK=20, AIR_OOB_GB=6, AIR_ORG_GB=60;   // HS v1.21: Air's minimum switch size; its default org limit
   function _airModel(d){   // HS v1.21: the node's model label in Air (labels.model)
@@ -24387,7 +24462,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
   function airFiles(){   // v537: every file of the kit, in bundle order
     var B=_airBuild(); if(!B) return [];
     return [['air/topology.json', B.topo], ['air/slice.csv', B.slice], ['air/breakouts.csv', B.breakouts], ['air/nvtest.sh', AIR_NVTEST],
-            ['air/run-tests.sh', AIR_RUNTESTS], ['air/report.py', AIR_REPORT], ['air/firstlogin.py', AIR_FIRSTLOGIN], ['air/ztp.sh', AIR_ZTP], ['air/README.md', airReadme(B)]];   // HS v1.21
+            ['air/run-tests.sh', AIR_RUNTESTS], ['air/report.py', AIR_REPORT], ['air/firstlogin.py', AIR_FIRSTLOGIN], ['air/ztp.sh', AIR_ZTP],
+            ['air/ztp-host.sh', AIR_ZTPHOST], ['air/ztp-kick.sh', AIR_ZTPKICK], ['air/README.md', airReadme(B)]];   // HS v1.21, v1.22
   }
   function airReadme(B){
     B=B||_airBuild(); if(!B) return '';
@@ -24437,7 +24513,22 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       '## Not covered here','',
       '- The DPU (HBN) files: HBN runs on BlueField-3, not Cumulus VX.',
       '- The data plane: RoCE, PFC/ECN and adaptive routing need Spectrum hardware.',
-      '- ZTP end to end (Phase B): boots the switches from the provisioning service instead of run-tests.sh; separate runbook.']).join('\n');
+      '- The SN2201 in TC-202: its ZTP rides its uplink through the OOB spine, outside the slice (TC-201 covers its configuration).','',
+      '## TC-202: zero-touch end to end (HS v1.22)','',
+      'The provisioning service runs on oob-mgmt-server in place of Air’s own DHCP. Use a NEW simulation from the same topology.json',
+      '(switches still on their factory configuration); do not set air/ztp.sh as its ZTP script.','',
+      '1. Start the simulation; enable SSH on oob-mgmt-server; copy the .run to it and sign in (tmux new -s t, on its own line).',
+      '2. bash <SITE>-deploy-<ver>.run --extract-only --dir ~/t ;  cd ~/t/<SITE>-deploy',
+      '3. sudo bash air/ztp-host.sh   -- Air’s DHCP stops; the provisioning and gateway addresses go on the OOB interface; test',
+      '   secrets (you give the switches’ netadmin password); setup.sh (you confirm the site and set the console admin password);',
+      '   lab-slice sets aside every device outside the slice; the run starts.',
+      '4. bash air/ztp-kick.sh   -- ZTP restarts on each slice switch; it lists each switch’s eth0 MAC.',
+      '5. Console (https://<prov address>:8443; from your PC: ssh -L 8443:<prov address>:8443 to oob-mgmt-server, then https://localhost:8443):',
+      '   bind each MAC under Unclaimed to its switch. A switch takes its address and option 239 when its wave opens.',
+      '6. Each build’s gate blocks on the devices set aside (and on carrier, host and storage checks Air cannot run): override it',
+      '   with a reason ("TC-202 Air slice") once the slice switches in that build are Done.',
+      '7. Pass: every slice switch except the SN2201 reaches Done. On a switch (user netadmin, the password from step 3):',
+      '   sudo ztp -s shows success; the factory cumulus login is refused (locked).']).join('\n');
   }
   // v499 (lab): the cluster configuration as one standalone SRX -- node 0's settings, node 0's reth members.
   function fwStandalone(t){
@@ -34597,6 +34688,28 @@ class Estate(Phase2Mixin):
             self.kea_dirty = True
             return True, "ok"
 
+    def lab_slice(self, keep, reason, user):
+        # HS v1.22 (TC-202): a lab holds a few of the site's devices. Every other device is set aside, so its wave
+        # settles; a device whose ZTP rides an uplink relayed by a switch outside the slice (an SN2201 behind its OOB
+        # spine) cannot be reached on a flat lab network and is set aside too. Gates that need the absent devices are
+        # then overridden by the operator, with a reason. Audited per device, like any quarantine.
+        keep = set(keep)
+        unknown = sorted(n for n in keep if n not in self.devs)
+        if not keep or len(unknown) == len(keep):
+            return False, "none of the slice's nodes are in this plan (%s)" % ", ".join(unknown[:3])
+        kept, out = [], 0
+        for n in self.devs:
+            inband = bool(self.devs[n].get("ztp_links"))
+            if n in keep and not inband:
+                kept.append(n)
+                continue
+            if self.st[n]["flag"] == "quarantined":
+                continue
+            self.quarantine(n, user, ("lab: in-band ZTP through a switch outside the slice" if n in keep else reason))
+            out += 1
+        self.event("Lab slice: %d device(s) kept (%s), %d set aside" % (len(kept), ", ".join(self.devs[n].get("short", n) for n in kept[:6]) + (" ..." if len(kept) > 6 else ""), out), "warn", user=user)
+        return True, "%d kept, %d set aside%s" % (len(kept), out, ("; not in the plan: " + ", ".join(unknown)) if unknown else "")
+
     def mark_configured(self, n, user, note):
         with self.lock:
             self.audit(user, "mark-configured", n, note)
@@ -35281,6 +35394,9 @@ def make_internal_handler(est):
             if u.path == "/local/start":
                 ok, msg = est.start_run(data.get("plane", "all"), "cli:" + data.get("user", "root"), data.get("reason", ""))
                 return self._j(200 if ok else 409, {"ok": ok, "msg": msg})
+            if u.path == "/local/lab-slice":
+                ok, msg = est.lab_slice(data.get("keep") or [], data.get("reason", ""), "cli:root")
+                return self._j(200 if ok else 409, {"ok": ok, "msg": msg})
             if u.path == "/local/promote":
                 ok, msg = est.promote()
                 return self._j(200 if ok else 409, {"ok": ok, "msg": msg})
@@ -35753,7 +35869,7 @@ def probe_dhcp(nic, wait=4.0):
 def main():
     here = os.path.dirname(os.path.realpath(__file__))
     ap = argparse.ArgumentParser(description="Estate provisioning service (" + VERSION + ")")
-    ap.add_argument("cmd", nargs="?", default="serve", choices=["serve", "init", "status", "start", "pause", "resume", "check", "user", "probe-dhcp", "promote", "result", "fingerprint"])
+    ap.add_argument("cmd", nargs="?", default="serve", choices=["serve", "init", "status", "start", "pause", "resume", "check", "user", "probe-dhcp", "promote", "result", "fingerprint", "lab-slice"])
     ap.add_argument("args", nargs="*")
     ap.add_argument("--plan", default=os.path.join(here, "estate.json"))
     ap.add_argument("--conf", default="/etc/fabric/estate.conf")
@@ -35781,7 +35897,7 @@ def main():
             return 1
         print(hashlib.sha256(der).hexdigest())
         return 0
-    if a.cmd in ("status", "start", "pause", "resume", "promote", "result"):
+    if a.cmd in ("status", "start", "pause", "resume", "promote", "result", "lab-slice"):
         conf = copy.deepcopy(DEFAULTS)
         try:
             conf.update(json.load(open(a.conf)))
@@ -35796,6 +35912,12 @@ def main():
             body = {"plane": a.plane, "reason": a.reason}
             if a.cmd == "result":
                 body = {"kind": "nccl", "busbw": float(a.args[0]), "target": float(a.args[1])}
+            if a.cmd == "lab-slice":   # HS v1.22: lab-slice SLICE.csv (the node column) [--reason TEXT]
+                if not a.args:
+                    print("usage: estate_build.py lab-slice air/slice.csv [--reason TEXT]")
+                    return 2
+                keep = [r["node"] for r in csv.DictReader(open(a.args[0])) if r.get("node")]
+                body = {"keep": keep, "reason": a.reason or "lab: outside the test slice (%s)" % os.path.basename(a.args[0])}
             req = urllib.request.Request(base + "/local/" + a.cmd, data=json.dumps(body).encode(),
                                          headers={"X-Estate-Token": tok, "Content-Type": "application/json"})
             print(urllib.request.urlopen(req, timeout=10).read().decode())

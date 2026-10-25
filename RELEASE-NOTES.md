@@ -1,3 +1,11 @@
+# AIDC DBD Desktop 2.0.16 (builder HS-v1.22, site runner 1.5.0)
+
+- **Builder HS-v1.22: TC-202 (zero-touch end to end in DSX Air).**
+  - **air/ztp-host.sh** makes Air's oob-mgmt-server the provisioning host. It stops Air's DHCP, puts the provisioning and gateway addresses on the OOB interface, writes test secrets, runs setup.sh, sets aside the devices outside the slice and starts the run.
+  - **air/ztp-kick.sh** restarts ZTP on the slice switches and lists their eth0 MACs for binding from Unclaimed.
+  - **estate_build.py lab-slice SLICE.csv** sets aside (quarantines, audited) every device outside a lab slice, so its waves settle.
+  - **Cumulus ZTP scripts** reach the provisioning host through the management VRF when the default VRF has no route.
+
 # AIDC DBD Desktop 2.0.15 (builder HS-v1.21, site runner 1.5.0)
 
 - **Show DSX Air test files:** Site build > Show DSX Air test files… takes air/ out of a .run into a folder next to it (`<run name>-air`) and opens it. The package checksum is verified first; nothing is installed. No Linux machine is needed to get topology.json for the Air import.
