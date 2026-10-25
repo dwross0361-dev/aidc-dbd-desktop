@@ -942,7 +942,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.20';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.21';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   var RADIX=64, CAGE=800;
   // ---- FABRIC PROFILE (parameterized per accelerator platform) ----------------------------------------
   // rails == accelerators per host. Each accelerator instance gets its own rail leaf, which is what
@@ -9612,6 +9612,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     osZtpCumulus(d, host, mp).forEach(function(l){ L.push(l); });
     cfg.split('\n').forEach(function(l){ if(/^\s*nv config apply/.test(l)) return; L.push(l); });
     L.push('nv config apply -y');
+    L.push('# HS v1.21: the factory account (cumulus, default password) is locked and expired; the switch is managed as '+ADMIN_USER+' (secrets.env)');
+    L.push('passwd -l cumulus >/dev/null && chage -E 0 cumulus');
     L.push('curl -fsS -m 5 "http://'+mp.prov+'/ci/'+host+'/config" >/dev/null 2>&1 || true   # check-in: estate service (provision/)');
     L.push('echo "ZTP complete: $(date)"');
     L.push('exit 0');
@@ -14359,6 +14361,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
   // sub-port speeds, and route-maps can no longer match an extended-community list (matched on the VNI instead -- in this
   // design every route target is <admin>:<VNI>, so the two are the same test). Generators keep one form; this rewrites the
   // finished switch config. DPU HBN 3.2 keeps the pre-5.15 syntax and is NOT passed through it.
+  function _q121(v){ return '"'+String(v==null?'':v).replace(/["\\]/g,'')+'"'; }   // HS v1.21: a free-text value, quoted
   function nvue518(text){
     var lines=String(text).split('\n'), out=[], m;
     var ecl={}, rmUse={}, bfdT={}, tac={}, once={};
@@ -14390,6 +14393,11 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
         push1('prof'+nm, ['nv set router bfd profile '+nm+' min-tx-interval '+tx, 'nv set router bfd profile '+nm+' min-rx-interval '+rx, 'nv set router bfd profile '+nm+' detect-multiplier '+mu]);
         out.push(m[1]+' bfd profile '+nm+cm); return; }
       if(/^nv set vrf \S+ router bgp (neighbor|peer-group) \S+ bfd (min-tx-interval|min-rx-interval|detect-multiplier) \d+$/.test(l)) return;
+      if((m=/^(nv set interface \S+ router ospf) bfd enable on$/.exec(l))){   // HS v1.21: 5.18 has no "router ospf bfd state"
+        var on='BFD-'+BFD_MS+'-'+BFD_MS+'-'+BFD_MULT;
+        push1('bfd', ['nv set router bfd state enabled   # BFD runs from profiles on 5.15+ (applying it restarts FRR once)']);
+        push1('prof'+on, ['nv set router bfd profile '+on+' min-tx-interval '+BFD_MS, 'nv set router bfd profile '+on+' min-rx-interval '+BFD_MS, 'nv set router bfd profile '+on+' detect-multiplier '+BFD_MULT]);
+        out.push(m[1]+' bfd profile '+on+cm); return; }
       // TACACS: servers keyed by address with a priority; no enable switch
       if(l==='nv set system aaa tacacs enable on'){ push1('tacorder', ['nv set system aaa authentication order tacacs local']); return; }
       if((m=/^nv set system aaa tacacs server (\d+) host (\S+)$/.exec(l))){ out.push('nv set system aaa tacacs server '+m[2]+' priority '+(tacRank[m[1]]||1)+cm); return; }
@@ -14604,10 +14612,10 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       checked:OS_CHECKED, confirm:['QFX5230-64CD as an EVPN route-server spine: Apstra qualifies it as IP forwarder only -- check Feature Explorer','EVO image file name'],
       src:['juniper.net/documentation/us/en/software/junos/ai-ml-evo/topics/concept/ai-ml-releases.html','Junos OS Evolved 25.2X100-D20 release notes']},
     'junos-evo-ptx':{os:'Junos OS Evolved', family:'junos', label:'Junos OS Evolved (PTX10001-36MR DCI hub)',
-      models:['PTX10001-36MR'], target:'24.4R2-S (latest)', tv:'24.4R2', previous:'24.2R2-EVO', pv:'24.2R2', baseline:'23.4R2-S7-EVO', bv:'23.4R2-S7',
-      image:'junos-evo-install-ptx-x86-64-24.4R2-S<n>-EVO.iso', verify:'show version', enforce:'ZTP DHCP option 43 image-file-name',
+      models:['PTX10001-36MR'], target:'24.4R2-S3-EVO', tv:'24.4R2-S3', previous:'24.2R2-EVO', pv:'24.2R2', baseline:'23.4R2-S7-EVO', bv:'23.4R2-S7',
+      image:'junos-evo-install-ptx-x86-64-24.4R2-S3-EVO.iso', verify:'show version', enforce:'ZTP DHCP option 43 image-file-name',
       notes:['Apstra minimum for the interconnect-gateway role is 23.4R2-S7-EVO'], checked:OS_CHECKED,
-      confirm:['Exact 24.4R2 service release (KB21476 names the latest S)','First release for the PTX10001-36MR'],
+      confirm:['24.4R2-S3 pinned (HS v1.21): confirm it is still the KB21476 recommendation before a Build','First release for the PTX10001-36MR'],
       src:['supportportal.juniper.net KB21476','Apstra 6.2 qualified devices']},
     'junos-evo-acx':{os:'Junos OS Evolved', family:'junos', label:'Junos OS Evolved (ACX7100-32C)',
       models:['ACX7100-32C'], target:'24.2R2-EVO', tv:'24.2R2', previous:'23.4R2-S7-EVO', pv:'23.4R2-S7', baseline:'23.4R2-S7-EVO', bv:'23.4R2-S7',
@@ -14615,13 +14623,13 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       notes:['KB21476 lists 24.2R2-EVO for the ACX7100; Apstra qualifies 23.4R2-S7-EVO'], checked:OS_CHECKED,
       confirm:['KB21476 note added Dec 2025 not readable','EVO image file name'], src:['supportportal.juniper.net KB21476','Apstra 6.2 qualified devices']},
     'junos-mx':{os:'Junos OS', family:'junos', label:'Junos OS (MX304 edge router)',
-      models:['MX304'], target:'24.4R2-S (latest)', tv:'24.4R2', previous:'23.4R2-S (latest)', pv:'23.4R2', baseline:'23.4R2', bv:'23.4R2',
-      image:'junos-vmhost-install-mx-x86-64-24.4R2-S<n>.tgz', verify:'show version', enforce:'ZTP DHCP option 43 image-file-name',
-      notes:['Unnumbered BGP needs 21.1R1+, below the baseline'], checked:OS_CHECKED, confirm:['Exact 24.4R2 service release','Image file name'],
+      models:['MX304'], target:'24.4R2-S3', tv:'24.4R2-S3', previous:'23.4R2-S5', pv:'23.4R2-S5', baseline:'23.4R2', bv:'23.4R2',
+      image:'junos-vmhost-install-mx-x86-64-24.4R2-S3.tgz', verify:'show version', enforce:'ZTP DHCP option 43 image-file-name',
+      notes:['Unnumbered BGP needs 21.1R1+, below the baseline'], checked:OS_CHECKED, confirm:['24.4R2-S3 pinned (HS v1.21): confirm it is still the KB21476 recommendation before a Build','Image file name'],
       src:['supportportal.juniper.net KB21476']},
     'junos-srx4700':{os:'Junos OS', family:'junos', label:'Junos OS (SRX4700 front-end firewall)',
-      models:['SRX4700-700','SRX4700'], target:'24.4R2-S (latest)', tv:'24.4R2', previous:'—', pv:'', baseline:'24.4R1-S2', bv:'24.4R1-S2',
-      image:'junos-install-srxentedge-x86-64-24.4R2-S<n>.tgz', verify:'show version', enforce:'Mist Secure ZTP or a console install; then the PyEZ release gate',
+      models:['SRX4700-700','SRX4700'], target:'24.4R2-S3', tv:'24.4R2-S3', previous:'—', pv:'', baseline:'24.4R1-S2', bv:'24.4R1-S2',
+      image:'junos-install-srxentedge-x86-64-24.4R2-S3.tgz', verify:'show version', enforce:'Mist Secure ZTP or a console install; then the PyEZ release gate',
       notes:['First supported release 24.4R1-S2',
              'High availability is Multinode High Availability (MNHA) ONLY: the SRX4700 does not support chassis cluster; the builder generates MNHA routing mode'],
       checked:OS_CHECKED, confirm:['SRX4700 is not in KB21476: the target follows the MX train (inferred)','Routing-instance scale at about 120 tenants (the datasheet gives no figure; the SRX4600 lists 2,000)','DHCP ZTP on the SRX4700 (Juniper documents ZTP/sZTP; DHCP option 43 unconfirmed)','Image package name (srxentedge vs vmhost)'],
@@ -16636,7 +16644,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       'sysctl -w net.ipv4.ip_forward=1',
       'iptables -t nat -C POSTROUTING -s \"$MGMT_NET\" -o \"$UP\" -j MASQUERADE 2>/dev/null || iptables -t nat -A POSTROUTING -s \"$MGMT_NET\" -o \"$UP\" -j MASQUERADE',
       '# DNS for the firewalls: a forwarder on '+mp.prov+' (the DHCP server hands it out to the FTD reservations)',
-      'command -v dnsmasq >/dev/null || { apt-get install -y dnsmasq 2>/dev/null || dnf install -y dnsmasq; }',
+      'command -v dnsmasq >/dev/null || { apt-get install -y --no-install-recommends dnsmasq 2>/dev/null || dnf install -y dnsmasq; }',
       'printf \"listen-address='+mp.prov+'\\nbind-interfaces\\nno-dhcp-interface=*\\nserver=1.1.1.1\\nserver=9.9.9.9\\n\" > /etc/dnsmasq.d/stage0.conf',
       'systemctl restart dnsmasq',
       'echo \"[ok] NAT $MGMT_NET -> $UP and DNS on '+mp.prov+'. Check from a firewall: ping registration.us.sse.itd.cisco.com\"'].join('\n');
@@ -22394,8 +22402,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
             'system syslog host '+ops('syslog2','SYSLOG2_IP')+' any notice',
             'system syslog file messages any notice',
             'system syslog file interactive-commands interactive-commands any']);
-    S.push(['snmp location '+ops('snmpLocation','SITE_AND_RACK'),
-            'snmp contact '+ops('snmpContact','SNMP_CONTACT'),
+    S.push(['snmp location '+_q121(ops('snmpLocation','SITE_AND_RACK')),   // HS v1.21: quoted
+            'snmp contact '+_q121(ops('snmpContact','SNMP_CONTACT')),
             'snmp v3 usm local-engine user '+ops('snmpUser','SNMP_V3_USER')+' authentication-sha authentication-key '+SA,
             'snmp v3 usm local-engine user '+ops('snmpUser','SNMP_V3_USER')+' privacy-aes128 privacy-key '+SP,
             'snmp v3 vacm security-to-group security-model usm security-name '+ops('snmpUser','SNMP_V3_USER')+' group NMS',
@@ -23441,8 +23449,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       L.push('nv set system aaa tacacs server 20 secret '+TK);
       L.push('nv set system aaa tacacs accounting enable on');
       L.push('nv set service snmp-server username '+o('snmpUser','SNMP_V3_USER')+' auth-sha '+SA+' encrypt-aes '+SP);
-      L.push('nv set service snmp-server system-contact '+o('snmpContact','SNMP_CONTACT'));
-      L.push('nv set service snmp-server system-location '+o('snmpLocation','SITE_AND_RACK'));
+      L.push('nv set service snmp-server system-contact '+_q121(o('snmpContact','SNMP_CONTACT')));   // HS v1.21: quoted
+      L.push('nv set service snmp-server system-location '+_q121(o('snmpLocation','SITE_AND_RACK')));
       gnmiLines('cumulus').forEach(function(l){ L.push(l); });
     } else if(os==='srl'){
       var M='set / system ';
@@ -23570,6 +23578,9 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     if(!re) return out; while((m=re.exec(text))){ if(!seen[m[1]]){ seen[m[1]]=1; out.push(m[1]); } }
     var _par={}; out.forEach(function(q){ for(var i=1;i<q.length;i++){ var ch=q.charAt(i); if(ch==='s'||ch==='/'||ch===':') _par[q.slice(0,i)]=1; } });   // HS v1.06: every parent prefix, once
     out=out.filter(function(p){ return !_par[p]; });   // broken-out parents
+    var _bk={cumulus:/^nv set interface (swp\d+) link breakout /mg, srl:/^set \/ interface (ethernet-\d+\/\d+) breakout-mode/mg,
+      junos:/^(?:set )?interfaces (et-\d+\/\d+\/\d+) number-of-sub-ports/mg, nxos:/^interface breakout module 1 port (\d+) map/mg}[os], _bp={}, _bm;   // HS v1.21
+    if(_bk){ while((_bm=_bk.exec(text))) _bp[os==='nxos'?('Ethernet1/'+_bm[1]):_bm[1]]=1; out=out.filter(function(p){ return !_bp[p] && !_bp[p.replace(/^e/,'E')]; }); }
     var key=function(x){ return x.replace(/\d+/g,function(n){ return ('00000'+n).slice(-5); }); };
     return out.sort(function(a,b){ a=key(a); b=key(b); return a<b?-1:(a>b?1:0); });
   }
@@ -24278,8 +24289,47 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     return out.slice(0,at).concat(['! every VLAN is defined before the routing sections (a vlan line after router bgp is taken as a BGP EVPN vlan)'], moved, ['!'], out.slice(at)).join('\n');
   }
   // v537: the DSX Air Cumulus test kit (Captain, 19 Oct 2026)
-  var AIR_NVTEST="#!/bin/bash\n# nvtest.sh CONFIG OUTDIR -- runs ON a Cumulus VX node in DSX Air, as root.\n# Pass 1 (syntax): stages every \"nv set\"/\"nv unset\" line one at a time and records each line NVUE rejects, with its\n#   message; the staged changes are then discarded (nv config detach). Nothing is applied.\n# Pass 2 (apply): stages every line again EXCEPT the out-of-band access lines (eth0 address and DHCP, the management\n#   default route, the eth0 control-plane ACL) -- those would cut the Air OOB session -- then applies once and\n#   records the result, the BGP neighbors and the interfaces.\nset -u\nCFG=${1:-}; OUT=${2:-/tmp/nvtest}\n[ -f \"$CFG\" ] || { echo \"nvtest: no configuration file: $CFG\"; exit 2; }\nrm -rf \"$OUT\"; mkdir -p \"$OUT\"; : > \"$OUT/rejected.tsv\"\nOOB='nv set interface eth0 |acl MGMT-IN|nv set vrf mgmt router static'\nstage(){   # $1 = 1 (every line) or 2 (skip the OOB access lines); prints \"<accepted> <rejected> <skipped>\"\n  local n=0 ok=0 bad=0 skip=0 line msg\n  while IFS= read -r line || [ -n \"$line\" ]; do n=$((n+1))\n    case \"$line\" in \"nv set \"*|\"nv unset \"*) ;; *) continue;; esac\n    if [ \"$1\" = 2 ] && printf '%s' \"$line\" | grep -Eq \"$OOB\"; then skip=$((skip+1)); continue; fi\n    if msg=$(eval \"$line\" </dev/null 2>&1); then ok=$((ok+1))\n    else bad=$((bad+1)); [ \"$1\" = 1 ] && printf '%s\\t%s\\t%s\\n' \"$n\" \"$line\" \"$(printf '%s' \"$msg\" | tr '\\n\\t' '  ' | cut -c1-400)\" >> \"$OUT/rejected.tsv\"; fi\n  done < \"$CFG\"\n  echo \"$ok $bad $skip\"\n}\nnv config detach >/dev/null 2>&1\nT0=$(date +%s)\nread -r ok1 bad1 sk1 < <(stage 1)\nnv config detach >/dev/null 2>&1\nread -r ok2 bad2 sk2 < <(stage 2)\nnv config apply -y > \"$OUT/apply.txt\" 2>&1; rc=$?; echo \"exit $rc\" >> \"$OUT/apply.txt\"\nsleep 45   # let BGP and BFD settle\nnv show vrf default router bgp neighbor > \"$OUT/bgp.txt\" 2>&1\nvtysh -c 'show bgp summary' > \"$OUT/bgp-summary.txt\" 2>&1\nnv show interface > \"$OUT/interfaces.txt\" 2>&1\nnv config history > \"$OUT/history.txt\" 2>&1\n{ echo \"config $(basename \"$CFG\")\"; echo \"release $(grep -m1 DISTRIB_RELEASE /etc/lsb-release 2>/dev/null | cut -d= -f2)\";\n  echo \"pass1 accepted $ok1 rejected $bad1\"; echo \"pass2 accepted $ok2 rejected $bad2 skipped-oob $sk2\"; echo \"apply exit $rc\";\n  echo \"seconds $(( $(date +%s) - T0 ))\"; } > \"$OUT/summary.txt\"\ncat \"$OUT/summary.txt\"\n", AIR_RUNTESTS="#!/bin/bash\n# run-tests.sh -- runs on the DSX Air oob-mgmt-server, from the unpacked deploy folder:  bash air/run-tests.sh\n# 1. Renders a throwaway copy of the package with test secrets (every key filled; password hashes are real SHA-512\n#    hashes of a test password), using setup.sh's own render step -- the files the switches get are the real ones.\n# 2. Copies each slice switch's configuration and air/nvtest.sh to it, runs the test on all switches in parallel.\n# 3. Collects the results into air-results/ and air-results.tgz, and writes air-results/REPORT.md.\nset -u\nHERE=$(cd \"$(dirname \"$0\")/..\" && pwd); cd \"$HERE\"\n[ -f setup.sh ] && [ -f air/slice.csv ] || { echo \"[!] run from the unpacked deploy folder: bash air/run-tests.sh\"; exit 1; }\nW=$(mktemp -d); cp -r \"$HERE/.\" \"$W/\"\nH=$(openssl passwd -6 'AirTest-1')\nawk -F= -v h=\"$H\" '/^[A-Z][A-Z0-9_]*=/{k=$1; v=substr($0,index($0,\"=\")+1); if(v==\"\"){ if(k ~ /HASH/) v=h; else if(k ~ /_FILE$/) v=\"/etc/hostname\"; else if(k ~ /ASN/) v=\"64999\"; else if(k ~ /FREQ/) v=\"193100000\"; else v=\"AirTest1\"} print k\"=\"v; next} {print}' \"$W/secrets.env.template\" > \"$W/secrets.env\"\nsed -n \"/^python3 - \\\"\\$SECRETS\\\" <<'PYEOF'/,/^PYEOF/p\" \"$W/setup.sh\" | sed '1d;$d' > \"$W/.render.py\"\n( cd \"$W\" && python3 .render.py secrets.env | tail -2 )\ncommand -v sshpass >/dev/null || { echo \"[i] installing sshpass\"; sudo apt-get install -y sshpass >/dev/null 2>&1 || { echo \"[!] sshpass is needed\"; exit 1; }; }\nread -rsp \"Password for user cumulus on the switches (the simulation's switch login): \" PW; echo\nexport SSHPASS=\"$PW\"\nSSH=\"sshpass -e ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR\"\nSCP=\"sshpass -e scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR\"\nRES=\"$HERE/air-results\"; rm -rf \"$RES\"; mkdir -p \"$RES\"\nwhile IFS=, read -r node role cfg peers; do\n  [ \"$node\" = node ] && continue\n  f=$(basename \"$cfg\")\n  getent hosts \"$node\" >/dev/null || echo \"[!] $node does not resolve here -- check the node name in the simulation (see air/README.md)\"\n  ( $SCP \"$W/$cfg\" \"$W/air/nvtest.sh\" \"cumulus@$node:/tmp/\" &&\n    $SSH \"cumulus@$node\" \"sudo -S -p '' bash /tmp/nvtest.sh /tmp/$f /tmp/nvtest\" <<< \"$PW\" &&\n    $SCP -r \"cumulus@$node:/tmp/nvtest\" \"$RES/$node\" ) > \"$RES/$node.log\" 2>&1 &\n  echo \"[..] $node ($role) started\"\ndone < air/slice.csv\necho \"[..] testing in parallel; each switch takes about 10-20 minutes\"\nwait\npython3 air/report.py \"$RES\" air/slice.csv > \"$RES/REPORT.md\"\ntar czf \"$HERE/air-results.tgz\" -C \"$HERE\" air-results\nrm -rf \"$W\"\necho \"[ok] $RES/REPORT.md  and  $HERE/air-results.tgz\"\n", AIR_REPORT="#!/usr/bin/env python3\n# report.py RESULTS_DIR SLICE_CSV -- one Markdown report from the per-switch nvtest results.\nimport os, re, sys, csv, collections\nres, sl = sys.argv[1], sys.argv[2]\n# NVUE lines Cumulus VX cannot honor: it has no Spectrum ASIC, so these are expected to fail in Air and are checked\n# on hardware instead. Anything else that fails is a finding.\nVX = re.compile(r\"link breakout|link speed|nv set qos|telemetry|wjh|roce|histogram|buffer|adaptive-routing|pfc|ecn|ptp\")\nrows = list(csv.DictReader(open(sl)))\nout = [\"# DSX Air Cumulus test\", \"\", \"| Switch | Role | Pass 1 accepted / rejected | Apply | BGP Established / expected |\", \"|---|---|---|---|---|\"]\nfind, vx = collections.OrderedDict(), collections.OrderedDict()\nfor r in rows:\n    n = r[\"node\"]; d = os.path.join(res, n); s = {}\n    try:\n        for ln in open(os.path.join(d, \"summary.txt\")):\n            k, _, v = ln.strip().partition(\" \"); s[k] = v\n    except OSError:\n        out.append(\"| %s | %s | no result (see %s.log) | | |\" % (n, r[\"role\"], n)); continue\n    est = 0\n    try: est = len(re.findall(r\"\\bestablished\\b\", open(os.path.join(d, \"bgp.txt\")).read(), re.I))\n    except OSError: pass\n    out.append(\"| %s | %s | %s | %s | %s / %s |\" % (n, r[\"role\"], s.get(\"pass1\", \"\").replace(\"accepted \", \"\").replace(\" rejected \", \" / \"),\n               \"ok\" if s.get(\"apply\") == \"exit 0\" else s.get(\"apply\", \"?\"), est, r.get(\"peers\", \"\")))\n    try:\n        for ln in open(os.path.join(d, \"rejected.tsv\")):\n            p = ln.rstrip(\"\\n\").split(\"\\t\")\n            if len(p) < 3: continue\n            key = re.sub(r\"\\b(swp\\d+(s\\d+)?|\\d+(\\.\\d+){3}(/\\d+)?|\\d+)\\b\", \"#\", p[1])\n            bucket = vx if VX.search(p[1]) else find\n            e = bucket.setdefault(key, {\"line\": p[1], \"msg\": p[2], \"where\": []}); e[\"where\"].append(\"%s:%s\" % (n, p[0]))\n    except OSError: pass\ndef sect(title, b):\n    out.extend([\"\", \"## \" + title + \" (%d distinct)\" % len(b), \"\"])\n    for k, e in b.items():\n        out.append(\"- `%s`  \\n  %s  \\n  %s\" % (e[\"line\"], e[\"msg\"][:300], \", \".join(e[\"where\"][:6]) + (\" ...\" if len(e[\"where\"]) > 6 else \"\")))\nsect(\"Rejected lines to fix\", find)\nsect(\"Rejected lines Cumulus VX cannot run (check on Spectrum hardware)\", vx)\nfor r in rows:\n    try: out.extend([\"\", \"### Apply: \" + r[\"node\"], \"\", \"```\", open(os.path.join(res, r[\"node\"], \"apply.txt\")).read()[-1500:], \"```\"])\n    except OSError: pass\nprint(\"\\n\".join(out))\n";
-  var AIR_VX='cumulus-vx-5.18.3', AIR_STUB_PORTS=64;
+  var AIR_FIRSTLOGIN=['#!/usr/bin/env python3',   // HS v1.21
+    '# firstlogin.py NODE OLD NEW -- DSX Air lab only: signs in to a Cumulus VX switch with its factory password and answers the',
+    '# forced change at first login with NEW. A switch that already takes NEW (or has no forced change) just signs in and out.',
+    'import os, pty, select, sys, time',
+    'node, old, new = sys.argv[1:4]',
+    'pid, fd = pty.fork()',
+    'if pid == 0:',
+    '    os.execvp("ssh", ["ssh", "-tt", "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null", "-o", "LogLevel=ERROR",',
+    '                      "-o", "PubkeyAuthentication=no", "-o", "NumberOfPasswordPrompts=1", "cumulus@" + node, "exit"])',
+    'P = [(b"current password:", old), (b"retype new password:", new), (b"new password:", new), (b"password:", old)]',
+    'buf, pos, end = b"", 0, time.time() + 60',
+    'while time.time() < end:',
+    '    if not select.select([fd], [], [], 1)[0]: continue',
+    '    try: data = os.read(fd, 1024)',
+    '    except OSError: break',
+    '    if not data: break',
+    '    buf += data; low = buf.lower()',
+    '    while True:',
+    '        hits = [(low.find(p, pos), p, a) for p, a in P if low.find(p, pos) >= 0]',
+    '        if not hits: break',
+    '        i, p, a = min(hits, key=lambda h: h[0]); pos = i + len(p); os.write(fd, (a + "\\n").encode())',
+    '_, st = os.waitpid(pid, 0)',
+    'ok = os.WIFEXITED(st) and os.WEXITSTATUS(st) == 0',
+    'print("[%s] %s: %s" % ("ok" if ok else "!!", node, "signed in" if ok else "first login failed (see the switch console)"))',
+    'sys.exit(0 if ok else 1)'].join('\n')+'\n';
+  var AIR_ZTP=['#!/bin/bash','# CUMULUS-AUTOPROVISIONING',   // HS v1.21
+    '# air/ztp.sh -- DSX Air lab only: the simulation\u2019s ZTP script. Sets the switch login to cumulus / CumulusLinux! with no',
+    '# forced change, so air/run-tests.sh can sign in. Never for real switches: their ZTP (ztp/<switch>.sh) locks this account.',
+    "echo 'cumulus:CumulusLinux!' | chpasswd",
+    'passwd -x 99999 cumulus',
+    'exit 0'].join('\n')+'\n';
+  var AIR_NVTEST="#!/bin/bash\n# nvtest.sh CONFIG OUTDIR [EXPECTED] -- runs ON a Cumulus VX node in DSX Air, as root.\n# Pass 1 (syntax): stages every \"nv set\"/\"nv unset\" line one at a time and records each line NVUE rejects, with its\n#   message; the staged changes are then discarded (nv config detach). Nothing is applied.\n# Pass 2 (apply): stages every line again EXCEPT the out-of-band access lines (eth0 address and DHCP, the management\n#   default route, the eth0 control-plane ACL) -- those would cut the Air OOB session -- then applies once and\n#   records the result, the BGP neighbors and the interfaces.\nset -u\nCFG=${1:-}; OUT=${2:-/tmp/nvtest}\n[ -f \"$CFG\" ] || { echo \"nvtest: no configuration file: $CFG\"; exit 2; }\nrm -rf \"$OUT\"; mkdir -p \"$OUT\"; : > \"$OUT/rejected.tsv\"\nOOB='nv set interface eth0 |acl MGMT-IN|nv set vrf mgmt router static'\nstage(){   # $1 = 1 (every line) or 2 (skip the OOB access lines); prints \"<accepted> <rejected> <skipped>\"\n  local n=0 ok=0 bad=0 skip=0 line msg\n  while IFS= read -r line || [ -n \"$line\" ]; do n=$((n+1))\n    case \"$line\" in \"nv set \"*|\"nv unset \"*) ;; *) continue;; esac\n    if [ \"$1\" = 2 ] && printf '%s' \"$line\" | grep -Eq \"$OOB\"; then skip=$((skip+1)); continue; fi\n    if msg=$(eval \"$line\" </dev/null 2>&1); then ok=$((ok+1))\n    else bad=$((bad+1)); [ \"$1\" = 1 ] && printf '%s\\t%s\\t%s\\n' \"$n\" \"$line\" \"$(printf '%s' \"$msg\" | tr '\\n\\t' '  ' | cut -c1-400)\" >> \"$OUT/rejected.tsv\"; fi\n  done < \"$CFG\"\n  echo \"$ok $bad $skip\"\n}\nnv config detach >/dev/null 2>&1\nT0=$(date +%s)\nread -r ok1 bad1 sk1 < <(stage 1)\nnv config detach >/dev/null 2>&1\nread -r ok2 bad2 sk2 < <(stage 2)\nnv config apply -y > \"$OUT/apply.txt\" 2>&1; rc=$?; echo \"exit $rc\" >> \"$OUT/apply.txt\"\nEXP=${3:-0}; i=0   # HS v1.21: wait up to 5 minutes for the expected sessions on the cabled ports (BFD restarts FRR)\nwhile [ $i -lt 20 ]; do sleep 15; i=$((i+1)); n=$(nv show vrf default router bgp neighbor 2>/dev/null | grep -Ec '^swp[0-9s]+ .* established '); [ $i -ge 3 ] && [ \"${n:-0}\" -ge \"$EXP\" ] && break; done\nnv show vrf default router bgp neighbor > \"$OUT/bgp.txt\" 2>&1\nvtysh -c 'show bgp summary' > \"$OUT/bgp-summary.txt\" 2>&1\nnv show interface > \"$OUT/interfaces.txt\" 2>&1\nnv config history > \"$OUT/history.txt\" 2>&1\n{ echo \"config $(basename \"$CFG\")\"; echo \"release $(grep -m1 DISTRIB_RELEASE /etc/lsb-release 2>/dev/null | cut -d= -f2)\";\n  echo \"pass1 accepted $ok1 rejected $bad1\"; echo \"pass2 accepted $ok2 rejected $bad2 skipped-oob $sk2\"; echo \"apply exit $rc\";\n  echo \"seconds $(( $(date +%s) - T0 ))\"; } > \"$OUT/summary.txt\"\ncat \"$OUT/summary.txt\"\n", AIR_RUNTESTS="#!/bin/bash\n# run-tests.sh -- runs on the DSX Air oob-mgmt-server, from the unpacked deploy folder:  bash air/run-tests.sh\n# 1. Renders a throwaway copy of the package with test secrets (every key filled; password hashes are real SHA-512\n#    hashes of a test password), using setup.sh's own render step -- the files the switches get are the real ones.\n# 2. Copies each slice switch's configuration and air/nvtest.sh to it, runs the test on all switches in parallel.\n# 3. Collects the results into air-results/ and air-results.tgz, and writes air-results/REPORT.md.\nset -u\nHERE=$(cd \"$(dirname \"$0\")/..\" && pwd); cd \"$HERE\"\n[ -f setup.sh ] && [ -f air/slice.csv ] || { echo \"[!] run from the unpacked deploy folder: bash air/run-tests.sh\"; exit 1; }\nW=$(mktemp -d); cp -r \"$HERE/.\" \"$W/\"\nH=$(openssl passwd -6 'AirTest-1')\nawk -F= -v h=\"$H\" '/^[A-Z][A-Z0-9_]*=/{k=$1; v=substr($0,index($0,\"=\")+1); if(v==\"\"){ if(k ~ /HASH/) v=h; else if(k ~ /_FILE$/) v=\"/etc/hostname\"; else if(k ~ /ASN/) v=\"64999\"; else if(k ~ /FREQ/) v=\"193100000\"; else v=\"AirTest1\"} print k\"=\"v; next} {print}' \"$W/secrets.env.template\" > \"$W/secrets.env\"\nsed -n \"/^python3 - \\\"\\$SECRETS\\\" <<'PYEOF'/,/^PYEOF/p\" \"$W/setup.sh\" | sed '1d;$d' > \"$W/.render.py\"\n( cd \"$W\" && python3 .render.py secrets.env | tail -2 )\ncommand -v sshpass >/dev/null || { echo \"[i] installing sshpass\"; sudo apt-get install -y sshpass >/dev/null 2>&1 || { echo \"[!] sshpass is needed\"; exit 1; }; }\nread -rsp \"Password for user cumulus on the switches (the simulation's switch login): \" PW; echo\nexport SSHPASS=\"$PW\"\nSSH=\"sshpass -e ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR\"\nSCP=\"sshpass -e scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR\"\nRES=\"$HERE/air-results\"; rm -rf \"$RES\"; mkdir -p \"$RES\"\nwhile IFS=, read -r node role cfg peers; do\n  [ \"$node\" = node ] && continue\n  f=$(basename \"$cfg\")\n  getent hosts \"$node\" >/dev/null || echo \"[!] $node does not resolve here -- check the node name in the simulation (see air/README.md)\"\n  ( { $SSH -o BatchMode=no \"cumulus@$node\" true 2>/dev/null || python3 \"$W/air/firstlogin.py\" \"$node\" cumulus \"$PW\"; } &&   # HS v1.21: the factory login's forced change\n    $SCP \"$W/$cfg\" \"$W/air/nvtest.sh\" \"cumulus@$node:/tmp/\" &&\n    $SSH \"cumulus@$node\" \"sudo -S -p '' bash /tmp/nvtest.sh /tmp/$f /tmp/nvtest $peers\" <<< \"$PW\" &&\n    $SCP -r \"cumulus@$node:/tmp/nvtest\" \"$RES/$node\" ) > \"$RES/$node.log\" 2>&1 &\n  echo \"[..] $node ($role) started\"\ndone < air/slice.csv\necho \"[..] testing in parallel; each switch takes about 10-20 minutes\"\nwait\npython3 air/report.py \"$RES\" air/slice.csv > \"$RES/REPORT.md\"\ntar czf \"$HERE/air-results.tgz\" -C \"$HERE\" air-results\nrm -rf \"$W\"\necho \"[ok] $RES/REPORT.md  and  $HERE/air-results.tgz\"\n", AIR_REPORT="#!/usr/bin/env python3\n# report.py RESULTS_DIR SLICE_CSV -- one Markdown report from the per-switch nvtest results.\nimport os, re, sys, csv, collections\nres, sl = sys.argv[1], sys.argv[2]\n# NVUE lines Cumulus VX cannot honor: it has no Spectrum ASIC, so these are expected to fail in Air and are checked\n# on hardware instead. Anything else that fails is a finding.\nVX = re.compile(r\"link breakout|link speed|nv set qos|telemetry|wjh|roce|histogram|buffer|adaptive-routing|pfc|ecn|ptp\")\nrows = list(csv.DictReader(open(sl)))\nout = [\"# DSX Air Cumulus test\", \"\", \"| Switch | Role | Pass 1 accepted / rejected | Apply | BGP Established on cabled ports / expected |\", \"|---|---|---|---|---|\"]\nfind, vx = collections.OrderedDict(), collections.OrderedDict()\nfor r in rows:\n    n = r[\"node\"]; d = os.path.join(res, n); s = {}\n    try:\n        for ln in open(os.path.join(d, \"summary.txt\")):\n            k, _, v = ln.strip().partition(\" \"); s[k] = v\n    except OSError:\n        out.append(\"| %s | %s | no result (see %s.log) | | |\" % (n, r[\"role\"], n)); continue\n    est = evpn = 0   # HS v1.21: sessions on cabled ports (unnumbered, swpN) against the expected count; EVPN loopback sessions apart\n    try:\n        for ln in open(os.path.join(d, \"bgp.txt\")):\n            if re.search(r\"\\sestablished\\s\", ln, re.I):\n                if re.match(r\"swp\\d\", ln): est += 1\n                else: evpn += 1\n    except OSError: pass\n    out.append(\"| %s | %s | %s | %s | %s / %s |\" % (n, r[\"role\"], s.get(\"pass1\", \"\").replace(\"accepted \", \"\").replace(\" rejected \", \" / \"),\n               \"ok\" if s.get(\"apply\") == \"exit 0\" else s.get(\"apply\", \"?\"), est, r.get(\"peers\", \"\") + (\" (+%d EVPN)\" % evpn if evpn else \"\")))\n    try:\n        for ln in open(os.path.join(d, \"rejected.tsv\")):\n            p = ln.rstrip(\"\\n\").split(\"\\t\")\n            if len(p) < 3: continue\n            key = re.sub(r\"\\b(swp\\d+(s\\d+)?|\\d+(\\.\\d+){3}(/\\d+)?|\\d+)\\b\", \"#\", p[1])\n            bucket = vx if VX.search(p[1]) else find\n            e = bucket.setdefault(key, {\"line\": p[1], \"msg\": p[2], \"where\": []}); e[\"where\"].append(\"%s:%s\" % (n, p[0]))\n    except OSError: pass\ndef sect(title, b):\n    out.extend([\"\", \"## \" + title + \" (%d distinct)\" % len(b), \"\"])\n    for k, e in b.items():\n        out.append(\"- `%s`  \\n  %s  \\n  %s\" % (e[\"line\"], e[\"msg\"][:300], \", \".join(e[\"where\"][:6]) + (\" ...\" if len(e[\"where\"]) > 6 else \"\")))\nsect(\"Rejected lines to fix\", find)\nsect(\"Rejected lines Cumulus VX cannot run (check on Spectrum hardware)\", vx)\nfor r in rows:\n    try: out.extend([\"\", \"### Apply: \" + r[\"node\"], \"\", \"```\", open(os.path.join(res, r[\"node\"], \"apply.txt\")).read()[-1500:], \"```\"])\n    except OSError: pass\nprint(\"\\n\".join(out))\n";
+  var AIR_VX='cumulus-vx-5.18.3', AIR_STUB_PORTS=64, AIR_MEM=4096, AIR_DISK=20, AIR_OOB_GB=6, AIR_ORG_GB=60;   // HS v1.21: Air's minimum switch size; its default org limit
+  function _airModel(d){   // HS v1.21: the node's model label in Air (labels.model)
+    var m='';
+    if(d.gen==='rsn') m='SN2201';
+    else if(/^FE border/.test(d.role||'')) m=FE.borderModel;
+    else if(/^FE leaf/.test(d.role||'')) m=FE.leafModel;
+    else if(/^FE /.test(d.role||'')) m=FE.spineModel;
+    else { var x=d.devId!=null?devs.filter(function(y){ return y.id===d.devId; })[0]:null; m=(x&&x.model)||beModel; }
+    return String(m||'').replace(/^NV-/,''); }
   function _airCfg(d){ var t=''; try{ t=String(genDeployConfig(d,'set','')||''); }catch(e){} return t; }
   function _airPeers(t){ var re=/^nv set interface (swp\d+(?:s\d+)?) .*?#\s*->\s*(\S+) (swp\d+(?:s\d+)?)\s*$/mg, m, o=[];
     while((m=re.exec(t))) o.push({port:m[1], peer:m[2], pport:m[3]}); return o; }
@@ -24319,18 +24369,17 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
   function _airBuild(){
     var S=airSlice(); if(!S.length) return null;
     var inS={}, nodes={}, links=[], seen={}, used={}, rows=[], bko=[];
-    S.forEach(function(o){ inS[o.d.name]=1; nodes[o.d.name]={os:AIR_VX, cpu:2, memory:2048, storage:10}; used[o.d.name]={}; });
+    S.forEach(function(o){ inS[o.d.name]=1; nodes[o.d.name]={os:AIR_VX, cpu:2, memory:AIR_MEM, storage:AIR_DISK, labels:{group:'SWITCH', model:_airModel(o.d)}}; used[o.d.name]={}; });   // HS v1.21
     S.forEach(function(o){ var n=0;
       _airPeers(o.text).forEach(function(p){ if(!inS[p.peer]) return;
         var a=o.d.name+':'+p.port, b=p.peer+':'+p.pport, k=a<b?a+'|'+b:b+'|'+a; if(seen[k]) return; seen[k]=1;
         used[o.d.name][p.port]=1; used[p.peer][p.pport]=1; links.push([{interface:p.port, node:o.d.name}, {interface:p.pport, node:p.peer}]); });
       var re=/^nv set interface (swp\d+) link breakout (\S+)/mg, m; while((m=re.exec(o.text))) bko.push([o.d.name, m[1], m[2]].join(','));
       o.peers=_airPeers(o.text).filter(function(p){ return inS[p.peer]; }).length; });   /* one unnumbered session per cabled port */
-    S.forEach(function(o){ var free=_airPorts(o.text).filter(function(p){ return !used[o.d.name][p]; }), k=0;
-      for(var i=0;i<free.length;i+=AIR_STUB_PORTS){ k++; var sn=o.d.name+'-stub'+k; nodes[sn]={os:'generic/ubuntu2204', cpu:1, memory:1024, storage:10};
-        free.slice(i,i+AIR_STUB_PORTS).forEach(function(p,j){ links.push([{interface:p, node:o.d.name}, {interface:'eth'+(j+1), node:sn}]); }); }
-      o.stubs=k; rows.push([o.d.name, o.why.replace(/,/g,';'), o.d.cfg, o.peers].join(',')); });
-    var topo=JSON.stringify({format:'JSON', title:(clientCode||'SITE')+'-cumulus-test', ztp:null, content:{nodes:nodes, links:links}}, null, 1);
+    S.forEach(function(o){ var free=_airPorts(o.text).filter(function(p){ return !used[o.d.name][p]; });   // HS v1.21: no stub nodes; Air leaves these ports unconnected
+      free.forEach(function(p){ links.push([{interface:p, node:o.d.name}, 'unconnected']); });
+      o.stubs=0; o.free=free.length; rows.push([o.d.name, o.why.replace(/,/g,';'), o.d.cfg, o.peers].join(',')); });
+    var topo=JSON.stringify({format:'JSON', name:(clientCode||'SITE')+'-cumulus-test', ztp:null, content:{nodes:nodes, links:links}}, null, 1);
     return {S:S, topo:topo, slice:'node,role,cfg,peers\n'+rows.join('\n')+'\n', breakouts:'node,port,mode\n'+bko.join('\n')+(bko.length?'\n':''),
       nSw:S.length, nStub:Object.keys(nodes).length-S.length, nLinks:links.length};
   }
@@ -24338,32 +24387,40 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
   function airFiles(){   // v537: every file of the kit, in bundle order
     var B=_airBuild(); if(!B) return [];
     return [['air/topology.json', B.topo], ['air/slice.csv', B.slice], ['air/breakouts.csv', B.breakouts], ['air/nvtest.sh', AIR_NVTEST],
-            ['air/run-tests.sh', AIR_RUNTESTS], ['air/report.py', AIR_REPORT], ['air/README.md', airReadme(B)]];
+            ['air/run-tests.sh', AIR_RUNTESTS], ['air/report.py', AIR_REPORT], ['air/firstlogin.py', AIR_FIRSTLOGIN], ['air/ztp.sh', AIR_ZTP], ['air/README.md', airReadme(B)]];   // HS v1.21
   }
   function airReadme(B){
     B=B||_airBuild(); if(!B) return '';
-    var vcpu=B.nSw*2+B.nStub, gb=B.nSw*2+B.nStub;
+    var vcpu=B.nSw*2, gb=B.nSw*AIR_MEM/1024, disk=B.nSw*AIR_DISK, tot=gb+AIR_OOB_GB;   // HS v1.21
     return ['# DSX Air -- Cumulus configuration test','',
       'Tests every kind of Cumulus configuration this design emits on Cumulus VX in DSX Air: each "nv set" line is checked by NVUE,',
       'then the configuration is applied and BGP is checked between the switches of the slice. Run it against every release before a Build.','',
-      '## The slice ('+B.nSw+' switches, '+B.nStub+' stub nodes, '+B.nLinks+' links)','',
+      '## The slice ('+B.nSw+' switches, '+B.nLinks+' links)','',
       '| Switch | What it covers | Configuration | BGP sessions expected |','|---|---|---|---|']
       .concat(B.S.map(function(o){ return '| '+o.d.name+' | '+o.why+' | '+o.d.cfg+' | '+o.peers+' |'; }))
       .concat(['',
-      'Ports that lead outside the slice (host ports, other spines) are cabled to Ubuntu stub nodes (`<switch>-stubN`), so every',
-      'port a configuration names exists. BGP on those ports stays down; that is expected.','',
+      'Ports that lead outside the slice (host ports, other spines) are imported as unconnected, so every port a configuration',
+      'names exists. BGP on those ports stays down; that is expected.','',
+      '## Resources','',
+      '- Each switch: 2 vCPU, '+AIR_MEM/1024+' GB memory, '+AIR_DISK+' GB disk (Air\u2019s minimum for Cumulus VX; smaller nodes make the import INVALID).',
+      '- This slice: '+vcpu+' vCPU, '+gb+' GB memory, '+disk+' GB disk, plus about '+AIR_OOB_GB+' GB for Air\u2019s oob-mgmt-server and oob-mgmt-switch: about '+tot+' GB.',
+      tot>AIR_ORG_GB?('- **Over Air\u2019s default organization limit of '+AIR_ORG_GB+' GiB.** Delete the super-spine nodes (and their links) from topology.json and slice.csv, or ask NVIDIA to raise the limit.'):('- Within Air\u2019s default organization limit of '+AIR_ORG_GB+' GiB.'),'',
       '## Run it','',
       '1. Build the design, then Deploy, then the .run installer (any size: 32 to 64 racks is enough; the configurations are the same kinds).',
       '2. In DSX Air: Create Simulation, Import, choose air/topology.json from the bundle (unpack the .run with --extract-only on any Linux',
-      '   machine, or take it from the deploy .zip). Resources: about '+vcpu+' vCPU and '+gb+' GB, plus Air\u2019s two OOB nodes.',
+      '   machine, as any user, or take it from the deploy .zip). The UI import may refuse a file the API takes: then import it with the API',
+      '   (POST https://api.dsx-air.nvidia.com/api/v3/simulations/import/, Bearer NGC key with the NVIDIA Air service; load the key with',
+      '   read -rs, never on the command line).',
       '3. Before the first start, open each switch listed in air/breakouts.csv and break out the listed ports (2x or 4x) if the import did',
       '   not already create the swpNsM lanes. Air only allows breakout before the first start.',
       '4. Image: the topology asks for '+AIR_VX+'. If DSX Air does not offer it, change every "os" value in topology.json to the newest',
       '   cumulus-vx 5.x image Air lists, and note which: lines new in 5.18 will then show as rejected.',
       '5. Start the simulation and wait until every switch is up. Enable the SSH service on oob-mgmt-server and copy the .run to it.',
       '6. On oob-mgmt-server:  bash <SITE>-deploy-<ver>.run --extract-only --dir ~/t ;  cd ~/t/<SITE>-deploy ;  bash air/run-tests.sh',
-      '   It asks once for the switches\u2019 cumulus password (the simulation\u2019s switch login). Every switch is tested in parallel;',
-      '   expect 10 to 20 minutes.',
+      '   It asks once for the switches\u2019 cumulus password. A switch still on the factory login (cumulus/cumulus, change forced at first',
+      '   login) is changed to that password first (air/firstlogin.py). Alternatively set air/ztp.sh as the simulation\u2019s ZTP script before',
+      '   the first start: it sets cumulus / CumulusLinux! with no forced change (lab only; real switches lock this account in their ZTP).',
+      '   Every switch is tested in parallel; expect 10 to 20 minutes.',
       '7. Send air-results.tgz (or air-results/REPORT.md) back for review.','',
       '## What each switch does','',
       '- Pass 1 (syntax): every nv line is staged one at a time; NVUE\u2019s rejections are recorded with the line number and message.',
@@ -24375,7 +24432,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       '- "Rejected lines to fix": real findings. Each is a builder fix.',
       '- "Lines Cumulus VX cannot run": breakout, port speed, QoS/RoCE, telemetry histograms and What Just Happened need the Spectrum',
       '  ASIC. They are checked on hardware, not here.',
-      '- BGP: the number of Established sessions should equal the "BGP sessions expected" column (one per port cabled inside the slice).','',
+      '- BGP: the Established sessions on cabled ports should equal the "BGP sessions expected" column (one per port cabled inside the',
+      '  slice). The test waits up to 5 minutes for them (applying BFD restarts FRR). EVPN sessions to loopbacks are counted separately.','',
       '## Not covered here','',
       '- The DPU (HBN) files: HBN runs on BlueField-3, not Cumulus VX.',
       '- The data plane: RoCE, PFC/ECN and adaptive routing need Spectrum hardware.',
@@ -25190,7 +25248,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     B.push('');
     B.push('pkg_install() {  # pkg_install <apt-name> <rhel-name>');
     B.push('  local aptn="$1" rhn="$2"');
-    B.push('  if [[ $PM == apt ]]; then apt-get install -y "$aptn"; else $PM install -y "$rhn"; fi');
+    B.push('  if [[ $PM == apt ]]; then apt-get install -y --no-install-recommends "$aptn"; else $PM install -y "$rhn"; fi   # HS v1.21: no compilers via Recommends');
     B.push('}');
     B.push('[[ $PM == apt ]] && apt-get update -qq || true');
     B.push('');
@@ -25231,7 +25289,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     B.push('  echo "[ok] PyEZ already installed ($(python3 -c \'import jnpr.junos;print(jnpr.junos.__version__)\'))"');
     B.push('else');
     B.push('  echo "[..] installing junos-eznc (PyEZ)"');
-    B.push('  pip3 install --quiet --break-system-packages junos-eznc 2>/dev/null || pip3 install --quiet junos-eznc \\');   // v513: PEP 668 (Ubuntu 23.04+, Debian 12), as for netmiko
+    B.push('  { pip3 install --quiet --break-system-packages junos-eznc 2>/dev/null || pip3 install --quiet junos-eznc 2>/dev/null; } && python3 -c "import jnpr.junos" >/dev/null 2>&1 \\');   // v513: PEP 668 (Ubuntu 23.04+, Debian 12)
+    B.push('    && echo "[ok] PyEZ installed ($(python3 -c \'import jnpr.junos;print(jnpr.junos.__version__)\'))" \\');   // HS v1.21: a result line
     B.push('    || echo "[warn] junos-eznc not installed: install it (pip3 install --break-system-packages junos-eznc) before push_configs.py"');
     B.push('fi');
     } else B.push('# ---- 4. PyEZ: not needed (no Junos devices in this build) ----');
@@ -25392,8 +25451,14 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     B.push("KEA_SVC=$(systemctl list-unit-files 2>/dev/null | awk '/^kea-dhcp4(-server)?\\.service/ && !f {print $1; f=1}')   # read to the end: an early exit is SIGPIPE under pipefail");
     B.push("[[ -n \"$KEA_SVC\" ]] && systemctl stop \"$KEA_SVC\" 2>/dev/null || true");
     B.push("python3 ./provision/estate_build.py probe-dhcp --nic \"$PROV_NIC\" || { echo \"[!] another DHCP server answers on $PROV_NIC: stop it before building\"; [[ $IGNORE_DHCP -eq 1 ]] || exit 6; }");   // v515: --yes no longer silences it
-    B.push("python3 -c \"import netmiko\" 2>/dev/null || pip3 install --quiet --break-system-packages netmiko requests 2>/dev/null || pip3 install --quiet netmiko requests \\");
-    B.push("  || echo \"[warn] netmiko not installed: automatic gate checks and backups fall back to operator confirmation\"");
+    // HS v1.21: netmiko in its own environment (/opt/estate-build/pyenv, system packages visible): PEP 668 refuses a system-wide
+    // pip install on Ubuntu 24.04 even with --break-system-packages when apt owns a dependency. estate_build.py finds it there.
+    B.push("NMV=/opt/estate-build/pyenv");
+    B.push("if python3 -c \"import netmiko\" 2>/dev/null || \"$NMV/bin/python3\" -c \"import netmiko\" 2>/dev/null; then echo \"[ok] netmiko present\"");
+    B.push("else echo \"[..] installing netmiko ($NMV)\"; mkdir -p /opt/estate-build; [[ $PM == apt ]] && apt-get install -y -qq --no-install-recommends python3-venv >/dev/null 2>&1 || true");
+    B.push("  if python3 -m venv --system-site-packages \"$NMV\" >/dev/null 2>&1 && \"$NMV/bin/pip\" install --quiet netmiko >/dev/null 2>&1; then echo \"[ok] netmiko installed ($($NMV/bin/python3 -c 'import netmiko;print(netmiko.__version__)'))\"");
+    B.push("  else echo \"[warn] netmiko not installed: automatic gate checks and backups fall back to operator confirmation\"; fi");
+    B.push("fi");
     B.push("# the estate service serves TFTP itself and sees every POAP fetch: stop any other TFTP server, one unit at a time");
     B.push("for u in tftpd-hpa tftp.socket tftp atftpd; do systemctl disable --now \"$u\" >/dev/null 2>&1 || true; done");
     B.push("for s in /etc/init.d/tftpd-hpa /etc/init.d/atftpd; do [[ -x \"$s\" ]] && { \"$s\" stop >/dev/null 2>&1 || true; }; done");
@@ -25425,6 +25490,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     B.push("if sys.argv[4]: c.update(http_bind=sys.argv[4], console_bind=sys.argv[4], tftp_bind=sys.argv[4])");
     B.push("print(json.dumps(c, indent=1))");
     B.push("PYEOF");
+    B.push("python3 -c 'import json,sys;p=\"/etc/fabric/estate.conf\";c=json.load(open(p));c[\"prov_nic\"]=sys.argv[1];open(p,\"w\").write(json.dumps(c,indent=1))' \"$PROV_NIC\" && echo \"[ok] DHCP sniffer bound to $PROV_NIC\"   # HS v1.21");
     B.push("KEA_HOOKS=$(dirname \"$(find /usr/lib /usr/lib64 /usr/local/lib -name libdhcp_run_script.so -print -quit 2>/dev/null || true)\")");
     B.push("[[ -n \"$KEA_HOOKS\" && \"$KEA_HOOKS\" != \".\" ]] || { echo \"[!] Kea run_script hook not found (install the Kea hooks package)\"; exit 7; }");
     B.push("sed -i \"s|@PROV_NIC@|$PROV_NIC|g; s|@KEA_HOOKS@|$KEA_HOOKS|g; s|@HA_SELF@|$HA_SELF|g\" /opt/estate-build/kea-dhcp4.json");
@@ -26956,9 +27022,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
 '  --yes) YES=1; PASS+=("$1");;',
 '  *) PASS+=("$1");;',
 'esac; shift; done',
-'[[ $EUID -eq 0 ]] || { echo "[!] run as root: sudo bash $(basename "$SELF")"; exit 1; }',
+'[[ $EUID -eq 0 || $EXTRACT_ONLY -eq 1 ]] || { echo "[!] run as root: sudo bash $(basename "$SELF")  (--extract-only runs as any user)"; exit 1; }',
 'command -v python3 >/dev/null 2>&1 || { echo "[!] python3 is required (it is also what setup.sh and the service run on)"; exit 1; }',
-'mkdir -p "$DEST"; DEST="$(cd "$DEST" && pwd)"',
 'echo "== $SITE deploy package $VER -> $DEST/$SITE-deploy"',
 'TMP="$(mktemp -d)"; trap \'rm -rf "$TMP"\' EXIT',
 'LINE=$(awk \'/^__PAYLOAD_BELOW__$/ { print NR + 1; exit }\' "$SELF")',
@@ -26966,8 +27031,9 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
 'GOT=$(sha256sum "$TMP/pkg.zip" | cut -d" " -f1)',
 '[[ "$GOT" == "$SHA" ]] || { echo "[!] checksum mismatch: the file was damaged or truncated in transit; copy it again (nothing was changed)"; exit 2; }',
 'echo "[ok] package verified (sha256 ${SHA:0:12}...)"',
-'# a different site already installed on this host?',
-'if [[ -f /opt/estate-build/estate.json ]]; then',
+'mkdir -p "$DEST"; DEST="$(cd "$DEST" && pwd)"   # only once the package is verified',
+'# a different site already installed on this host? (not asked for --extract-only: nothing is installed)',
+'if [[ $EXTRACT_ONLY -ne 1 && -f /opt/estate-build/estate.json ]]; then',
 '  CUR=$(python3 -c "import json;print(json.load(open(\'/opt/estate-build/estate.json\'))[\'site\'][\'code\'])" 2>/dev/null || true)',
 '  if [[ -n "$CUR" && "${CUR^^}" != "${SITE_CODE^^}" ]]; then',
 '    echo "[!] this host currently runs site $CUR; this installer is for site $SITE_CODE."',
@@ -32614,7 +32680,12 @@ class Phase2Mixin(object):
         try:
             from netmiko import ConnectHandler
         except ImportError:
-            raise ReaderUnavailable("netmiko is not installed (pip3 install netmiko)")
+            import glob   # HS v1.21: setup.sh installs it in /opt/estate-build/pyenv (PEP 668)
+            sys.path.extend(glob.glob("/opt/estate-build/pyenv/lib/python3*/site-packages"))
+            try:
+                from netmiko import ConnectHandler
+            except ImportError:
+                raise ReaderUnavailable("netmiko is not installed (re-run setup.sh: it installs it in /opt/estate-build/pyenv)")
         c = ConnectHandler(device_type=DT[os_], host=d["ip"], username=u, password=p, timeout=20, conn_timeout=15)
         try:
             return [c.send_command(x, read_timeout=120) for x in cmds]
@@ -33749,7 +33820,7 @@ class Estate(Phase2Mixin):
     def note_unclaimed(self, ev, why, source):
         key = ev.get("mac") or ev.get("serial")
         u = self.unclaimed.get(key) or {"key": key, "first": now(), "state": "open"}
-        if u.get("state") == "bound":
+        if u.get("state") in ("bound", "dismissed"):   # HS v1.21: dismissed stays dismissed
             return
         for k in ("mac", "serial", "client_id", "vendor_class", "model", "circuit", "remote_id", "ip", "giaddr"):
             if ev.get(k):
@@ -34411,6 +34482,22 @@ class Estate(Phase2Mixin):
             self.kea_dirty = True
             return True, "bound"
 
+    def dismiss(self, key, user, reason):
+        # HS v1.21: an Unclaimed entry that is not ours (another network's DHCP, a laptop): off the list and the gate, audited
+        reason = str(reason or "").strip()[:200]
+        if not reason:
+            return False, "a reason is required"
+        with self.lock:
+            u = self.unclaimed.get(key)
+            if not u or u.get("state") != "open":
+                return False, "no open unclaimed entry " + str(key)
+            u["state"] = "dismissed"; u["dismissed"] = {"by": user, "ts": now(), "reason": reason}
+            self.db.execute("INSERT OR REPLACE INTO unclaimed(key,data) VALUES(?,?)", (key, json.dumps(u)))
+            self.db.commit()
+        self.audit(user, "dismiss", key, reason)
+        self.event("Unclaimed %s dismissed by %s: %s" % (key, user, reason), "info", user=user)
+        return True, "dismissed"
+
     def unbind(self, n, user):
         """v498: undo a bind made by mistake. Only a console binding, and only before the device reaches Config;
         after that the identity is replaced through RMA."""
@@ -34732,7 +34819,7 @@ class Estate(Phase2Mixin):
     PLANES = ("oob", "edge", "fe", "be")
 
     def user_add(self, name, role="admin", password=None, planes="", must_change=True):
-        pw = password or secrets.token_urlsafe(12)
+        pw = password or temp_password()
         with self.lock:
             self._user_add(name, role, pw, planes, must_change)
         return pw
@@ -34808,7 +34895,7 @@ class Estate(Phase2Mixin):
 
     def user_reset(self, actor, name):
         """A temporary password, changed at first login; every session of that user ends. Admin action, or root at the CLI."""
-        pw = secrets.token_urlsafe(12)
+        pw = temp_password()
         with self.lock:
             if not self.db.execute("SELECT 1 FROM users WHERE name=?", (name,)).fetchone():
                 return False, "no such login"
@@ -34921,9 +35008,20 @@ def parse_dhcp(frame):
     return ev
 
 
-def sniffer(est):
+TEMP_PW_CHARS = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789"   # HS v1.21: no l/I/1, O/0, -/_
+
+
+def temp_password(n=16):
+    return "".join(secrets.choice(TEMP_PW_CHARS) for _ in range(n))
+
+
+def sniffer(est, nic=""):
     try:
         s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(0x0800))
+        if nic:   # HS v1.21: the provisioning NIC only (DHCP on the host's other networks is not ours)
+            s.bind((nic, 0))
+        else:
+            est.event("DHCP sniffer listens on every interface: set prov_nic in estate.conf (setup.sh does)", "warn")
     except (OSError, AttributeError) as e:
         est.event("DHCP sniffer off (%s): vendor-class serials come only from Kea's lease hook" % e, "warn")
         return
@@ -34994,7 +35092,11 @@ def make_boot_handler(est):
     root = os.path.realpath(est.conf["web_root"])
 
     class H(BaseHTTPRequestHandler):
-        server_version = "estate-build/" + VERSION
+        server_version = "estate"   # HS v1.21: no software or version in the Server header
+        sys_version = ""
+
+        def version_string(self):
+            return "estate"
 
         def log_message(self, *a):
             pass
@@ -35200,7 +35302,11 @@ def make_console_handler(est, console_html):
     fails = {}
 
     class H(BaseHTTPRequestHandler):
-        server_version = "estate-console/" + VERSION
+        server_version = "estate"   # HS v1.21
+        sys_version = ""
+
+        def version_string(self):
+            return "estate"
 
         def log_message(self, *a):
             pass
@@ -35399,6 +35505,8 @@ def make_console_handler(est, console_html):
                     ok, msg = False, "user and password"
             elif p == "/api/bind":
                 ok, msg = est.bind(data.get("key", ""), n, user)
+            elif p == "/api/dismiss":
+                ok, msg = est.dismiss(data.get("key", ""), user, data.get("reason", ""))
             elif p == "/api/unbind":
                 ok, msg = est.unbind(n, user)
             elif p == "/api/retry":
@@ -35548,7 +35656,7 @@ def serve(est, console_path):
             time.sleep(5)
     threading.Thread(target=prober, daemon=True).start()
     if c.get("sniff"):
-        threading.Thread(target=sniffer, args=(est,), daemon=True).start()
+        threading.Thread(target=sniffer, args=(est, c.get("prov_nic", "")), daemon=True).start()
     est.event("Service %s up: bootstraps on http://%s:%s, console on %s://%s:%s, plan digest %s" % (
         VERSION, b.server_address[0], b.server_address[1], scheme, con.server_address[0], con.server_address[1], est.digest[:12]))
     while True:
@@ -35970,6 +36078,7 @@ function api(path, body){
   });
 }
 function act(path, body){ return api(path, body).then(function(j){ refresh(); return j; }).catch(function(e){ if(e.message!=='login') alert(e.message); }); }
+function cidMac(c){ c=String(c||'').toLowerCase().replace(/[^0-9a-f]/g,''); if(c.length===14 && c.slice(0,2)==='01') c=c.slice(2); return c.length===12?c.match(/../g).join(':'):''; }   // HS v1.21: the MAC in a type-1 client-ID
 function showLogin(){ $('app').style.display='none'; $('pwView').style.display='none'; $('loginView').style.display='flex'; }   // v515: never both cards
 $('lGo').onclick=function(){
   fetch('api/login',{method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json'}, body:JSON.stringify({user:$('lUser').value, password:$('lPw').value})})
@@ -35999,14 +36108,19 @@ function ask(title, body, fields){
 function planeOf(n){ var b=(S.plan&&S.plan.builds)||[]; for(var i=0;i<b.length;i++){ var w=b[i].waves||[]; for(var j=0;j<w.length;j++){ if((w[j].devices||[]).indexOf(n)>=0) return b[i].key; } } return ''; }
 function canAct(plane){ if(!S.who||S.mode!=='live') return false; if(S.who.role==='admin') return true;
   return S.who.role==='operator' && !!plane && (S.who.planes||[]).indexOf(plane)>=0; }
-function showPw(){ $('pwCancel').style.display='none'; $('app').style.display='none'; $('loginView').style.display='none'; $('pwView').style.display='flex'; $('pwErr').textContent=''; $('pwOld').value=''; $('pwNew').value=''; $('pwNew2').value=''; }
+function showPw(forced){ var shown=$('pwView').style.display==='flex'; S.pwForced=forced!==false;   // HS v1.21: typed fields survive a re-show
+  if(S.pwForced) $('pwWho').textContent='This login has a temporary password. Choose your own to continue: at least 12 characters, not your user name.';
+  $('pwCancel').style.display=''; $('app').style.display='none'; $('loginView').style.display='none'; $('pwView').style.display='flex';
+  if(!shown){ $('pwErr').textContent=''; $('pwOld').value=''; $('pwNew').value=''; $('pwNew2').value=''; } }
+function signedOut(){ S.who=null; S.plan=null; S.st=null; S.events=[]; S.lastId=0; showLogin(); }
 $('pwGo').onclick=function(){
   if($('pwNew').value!==$('pwNew2').value){ $('pwErr').textContent='The two new passwords differ.'; return; }
   api('api/password',{current:$('pwOld').value, 'new':$('pwNew').value}).then(function(){ $('pwView').style.display='none'; boot(); })
     .catch(function(e){ $('pwErr').textContent=e.message; });
 };
 $('pwNew2').addEventListener('keydown',function(e){ if(e.key==='Enter') $('pwGo').click(); });
-$('pwCancel').onclick=function(){ $('pwCancel').style.display='none'; boot(); };
+$('pwCancel').onclick=function(){ $('pwView').style.display='none';   // HS v1.21: a forced change cancels to the sign-in screen
+  if(S.pwForced){ api('api/logout',{}).then(signedOut).catch(signedOut); return; } boot(); };
 function boot(){
   $('loginView').style.display='none'; $('pwView').style.display='none';
   return api('api/whoami').then(function(w){
@@ -36025,7 +36139,7 @@ function refresh(){
     render();
   }).catch(function(){});
 }
-setInterval(function(){ if(S.plan && S.mode==='live') refresh(); }, 3000);
+setInterval(function(){ if(S.plan && S.mode==='live' && $('app').style.display!=='none') refresh(); }, 3000);   // HS v1.21: paused while sign-in or a password change shows
 // replay: device stage and flag at time T, rebuilt from the recorded events
 // v515: the events are sorted by time once (bReplay); a cursor applies only those since the last tick, and a scrub
 // back starts again from the beginning. An aggregate's count comes from its "N of M" event text.
@@ -36160,11 +36274,13 @@ function render(){
          .sort(function(a,b){ return (a[2]?1:0)-(b[2]?1:0); });
   $('unc').innerHTML=unc.length?unc.map(function(u){ var sg=(u.suggest||[])[0];
     return '<div style="border:2px dashed var(--w-bd);background:#fffaf0;border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:6px;font-size:13px">'
-      +'<div class="mono" style="font-weight:600">'+(u.serial?('Serial '+esc(u.serial)+' · '):'')+'MAC '+esc(u.mac||'—')+'</div>'
+      +'<div class="mono" style="font-weight:600">'+(u.serial?('Serial '+esc(u.serial)+' · '):'')+'MAC '+esc(u.mac||'—')+(function(){ var c=cidMac(u.client_id); return (c && c!==String(u.mac||'').toLowerCase())?(' · client-ID MAC '+esc(c)):''; })()+'</div>'
       +'<div>'+esc(u.vendor_class||'')+(u.circuit?(' · called in on '+esc(u.circuit)):'')+(u.ip?(' · holding lease '+esc(u.ip)):'')+'</div>'
       +'<div class="muted">'+esc(u.foreign?('Belongs to site '+u.foreign+': refused.'):/retired/.test(u.why||'')?(u.why+': refused.'):('Not in the '+site.code+' inventory'+(sg?('; likely '+sg.device+' ('+sg.why+').'):'.')))+'</div>'
-      +(u.foreign||/retired/.test(u.why||'')?'':'<button class="act warn" data-u="'+esc(u.key)+'" data-s="'+esc(sg?sg.device:'')+'" style="align-self:flex-start">Bind…</button>')+'</div>'; }).join('')
+      +(u.foreign||/retired/.test(u.why||'')?'':'<div class="row" style="gap:6px"><button class="act warn" data-u="'+esc(u.key)+'" data-s="'+esc(sg?sg.device:'')+'">Bind…</button><button class="act" data-x="'+esc(u.key)+'" title="Not one of this site\u2019s devices: off the list and the gate (audited)">Dismiss…</button></div>')+'</div>'; }).join('')
     :'<div class="muted" style="font-size:13px">'+(live?'None. Unknown serials that call in appear here for binding.':'Not shown in replay.')+'</div>';
+  document.querySelectorAll('[data-x]').forEach(function(e){ e.disabled=ro; e.onclick=function(){   // HS v1.21
+    ask('Dismiss unclaimed entry','Not one of this site\u2019s devices (another network\u2019s DHCP, a laptop). It leaves the list and no longer holds the gate; logged with your reason.',[{key:'reason', label:'Reason'}]).then(function(v){ if(v) act('api/dismiss',{key:e.dataset.x, reason:v.reason}); }); }; });
   document.querySelectorAll('[data-u]').forEach(function(e){ e.disabled=ro; e.onclick=function(){
     var _sv=e.dataset.s; if(_sv && _bd(_sv)) _sv='';   // never preselect a bound node
     ask('Bind unclaimed device','The device takes this serial or MAC from now on; logged. Nodes already bound are grayed out: unbind one first from its device panel.',[{key:'device', label:'Device', options:ud, value:_sv}]).then(function(v){ if(v) act('api/bind',{key:e.dataset.u, device:v.device}); }); }; });
@@ -36261,8 +36377,8 @@ function renderDetail(V, ro){
 $('bStart').onclick=function(){ var pl=$('runPlane').value; act('api/run',{plane:pl}); };
 $('bPause').onclick=function(){ act('api/pause',{}); };
 $('bCred').onclick=function(){ ask('Push credential','Used by the service to push Junos and SR Linux configurations. Held in memory only; never written to disk.',[{key:'user',label:'User',value:'netadmin'},{key:'password',label:'Password',type:'password'}]).then(function(v){ if(v) act('api/push-credential',v); }); };
-$('bMyPw').onclick=function(){ showPw(); $('pwWho').textContent='Change your password: at least 12 characters, not your user name. Your other sessions end.'; $('pwCancel').style.display=''; };
-$('bLogout').onclick=function(){ api('api/logout',{}).then(function(){ S.who=null; showLogin(); }).catch(function(){ showLogin(); }); };
+$('bMyPw').onclick=function(){ showPw(false); $('pwWho').textContent='Change your password: at least 12 characters, not your user name. Your other sessions end.'; $('pwCancel').style.display=''; };
+$('bLogout').onclick=function(){ api('api/logout',{}).then(signedOut).catch(signedOut); };   // HS v1.21: the previous user's plan goes too
 function planesTxt(u){ return u.role==='admin'?'all':(u.role==='operator'?(u.planes.join(', ')||'none'):'read only'); }
 function usersDlg(){
   api('api/users').then(function(v){

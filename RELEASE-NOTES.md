@@ -1,3 +1,16 @@
+# AIDC DBD Desktop 2.0.15 (builder HS-v1.21, site runner 1.5.0)
+
+- **Show DSX Air test files:** Site build > Show DSX Air test files… takes air/ out of a .run into a folder next to it (`<run name>-air`) and opens it. The package checksum is verified first; nothing is installed. No Linux machine is needed to get topology.json for the Air import.
+- **Builder HS-v1.21:** the fixes from the Prov_Serv and DSX Air tests (HS-DEP-002 stage 1 and TC-201):
+  - **Cumulus configurations:** SNMP contact and location are quoted; OSPF BFD on the SN2201 uses a BFD profile; telemetry (and every per-port line) never names the parent of a broken-out port, which had stopped the front-end leaves from applying. The same parent rule now covers SR Linux, Junos and NX-OS.
+  - **Cumulus ZTP** locks and expires the factory cumulus account once the configuration is applied. The switch is managed with the admin login from secrets.env.
+  - **DSX Air kit:** imports as is (name, model labels, 4 GB / 20 GB switches, unused ports unconnected instead of stub nodes). run-tests.sh answers the first-login password change itself, waits up to 5 minutes for BGP, and counts sessions on cabled ports apart from EVPN. air/ztp.sh is an optional lab ZTP script. The README gives the slice's memory against Air's 60 GiB limit.
+  - **.run:** --extract-only runs as any user, and the destination folder is created only after the package is verified.
+  - **setup.sh:** no Recommends (no compilers), a PyEZ result line, and netmiko in its own environment (/opt/estate-build/pyenv) so Ubuntu 24.04 installs it.
+  - **Junos edge releases pinned** to 24.4R2-S3 (MX304, SRX4700, PTX10001-36MR EVO). Confirm before a Build.
+  - **Provisioning service:** the DHCP sniffer listens only on the provisioning NIC; temporary passwords have no look-alike characters; the Server header no longer shows software or version.
+  - **Deployment Console:** a forced password change is no longer wiped by the live refresh and has Cancel (back to sign-in); signing out clears the previous user's view; Unclaimed shows the client-ID MAC when it differs and has Dismiss… (with a reason, audited).
+
 # AIDC DBD Desktop 2.0.14 (builder HS-v1.20, site runner 1.5.0)
 
 - **Faster packages and .run files:** about 20% faster (1,024 racks: 944 s to 742 s; the Final package 519 s to 416 s, the .run 425 s to 326 s), with less memory. The package and the .run no longer rebuild the physical model, management plan and deploy plan at each step. Output is unchanged: every file matches HS-v1.19 except the version and date, and parity passes.

@@ -199,6 +199,19 @@ ipcMain.on('layout-chunk', (e, id, part) => { const p = pending.get(id); if (p) 
 ipcMain.on('layout-parts', (e, id, res) => { const p = pending.get(id); if (!p) return; pending.delete(id);
   if (res && res.error) p.reject(new Error(res.error)); else p.resolve({ head: res.head, parts: p.parts }); });
 
+// ---- DSX Air test files out of a .run (2.0.15): no Linux machine needed to get air/topology.json for the import
+function showAirFiles() {
+  const r = dialog.showOpenDialogSync(main || undefined, { title: 'Choose the .run whose DSX Air test files you want', defaultPath: CFG.projectDir || app.getPath('documents'),
+    filters: [{ name: 'AIDC DBD installer', extensions: ['run'] }], properties: ['openFile'] });
+  if (!r || !r[0]) return;
+  try {
+    const x = require('./airfiles').extractAir(r[0], uniquePath);
+    shell.openPath(x.dir);
+    dialog.showMessageBox(main, { type: 'info', title: 'AIDC DBD', message: 'DSX Air test files (' + x.n + ') from ' + path.basename(r[0]),
+      detail: 'Package checksum verified. Saved to ' + x.dir + '\n\nImport topology.json in DSX Air, then follow README.md. The .run itself is still what goes on oob-mgmt-server for run-tests.sh.' });
+  } catch (err) { dialog.showMessageBox(main, { type: 'error', title: 'AIDC DBD', message: 'No DSX Air files taken from ' + path.basename(r[0]), detail: err.message }); }
+}
+
 // ---- menu
 function menu() {
   const act = (a) => () => send('menu', a);
@@ -214,7 +227,9 @@ function menu() {
       { label: '.run only', click: act('job-run') },
       { type: 'separator' },
       { label: 'DC Layout Builder', click: act('layout') },
-      { label: 'Export site-runner file', click: act('site-runner') } ] },
+      { label: 'Export site-runner file', click: act('site-runner') },
+      { type: 'separator' },
+      { label: 'Show DSX Air test files…', click: () => showAirFiles() } ] },
     { label: 'View', submenu: [ { role: 'reload' }, { role: 'toggleDevTools' }, { type: 'separator' }, { role: 'resetZoom' }, { role: 'zoomIn' }, { role: 'zoomOut' }, { type: 'separator' }, { role: 'togglefullscreen' } ] },
     { label: 'Help', submenu: [ { label: 'About AIDC DBD', click: () => dialog.showMessageBox(main, { type: 'info', title: 'AIDC DBD',
       message: 'AIDC DBD ' + app.getVersion() + ' — DWR Networking',

@@ -2,7 +2,7 @@
 
 DWR Networking internal. The AIDC DBD Hyperscale builder as a Windows app, with the site runner built in.
 
-- **The builder** runs unchanged in the main window (builder `HS-v1.20`).
+- **The builder** runs unchanged in the main window (builder `HS-v1.21`).
 - **Saves:** every download lands in your project folder. Nothing is overwritten: a second copy is saved as `name (2)`.
 - **Past 512 racks**, the Final package, the Review package and the .run are built by the built-in site runner.
   - The runner is a separate process with the memory the builder window and Windows leave, so the browser's 4 GB tab limit no longer applies.
@@ -30,6 +30,7 @@ DWR Networking internal. The AIDC DBD Hyperscale builder as a Windows app, with 
 | Final package / Review package / .run only | One output. |
 | DC Layout Builder | The layout tool (own window past 512 racks). |
 | Export site-runner file | The file for the command-line runner on another machine. |
+| Show DSX Air test files… | Takes air/ out of a .run (checksum verified) into `<run name>-air/` next to it, for the DSX Air import. |
 
 - **Up to 512 racks**, the Blueprint package and Deploy buttons work in the window, as in the browser.
 - **Past 512 racks**, those buttons and the menu items send the job to the site runner.
