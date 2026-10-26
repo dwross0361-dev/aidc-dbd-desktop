@@ -1,3 +1,17 @@
+# AIDC DBD Desktop 2.0.17 (builder HS-v1.23, site runner 1.5.0)
+
+- **Builder HS-v1.23: the TC-202 to TC-205 findings from DSX Air.**
+  - **Deployment Console:**
+    - Gates have **Re-check**, which runs their automatic checks once, now. The checks skip devices that were set aside.
+    - A Done device that stops answering shows **"Done · not answering"**, with a hint to start an RMA.
+    - The RMA identity box no longer clears while you type, and a registered replacement is shown.
+  - **Provisioning service:** device reads wait out unreachable TACACS servers (longer login timeout), and BGP reads skip VRFs without BGP.
+  - **setup.sh** waits for the package lock after a boot, and a failed PyEZ install says why.
+  - **DSX Air TC-202:**
+    - air/ztp-host.sh now does the whole host setup. It asks for the password twice and makes it the read login, puts the service addresses on the host, and binds the slice by MAC from Air's own list.
+    - air/ztp-kick.sh is gone.
+    - The README explains the console tunnel.
+
 # AIDC DBD Desktop 2.0.16 (builder HS-v1.22, site runner 1.5.0)
 
 - **Builder HS-v1.22: TC-202 (zero-touch end to end in DSX Air).**

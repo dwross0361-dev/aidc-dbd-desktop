@@ -942,7 +942,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.22';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.23';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   var RADIX=64, CAGE=800;
   // ---- FABRIC PROFILE (parameterized per accelerator platform) ----------------------------------------
   // rails == accelerators per host. Each accelerator instance gets its own rail leaf, which is what
@@ -24321,13 +24321,13 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     "echo 'cumulus:CumulusLinux!' | chpasswd",
     'passwd -x 99999 cumulus',
     'exit 0'].join('\n')+'\n';
-  var AIR_ZTPHOST=['#!/bin/bash',   // HS v1.22
+  var AIR_ZTPHOST=['#!/bin/bash',   // HS v1.22, v1.23
     '# air/ztp-host.sh -- TC-202, DSX Air lab only: makes oob-mgmt-server the provisioning host for the slice.',
     '#   1. stops Air’s own DHCP (and web) server, so the switches take their leases and option 239 from this host',
-    '#   2. puts the provisioning address and each slice subnet’s gateway on the Air OOB interface (flat L2: in Air there are',
-    '#      no OOB cores to relay DHCP)',
-    '#   3. writes test secrets (the switch admin login is the password you give), runs setup.sh, sets aside every device',
-    '#      outside the slice (estate_build.py lab-slice) and starts the run',
+    '#   2. puts the provisioning address, each slice subnet’s gateway and the service addresses (NTP, DNS, syslog, TACACS) on',
+    '#      the Air OOB interface: flat L2 (no OOB cores in Air), and a login fails over to the local account at once',
+    '#   3. writes test secrets (the switches’ netadmin login and the service’s read login are the password you give), runs',
+    '#      setup.sh, sets aside every device outside the slice, binds the slice by MAC (Air’s dhcpd.hosts) and starts the run',
     '# Run from the unpacked deploy folder:  sudo bash air/ztp-host.sh [interface]',
     'set -euo pipefail',
     '[[ $EUID -eq 0 ]] || { echo "[!] run as root: sudo bash air/ztp-host.sh"; exit 1; }',
@@ -24337,11 +24337,16 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     '[[ -n "$NIC" ]] || { echo "[!] no interface on Air’s OOB network (192.168.200.0/24): give it as the first argument"; exit 1; }',
     'echo "[ok] Air OOB interface: $NIC"',
     'python3 -c "import sys; sys.exit(0 if sys.version_info >= (3, 7) else 1)" || { echo "[!] python3 3.7 or later is needed"; exit 1; }',
+    '# the slice’s MACs, from Air’s own DHCP host list (before its DHCP server stops)',
+    'if [[ -f /etc/dhcp/dhcpd.hosts ]]; then',
+    '  awk \'/^ *host /{n=$2} /hardware ethernet/{gsub(";","",$3); print n","tolower($3)}\' /etc/dhcp/dhcpd.hosts | grep -F -f <(cut -d, -f1 air/slice.csv | tail -n +2 | sed "s/$/,/") > air/macs.csv || true',
+    '  echo "[ok] $(wc -l < air/macs.csv) slice MAC(s) from /etc/dhcp/dhcpd.hosts (air/macs.csv)"',
+    'fi',
     'for s in isc-dhcp-server dnsmasq nginx apache2; do',
     '  if systemctl is-active --quiet "$s" 2>/dev/null; then systemctl disable --now "$s" >/dev/null 2>&1 || true; echo "[ok] stopped $s (Air’s)"; fi',
     'done',
     'ADDRS=$(python3 - <<\'PYEOF\'',
-    'import csv, ipaddress, json',
+    'import csv, glob, ipaddress, json, re',
     'e = json.load(open("provision/estate.json")); k = json.load(open("provision/kea-dhcp4.json"))["Dhcp4"]',
     'subs = list(k.get("subnet4", [])) + [x for sn in k.get("shared-networks", []) for x in sn.get("subnet4", [])]',
     'nets = [(ipaddress.ip_network(x["subnet"]), x) for x in subs]',
@@ -24350,7 +24355,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     '        if ipaddress.ip_address(ip) in n: return n, x',
     '    return None, None',
     'out = []',
-    'n, x = sub(e["site"]["prov_ip"]); out.append("%s/%d" % (e["site"]["prov_ip"], n.prefixlen if n else 24))',
+    'pn, x = sub(e["site"]["prov_ip"]); out.append("%s/%d" % (e["site"]["prov_ip"], pn.prefixlen if pn else 24))',
     'D = {d["name"]: d for d in e["devices"]}',
     'for r in csv.DictReader(open("air/slice.csv")):',
     '    d = D.get(r["node"])',
@@ -24358,43 +24363,32 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     '    n, x = sub(d["ip"])',
     '    gw = [o["data"] for o in (x or {}).get("option-data", []) if o.get("name") == "routers"]',
     '    if n and gw: out.append("%s/%d" % (gw[0], n.prefixlen))',
-    'print(" ".join(sorted(set(out), key=out.index)))',
+    'svc = set()   # the services the switch configurations name, inside the provisioning subnet (nothing answers: refused at once)',
+    'for f in glob.glob("ztp/*.sh"):',
+    '    for m in re.finditer(r"(?:tacacs server|dns server|ntp server|syslog server) (\\d+\\.\\d+\\.\\d+\\.\\d+)", open(f, errors="replace").read()):',
+    '        if pn and ipaddress.ip_address(m.group(1)) in pn and m.group(1) != e["site"]["prov_ip"]: svc.add(m.group(1) + "/32")',
+    'print(" ".join(sorted(set(out), key=out.index) + sorted(svc)))',
     'PYEOF',
     ')',
     'for a in $ADDRS; do ip addr replace "$a" dev "$NIC"; echo "[ok] $a on $NIC"; done',
     'if [[ ! -s /etc/fabric/secrets.env ]] || grep -qE "^[A-Z][A-Z0-9_]*=$" /etc/fabric/secrets.env; then',
-    '  read -rsp "Admin password for the switches after ZTP (user netadmin; 8+ characters, upper, lower, digit, symbol): " APW; echo',
+    '  while :; do',
+    '    read -rsp "Password for the switches after ZTP (user netadmin; 8+ characters, upper, lower, digit, symbol): " APW; echo',
+    '    read -rsp "Again: " APW2; echo',
+    '    [[ "$APW" == "$APW2" && ${#APW} -ge 8 ]] && break; echo "[!] the two differ, or shorter than 8: again"',
+    '  done',
     '  H=$(openssl passwd -6 "$APW"); mkdir -p /etc/fabric; umask 077',
     '  awk -F= -v h="$H" \'/^[A-Z][A-Z0-9_]*=/{k=$1; v=substr($0,index($0,"=")+1); if(v==""){ if(k ~ /HASH/) v=h; else if(k ~ /_FILE$/) v="/etc/hostname"; else if(k ~ /ASN/) v="64999"; else if(k ~ /FREQ/) v="193100000"; else v="AirTest1"} print k"="v; next} {print}\' secrets.env.template > /etc/fabric/secrets.env',
-    '  chmod 600 /etc/fabric/secrets.env; echo "[ok] test secrets written to /etc/fabric/secrets.env (lab only)"',
+    '  APW="$APW" python3 -c \'import os,re;p="/etc/fabric/secrets.env";t=open(p).read();t=re.sub(r"(?m)^READ_USER=.*$","READ_USER=netadmin",t);t=re.sub(r"(?m)^READ_PASSWORD=.*$",lambda m:"READ_PASSWORD="+os.environ["APW"],t);open(p,"w").write(t)\'',
+    '  chmod 600 /etc/fabric/secrets.env; echo "[ok] test secrets written to /etc/fabric/secrets.env (lab only); the service reads the switches as netadmin"',
     'fi',
     'bash ./setup.sh',
-    'python3 /opt/estate-build/estate_build.py lab-slice air/slice.csv --conf /etc/fabric/estate.conf',
+    'python3 /opt/estate-build/estate_build.py lab-slice air/slice.csv --macs air/macs.csv --conf /etc/fabric/estate.conf',
     'python3 /opt/estate-build/estate_build.py start --plane all --conf /etc/fabric/estate.conf',
     'echo',
-    'echo "[next] bash air/ztp-kick.sh  -- restarts ZTP on the slice switches and lists their eth0 MACs for binding"'].join('\n')+'\n';
-  var AIR_ZTPKICK=['#!/bin/bash',   // HS v1.22
-    '# air/ztp-kick.sh -- TC-202, DSX Air lab only, after air/ztp-host.sh: restarts ZTP on each slice switch (they booted on',
-    '# Air’s DHCP before this host took over) and prints each switch’s eth0 MAC, to bind it from Unclaimed in the console.',
-    '# The SN2201 is skipped: its ZTP runs in-band through its OOB spine, which is outside the slice.',
-    'set -u',
-    'cd "$(dirname "$0")/.."',
-    'command -v sshpass >/dev/null || { echo "[i] installing sshpass"; sudo apt-get install -y -qq --no-install-recommends sshpass >/dev/null 2>&1 || { echo "[!] sshpass is needed"; exit 1; }; }',
-    'read -rsp "Password for user cumulus on the switches (a switch still on the factory login is set to it first): " PW; echo',
-    'export SSHPASS="$PW"',
-    'SSH="sshpass -e ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR"',
-    'printf "%-40s %s\\n" SWITCH "eth0 MAC (bind this one)"',
-    'while IFS=, read -r node role cfg peers; do',
-    '  [ "$node" = node ] && continue',
-    '  case "$role" in *SN2201*) printf "%-40s %s\\n" "$node" "skipped: in-band ZTP through the OOB spine (set aside by lab-slice)"; continue;; esac',
-    '  { $SSH -n "cumulus@$node" true 2>/dev/null || python3 air/firstlogin.py "$node" cumulus "$PW" >/dev/null; } || { printf "%-40s %s\\n" "$node" "cannot sign in"; continue; }',
-    '  MAC=$($SSH -n "cumulus@$node" cat /sys/class/net/eth0/address 2>/dev/null)',
-    '  $SSH -n "cumulus@$node" "echo \'$PW\' | sudo -S -p \'\' sh -c \'ztp -R </dev/null >/dev/null 2>&1; nohup sh -c \\"sleep 2; reboot\\" >/dev/null 2>&1 &\'" >/dev/null 2>&1',
-    '  printf "%-40s %s\\n" "$node" "${MAC:-?}"',
-    'done < air/slice.csv',
-    'echo',
-    'echo "[next] in the Deployment Console (https://172.16.16.10:8443 from this host): bind each MAC from Unclaimed to its switch."',
-    'echo "       Each switch takes its address and ZTP script when its wave opens; override a gate that waits on absent devices."'].join('\n')+'\n';
+    'echo "[next] Console: https://$(python3 -c \'import json;print(json.load(open("provision/estate.json"))["site"]["prov_ip"])\'):8443 (tunnel: air/README.md)."',
+    'echo "       The slice switches are bound by MAC; each takes its address and ZTP script when its wave opens."',
+    'echo "       Override a gate that waits on the devices set aside. Stay off the switches until Done: ZTP pauses while an SSH session is open."'].join('\n')+'\n';
   var AIR_NVTEST="#!/bin/bash\n# nvtest.sh CONFIG OUTDIR [EXPECTED] -- runs ON a Cumulus VX node in DSX Air, as root.\n# Pass 1 (syntax): stages every \"nv set\"/\"nv unset\" line one at a time and records each line NVUE rejects, with its\n#   message; the staged changes are then discarded (nv config detach). Nothing is applied.\n# Pass 2 (apply): stages every line again EXCEPT the out-of-band access lines (eth0 address and DHCP, the management\n#   default route, the eth0 control-plane ACL) -- those would cut the Air OOB session -- then applies once and\n#   records the result, the BGP neighbors and the interfaces.\nset -u\nCFG=${1:-}; OUT=${2:-/tmp/nvtest}\n[ -f \"$CFG\" ] || { echo \"nvtest: no configuration file: $CFG\"; exit 2; }\nrm -rf \"$OUT\"; mkdir -p \"$OUT\"; : > \"$OUT/rejected.tsv\"\nOOB='nv set interface eth0 |acl MGMT-IN|nv set vrf mgmt router static'\nstage(){   # $1 = 1 (every line) or 2 (skip the OOB access lines); prints \"<accepted> <rejected> <skipped>\"\n  local n=0 ok=0 bad=0 skip=0 line msg\n  while IFS= read -r line || [ -n \"$line\" ]; do n=$((n+1))\n    case \"$line\" in \"nv set \"*|\"nv unset \"*) ;; *) continue;; esac\n    if [ \"$1\" = 2 ] && printf '%s' \"$line\" | grep -Eq \"$OOB\"; then skip=$((skip+1)); continue; fi\n    if msg=$(eval \"$line\" </dev/null 2>&1); then ok=$((ok+1))\n    else bad=$((bad+1)); [ \"$1\" = 1 ] && printf '%s\\t%s\\t%s\\n' \"$n\" \"$line\" \"$(printf '%s' \"$msg\" | tr '\\n\\t' '  ' | cut -c1-400)\" >> \"$OUT/rejected.tsv\"; fi\n  done < \"$CFG\"\n  echo \"$ok $bad $skip\"\n}\nnv config detach >/dev/null 2>&1\nT0=$(date +%s)\nread -r ok1 bad1 sk1 < <(stage 1)\nnv config detach >/dev/null 2>&1\nread -r ok2 bad2 sk2 < <(stage 2)\nnv config apply -y > \"$OUT/apply.txt\" 2>&1; rc=$?; echo \"exit $rc\" >> \"$OUT/apply.txt\"\nEXP=${3:-0}; i=0   # HS v1.21: wait up to 5 minutes for the expected sessions on the cabled ports (BFD restarts FRR)\nwhile [ $i -lt 20 ]; do sleep 15; i=$((i+1)); n=$(nv show vrf default router bgp neighbor 2>/dev/null | grep -Ec '^swp[0-9s]+ .* established '); [ $i -ge 3 ] && [ \"${n:-0}\" -ge \"$EXP\" ] && break; done\nnv show vrf default router bgp neighbor > \"$OUT/bgp.txt\" 2>&1\nvtysh -c 'show bgp summary' > \"$OUT/bgp-summary.txt\" 2>&1\nnv show interface > \"$OUT/interfaces.txt\" 2>&1\nnv config history > \"$OUT/history.txt\" 2>&1\n{ echo \"config $(basename \"$CFG\")\"; echo \"release $(grep -m1 DISTRIB_RELEASE /etc/lsb-release 2>/dev/null | cut -d= -f2)\";\n  echo \"pass1 accepted $ok1 rejected $bad1\"; echo \"pass2 accepted $ok2 rejected $bad2 skipped-oob $sk2\"; echo \"apply exit $rc\";\n  echo \"seconds $(( $(date +%s) - T0 ))\"; } > \"$OUT/summary.txt\"\ncat \"$OUT/summary.txt\"\n", AIR_RUNTESTS="#!/bin/bash\n# run-tests.sh -- runs on the DSX Air oob-mgmt-server, from the unpacked deploy folder:  bash air/run-tests.sh\n# 1. Renders a throwaway copy of the package with test secrets (every key filled; password hashes are real SHA-512\n#    hashes of a test password), using setup.sh's own render step -- the files the switches get are the real ones.\n# 2. Copies each slice switch's configuration and air/nvtest.sh to it, runs the test on all switches in parallel.\n# 3. Collects the results into air-results/ and air-results.tgz, and writes air-results/REPORT.md.\nset -u\nHERE=$(cd \"$(dirname \"$0\")/..\" && pwd); cd \"$HERE\"\n[ -f setup.sh ] && [ -f air/slice.csv ] || { echo \"[!] run from the unpacked deploy folder: bash air/run-tests.sh\"; exit 1; }\nW=$(mktemp -d); cp -r \"$HERE/.\" \"$W/\"\nH=$(openssl passwd -6 'AirTest-1')\nawk -F= -v h=\"$H\" '/^[A-Z][A-Z0-9_]*=/{k=$1; v=substr($0,index($0,\"=\")+1); if(v==\"\"){ if(k ~ /HASH/) v=h; else if(k ~ /_FILE$/) v=\"/etc/hostname\"; else if(k ~ /ASN/) v=\"64999\"; else if(k ~ /FREQ/) v=\"193100000\"; else v=\"AirTest1\"} print k\"=\"v; next} {print}' \"$W/secrets.env.template\" > \"$W/secrets.env\"\nsed -n \"/^python3 - \\\"\\$SECRETS\\\" <<'PYEOF'/,/^PYEOF/p\" \"$W/setup.sh\" | sed '1d;$d' > \"$W/.render.py\"\n( cd \"$W\" && python3 .render.py secrets.env | tail -2 )\ncommand -v sshpass >/dev/null || { echo \"[i] installing sshpass\"; sudo apt-get install -y sshpass >/dev/null 2>&1 || { echo \"[!] sshpass is needed\"; exit 1; }; }\nread -rsp \"Password for user cumulus on the switches (the simulation's switch login): \" PW; echo\nexport SSHPASS=\"$PW\"\nSSH=\"sshpass -e ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR\"\nSCP=\"sshpass -e scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR\"\nRES=\"$HERE/air-results\"; rm -rf \"$RES\"; mkdir -p \"$RES\"\nwhile IFS=, read -r node role cfg peers; do\n  [ \"$node\" = node ] && continue\n  f=$(basename \"$cfg\")\n  getent hosts \"$node\" >/dev/null || echo \"[!] $node does not resolve here -- check the node name in the simulation (see air/README.md)\"\n  ( { $SSH -o BatchMode=no \"cumulus@$node\" true 2>/dev/null || python3 \"$W/air/firstlogin.py\" \"$node\" cumulus \"$PW\"; } &&   # HS v1.21: the factory login's forced change\n    $SCP \"$W/$cfg\" \"$W/air/nvtest.sh\" \"cumulus@$node:/tmp/\" &&\n    $SSH \"cumulus@$node\" \"sudo -S -p '' bash /tmp/nvtest.sh /tmp/$f /tmp/nvtest $peers\" <<< \"$PW\" &&\n    $SCP -r \"cumulus@$node:/tmp/nvtest\" \"$RES/$node\" ) > \"$RES/$node.log\" 2>&1 &\n  echo \"[..] $node ($role) started\"\ndone < air/slice.csv\necho \"[..] testing in parallel; each switch takes about 10-20 minutes\"\nwait\npython3 air/report.py \"$RES\" air/slice.csv > \"$RES/REPORT.md\"\ntar czf \"$HERE/air-results.tgz\" -C \"$HERE\" air-results\nrm -rf \"$W\"\necho \"[ok] $RES/REPORT.md  and  $HERE/air-results.tgz\"\n", AIR_REPORT="#!/usr/bin/env python3\n# report.py RESULTS_DIR SLICE_CSV -- one Markdown report from the per-switch nvtest results.\nimport os, re, sys, csv, collections\nres, sl = sys.argv[1], sys.argv[2]\n# NVUE lines Cumulus VX cannot honor: it has no Spectrum ASIC, so these are expected to fail in Air and are checked\n# on hardware instead. Anything else that fails is a finding.\nVX = re.compile(r\"link breakout|link speed|nv set qos|telemetry|wjh|roce|histogram|buffer|adaptive-routing|pfc|ecn|ptp\")\nrows = list(csv.DictReader(open(sl)))\nout = [\"# DSX Air Cumulus test\", \"\", \"| Switch | Role | Pass 1 accepted / rejected | Apply | BGP Established on cabled ports / expected |\", \"|---|---|---|---|---|\"]\nfind, vx = collections.OrderedDict(), collections.OrderedDict()\nfor r in rows:\n    n = r[\"node\"]; d = os.path.join(res, n); s = {}\n    try:\n        for ln in open(os.path.join(d, \"summary.txt\")):\n            k, _, v = ln.strip().partition(\" \"); s[k] = v\n    except OSError:\n        out.append(\"| %s | %s | no result (see %s.log) | | |\" % (n, r[\"role\"], n)); continue\n    est = evpn = 0   # HS v1.21: sessions on cabled ports (unnumbered, swpN) against the expected count; EVPN loopback sessions apart\n    try:\n        for ln in open(os.path.join(d, \"bgp.txt\")):\n            if re.search(r\"\\sestablished\\s\", ln, re.I):\n                if re.match(r\"swp\\d\", ln): est += 1\n                else: evpn += 1\n    except OSError: pass\n    out.append(\"| %s | %s | %s | %s | %s / %s |\" % (n, r[\"role\"], s.get(\"pass1\", \"\").replace(\"accepted \", \"\").replace(\" rejected \", \" / \"),\n               \"ok\" if s.get(\"apply\") == \"exit 0\" else s.get(\"apply\", \"?\"), est, r.get(\"peers\", \"\") + (\" (+%d EVPN)\" % evpn if evpn else \"\")))\n    try:\n        for ln in open(os.path.join(d, \"rejected.tsv\")):\n            p = ln.rstrip(\"\\n\").split(\"\\t\")\n            if len(p) < 3: continue\n            key = re.sub(r\"\\b(swp\\d+(s\\d+)?|\\d+(\\.\\d+){3}(/\\d+)?|\\d+)\\b\", \"#\", p[1])\n            bucket = vx if VX.search(p[1]) else find\n            e = bucket.setdefault(key, {\"line\": p[1], \"msg\": p[2], \"where\": []}); e[\"where\"].append(\"%s:%s\" % (n, p[0]))\n    except OSError: pass\ndef sect(title, b):\n    out.extend([\"\", \"## \" + title + \" (%d distinct)\" % len(b), \"\"])\n    for k, e in b.items():\n        out.append(\"- `%s`  \\n  %s  \\n  %s\" % (e[\"line\"], e[\"msg\"][:300], \", \".join(e[\"where\"][:6]) + (\" ...\" if len(e[\"where\"]) > 6 else \"\")))\nsect(\"Rejected lines to fix\", find)\nsect(\"Rejected lines Cumulus VX cannot run (check on Spectrum hardware)\", vx)\nfor r in rows:\n    try: out.extend([\"\", \"### Apply: \" + r[\"node\"], \"\", \"```\", open(os.path.join(res, r[\"node\"], \"apply.txt\")).read()[-1500:], \"```\"])\n    except OSError: pass\nprint(\"\\n\".join(out))\n";
   var AIR_VX='cumulus-vx-5.18.3', AIR_STUB_PORTS=64, AIR_MEM=4096, AIR_DISK=20, AIR_OOB_GB=6, AIR_ORG_GB=60;   // HS v1.21: Air's minimum switch size; its default org limit
   function _airModel(d){   // HS v1.21: the node's model label in Air (labels.model)
@@ -24463,7 +24457,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     var B=_airBuild(); if(!B) return [];
     return [['air/topology.json', B.topo], ['air/slice.csv', B.slice], ['air/breakouts.csv', B.breakouts], ['air/nvtest.sh', AIR_NVTEST],
             ['air/run-tests.sh', AIR_RUNTESTS], ['air/report.py', AIR_REPORT], ['air/firstlogin.py', AIR_FIRSTLOGIN], ['air/ztp.sh', AIR_ZTP],
-            ['air/ztp-host.sh', AIR_ZTPHOST], ['air/ztp-kick.sh', AIR_ZTPKICK], ['air/README.md', airReadme(B)]];   // HS v1.21, v1.22
+            ['air/ztp-host.sh', AIR_ZTPHOST], ['air/README.md', airReadme(B)]];   // HS v1.21, v1.22, v1.23
   }
   function airReadme(B){
     B=B||_airBuild(); if(!B) return '';
@@ -24519,15 +24513,19 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       '(switches still on their factory configuration); do not set air/ztp.sh as its ZTP script.','',
       '1. Start the simulation; enable SSH on oob-mgmt-server; copy the .run to it and sign in (tmux new -s t, on its own line).',
       '2. bash <SITE>-deploy-<ver>.run --extract-only --dir ~/t ;  cd ~/t/<SITE>-deploy',
-      '3. sudo bash air/ztp-host.sh   -- Air’s DHCP stops; the provisioning and gateway addresses go on the OOB interface; test',
-      '   secrets (you give the switches’ netadmin password); setup.sh (you confirm the site and set the console admin password);',
-      '   lab-slice sets aside every device outside the slice; the run starts.',
-      '4. bash air/ztp-kick.sh   -- ZTP restarts on each slice switch; it lists each switch’s eth0 MAC.',
-      '5. Console (https://<prov address>:8443; from your PC: ssh -L 8443:<prov address>:8443 to oob-mgmt-server, then https://localhost:8443):',
-      '   bind each MAC under Unclaimed to its switch. A switch takes its address and option 239 when its wave opens.',
-      '6. Each build’s gate blocks on the devices set aside (and on carrier, host and storage checks Air cannot run): override it',
-      '   with a reason ("TC-202 Air slice") once the slice switches in that build are Done.',
-      '7. Pass: every slice switch except the SN2201 reaches Done. On a switch (user netadmin, the password from step 3):',
+      '3. sudo bash air/ztp-host.sh   -- Air’s DHCP stops; the provisioning, gateway and service addresses go on the OOB',
+      '   interface; test secrets (you give the switches’ netadmin password, twice; the service reads the switches with it);',
+      '   setup.sh (you confirm the site and set the console admin password); lab-slice sets aside every device outside the slice',
+      '   and binds the slice by MAC from Air’s /etc/dhcp/dhcpd.hosts; the run starts. The switches keep ZTP running and refresh',
+      '   DHCP every minute, so nothing else is needed on them. Stay off them until Done: ZTP pauses while an SSH session is open.',
+      '4. Console tunnel: Air accepts SSH keys only, and only those in Air Settings. From a PC whose key is not there, go through the',
+      '   host whose key is (port 9443 keeps clear of that host’s own console):',
+      '     ssh -t -L 9443:localhost:9443 USER@KEYED-HOST ssh -L 9443:<prov address>:8443 -p <port> ubuntu@<worker>.dsx-air.nvidia.com',
+      '   then https://localhost:9443. On Windows, turn off QuickEdit Mode (window Properties): a click in the window pauses it.',
+      '5. Each build’s gate blocks on the devices set aside (and on carrier, host and storage checks Air cannot run): override it',
+      '   with a reason ("TC-202 Air slice") once the slice switches in that build are Done. Re-check runs a gate’s automatic checks',
+      '   again at any time (TC-203: they read the slice switches and skip the devices set aside).',
+      '6. Pass: every slice switch except the SN2201 reaches Done. On a switch (user netadmin, the password from step 3):',
       '   sudo ztp -s shows success; the factory cumulus login is refused (locked).']).join('\n');
   }
   // v499 (lab): the cluster configuration as one standalone SRX -- node 0's settings, node 0's reth members.
@@ -25339,9 +25337,9 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     B.push('');
     B.push('pkg_install() {  # pkg_install <apt-name> <rhel-name>');
     B.push('  local aptn="$1" rhn="$2"');
-    B.push('  if [[ $PM == apt ]]; then apt-get install -y --no-install-recommends "$aptn"; else $PM install -y "$rhn"; fi   # HS v1.21: no compilers via Recommends');
+    B.push('  if [[ $PM == apt ]]; then apt-get -o DPkg::Lock::Timeout=600 install -y --no-install-recommends "$aptn"; else $PM install -y "$rhn"; fi   # HS v1.21: no compilers via Recommends');
     B.push('}');
-    B.push('[[ $PM == apt ]] && apt-get update -qq || true');
+    B.push('[[ $PM == apt ]] && apt-get -o DPkg::Lock::Timeout=600 update -qq || true   # HS v1.23: waits for the package lock');
     B.push('');
     B.push("# ---- 1. DHCP server: Kea (ISC dhcpd is no longer maintained; --legacy keeps it) ----");
     B.push("if [[ $LEGACY -eq 1 ]]; then");
@@ -25380,9 +25378,9 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     B.push('  echo "[ok] PyEZ already installed ($(python3 -c \'import jnpr.junos;print(jnpr.junos.__version__)\'))"');
     B.push('else');
     B.push('  echo "[..] installing junos-eznc (PyEZ)"');
-    B.push('  { pip3 install --quiet --break-system-packages junos-eznc 2>/dev/null || pip3 install --quiet junos-eznc 2>/dev/null; } && python3 -c "import jnpr.junos" >/dev/null 2>&1 \\');   // v513: PEP 668 (Ubuntu 23.04+, Debian 12)
+    B.push('  { pip3 install --quiet --break-system-packages junos-eznc >/tmp/pyez-pip.log 2>&1 || pip3 install --quiet junos-eznc >>/tmp/pyez-pip.log 2>&1; } && python3 -c "import jnpr.junos" >/dev/null 2>&1 \\');   // v513: PEP 668 (Ubuntu 23.04+, Debian 12)
     B.push('    && echo "[ok] PyEZ installed ($(python3 -c \'import jnpr.junos;print(jnpr.junos.__version__)\'))" \\');   // HS v1.21: a result line
-    B.push('    || echo "[warn] junos-eznc not installed: install it (pip3 install --break-system-packages junos-eznc) before push_configs.py"');
+    B.push('    || echo "[warn] junos-eznc not installed ($(tail -n 1 /tmp/pyez-pip.log 2>/dev/null)): install it (pip3 install --break-system-packages junos-eznc) before push_configs.py"');   // HS v1.23: pip’s reason
     B.push('fi');
     } else B.push('# ---- 4. PyEZ: not needed (no Junos devices in this build) ----');
     B.push('');
@@ -25546,7 +25544,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     // pip install on Ubuntu 24.04 even with --break-system-packages when apt owns a dependency. estate_build.py finds it there.
     B.push("NMV=/opt/estate-build/pyenv");
     B.push("if python3 -c \"import netmiko\" 2>/dev/null || \"$NMV/bin/python3\" -c \"import netmiko\" 2>/dev/null; then echo \"[ok] netmiko present\"");
-    B.push("else echo \"[..] installing netmiko ($NMV)\"; mkdir -p /opt/estate-build; [[ $PM == apt ]] && apt-get install -y -qq --no-install-recommends python3-venv >/dev/null 2>&1 || true");
+    B.push("else echo \"[..] installing netmiko ($NMV)\"; mkdir -p /opt/estate-build; [[ $PM == apt ]] && apt-get -o DPkg::Lock::Timeout=600 install -y -qq --no-install-recommends python3-venv >/dev/null 2>&1 || true");
     B.push("  if python3 -m venv --system-site-packages \"$NMV\" >/dev/null 2>&1 && \"$NMV/bin/pip\" install --quiet netmiko >/dev/null 2>&1; then echo \"[ok] netmiko installed ($($NMV/bin/python3 -c 'import netmiko;print(netmiko.__version__)'))\"");
     B.push("  else echo \"[warn] netmiko not installed: automatic gate checks and backups fall back to operator confirmation\"; fi");
     B.push("fi");
@@ -32777,7 +32775,7 @@ class Phase2Mixin(object):
                 from netmiko import ConnectHandler
             except ImportError:
                 raise ReaderUnavailable("netmiko is not installed (re-run setup.sh: it installs it in /opt/estate-build/pyenv)")
-        c = ConnectHandler(device_type=DT[os_], host=d["ip"], username=u, password=p, timeout=20, conn_timeout=15)
+        c = ConnectHandler(device_type=DT[os_], host=d["ip"], username=u, password=p, timeout=20, conn_timeout=15, auth_timeout=90, banner_timeout=60)   # HS v1.23: TACACS fall-back takes time
         try:
             return [c.send_command(x, read_timeout=120) for x in cmds]
         finally:
@@ -32794,7 +32792,8 @@ class Phase2Mixin(object):
                 vrfs = sorted(json.loads(vr).keys())
             except ValueError:
                 vrfs = ["default"]
-            return self.read(name, ["nv show vrf %s router bgp neighbor -o json" % x for x in vrfs])
+            out = self.read(name, ["nv show vrf %s router bgp neighbor -o json" % x for x in vrfs])
+            return [t for t in out if not t.strip().startswith("Error:")] or out   # HS v1.23: VRFs without BGP
         return self.read(name, cmds)
 
     def eval_kind(self, kind, n, c):
@@ -32856,7 +32855,9 @@ class Phase2Mixin(object):
                 self.kv_set("auto_res", {"%s|%s" % k2: v for k2, v in self.auto_res.items()})
             return
         ev, bad, why = {}, [], None
-        for n in c["devices"]:
+        devs = [n for n in c["devices"] if self.st[n]["flag"] != "quarantined"]   # HS v1.23: set-aside devices are not read
+        aside = len(c["devices"]) - len(devs)
+        for n in devs:
             if self.st[n]["stage"] < 5 and not self.devs[n].get("aggregate"):
                 bad.append(n)
                 ev[n] = {"ok": False, "note": "not yet verified", "text": ""}
@@ -32874,13 +32875,15 @@ class Phase2Mixin(object):
         t = now()
         if why:
             res = {"result": "unavailable", "note": "automatic check unavailable (%s): confirm by hand" % why, "evidence": ev}
+        elif not devs:
+            res = {"result": "pass", "note": "no device to read: all %d set aside" % aside, "evidence": ev}
         elif not bad:
-            res = {"result": "pass", "note": "%d of %d devices pass" % (len(c["devices"]), len(c["devices"])), "evidence": ev}
+            res = {"result": "pass", "note": "%d of %d devices pass%s" % (len(devs), len(devs), (" (%d set aside)" % aside) if aside else ""), "evidence": ev}
         else:
             first = prev.get("first_fail") or t
             late = t - first > float(c.get("grace_s", 300))
             res = {"result": ("warn" if c.get("warn_only") else "blocked") if late else "running",
-                   "note": "%d of %d pass; %s" % (len(c["devices"]) - len(bad), len(c["devices"]),
+                   "note": "%d of %d pass%s; %s" % (len(devs) - len(bad), len(devs), (" (%d set aside)" % aside) if aside else "",
                                                   "; ".join("%s: %s" % (self.devs[n].get("short", n), ev[n]["note"]) for n in bad[:3])),
                    "evidence": ev, "first_fail": first}
         with self.lock:
@@ -34387,6 +34390,8 @@ class Estate(Phase2Mixin):
         return True
 
     def _probes(self):
+        if not hasattr(self, "down_miss"):
+            self.down_miss = {}   # HS v1.23
         with self.lock:
             todo = []
             t = now()
@@ -34416,6 +34421,33 @@ class Estate(Phase2Mixin):
                 if up != self.st[n].get("count"):
                     self.checkin(n, "count", str(up), "127.0.0.1")
         res = list(pool.map(lambda x: (x, self._probe(x[1]["ip"], x[1].get("verify_ports", [22]))), todo))
+        # HS v1.23: a Done device is probed every done_probe_s; two misses in a row flag it "down" (its stage stays Done)
+        done, every = [], float(self.conf.get("done_probe_s", 120))
+        with self.lock:
+            for n, s in self.st.items():
+                d = self.devs[n]
+                if s["stage"] != 6 or s["flag"] not in ("", "down") or not d.get("ip") or d.get("aggregate") or not d.get("verify_ports"):
+                    continue
+                if t < self.probe_due.get("done:" + n, 0):
+                    continue
+                self.probe_due["done:" + n] = t + every
+                done.append((n, d))
+        for (n, d), up in zip(done, pool.map(lambda x: self._probe(x[1]["ip"], x[1].get("verify_ports", [22])), done)):
+            with self.lock:
+                s = self.st[n]
+                if up:
+                    self.down_miss.pop(n, None)
+                    if s["flag"] == "down":
+                        s["flag"], s["detail"] = "", "answering again"
+                        self.save_dev(n)
+                        self.event("%s answers again" % d.get("short", n), "info", n)
+                    continue
+                self.down_miss[n] = self.down_miss.get(n, 0) + 1
+                if self.down_miss[n] >= 2 and s["flag"] != "down":
+                    s["flag"] = "down"
+                    s["detail"] = "not answering since %s UTC (was Done); if it has failed, Start RMA" % time.strftime("%H:%M", time.gmtime())
+                    self.save_dev(n)
+                    self.event("%s: not answering on its management address (was Done)" % d.get("short", n), "warn", n)
         pool.shutdown(wait=False)
         for (n, d, stage), up in res:
             mode = d.get("config_signal", "checkin")
@@ -34688,7 +34720,7 @@ class Estate(Phase2Mixin):
             self.kea_dirty = True
             return True, "ok"
 
-    def lab_slice(self, keep, reason, user):
+    def lab_slice(self, keep, reason, user, macs=None):
         # HS v1.22 (TC-202): a lab holds a few of the site's devices. Every other device is set aside, so its wave
         # settles; a device whose ZTP rides an uplink relayed by a switch outside the slice (an SN2201 behind its OOB
         # spine) cannot be reached on a flat lab network and is set aside too. Gates that need the absent devices are
@@ -34707,8 +34739,28 @@ class Estate(Phase2Mixin):
                 continue
             self.quarantine(n, user, ("lab: in-band ZTP through a switch outside the slice" if n in keep else reason))
             out += 1
-        self.event("Lab slice: %d device(s) kept (%s), %d set aside" % (len(kept), ", ".join(self.devs[n].get("short", n) for n in kept[:6]) + (" ..." if len(kept) > 6 else ""), out), "warn", user=user)
-        return True, "%d kept, %d set aside%s" % (len(kept), out, ("; not in the plan: " + ", ".join(unknown)) if unknown else "")
+        bound, dism = 0, 0
+        for n, m in sorted((macs or {}).items()):   # HS v1.23: the lab's own MAC list binds the slice
+            mac = norm_mac(m)
+            if not mac or n not in self.devs:
+                continue
+            if n in kept and not self.ident.get(n):
+                key = "manual:" + mac
+                with self.lock:
+                    self.unclaimed[key] = {"key": key, "first": now(), "last": now(), "state": "open", "why": "lab slice MAC list", "mac": mac, "serial": "", "suggest": []}
+                ok, _ = self.bind(key, n, user)
+                bound += 1 if ok else 0
+            elif n in keep and n not in kept:   # set aside (in-band ZTP): its calls are not ours to bind
+                with self.lock:
+                    self.unclaimed[mac] = {"key": mac, "first": now(), "last": now(), "state": "dismissed", "mac": mac, "why": "lab: set aside",
+                                           "dismissed": {"by": user, "ts": now(), "reason": "lab: in-band ZTP through a switch outside the slice"}}
+                    self.db.execute("INSERT OR REPLACE INTO unclaimed(key,data) VALUES(?,?)", (mac, json.dumps(self.unclaimed[mac])))
+                    self.db.commit()
+                dism += 1
+        self.event("Lab slice: %d device(s) kept (%s), %d set aside%s" % (len(kept), ", ".join(self.devs[n].get("short", n) for n in kept[:6]) + (" ..." if len(kept) > 6 else ""), out,
+                   ("; %d bound by MAC" % bound) if bound else ""), "warn", user=user)
+        return True, "%d kept, %d set aside%s%s%s" % (len(kept), out, ("; %d bound by MAC" % bound) if macs else "", ("; %d set-aside MAC(s) dismissed" % dism) if dism else "",
+                                                     ("; not in the plan: " + ", ".join(unknown)) if unknown else "")
 
     def mark_configured(self, n, user, note):
         with self.lock:
@@ -34729,6 +34781,23 @@ class Estate(Phase2Mixin):
             self.audit(user, "gate-confirm", "%s/%s" % (k, chk), note)
             self.event("%s gate: '%s' confirmed by %s" % (self.build_by_key[k]["name"], chk, user), "info", user=user)
             return True, "ok"
+
+    def gate_recheck(self, k, user):
+        # HS v1.23: one pass of the build's automatic checks now, whatever its state (after an override they stop)
+        if k not in self.build_by_key:
+            return False, "unknown build"
+        checks = [c for c in self.build_by_key[k]["gate"] if c["type"] == "auto"]
+        if not checks:
+            return False, "this gate has no automatic checks"
+        def go():
+            for c in checks:
+                try:
+                    self.run_auto(k, c)
+                except Exception as e:
+                    sys.stderr.write("recheck: %s\n" % e)
+        threading.Thread(target=go, daemon=True).start()
+        self.audit(user, "gate-recheck", k, "")
+        return True, "re-checking %d automatic check(s)" % len(checks)
 
     def gate_override(self, k, user, reason):
         with self.lock:
@@ -34804,6 +34873,7 @@ class Estate(Phase2Mixin):
             ok, msg = self.bind(key, n, user)
             if ok:
                 s["flag"] = ""
+                s["rma"]["new"] = {"kind": "mac" if mac else "sn", "value": mac or value}   # HS v1.23
                 s["detail"] = "replacement registered; waiting for it to call in"
                 self.save_dev(n)
             return ok, msg
@@ -35395,7 +35465,7 @@ def make_internal_handler(est):
                 ok, msg = est.start_run(data.get("plane", "all"), "cli:" + data.get("user", "root"), data.get("reason", ""))
                 return self._j(200 if ok else 409, {"ok": ok, "msg": msg})
             if u.path == "/local/lab-slice":
-                ok, msg = est.lab_slice(data.get("keep") or [], data.get("reason", ""), "cli:root")
+                ok, msg = est.lab_slice(data.get("keep") or [], data.get("reason", ""), "cli:root", data.get("macs") or {})
                 return self._j(200 if ok else 409, {"ok": ok, "msg": msg})
             if u.path == "/local/promote":
                 ok, msg = est.promote()
@@ -35570,7 +35640,7 @@ def make_console_handler(est, console_html):
                 need = None   # admins only
             elif n:
                 need = est.wave_of.get(n, (None,))[0]
-            elif p in ("/api/gate/confirm", "/api/gate/override"):
+            elif p in ("/api/gate/confirm", "/api/gate/override", "/api/gate/recheck"):
                 need = data.get("build", "")
             elif p == "/api/run":
                 need = data.get("plane", "all")
@@ -35641,6 +35711,8 @@ def make_console_handler(est, console_html):
                 ok, msg = est.gate_confirm(data.get("build", ""), data.get("check", ""), user, data.get("note", ""))
             elif p == "/api/gate/override":
                 ok, msg = est.gate_override(data.get("build", ""), user, data.get("reason", ""))
+            elif p == "/api/gate/recheck":
+                ok, msg = est.gate_recheck(data.get("build", ""), user)
             elif p == "/api/rma/start":
                 ok, msg = est.rma_start(n, user, data.get("ticket", ""))
             elif p == "/api/rma/identity":
@@ -35881,6 +35953,7 @@ def main():
     ap.add_argument("--planes", default="", help="operator planes, comma-separated: oob,edge,fe,be")
     ap.add_argument("--admin-pass", default=os.environ.get("ESTATE_ADMIN_PASS", ""), help="init: the initial admin password (changed at first login)")
     ap.add_argument("--nic", default="")
+    ap.add_argument("--macs", default="")   # HS v1.23: lab-slice NODE,MAC file (Air: /etc/dhcp/dhcpd.hosts)
     a = ap.parse_args()
     if a.cmd == "probe-dhcp":
         return probe_dhcp(a.nic)
@@ -35917,7 +35990,13 @@ def main():
                     print("usage: estate_build.py lab-slice air/slice.csv [--reason TEXT]")
                     return 2
                 keep = [r["node"] for r in csv.DictReader(open(a.args[0])) if r.get("node")]
-                body = {"keep": keep, "reason": a.reason or "lab: outside the test slice (%s)" % os.path.basename(a.args[0])}
+                macs = {}
+                if a.macs and os.path.isfile(a.macs):
+                    for ln in open(a.macs):
+                        p = [x.strip() for x in ln.replace(",", " ").split()]
+                        if len(p) >= 2 and p[0] != "node":
+                            macs[p[0]] = p[1]
+                body = {"keep": keep, "macs": macs, "reason": a.reason or "lab: outside the test slice (%s)" % os.path.basename(a.args[0])}
             req = urllib.request.Request(base + "/local/" + a.cmd, data=json.dumps(body).encode(),
                                          headers={"X-Estate-Token": tok, "Content-Type": "application/json"})
             print(urllib.request.urlopen(req, timeout=10).read().decode())
@@ -36167,7 +36246,7 @@ dialog::backdrop{background:rgba(20,33,43,.45)}
 </section>
 
 <section class="card" aria-label="Gate"><div class="row" style="justify-content:space-between"><h2 id="gName">Gate</h2><span class="chip k-queued" id="gChip">—</span></div>
-<ul class="steps" id="gChecks"></ul><div class="row"><button class="act" id="gOverride">Override with reason…</button></div></section>
+<ul class="steps" id="gChecks"></ul><div class="row"><button class="act" id="gOverride">Override with reason…</button><button class="act" id="gRecheck" title="Run the automatic checks once now">Re-check</button></div></section>
 
 <section class="card" aria-label="Unclaimed devices"><h2>Unclaimed devices</h2><div id="unc" style="display:flex;flex-direction:column;gap:10px"></div></section>
 
@@ -36286,10 +36365,10 @@ function view(){
 }
 // ------------------------------------------------------------------ render
 function tileClass(x){ if(x.flag==='failed'||x.flag==='missing') return 'tf'; if(x.flag==='rma') return 'tr';
-  if(x.flag==='unclaimed'||x.flag==='waiting'||x.flag==='slow'||x.flag==='quarantined'||/^waiting for operator/.test(x.detail||'')) return 'tw';
+  if(x.flag==='unclaimed'||x.flag==='waiting'||x.flag==='slow'||x.flag==='quarantined'||x.flag==='down'||/^waiting for operator/.test(x.detail||'')) return 'tw';
   if(x.stage===6) return 't6'; if(x.stage>0) return 't1'; return 't0'; }
 function stageTxt(n,x){ var d=S.plan.devices[n];
-  if(x.flag==='failed') return 'Failed: '+STG[Math.min(6,x.stage+1)]; if(x.flag==='missing') return 'Not called in'; if(x.flag==='unclaimed') return 'Unclaimed?';
+  if(x.flag==='failed') return 'Failed: '+STG[Math.min(6,x.stage+1)]; if(x.flag==='down') return 'Done · not answering'; if(x.flag==='missing') return 'Not called in'; if(x.flag==='unclaimed') return 'Unclaimed?';
   if(x.flag==='waiting') return 'Waiting for wave'; if(x.flag==='slow') return 'Waiting (slow)'; if(x.flag==='quarantined') return 'Quarantined'; if(x.flag==='rma') return 'RMA';
   if(d.aggregate && x.stage>0 && x.stage<6) return (x.count||0)+'/'+d.aggregate; return STG[x.stage]; }
 function render(){
@@ -36389,6 +36468,8 @@ function render(){
     ask('Evidence', '<div class="mono" style="font-size:12px;white-space:pre-wrap;max-height:50vh;overflow:auto">'+esc((j.note||'')+'\n\n'+Object.keys(j.evidence||{}).map(function(n){ var x=j.evidence[n]; return (x.ok?'PASS ':'FAIL ')+n+': '+x.note+(x.text?('\n'+x.text.slice(-600)):''); }).join('\n\n'))+'</div>', []); }); }; });
   document.querySelectorAll('[data-nc]').forEach(function(e){ e.disabled=!canAct('be'); e.onclick=function(){ ask('NCCL all-reduce result','From acceptance/nccl.sh (Avg bus bandwidth).',[{key:'busbw',label:'Bus bandwidth, GB/s'},{key:'target',label:'Target, GB/s'}]).then(function(v){ if(v) act('api/result',{kind:'nccl', busbw:v.busbw, target:v.target}); }); }; });
   $('gOverride').disabled=!canAct(gb.key)||gb.state==='complete'||gb.state==='queued';
+  $('gRecheck').disabled=!canAct(gb.key)||gb.state==='queued'||!gb.gate.some(function(c){ return c.type==='auto'; });   // HS v1.23
+  $('gRecheck').onclick=function(){ act('api/gate/recheck',{build:gb.key}); };
   $('gOverride').onclick=function(){ ask('Override the '+gb.name+' gate','The override and its reason go into the audit log and the as-built record.',[{key:'reason', label:'Reason'}]).then(function(v){ if(v) act('api/gate/override',{build:gb.key, reason:v.reason}); }); };
   // unclaimed
   var _bd=function(n){ return live && S.st.devices[n] && S.st.devices[n].id; };   // v498: a bound node is shown, grayed out, never offered
@@ -36484,6 +36565,7 @@ function renderDetail(V, ro){
   } else BK.style.display='none';
   var R=$('dRma'), rma=dc&&dc.state.rma&&dc.state.rma.state==='open'?dc.state.rma:null;
   if(rma && live){ R.style.display='flex';
+    var _rv=$('rmaVal'), _rk=_rv?_rv.value:'', _rf=!!_rv&&document.activeElement===_rv, _rs=_rf?_rv.selectionStart:0;   // HS v1.23
     R.innerHTML='<b>RMA '+esc(rma.ticket||'')+'</b><div>Old identity: <span class="mono">'+esc(rma.old?rma.old.value:'—')+'</span> (retired)'+(rma['new']?(' · new: <span class="mono">'+esc(rma['new'].value)+'</span>'):'')+'</div>'
       +(rma['new']?'':'<div class="row"><input type="text" id="rmaVal" placeholder="Scan serial or MAC" class="f" style="flex:1 1 180px"><button class="act" id="rmaGo">Register</button></div><div class="muted">Or power the replacement on and bind it from Unclaimed: option 82 shows it on this device’s port.</div>')
       +'<div class="row"><b>Apply</b><button class="act" data-ap="planned" style="min-height:32px;'+(((rma.apply||{}).source||'planned')==='planned'?'background:#3b2780;color:#fff':'')+'">Planned</button><button class="act" data-ap="backup" style="min-height:32px;'+((rma.apply||{}).source==='backup'?'background:#3b2780;color:#fff':'')+'"'+(bks.length?'':' disabled')+'>Last backup</button>'+(bks.length?'':'<span class="muted">no backup of this device</span>')+'</div>'
@@ -36491,6 +36573,7 @@ function renderDetail(V, ro){
       +rma.checklist.map(function(c){ return '<div class="row" style="flex-wrap:nowrap;align-items:flex-start"><span class="chip k-'+(c.done?'done':'warn')+'">'+(c.done?'Done':'Open')+'</span><span style="flex:1 1 auto">'+esc(c.label)+(c.blocks_push?' <span class="muted">(push waits)</span>':'')+(c.note?'<br><span class="muted">'+esc(c.note)+'</span>':'')+'</span>'+(c.done?'':'<button class="act" data-rc="'+c.key+'" style="min-height:32px">Confirm</button>')+'</div>'; }).join('');
     R.querySelectorAll('[data-ap]').forEach(function(b){ if(!b.disabled) b.disabled=ro; b.onclick=function(){ act('api/rma/apply',{device:n, source:b.dataset.ap}).then(loadDetail); }; });
     var mg=$('mnhaGo'); if(mg){ mg.disabled=ro; mg.onclick=function(){ act('api/rma/mnha-restore',{device:n}).then(loadDetail); }; }
+    var _nv=$('rmaVal'); if(_nv && _rk){ _nv.value=_rk; } if(_nv && _rf){ _nv.focus(); try{ _nv.setSelectionRange(_rs,_rs); }catch(e){} }   // HS v1.23
     var g=$('rmaGo'); if(g){ g.disabled=ro; g.onclick=function(){ act('api/rma/identity',{device:n, value:$('rmaVal').value}).then(loadDetail); }; }
     R.querySelectorAll('[data-rc]').forEach(function(b){ b.disabled=ro; b.onclick=function(){ act('api/rma/check',{device:n, key:b.dataset.rc}).then(loadDetail); }; });
   } else R.style.display='none';
