@@ -942,7 +942,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.23';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.24';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   var RADIX=64, CAGE=800;
   // ---- FABRIC PROFILE (parameterized per accelerator platform) ----------------------------------------
   // rails == accelerators per host. Each accelerator instance gets its own rail leaf, which is what
@@ -11248,22 +11248,60 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     if(!a||!b) return false;
     return a===b || b.indexOf(a)===0 || a.indexOf(b)===0;
   }
+  // HS v1.24: a header row names the columns (serial, MAC, model, hostname, in any order), as a vendor manifest ships:
+  // both the serial and the MAC are kept, and the identity each device matches on is chosen by its OS (idFor).
+  var ID_COLS={serial:/^(serial|serial ?(no|num|number|#)|sn|s\/n|chassis ?(serial|sn))$/i, mac:/^(mac|mac ?addr(ess)?|base ?mac|mgmt0? ?mac|management ?mac|eth0 ?mac)$/i,
+               model:/^(model|pid|part ?(no|number)|sku|product( ?id)?)$/i, host:/^(host ?name|device|name)$/i};
+  function idHeader(f){ var m={}, n=0; f.forEach(function(x,i){ Object.keys(ID_COLS).forEach(function(k){ if(m[k]===undefined && ID_COLS[k].test(x)){ m[k]=i; n++; } }); });
+    return n>=2 && (m.serial!==undefined || m.mac!==undefined) ? m : null; }
   function parseInventoryCsv(text){
-    var out={units:[], bad:[]};
+    var out={units:[], bad:[]}, H=null;
     String(text||'').split(/\r?\n/).forEach(function(line,i){
       var t=line.trim();
       if(!t || t.charAt(0)==='#') return;
       var f=t.split(/[,;\t]/).map(function(s){return s.trim();});
+      if(!H){ var h=idHeader(f); if(h){ H=h; return; } }
+      if(H){
+        var sn=H.serial!==undefined?String(f[H.serial]||'').trim().toUpperCase():'', mac=H.mac!==undefined?normMac(f[H.mac]||''):null, mdl=H.model!==undefined?String(f[H.model]||'').trim():'';
+        if(H.mac!==undefined && f[H.mac] && !mac){ out.bad.push({line:i+1,text:t,why:'MAC column is not a 12-hex MAC'}); return; }
+        if(sn && !/^[A-Z0-9-]{3,40}$/.test(sn)){ out.bad.push({line:i+1,text:t,why:'serial has characters a serial does not'}); return; }
+        if(!sn && !mac){ out.bad.push({line:i+1,text:t,why:'no serial and no MAC'}); return; }
+        if(!normModel(mdl)){ out.bad.push({line:i+1,text:t,why:'no model given'}); return; }
+        out.units.push({kind:sn?'sn':'mac', value:sn||mac, serial:sn, mac:mac||'', model:mdl,
+                        pin:(H.host!==undefined?String(f[H.host]||''):'').trim().replace(/[^A-Za-z0-9_-]/g,'-')});
+        return;
+      }
       if(f.length<2){ out.bad.push({line:i+1,text:t,why:'needs serial and model'}); return; }
       if(/^(serial|serial ?no|sn|s\/n)$/i.test(f[0])) return;              // header
       var id=classifyId(f[0]);
       if(!id){ out.bad.push({line:i+1,text:t,why:'first field is not a serial or MAC'}); return; }
       if(!normModel(f[1])){ out.bad.push({line:i+1,text:t,why:'no model given'}); return; }
-      out.units.push({kind:id.kind, value:id.value, model:f[1].trim(),
+      out.units.push({kind:id.kind, value:id.value, serial:id.kind==='sn'?id.value:'', mac:id.kind==='mac'?id.value:'', model:f[1].trim(),
                       pin:(f[2]||'').trim().replace(/[^A-Za-z0-9_-]/g,'-')});
     });
     return out;
   }
+  // HS v1.24: the identity a device matches on, by OS. Cumulus, EOS and IOS XR send their MAC; NX-OS POAP sends the
+  // chassis serial in option 61 (0x00 + ASCII; the DHCP MAC is mgmt0's, which a manifest may not list); Junos, SR Linux
+  // and SR OS send their serial. The other identifier is kept: shown, cross-checked, and in the as-built record.
+  var ID_MACFIRST={cumulus:1, eos:1, iosxr:1};
+  function hostOsMap(){ var m={}; try{ var dp=deployPlanes(); dp.order.forEach(function(pl){ dp[pl].forEach(function(d){ m[String(d.name).replace(/[^A-Za-z0-9_-]/g,'-')]=deployOs(d); }); }); }catch(e){} return m; }
+  function idFor(h, u, osm){
+    var os=(osm||{})[h]||'', sn=u.serial||(u.kind==='sn'?u.value:''), mac=u.mac||(u.kind==='mac'?u.value:''), o;
+    if(ID_MACFIRST[os]) o=mac?{kind:'mac', value:mac}:{kind:'sn', value:sn};
+    else o=sn?{kind:'sn', value:sn}:{kind:'mac', value:mac};
+    if(sn) o.serial=sn; if(mac) o.mac=mac; if(u.model) o.model=u.model; if(u.source) o.source=u.source;
+    return o;
+  }
+  // HS v1.24: what would not match, said at import: a MAC-matched unit with no MAC; a MAC or serial given twice
+  function idProblems(){
+    var osm=hostOsMap(), noMac=[], seen={}, dup={};
+    Object.keys(DEVICE_IDS).forEach(function(h){ var id=DEVICE_IDS[h]||{}, os=osm[h];
+      if(ID_MACFIRST[os] && id.kind!=='mac') noMac.push(h);
+      [id.kind==='mac'?id.value:id.mac, id.kind==='sn'?id.value:id.serial].forEach(function(v){ if(!v) return; if(seen[v] && seen[v]!==h) dup[v]=[seen[v],h]; else seen[v]=h; }); });
+    var out=[]; if(noMac.length) out.push(noMac.length+' Cumulus/EOS/IOS XR device(s) without a MAC will not match ('+noMac.slice(0,3).join(', ')+(noMac.length>3?', …':'')+')');
+    var d=Object.keys(dup); if(d.length) out.push(d.length+' identifier(s) given twice ('+d.slice(0,2).map(function(v){ return v+': '+dup[v].join(' and '); }).join('; ')+')');
+    return out; }
   // Allocate serials to hostnames, constrained by platform. Within a platform the order is
   // arbitrary -- any QFX5230 can be FE-SP01 -- so allocation is first-come within the group.
   function allocateIdentities(units){
@@ -11282,13 +11320,13 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       if(!hit){ unknown.push(u); return; }
       (pool[hit]=pool[hit]||[]).push(u);
     });
-    var assigned={}, taken={};
-    pinned.forEach(function(u){ assigned[u.pin]={kind:u.kind,value:u.value,model:u.model}; taken[u.pin]=1; });
+    var assigned={}, taken={}, osm=hostOsMap();   // HS v1.24: identity by OS (idFor)
+    pinned.forEach(function(u){ assigned[u.pin]=idFor(u.pin, u, osm); taken[u.pin]=1; });
     var report=order.map(function(m){
       var hosts=need[m].hosts.filter(function(h){ return !taken[h]; });
       var have=pool[m]||[];
       hosts.forEach(function(h,i){
-        if(have[i]) assigned[h]={kind:have[i].kind, value:have[i].value, model:have[i].model};
+        if(have[i]) assigned[h]=idFor(h, have[i], osm);
       });
       return {model:need[m].model, need:need[m].hosts.length, have:(pool[m]||[]).length,
               short:Math.max(0,hosts.length-have.length), surplus:Math.max(0,have.length-hosts.length)};
@@ -11302,11 +11340,17 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
   // Accepts "hostname,identifier" with an optional header and optional third column.
   // Tabs, semicolons and commas all work as separators.
   function parseDeviceIdCsv(text){
-    var out={rows:[], bad:[], dupes:[]}, seen={};
+    var out={rows:[], bad:[], dupes:[]}, seen={}, H=null;
     String(text||'').split(/\r?\n/).forEach(function(line,i){
       var t=line.trim();
       if(!t || t.charAt(0)==='#') return;
       var f=t.split(/[,;\t]/).map(function(s){return s.trim();});
+      if(!H){ var hh=idHeader(f); if(hh && hh.host!==undefined){ H=hh; return; } }   // HS v1.24: hostname,serial,MAC,model by header
+      if(H){ var host0=String(f[H.host]||'').replace(/[^A-Za-z0-9_-]/g,'-'), sn0=H.serial!==undefined?String(f[H.serial]||'').trim().toUpperCase():'', mac0=H.mac!==undefined?normMac(f[H.mac]||''):null;
+        if(!host0){ out.bad.push({line:i+1, text:t, why:'no hostname'}); return; }
+        if(!sn0 && !mac0){ out.bad.push({line:i+1, text:t, why:'no serial and no MAC'}); return; }
+        if(seen[host0]){ out.dupes.push(host0); return; } seen[host0]=1;
+        out.rows.push({host:host0, kind:sn0?'sn':'mac', value:sn0||mac0, serial:sn0, mac:mac0||'', model:H.model!==undefined?String(f[H.model]||'').trim():''}); return; }
       if(f.length<2) { out.bad.push({line:i+1, text:t, why:'needs hostname and identifier'}); return; }
       if(/^(host ?name|device|name)$/i.test(f[0])) return;          // header row
       var host=f[0].replace(/[^A-Za-z0-9_-]/g,'-');
@@ -11320,8 +11364,9 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     return out;
   }
   function applyDeviceIds(parsed){
+    var osm=hostOsMap();   // HS v1.24: identity by OS; both identifiers kept
     parsed.rows.forEach(function(r){
-      DEVICE_IDS[r.host]={kind:r.kind, value:r.value, model:r.model||''}; });
+      DEVICE_IDS[r.host]=idFor(r.host, r, osm); if(!DEVICE_IDS[r.host].model) DEVICE_IDS[r.host].model=''; });
   }
   // Reconciliation against the actual build -- the part that catches the site visit.
   function deviceIdStatus(){
@@ -11604,6 +11649,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     L.push('hostname '+host);
     L.push('!');
     L.push('username '+ADMIN_USER+' privilege 15 role network-admin secret sha512 <SET-ADMIN-HASH>');
+    L.push.apply(L, acctLines('eos'));   // HS v1.24
     L.push('!');
     var SEGS=oobSegments(), DEVG=oobSeg('device');
     SEGS.forEach(function(g){ if(g.gwAtFirewall) return; L.push('vlan '+g.vlan); L.push('   name '+g.name); });
@@ -11668,6 +11714,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     // SHA-512 crypt ($6$) hash as "password 5". Placeholder only -- never a real value.
     L.push('username admin password 5 <SET-ADMIN-HASH> role network-admin');
     L.push('username '+ADMIN_USER+' password 5 <SET-ADMIN-HASH> role network-admin');
+    L.push.apply(L, acctLines('nxos'));   // HS v1.24
     L.push('!');
 
     var SEGS=oobSegments(), DEVG=oobSeg('device');
@@ -11739,6 +11786,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     var myIp = isA?mp.irbA:mp.irbB;
     L.push('! '+me.name+' -- management core  (Arista EOS)');
     L.push('username '+ADMIN_USER+' privilege 15 role network-admin secret sha512 <SET-ADMIN-HASH>');
+    L.push.apply(L, acctLines('eos'));   // HS v1.24
     L.push('hostname '+host);
     L.push('ip routing');   // Q-046: EOS has IP routing OFF by default -- without this nothing is forwarded
     L.push('ip dhcp relay information option   ! option 82 toward the provisioning host (estate service identity check)');
@@ -11889,6 +11937,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     // SHA-512 crypt ($6$) hash as "password 5". Placeholder only -- never a real value.
     L.push('username admin password 5 <SET-ADMIN-HASH> role network-admin');
     L.push('username '+ADMIN_USER+' password 5 <SET-ADMIN-HASH> role network-admin');
+    L.push.apply(L, acctLines('nxos'));   // HS v1.24
     L.push('!');
 
     var SEGS=oobSegments();
@@ -12076,6 +12125,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       // Login: local admin, SSH only. The secret is a placeholder -- never a real value.
       L.push('ip domain name '+ops('domain','DOMAIN_NAME'));   // v515: the token every other OS uses
       L.push('username '+ADMIN_USER+' privilege 15 secret 9 <SET-ADMIN-TYPE9-HASH>');
+      L.push.apply(L, acctLines('iosxe'));   // HS v1.24
       L.push('aaa new-model');
       L.push('aaa authentication login default local');
       L.push('aaa authorization exec default local');
@@ -12087,6 +12137,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       L.push('!');
     } else {
       L.push('username '+ADMIN_USER+' privilege 15 role network-admin secret sha512 <SET-ADMIN-HASH>');   // v514: local admin, as every other EOS OOB device
+      L.push.apply(L, acctLines('eos'));   // HS v1.24
       L.push('!');
     }
     L.push('interface '+P.car);
@@ -12814,7 +12865,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
   function evpnEos(node){
     var mp=mgmtPlan(), f=oobFab(), L=[], role=node.role, isCore=role==='core', isA=isCore && (mp.mcs[0]||{}).name===node.name, k=isA?0:1;
     _evpnHdr(L, node, isCore?'OOB core, border and EVPN route reflector':role==='spine'?(node.ref&&node.ref.agg?'OOB aggregation':'OOB spine'):'OOB access switch (VTEP)', '!');
-    L.push('hostname '+_h(node.name), '!', 'username '+ADMIN_USER+' privilege 15 role network-admin secret sha512 <SET-ADMIN-HASH>', '!',
+    L.push('hostname '+_h(node.name), '!', 'username '+ADMIN_USER+' privilege 15 role network-admin secret sha512 <SET-ADMIN-HASH>'); L.push.apply(L, acctLines('eos')); L.push('!',   // HS v1.24
            'service routing protocols model multi-agent', 'ip routing', '!');
     L.push('interface Loopback0', '   ip address '+node.lo+'/32', '   ip ospf area '+OSPF_AREA, '!');
     if(isCore) oobBreakoutLines('eos', coreAcc(mp).length).forEach(function(x){ L.push(x); });   // v524; v530: standard core too
@@ -12886,7 +12937,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     _evpnHdr(L, node, isCore?'OOB core, border and EVPN route reflector':role==='spine'?(node.ref&&node.ref.agg?'OOB aggregation':'OOB spine'):'OOB access switch (VTEP)', '!');
     L.push('hostname '+_h(node.name), 'feature ospf', 'feature bfd', 'feature dhcp', 'feature lldp');
     if(role!=='spine' || _ozSpine(node)) L.push('feature bgp', 'feature interface-vlan', 'feature vn-segment-vlan-based', 'feature nv overlay', 'feature fabric forwarding', 'nv overlay evpn');   // v513: fabric forwarding (anycast gateway)
-    L.push('!', 'username admin password 5 <SET-ADMIN-HASH> role network-admin', 'username '+ADMIN_USER+' password 5 <SET-ADMIN-HASH> role network-admin', '!',
+    L.push('!', 'username admin password 5 <SET-ADMIN-HASH> role network-admin', 'username '+ADMIN_USER+' password 5 <SET-ADMIN-HASH> role network-admin'); L.push.apply(L, acctLines('nxos')); L.push('!',   // HS v1.24
            'service dhcp', 'ip dhcp relay', 'ip dhcp relay information option');
     if(isCore || _ozSpine(node)) L.push('ip dhcp relay information option vpn   ! the relay crosses VRFs (use-vrf)');
     L.push('!');
@@ -13658,7 +13709,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
   // the operational services, the NVUE 5.18 rewrite, then the services moved out of VRF mgmt
   function rsnWrap(text, agentIf){
     var cred=['# --- CREDENTIALS: replace the <...> hash before deploying (openssl passwd -6) ---',
-      'nv set system aaa user '+ADMIN_USER+' role system-admin', 'nv set system aaa user '+ADMIN_USER+' hashed-password "<SET-ADMIN-HASH>"',
+      'nv set system aaa user '+ADMIN_USER+' role system-admin', 'nv set system aaa user '+ADMIN_USER+' hashed-password "<SET-ADMIN-HASH>"', ...acctLines('cumulus'),   // HS v1.24
       'nv set system ssh-server permit-root-login disabled', 'nv set service snmp-server enable on', 'nv set service snmp-server listening-address all   # in band: default VRF',
       'nv set service snmp-server readonly-community <SET-SNMP-COMMUNITY> access '+mgmtPlan().cidr];
     text=String(text).replace(/^(nv set system hostname .*)$/m, function(h){ return h+'\n'+cred.join('\n'); });
@@ -14105,7 +14156,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     if(!rec) return [];
     return ['! ---- management: OOB port in VRF MGMT, SSH/SNMP from the OOB supernet only ----',
       'aaa root secret sha512 "<SET-ROOT-HASH>"',
-      'username '+ADMIN_USER+' privilege 15 role network-admin secret sha512 "<SET-ADMIN-HASH>"',
+      'username '+ADMIN_USER+' privilege 15 role network-admin secret sha512 "<SET-ADMIN-HASH>"', ...acctLines('eos', true),   // HS v1.24
       'vrf instance MGMT',
       'interface Management1',
       '   vrf MGMT',
@@ -14129,7 +14180,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
   function nxosMgmt(rec, mp){
     if(!rec) return [];
     return ['! ---- management: mgmt0 in VRF management, SSH/SNMP from the OOB supernet only ----',
-      'username '+ADMIN_USER+' password 5 "<SET-ADMIN-HASH>" role network-admin',
+      'username '+ADMIN_USER+' password 5 "<SET-ADMIN-HASH>" role network-admin', ...acctLines('nxos', true),   // HS v1.24
       'no feature telnet',
       'vrf context management',
       '  ip route 0.0.0.0/0 '+mp.gw,
@@ -15052,6 +15103,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     L.push('# --- CREDENTIALS: replace the <...> hash before deploying (openssl passwd -6) ---');
     L.push('nv set system aaa user '+ADMIN_USER+' role system-admin');
     L.push('nv set system aaa user '+ADMIN_USER+' hashed-password "<SET-ADMIN-HASH>"');
+    L.push.apply(L, acctLines('cumulus'));   // HS v1.24
     if(oob){
       L.push('# --- OOB management (eth0, mgmt VRF): reachable when the data plane is wedged ---');
       L.push('nv set interface eth0 ip address '+oob.ip+oob.mask);
@@ -15204,6 +15256,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     L.push('hostname '+host);
     L.push('! --- CREDENTIALS: replace the <...> hash before deploying ---');
     L.push('username '+ADMIN_USER+' password 5 "<SET-ADMIN-HASH>" role network-admin');
+    L.push.apply(L, acctLines('nxos', true));   // HS v1.24
     L.push('no feature telnet');
     L.push('!');
     L.push('feature bgp');
@@ -18146,7 +18199,11 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
 
   // Secrets: what each one is, which form each OS takes. Rendered by setup.sh from /etc/fabric/secrets.env.
   var SECRET_INFO={
-    'SET-ADMIN-HASH':     {what:'netadmin password hash', fmt:'hash'},
+    'SET-ADMIN-HASH':     {what:'netadmin password hash: the customer’s break-glass account (the customer generates it; DWR never knows the password)', fmt:'hash'},
+    'SET-DWR-ADMIN-HASH': {what:'dwr-netadmin password hash: DWR Networking’s account for the build, removed by Release DWR access', fmt:'hash'},
+    'SET-READ-HASH':      {what:'estate-ro password hash: the service’s read-only login (READ_USER / READ_PASSWORD) for gate checks and build-time backups', fmt:'hash'},
+    'SET-DWR-ADMIN-TYPE9-HASH':{what:'IOS-XE dwr-netadmin secret, type 9 (scrypt), $9$...', fmt:'raw'},
+    'SET-READ-TYPE9-HASH':{what:'IOS-XE estate-ro secret, type 9 (scrypt), $9$...', fmt:'raw'},
     'SET-ROOT-HASH':      {what:'root password hash (Junos root-authentication, EOS aaa root)', fmt:'hash'},
     'SET-BREAKGLASS-HASH':{what:'breakglass local user password hash', fmt:'hash'},
     'SET-TELEMETRY-HASH': {what:'telemetry (read-only) user password hash', fmt:'hash'},
@@ -18262,7 +18319,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       oth.forEach(function(t){ L.push('# <'+t+'>  Used by: '+Object.keys(sc.other[t]).sort().join(', ')); L.push(secretEnvKey(t)+'='); }); }
     L.push('#','# ---- estate provisioning service (provision/README.md). Leave a key blank and that step stays with the operator. ----',
       '# Read-only device login for the automatic gate checks and configuration backups (OS overrides: READ_USER_JUNOS ...)',
-      'READ_USER=', 'READ_PASSWORD=',
+      'READ_USER=estate-ro', 'READ_PASSWORD=',   // HS v1.24: the read-only account (SET-READ-HASH)
       '# Cisco management center for ftd_deploy.py', 'FMC_HOST=', 'FMC_USER=', 'FMC_PASSWORD=',
       '# PEM bundle that signed the management center certificate (TLS is verified; blank = the host\u2019s system store)', 'FMC_CA_BUNDLE=',
       '# kubeconfig of the BIG-IP Next cluster (path on this host)', 'BNK_KUBECONFIG=',
@@ -21162,7 +21219,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       // Q-043: the same management standard as the back-end Cumulus switches.
       ['# --- CREDENTIALS: replace the <...> hash before deploying (openssl passwd -6) ---',
        'nv set system aaa user '+ADMIN_USER+' role system-admin',
-       'nv set system aaa user '+ADMIN_USER+' hashed-password "<SET-ADMIN-HASH>"',
+       'nv set system aaa user '+ADMIN_USER+' hashed-password "<SET-ADMIN-HASH>"', ...acctLines('cumulus'),   // HS v1.24
        'nv set system ssh-server permit-root-login disabled',
        'nv set system ssh-server max-sessions 10',
        'nv set system ssh-server vrf mgmt',
@@ -21793,6 +21850,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     L.push('/configure system name "'+d.name.replace(/[^A-Za-z0-9_-]/g,'-')+'"');
     if(p.moob){
                 L.push('/configure system security user-params local-user user "'+ADMIN_USER+'" password "<SET-ADMIN-HASH>" access console true netconf true');
+    L.push.apply(L, acctLines('sros', '/configure system '));   // HS v1.24
                 L.push('/configure system security management-access-filter ip-filter entry 10 match router-instance "management" src-ip address '+p.mp.cidr+' action accept'); L.push('/configure system security management-access-filter ip-filter entry 20 match router-instance "management" action drop   # Q-017: the OOB port answers the OOB supernet only'); L.push('/configure system security management-access-filter ip-filter default-action accept   # in-band protocols (BGP, BFD) are policed by the CPM filter, not here'); }
     L.push(B+'interface "system" ipv4 primary address '+d.lo+' prefix-length 32');
     // ---- underlay ----
@@ -21910,6 +21968,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     L.push('edit-config private');
     L.push('/configure system name "'+x.nm+'"');
     L.push('/configure system security user-params local-user user "'+ADMIN_USER+'" password "<SET-ADMIN-HASH>" access console true netconf true');
+    L.push.apply(L, acctLines('sros', '/configure system '));   // HS v1.24
     L.push('/configure system security management-access-filter ip-filter entry 10 match router-instance "management" src-ip address '+mp.cidr+' action accept'); L.push('/configure system security management-access-filter ip-filter entry 20 match router-instance "management" action drop   # Q-017: the OOB port answers the OOB supernet only'); L.push('/configure system security management-access-filter ip-filter default-action accept   # in-band protocols (BGP, BFD) are policed by the CPM filter, not here');
     L.push(B+'interface "system" ipv4 primary address '+x.lo+' prefix-length 32');
     // ---- ports: every connector needs its breakout before its port exists ----
@@ -22478,7 +22537,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
         var B=['!! ---- management: MgmtEth in VRF MGMT, SSH from the OOB supernet only ----','vrf MGMT',
           'interface MgmtEth0/RP0/CPU0/0',' vrf MGMT',' ipv4 address '+_rx.ip+' '+xrMask(String(_rx.mask).replace('/','')),'!',
           'router static',' vrf MGMT','  address-family ipv4 unicast','   0.0.0.0/0 '+_mpx.gw,'!',
-          'username '+ADMIN_USER,' group root-lr',' secret 10 <SET-ADMIN-HASH>','!',
+          'username '+ADMIN_USER,' group root-lr',' secret 10 <SET-ADMIN-HASH>','!', ...acctLines('iosxr'),   // HS v1.24
           'ipv4 access-list MGMT-IN',' 10 permit ipv4 '+_mpx.cidr.replace(/\/(\d+)$/,function(m,l){ return ' '+xrWild(+l); })+' any',' 20 deny ipv4 any any log','!',
           'ssh server v2','ssh server vrf MGMT ipv4 access-list MGMT-IN','!'];
         _tx=_tx.replace(/^(hostname [^\n]*)$/m, '$1\n'+B.join('\n')); }
@@ -23469,6 +23528,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       L.push(M+'aaa authentication authentication-method [TACACS local]');
       L.push('# v515: the local fallback is the built-in admin user: its factory password is replaced (SHA-512 crypt, CONFIRM the hashed form on the release)');
       L.push(M+'aaa authentication admin-user password "<SET-ADMIN-HASH>"');
+      L.push.apply(L, acctLines('srl', M));   // HS v1.24
       L.push(M+'aaa accounting accounting-method [TACACS] event command record start-stop');
       L.push(M+'snmp network-instance mgmt admin-state enable');
       L.push(M+'information contact "'+o('snmpContact','SNMP_CONTACT')+'" location "'+o('snmpLocation','SITE_AND_RACK')+'"');
@@ -24159,7 +24219,30 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
 
   // Non-root account the PyEZ push authenticates with. Root SSH is denied by the full config,
   // so a super-user account MUST exist or the fabric is console-only after the push commits.
-  var ADMIN_USER='netadmin';
+  var ADMIN_USER='netadmin', DWR_USER='dwr-netadmin', READ_ACCT='estate-ro';
+  // HS v1.24 (HS-DEP-003 step 1.2): the two accounts beside netadmin, in each OS's syntax. dwr-netadmin is DWR's for the
+  // build and is removed by Release DWR access; estate-ro is the service's read-only login (READ_USER).
+  function acctLines(os, q){
+    var D=DWR_USER, E=READ_ACCT, h=function(t){ return q?'"<'+t+'>"':'<'+t+'>'; }, M=(typeof q==='string')?q:'';
+    if(os==='junos') return ['system login user '+D+' class super-user', 'system login user '+D+' authentication encrypted-password "<SET-DWR-ADMIN-HASH>"',
+                             'system login user '+E+' class read-only', 'system login user '+E+' authentication encrypted-password "<SET-READ-HASH>"'];
+    if(os==='cumulus') return ['nv set system aaa user '+D+' role system-admin', 'nv set system aaa user '+D+' hashed-password "<SET-DWR-ADMIN-HASH>"',
+                               'nv set system aaa user '+E+' role nvue-monitor', 'nv set system aaa user '+E+' hashed-password "<SET-READ-HASH>"'];
+    if(os==='eos') return ['username '+D+' privilege 15 role network-admin secret sha512 '+h('SET-DWR-ADMIN-HASH'),
+                           'username '+E+' privilege 1 role network-operator secret sha512 '+h('SET-READ-HASH')];
+    if(os==='nxos') return ['username '+D+' password 5 '+h('SET-DWR-ADMIN-HASH')+' role network-admin',
+                            'username '+E+' password 5 '+h('SET-READ-HASH')+' role network-operator'];
+    if(os==='iosxe') return ['username '+D+' privilege 15 secret 9 <SET-DWR-ADMIN-TYPE9-HASH>',
+                             '! '+E+': read-only; a configuration backup needs show running-config (privilege 15 by default): set READ_USER_IOSXE, or grant it with a parser view',
+                             'username '+E+' privilege 1 secret 9 <SET-READ-TYPE9-HASH>'];
+    if(os==='iosxr') return ['username '+D, ' group root-lr', ' secret 10 <SET-DWR-ADMIN-HASH>', '!', 'username '+E, ' group read-only-tg', ' secret 10 <SET-READ-HASH>', '!'];
+    if(os==='sros') return [M+'security user-params local-user user "'+D+'" password "<SET-DWR-ADMIN-HASH>" access console true netconf true console member ["administrative"]',
+                            M+'security user-params local-user user "'+E+'" password "<SET-READ-HASH>" access console true console member ["default"]   # CONFIRM the read-only profile on the SR OS release'];
+    if(os==='srl') return [M+'aaa authentication user '+D+' password "<SET-DWR-ADMIN-HASH>" superuser true   # CONFIRM the hashed form on the release',
+                           M+'aaa authorization role estate-ro services [cli]',
+                           M+'aaa authentication user '+E+' password "<SET-READ-HASH>" role [estate-ro]   # CONFIRM read-only on the SR Linux release'];
+    return [];
+  }
 
   // credential block, shared by bootstrap and full config so neither can lock you out.
   // Hashes are PLACEHOLDERS - substitute before deploying (see genDeployReadme / STEP 0a).
@@ -24171,7 +24254,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       'system root-authentication encrypted-password "<SET-ROOT-HASH>"',
       'system login user '+ADMIN_USER+' class super-user',
       'system login user '+ADMIN_USER+' authentication encrypted-password "<SET-ADMIN-HASH>"'
-    ];
+    ].concat(acctLines('junos'));   // HS v1.24
   }
 
   // minimal bootstrap config (set-style) — just enough to bring the box onto the OOB net + enable NETCONF
@@ -24379,10 +24462,10 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     '  done',
     '  H=$(openssl passwd -6 "$APW"); mkdir -p /etc/fabric; umask 077',
     '  awk -F= -v h="$H" \'/^[A-Z][A-Z0-9_]*=/{k=$1; v=substr($0,index($0,"=")+1); if(v==""){ if(k ~ /HASH/) v=h; else if(k ~ /_FILE$/) v="/etc/hostname"; else if(k ~ /ASN/) v="64999"; else if(k ~ /FREQ/) v="193100000"; else v="AirTest1"} print k"="v; next} {print}\' secrets.env.template > /etc/fabric/secrets.env',
-    '  APW="$APW" python3 -c \'import os,re;p="/etc/fabric/secrets.env";t=open(p).read();t=re.sub(r"(?m)^READ_USER=.*$","READ_USER=netadmin",t);t=re.sub(r"(?m)^READ_PASSWORD=.*$",lambda m:"READ_PASSWORD="+os.environ["APW"],t);open(p,"w").write(t)\'',
-    '  chmod 600 /etc/fabric/secrets.env; echo "[ok] test secrets written to /etc/fabric/secrets.env (lab only); the service reads the switches as netadmin"',
+    '  APW="$APW" python3 -c \'import os,re;p="/etc/fabric/secrets.env";t=open(p).read();t=re.sub(r"(?m)^READ_USER=.*$","READ_USER=estate-ro",t);t=re.sub(r"(?m)^READ_PASSWORD=.*$",lambda m:"READ_PASSWORD="+os.environ["APW"],t);open(p,"w").write(t)\'',
+    '  chmod 600 /etc/fabric/secrets.env; echo "[ok] test secrets written to /etc/fabric/secrets.env (lab only); netadmin, dwr-netadmin and estate-ro take that password; the service reads as estate-ro"',
     'fi',
-    'bash ./setup.sh',
+    'VENDOR_ACCOUNTS=none bash ./setup.sh',   // HS v1.24: nothing of DWR's to lock on the lab host
     'python3 /opt/estate-build/estate_build.py lab-slice air/slice.csv --macs air/macs.csv --conf /etc/fabric/estate.conf',
     'python3 /opt/estate-build/estate_build.py start --plane all --conf /etc/fabric/estate.conf',
     'echo',
@@ -24526,7 +24609,14 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       '   with a reason ("TC-202 Air slice") once the slice switches in that build are Done. Re-check runs a gate’s automatic checks',
       '   again at any time (TC-203: they read the slice switches and skip the devices set aside).',
       '6. Pass: every slice switch except the SN2201 reaches Done. On a switch (user netadmin, the password from step 3):',
-      '   sudo ztp -s shows success; the factory cumulus login is refused (locked).']).join('\n');
+      '   sudo ztp -s shows success; the factory cumulus login is refused (locked). netadmin, dwr-netadmin and estate-ro all',
+      '   take the step 3 password; the service reads the switches as estate-ro (read-only).','',
+      '## TC-206: hand-over and Release DWR access (HS v1.24)','',
+      '1. Console, Logins: add two admins with Organization = Customer; sign in as one of them (it changes its password).',
+      '2. Hand-over: Take the final backup; then Download the hand-over export (sot-asbuilt.csv, apply_asbuilt.py, backups/).',
+      '3. Release DWR access: the two confirmations, an attestation reference, the netadmin password, RELEASE.',
+      '4. Pass: dwr-netadmin removed from every Done slice switch (Hand-over shows n of n); ssh dwr-netadmin@<switch> is refused;',
+      '   the DWR console login (admin) is disabled; scheduled console backups are off (event log).']).join('\n');
   }
   // v499 (lab): the cluster configuration as one standalone SRX -- node 0's settings, node 0's reth members.
   function fwStandalone(t){
@@ -24668,7 +24758,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       ' no shutdown',
       'ip route vrf Mgmt-vrf 0.0.0.0 0.0.0.0 '+mp.gw,
       'ip domain name '+ops('domain','DOMAIN_NAME'),
-      'username '+ADMIN_USER+' privilege 15 secret 9 <SET-ADMIN-TYPE9-HASH>',
+      'username '+ADMIN_USER+' privilege 15 secret 9 <SET-ADMIN-TYPE9-HASH>', ...acctLines('iosxe'),   // HS v1.24
       'aaa new-model',
       'aaa authentication login default local',
       'aaa authorization exec default local',
@@ -25307,11 +25397,28 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     B.push("  --admin-pass) ADMIN_PASS=\"$2\"; shift;; --admin-pass=*) ADMIN_PASS=\"${1#*=}\";;");
     B.push("  --status) [[ -f /opt/estate-build/estate_build.py ]] || { echo \"[i] the estate service is not installed yet: run sudo ./setup.sh\"; exit 0; }");
     B.push("    python3 /opt/estate-build/estate_build.py status --conf /etc/fabric/estate.conf || true; systemctl --no-pager --lines=0 status estate-build kea-dhcp4-server kea-dhcp4 2>/dev/null | grep -E \"^\\S|Active:\" || true; exit 0;;");
+    B.push("  --release-vendor) [[ $EUID -eq 0 ]] || { echo \"Run as root (sudo ./setup.sh --release-vendor)\"; exit 1; }");   // HS v1.24
+    B.push("    python3 /opt/estate-build/estate_build.py release-vendor --conf /etc/fabric/estate.conf; rc=$?; systemctl restart estate-build 2>/dev/null || true; exit $rc;;");
+    B.push("  --decommission) [[ $EUID -eq 0 ]] || { echo \"Run as root (sudo ./setup.sh --decommission)\"; exit 1; }; DECOM=1;;");   // HS v1.24 (HS-DEP-003 11.2)
+    B.push("  --rma-restore) RMA_ZIP=\"$2\"; RMA_DEV=\"$3\"; shift 2;;");   // HS v1.24: .run --rma
     B.push("  --stop) [[ $EUID -eq 0 ]] || { echo \"Run as root (sudo ./setup.sh --stop)\"; exit 1; }");   // v515: root first; a missing unit does not end it
     B.push("    systemctl stop estate-build 2>/dev/null || true; systemctl stop kea-dhcp4-server 2>/dev/null || systemctl stop kea-dhcp4 2>/dev/null || true; echo \"[ok] service and Kea stopped\"; exit 0;;");
     B.push("  *) echo \"unknown option $1\"; exit 2;;");
     B.push("esac; shift; done");
+    B.push("if [[ ${DECOM:-0} -eq 1 ]]; then   # HS v1.24: end of service (HS-DEP-003 section 11.2)");
+    B.push("  SITE_CODE_D=$(python3 -c 'import json;print(json.load(open(\"/opt/estate-build/estate.json\"))[\"site\"][\"code\"])' 2>/dev/null || echo SITE)");
+    B.push("  echo \"Decommission removes the estate service, its state and backups, the web root files, the secrets and the Kea configuration\"");
+    B.push("  echo \"from this host, after writing the hand-over export for the customer. Device management addresses are static: nothing in\"");
+    B.push("  echo \"service depends on it.\"; read -rp \"Folder for the export [/root]: \" OUTD; OUTD=${OUTD:-/root}; mkdir -p \"$OUTD\"");
+    B.push("  python3 /opt/estate-build/estate_build.py handover-export --out \"$OUTD\" --conf /etc/fabric/estate.conf || { echo \"[!] the export was not written: nothing removed\"; exit 1; }");
+    B.push("  read -rp \"Type DECOMMISSION $SITE_CODE_D to remove the service: \" CONF; [[ \"$CONF\" == \"DECOMMISSION $SITE_CODE_D\" ]] || { echo \"[i] not confirmed: nothing removed\"; exit 1; }");
+    B.push("  systemctl disable --now estate-build >/dev/null 2>&1 || true; for k in kea-dhcp4-server kea-dhcp4; do systemctl disable --now $k >/dev/null 2>&1 || true; done");
+    B.push("  rm -rf /opt/estate-build /var/lib/estate-build /etc/systemd/system/estate-build.service /etc/kea/kea-dhcp4.conf /etc/fabric/secrets.env /etc/fabric/estate.conf /etc/fabric/vendor-access.json /etc/fabric/*.pem 2>/dev/null || true");
+    B.push("  for d in bootstrap ztp configs srl sros eos xr tftp images; do rm -rf \"/var/www/html/$d\"; done; systemctl daemon-reload");
+    B.push("  echo \"[ok] decommissioned: the service is removed; the customer's export is in $OUTD (DWR Networking keeps no copy)\"; exit 0");
+    B.push("fi");
     B.push("case \"$PLANE\" in \"\"|oob|edge|fe|be|all) ;; *) echo \"--plane takes oob, edge, fe, be or all\"; exit 2;; esac");
+    B.push("[[ -n \"${RMA_ZIP:-}\" && ( ! -f \"$RMA_ZIP\" || -z \"${RMA_DEV:-}\" ) ]] && { echo \"--rma-restore takes the customer's hand-over export .zip and the device being replaced\"; exit 2; }");
 
     B.push('');
     B.push('MGMT_NET="'+mp.cidr+'"');
@@ -25378,9 +25485,10 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     B.push('  echo "[ok] PyEZ already installed ($(python3 -c \'import jnpr.junos;print(jnpr.junos.__version__)\'))"');
     B.push('else');
     B.push('  echo "[..] installing junos-eznc (PyEZ)"');
-    B.push('  { pip3 install --quiet --break-system-packages junos-eznc >/tmp/pyez-pip.log 2>&1 || pip3 install --quiet junos-eznc >>/tmp/pyez-pip.log 2>&1; } && python3 -c "import jnpr.junos" >/dev/null 2>&1 \\');   // v513: PEP 668 (Ubuntu 23.04+, Debian 12)
+    B.push('  command -v pip3 >/dev/null 2>&1 || { [[ $PM == apt ]] && apt-get -o DPkg::Lock::Timeout=600 install -y -qq python3-pip >/dev/null 2>&1; } || true');   // HS v1.24
+    B.push('  { pip3 install --quiet --break-system-packages junos-eznc >/tmp/pyez-pip.log 2>&1 || pip3 install --quiet junos-eznc >>/tmp/pyez-pip.log 2>&1; }; python3 -c "import jnpr.junos" >/tmp/pyez-import.log 2>&1 \\');   // v513: PEP 668 (Ubuntu 23.04+, Debian 12)
     B.push('    && echo "[ok] PyEZ installed ($(python3 -c \'import jnpr.junos;print(jnpr.junos.__version__)\'))" \\');   // HS v1.21: a result line
-    B.push('    || echo "[warn] junos-eznc not installed ($(tail -n 1 /tmp/pyez-pip.log 2>/dev/null)): install it (pip3 install --break-system-packages junos-eznc) before push_configs.py"');   // HS v1.23: pip’s reason
+    B.push('    || echo "[warn] junos-eznc not usable ($( { command -v pip3 >/dev/null || echo "pip3 is not installed"; grep -viE "^WARNING: Running pip as|no such option|^ *$" /tmp/pyez-pip.log 2>/dev/null | grep -iE "error|could not|failed" ; grep -E "Error" /tmp/pyez-import.log 2>/dev/null; } | tail -n 1 )): install it (pip3 install junos-eznc) before push_configs.py"');   // HS v1.24: the real reason, not pip’s root warning
     B.push('fi');
     } else B.push('# ---- 4. PyEZ: not needed (no Junos devices in this build) ----');
     B.push('');
@@ -25597,6 +25705,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     B.push("  read -r -s -p \"Initial console admin password (12+ characters; Enter = generate one): \" ADMIN_PASS; echo");
     B.push("fi");
     B.push("ESTATE_ADMIN_PASS=\"$ADMIN_PASS\" python3 /opt/estate-build/estate_build.py init --conf /etc/fabric/estate.conf || { echo \"[!] admin login not created (see above): re-run with a longer --admin-pass\"; exit 10; }");
+    B.push('if [[ ! -f /etc/fabric/vendor-access.json ]]; then VA=${VENDOR_ACCOUNTS:-}; if [[ -z "$VA" && $ASSUME_YES -ne 1 && -t 0 ]]; then read -rp "DWR Networking OS account(s) on this host, locked by Release DWR access [${SUDO_USER:-none}] (none to skip): " VA; fi; VA=${VA:-${SUDO_USER:-none}}; python3 /opt/estate-build/estate_build.py record-vendor --account "$VA" --conf /etc/fabric/estate.conf || true; fi');   // HS v1.24
+    B.push('if [[ -n "${RMA_ZIP:-}" ]]; then systemctl stop estate-build 2>/dev/null || true; python3 /opt/estate-build/estate_build.py rma-restore "$RMA_ZIP" --device "$RMA_DEV" --conf /etc/fabric/estate.conf || exit 11; fi');   // HS v1.24: maintenance install
     B.push("systemctl enable estate-build >/dev/null 2>&1; systemctl restart estate-build; sleep 2");
     B.push("python3 /opt/estate-build/estate_build.py status --conf /etc/fabric/estate.conf || journalctl -u estate-build -n 20 --no-pager");
     B.push("[[ -n \"$PLANE\" ]] && python3 /opt/estate-build/estate_build.py start --plane \"$PLANE\" --conf /etc/fabric/estate.conf");
@@ -26707,7 +26817,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       try{ p=osProfileForDevice(d.name, os, d.gen==='rsn'?'SN2201':d.gen==='spn'&&d.src?(d.src.model||''):''); }catch(e){}
       var e={name:d.name, short:provShort(d.name), role:d.role||'', os:os, os_label:(OSL[os]||os)+(p&&p.target?(' '+p.target):''), ip:d.ip||'',
              plane:plane, rack:cab[d.name]||'', model:model[d.name]||'', release:p?{target:p.target, baseline:p.baseline}:null,
-             id:id?{kind:id.kind==='sn'?'sn':'mac', value:id.value}:null, files:[], verify_ports:[22], config_signal:'checkin'};
+             id:id?(function(){ var o={kind:id.kind==='sn'?'sn':'mac', value:id.value}; if(id.serial) o.serial=id.serial; if(id.mac) o.mac=id.mac; return o; })():null, files:[], verify_ports:[22], config_signal:'checkin'};   // HS v1.24: serial and MAC
       if(link[d.name]) e.mgmt_link=link[d.name];
       // v478: an OOB core's first lease is a seed address in the provisioning host's own subnet -- it fetches its
       // bootstrap over plain L2 before anything routes; the bootstrap then brings up its real address in-band
@@ -26746,7 +26856,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
         e.files=['xr/'+h+'.sh','xr/'+h+'.cfg']; e.dhcp={sn_forms:[], options:[opt('boot-file-name',url('xr/'+h+'.sh'),{'always-send':true})]};
       } else if(os==='nxos'){   // POAP over TFTP: not observed by the service; configuration inferred from reachability
         e.config_signal='reachable';
-        e.dhcp={sn_forms:[], 'next-server':prov, options:[opt('tftp-server-name',prov), opt('boot-file-name','poap-'+h+'.py')]};
+        e.dhcp={sn_forms:['client-id'], 'next-server':prov, options:[opt('tftp-server-name',prov), opt('boot-file-name','poap-'+h+'.py')]};   // HS v1.24: option 61 = 0x00 + chassis serial
       } else if(os==='iosxe'){  // classic autoinstall reads the BOOTP file field over TFTP
         e.config_signal='reachable'; e.dhcp={sn_forms:[], 'boot-file-name':h+'.conf', 'next-server':prov, options:[]};
       } else if(os==='ftd'){
@@ -27099,6 +27209,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
 '#   3. moves an existing '+site+'-deploy/ aside as '+site+'-deploy.<its version>-<date-time> (nothing is deleted)',
 '#   4. unpacks '+site+'-deploy/ next to this file (or into --dir DIR) and runs setup.sh with the remaining options',
 '# Own options: --dir DIR  --extract-only  --help.  Everything else (e.g. --plane oob, --yes, --standby) goes to setup.sh.',
+'#   --rma EXPORT.zip DEVICE   maintenance install after decommission: starts from the customer’s hand-over export and serves only',
+'#                             DEVICE, opened as an RMA; decommission again (setup.sh --decommission) once it is Done',
 '# Customer: '+(function(){ try{ return identLegal()+' -- build '+identBuild(); }catch(e){ return site; } })()+' -- delivered by DWR Networking (dwrnetworking.com)',
 '# Design digest: '+(planDigest()||'-')+' (matches the Blueprint package README and design document)',
 'set -euo pipefail',
@@ -27107,7 +27219,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
 'while [[ $# -gt 0 ]]; do case "$1" in',
 '  --dir) DEST="${2:?--dir needs a path}"; shift;; --dir=*) DEST="${1#*=}";;',
 '  --extract-only) EXTRACT_ONLY=1;;',
-'  --help|-h) sed -n "2,9p" "$SELF" | sed "s/^# \\{0,1\\}//"; exit 0;;',
+'  --rma) PASS+=("--rma-restore" "$(readlink -f "${2:?--rma needs the hand-over export .zip}")" "${3:?--rma needs the device name}"); shift 2;;',   // HS v1.24
+'  --help|-h) sed -n "2,11p" "$SELF" | sed "s/^# \\{0,1\\}//"; exit 0;;',
 '  --yes) YES=1; PASS+=("$1");;',
 '  *) PASS+=("$1");;',
 'esac; shift; done',
@@ -30383,6 +30496,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
         if(a.unknown.length) bits.push(a.unknown.length+' unit(s) of a model this build does not use');
         if(inv.bad.length) bits.push(inv.bad.length+' rejected (line '+inv.bad.map(function(b){return b.line;}).slice(0,4).join(', ')+')');
       }
+      try{ idProblems().forEach(function(p){ bits.push('CHECK: '+p); }); }catch(e){}   // HS v1.24
       msg.textContent=bits.join(' \u00b7 ');
       devIdBadgeRefresh(); setStatus('Device identities updated');
       setTimeout(function(){ devIdPanel(); var m=document.getElementById('devIdMsg'); if(m) m.textContent=bits.join(' \u00b7 '); },0);
@@ -30503,6 +30617,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       inventory:function(t){ var i=parseInventoryCsv(t); var a=allocateIdentities(i.units);
                              applyAllocation(a); return {parsed:i, alloc:a}; },
       dryRun:function(t){ var i=parseInventoryCsv(t); return {parsed:i, alloc:allocateIdentities(i.units)}; },
+      problems:function(){ return idProblems(); },   // HS v1.24
       classify:function(n){ return deviceClass(n); }
     },
     power:{
@@ -32624,6 +32739,71 @@ CMDS = {
              "eos": ["show priority-flow-control"], "nxos": ["show interface priority-flow-control"],
              "srl": ["info flat qos"]},
 }
+DWR_ACCT = "dwr-netadmin"
+# HS v1.24: Release DWR access removes DWR's build account in each OS's syntax, then reads the configuration back
+REMOVE_DWR = {"cumulus": (["nv unset system aaa user dwr-netadmin", "nv config apply -y"], "shell"),
+              "eos": (["no username dwr-netadmin"], "save"), "nxos": (["no username dwr-netadmin"], "save"),
+              "iosxe": (["no username dwr-netadmin"], "save"), "iosxr": (["no username dwr-netadmin"], "commit"),
+              "junos": (["delete system login user dwr-netadmin"], "commit"),
+              "srl": (["delete / system aaa authentication user dwr-netadmin"], "commit"),
+              "sros": (['delete configure system security user-params local-user user "dwr-netadmin"'], "commit")}
+HANDOVER_README = '''Hand-over export: site %(site)s
+Downloaded by %(by)s (customer admin), %(when)s. %(nb)d device backups; %(final)s.
+
+asbuilt.csv       every device: build, wave, identity as bound, state, completed, RMA ticket
+sot-status.csv    Active (Done) or Planned per device
+sot-asbuilt.csv   the as-built overlay for the source of truth: serial, MAC, status and RMA note per device
+apply_asbuilt.py  applies sot-asbuilt.csv to NetBox or Nautobot over the API, after the Final package's source of truth is
+                  loaded (HS-DEP-003 step 6.2):  python3 apply_asbuilt.py netbox https://netbox.example TOKEN --dry-run
+backups/          the newest configuration of each device: the baseline for the customer's own backup system
+audit.csv, events.csv   the console's audit log and event history
+
+From this download on, the console takes no scheduled backups: configuration backups are the customer's backup
+system's. DWR Networking keeps no copy of this export.
+'''
+APPLY_ASBUILT = r'''#!/usr/bin/env python3
+# Apply the as-built overlay (sot-asbuilt.csv) to NetBox or Nautobot: each device's serial, status and RMA note, matched
+# by name. Load the Final package's source of truth first (HS-DEP-003 step 6.2).
+USAGE = ("usage:  python3 apply_asbuilt.py netbox|nautobot URL TOKEN [--dry-run] [--csv sot-asbuilt.csv]\n"
+         "needs:  pip install pynetbox   (or pynautobot)")
+import csv, os, sys
+a = [x for x in sys.argv[1:] if not x.startswith("--")]
+if len(a) < 3 or a[0] not in ("netbox", "nautobot"):
+    sys.exit(USAGE)
+dry = "--dry-run" in sys.argv
+src = sys.argv[sys.argv.index("--csv") + 1] if "--csv" in sys.argv else os.path.join(os.path.dirname(os.path.abspath(__file__)), "sot-asbuilt.csv")
+if a[0] == "netbox":
+    import pynetbox
+    api = pynetbox.api(a[1], token=a[2])
+else:
+    import pynautobot
+    api = pynautobot.api(a[1], token=a[2])
+done = missing = same = 0
+for r in csv.DictReader(open(src)):
+    d = api.dcim.devices.get(name=r["name"])
+    if not d:
+        missing += 1
+        print("not found:", r["name"])
+        continue
+    ch = {}
+    if r["serial"] and (d.serial or "") != r["serial"]:
+        ch["serial"] = r["serial"]
+    want = r["status"] if a[0] == "netbox" else r["status"].capitalize()
+    cur = d.status.value if a[0] == "netbox" and hasattr(d.status, "value") else str(getattr(d.status, "name", d.status) or "")
+    if cur.lower() != r["status"].lower():
+        ch["status"] = want
+    note = "; ".join(x for x in ("As built: MAC %s" % r["mac"] if r["mac"] else "", r["note"]) if x)
+    if note and note not in (d.comments or ""):
+        ch["comments"] = ((d.comments or "") + "\n" + note).strip()
+    if not ch:
+        same += 1
+        continue
+    print(("would update" if dry else "update"), r["name"], ch)
+    if not dry:
+        d.update(ch)
+    done += 1
+print("%d updated%s, %d unchanged, %d not found" % (done, " (dry run)" if dry else "", same, missing))
+'''
 BACKUP_CMD = {"junos": "show configuration | display set", "eos": "show running-config", "nxos": "show running-config",
               "cumulus": "nv config show -o commands", "srl": "info flat /", "sros": "admin show configuration /configure flat",
               "iosxr": "show running-config", "iosxe": "show running-config"}
@@ -32694,7 +32874,7 @@ def text_bgp(t):
     return out
 
 
-def parse_bgp(texts):
+def bgp_sessions(texts):
     sessions = []
     for t in texts:
         s = t.strip()
@@ -32711,6 +32891,58 @@ def parse_bgp(texts):
             continue
         seen.add((p, st.lower()))
         uniq.append((p, st))
+    return uniq
+
+
+SECRET_KW = re.compile(r"\b(secret|hashed-password|password|auth-sha|auth-md5|encrypt-aes|encrypt-des|readonly-community|"
+                       r"readwrite-community|psk|pre-shared-key|encrypted-password)\s+('[^']*'|\x22[^\x22]*\x22|\S+)", re.I)
+# HS v1.24: what NVUE adds on its own (shown as a count, not as differences)
+DIFF_DEFAULTS = {"cumulus": re.compile(
+    r"^nv set (system aaa (class|role) |system aaa user (cumulus|telemetry) |system api state |system config (auto-save|backup) |"
+    r"system control-plane acl acl-default-|system ntp server \d\.cumulusnetworks\.pool\.ntp\.org |system docker vrf |"
+    r"interface \S+ type (eth|swp|loopback)$|interface eth0 ipv4 dhcp-client set-hostname |system ssh-server state enabled$|"
+    r"system lldp tlv egress-policy |router bgp state enabled$|system aaa user \S+ full-name |interface eth0 vrf mgmt$)")}
+
+
+def nv_expand(lst):
+    # "swp1-24,33-56,swp1s0-1" -> swp1 .. swp24, swp33 .. swp56, swp1s0, swp1s1
+    out, pre = [], ""
+    for t in lst.split(","):
+        m = re.match(r"^(.*?)(\d+)-(\d+)$", t)
+        if m and int(m.group(3)) >= int(m.group(2)) and int(m.group(3)) - int(m.group(2)) < 4096:
+            p = m.group(1) if m.group(1) else pre
+            if m.group(1):
+                pre = re.match(r"^\D*", m.group(1)).group(0)
+            out += ["%s%d" % (p, i) for i in range(int(m.group(2)), int(m.group(3)) + 1)]
+        else:
+            if re.match(r"^\D+", t):
+                pre = re.match(r"^\D+", t).group(0)
+            out.append(t)
+    return out
+
+
+def cfg_norm(t, os_=""):
+    # one form for the plan and a backup: no comments, quotes or blank lines; secrets masked; NVUE ranges expanded
+    out = set()
+    for l in t.splitlines():
+        s = l.strip()
+        if not s or s.startswith(("#", "!")):
+            continue
+        s = re.sub(r"\s+#\s.*$", "", s)   # a trailing comment
+        s = SECRET_KW.sub(lambda m: m.group(1) + " <secret>", s)
+        s = re.sub(r"\$nvsec\$\S+", "<secret>", s).replace("'", "").replace('"', "")
+        s = re.sub(r"\s+", " ", s).strip()
+        m = re.match(r"^(nv set interface )(\S+)( .*)$", s)
+        if os_ == "cumulus" and m and ("," in m.group(2) or re.search(r"\d-\d", m.group(2))):
+            for x in nv_expand(m.group(2)):
+                out.add(m.group(1) + x + m.group(3))
+            continue
+        out.add(s)
+    return out
+
+
+def parse_bgp(texts):
+    uniq = bgp_sessions(texts)
     est = [p for p, st in uniq if st.lower().startswith("established")]
     bad = ["%s %s" % (p, st) for p, st in uniq if not st.lower().startswith("established")]
     return len(est), len(uniq), bad
@@ -32781,6 +33013,28 @@ class Phase2Mixin(object):
         finally:
             c.disconnect()
 
+    def peers_of(self, n):
+        # HS v1.24: each BGP neighbor's device, from the planned configuration's neighbor comments ("... # PEER"):
+        # nothing added to estate.json. Read once per device.
+        if not hasattr(self, "_peers"):
+            self._peers = {}
+        if n not in self._peers:
+            m = {}
+            try:
+                for x in re.finditer(r"neighbor (\S+) remote-as \S+\s+#\s*([A-Za-z0-9_.-]+)", self.planned_text(n) or ""):
+                    m[x.group(1)] = x.group(2)
+            except Exception:
+                pass
+            self._peers[n] = m
+        return self._peers[n]
+
+    def peer_name(self, x):
+        if not x or x in self.devs:
+            return x or ""
+        if not hasattr(self, "_short2name"):
+            self._short2name = {d.get("short", k): k for k, d in self.devs.items()}
+        return self._short2name.get(x, x)
+
     def bgp_texts(self, name, kind):
         os_ = self.devs[name].get("os", "")
         cmds = CMDS[kind].get(os_)
@@ -32800,10 +33054,28 @@ class Phase2Mixin(object):
         os_ = self.devs[n].get("os", "")
         if kind in ("bgp", "evpn"):
             texts = self.bgp_texts(n, kind)
-            est, tot, bad = parse_bgp(texts)
+            sess = bgp_sessions(texts)
+            # HS v1.24: a session toward a set-aside device (quarantined, or outside a lab slice) is not counted
+            peers = self.peers_of(n)
+            aside = [p for p, st in sess if self.st.get(self.peer_name(peers.get(p)), {}).get("flag") == "quarantined"]
+            sess = [(p, st) for p, st in sess if p not in aside]
+            est = [p for p, st in sess if st.lower().startswith("established")]
+            down = [(p, st) for p, st in sess if not st.lower().startswith("established")]
+            if not hasattr(self, "_idle_prev"):
+                self._idle_prev = {}
+            known = (n, kind) in self._idle_prev
+            prev = self._idle_prev.get((n, kind), set())
+            self._idle_prev[(n, kind)] = set(p for p, st in down)
+            new = [x for x in down if known and x[0] not in prev]
+            order = new + [x for x in down if x not in new]   # newly down first
             need = int(c.get("min", 1))
-            ok = tot >= need and est == tot
-            note = "%d of %d sessions established" % (est, tot) + ((": " + ", ".join(bad[:4])) if bad else "")
+            ok = len(sess) >= need and len(est) == len(sess)
+            note = "%d of %d sessions established" % (len(est), len(sess))
+            if aside:
+                note += " (%d toward set-aside peers not counted)" % len(aside)
+            if down:
+                note += "; %d down: %s%s" % (len(down), ", ".join("%s %s%s" % (p, st.lower(), " (new)" if (p, st) in new else "")
+                                                                for p, st in order[:6]), (" +%d more" % (len(down) - 6)) if len(down) > 6 else "")
             return ok, note, "\n".join(texts)
         if kind == "mnha":
             cmds = CMDS["mnha"].get(os_)
@@ -32857,18 +33129,25 @@ class Phase2Mixin(object):
         ev, bad, why = {}, [], None
         devs = [n for n in c["devices"] if self.st[n]["flag"] != "quarantined"]   # HS v1.23: set-aside devices are not read
         aside = len(c["devices"]) - len(devs)
+        todo = []
         for n in devs:
             if self.st[n]["stage"] < 5 and not self.devs[n].get("aggregate"):
                 bad.append(n)
                 ev[n] = {"ok": False, "note": "not yet verified", "text": ""}
                 continue
+            todo.append(n)
+        def one(n):   # HS v1.24: devices read in parallel (reader_workers, default 16)
             try:
-                ok, note, text = self.eval_kind(c["kind"], n, c)
+                return n, self.eval_kind(c["kind"], n, c), None
             except ReaderUnavailable as e:
-                why = str(e)
-                break
+                return n, None, str(e)
             except Exception as e:
-                ok, note, text = False, "read failed: %s" % e, ""
+                return n, (False, "read failed: %s" % e, ""), None
+        for n, r3, err in self.pool_map(one, todo):
+            if err:
+                why = why or err
+                continue
+            ok, note, text = r3
             ev[n] = {"ok": ok, "note": note, "text": (text or "")[-1500:]}
             if not ok:
                 bad.append(n)
@@ -32893,6 +33172,16 @@ class Phase2Mixin(object):
             if changed and res["result"] in ("pass", "blocked", "warn"):
                 self.event("%s gate: '%s' %s -- %s" % (self.build_by_key[k]["name"], c["label"], res["result"], res["note"][:160]),
                            "info" if res["result"] == "pass" else ("warn" if res["result"] == "warn" else "fail"))
+
+    def pool_map(self, fn, items):
+        # HS v1.24: one SSH session per worker; results in input order
+        items = list(items)
+        w = max(1, min(int(self.conf.get("reader_workers", 16)), len(items) or 1))
+        if w == 1:
+            return [fn(x) for x in items]
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor(max_workers=w) as ex:
+            return list(ex.map(fn, items))
 
     def checker(self):
         while True:
@@ -32969,14 +33258,15 @@ class Phase2Mixin(object):
         prev = self.backups(n)
         if prev and open(prev[0]).read() == text:
             os.utime(prev[0], None)
-            return True
+            self.event("%s: configuration backed up (%s): unchanged since %s" % (d.get("short", n), why, os.path.basename(prev[0])), "info", n)
+            return "unchanged since " + os.path.basename(prev[0])   # HS v1.24: said, not silent
         p = os.path.join(self.bdir(n), time.strftime("%Y%m%dT%H%M%SZ", time.gmtime()) + ".cfg")
         with open(p, "w") as f:
             f.write(text)
         for old in self.backups(n)[int(self.conf.get("backup_keep", 20)):]:
             os.remove(old)
-        self.event("%s: configuration backed up (%s)" % (d.get("short", n), why), "info", n)
-        return True
+        self.event("%s: configuration backed up (%s): %s" % (d.get("short", n), why, os.path.basename(p)), "info", n)
+        return "saved " + os.path.basename(p)
 
     def backup_worker(self):
         while True:
@@ -32984,13 +33274,18 @@ class Phase2Mixin(object):
                 time.sleep(10)
                 continue
             try:
-                ivl = float(self.conf.get("backup_every_h", 6)) * 3600
+                ivl = 0 if self.handover().get("exported") else float(self.conf.get("backup_every_h", 6)) * 3600   # HS v1.24: off after hand-over
                 with self.lock:
                     due = [n for n, s in self.st.items() if s["stage"] == 6 and BACKUP_CMD.get(self.devs[n].get("os"))
                            and now() >= self.backup_due.get(n, 0)]
-                for n in due[:20]:
-                    ok = self.take_backup(n, "scheduled" if self.backups(n) else "after build")
-                    self.backup_due[n] = now() + (ivl if ok else 900)
+                if ivl <= 0 and not any(self.backup_due.get(n, 1) == 0 for n in due):
+                    due = []   # HS v1.24: scheduled backups off (after hand-over); requested and gate backups still run
+                elif ivl <= 0:
+                    due = [n for n in due if self.backup_due.get(n, 1) == 0]
+                def one(n):
+                    return n, self.take_backup(n, "scheduled" if self.backups(n) else "after build")
+                for n, ok in self.pool_map(one, due[:max(20, 8 * int(self.conf.get("reader_workers", 16)))]):   # HS v1.24: parallel
+                    self.backup_due[n] = now() + ((ivl if ivl > 0 else 10 ** 9) if ok else 900)
             except Exception as e:
                 sys.stderr.write("backups: %s\n" % e)
             time.sleep(30)
@@ -33016,21 +33311,90 @@ class Phase2Mixin(object):
             t = "\n".join(l for l in t.splitlines() if l.startswith("nv "))
         return t
 
-    def diff(self, n, which=None):
-        def norm(t):
-            return [l.rstrip() for l in t.splitlines() if l.strip() and not l.lstrip().startswith(("#", "!"))]
+    def diff(self, n, which=None, vs=None):
+        # HS v1.24: the plan and the device's configuration are put in one form before they are compared (the device
+        # stores ranges, sorts, encrypts secrets and adds defaults), so only real differences show; "vs prev" compares
+        # the last two backups as they are.
         b = self.backups(n)
+        if vs == "prev":
+            if len(b) < 2:
+                return {"backup": os.path.basename(b[0]) if b else None, "planned": None, "vs": "prev", "diff": "", "added": 0, "removed": 0}
+            a1, a2 = open(b[1]).read().splitlines(), open(b[0]).read().splitlines()
+            dl = list(difflib.unified_diff(a1, a2, os.path.basename(b[1]), os.path.basename(b[0]), lineterm="", n=1))
+            return {"backup": os.path.basename(b[0]), "previous": os.path.basename(b[1]), "vs": "prev", "diff": "\n".join(dl[:400]),
+                    "added": sum(1 for l in dl if l.startswith("+") and not l.startswith("+++")),
+                    "removed": sum(1 for l in dl if l.startswith("-") and not l.startswith("---"))}
         pl = self.planned_text(n)
         if not b:
             return {"backup": None, "planned": bool(pl), "diff": "", "added": 0, "removed": 0}
         bt = open(which if which in b else b[0]).read()
         if pl is None:
             return {"backup": os.path.basename(b[0]), "planned": False, "diff": "", "added": 0, "removed": 0}
-        dl = list(difflib.unified_diff(norm(pl), norm(bt), "planned", "backup " + os.path.basename(b[0]), lineterm="", n=1))
-        return {"backup": os.path.basename(b[0]), "planned": True, "diff": "\n".join(dl[:400]),
-                "added": sum(1 for l in dl if l.startswith("+") and not l.startswith("+++")),
-                "removed": sum(1 for l in dl if l.startswith("-") and not l.startswith("---")),
+        os_ = self.devs[n].get("os", "")
+        P, D = cfg_norm(pl, os_), cfg_norm(bt, os_)
+        ign = DIFF_DEFAULTS.get(os_)
+        only_dev = sorted(x for x in D - P if not (ign and ign.search(x)))
+        only_plan = sorted(P - D)
+        hidden = len([x for x in D - P if ign and ign.search(x)])
+        txt = "\n".join(["--- only in the plan (%d)" % len(only_plan)] + ["- " + x for x in only_plan[:300]] +
+                        ["", "+++ only on the device (%d)" % len(only_dev)] + ["+ " + x for x in only_dev[:300]])
+        return {"backup": os.path.basename(b[0]), "planned": True, "diff": txt if (only_plan or only_dev) else "",
+                "added": len(only_dev), "removed": len(only_plan), "same": len(P & D), "defaults_hidden": hidden,
                 "backups": [os.path.basename(x) for x in b[:10]]}
+
+    def rma_upload(self, n, text, user):
+        # HS v1.24: a configuration file from the customer's backup system becomes this device's newest backup
+        if not (self.st[n].get("rma") or {}).get("state") == "open":
+            return False, "no open RMA on " + n
+        t = str(text or "")
+        if not t.strip() or len(t) > 4 * 1024 * 1024:
+            return False, "an empty file, or larger than 4 MB"
+        p = os.path.join(self.bdir(n), time.strftime("%Y%m%dT%H%M%SZ", time.gmtime()) + ".cfg")
+        with open(p, "w") as f:
+            f.write(t)
+        self.audit(user, "rma-upload", n, "%d bytes from the customer's backup system -> %s" % (len(t), os.path.basename(p)))
+        self.event("%s: configuration loaded for the RMA (%s, from the customer's backup system)" % (self.devs[n].get("short", n), os.path.basename(p)), "info", n, user=user)
+        return self.rma_apply(n, "backup", user)
+
+    def restore_asbuilt(self, path, device, user="cli:root"):
+        # HS v1.24 (.run --rma, HS-DEP-003 section 11.2): a maintenance install starts from the customer's hand-over export:
+        # every device Done with its identity as bound, and an RMA opened on the device being replaced
+        import zipfile
+        rows = None
+        with zipfile.ZipFile(path) as z:
+            f = [x for x in z.namelist() if x.endswith("/asbuilt.csv")]
+            if not f:
+                return False, "no asbuilt.csv in " + path
+            rows = list(csv.DictReader(io.StringIO(z.read(f[0]).decode("utf-8", "replace"))))
+        if device not in self.devs:
+            return False, "unknown device %s" % device
+        n_id = 0
+        with self.lock:
+            for r in rows:
+                n = r.get("device")
+                if n not in self.devs:
+                    continue
+                v, src = (r.get("identity") or "").strip(), r.get("identity_source", "")
+                if v:
+                    kind = "mac" if norm_mac(v) else "sn"
+                    val = norm_mac(v) or v.upper()
+                    self.ident[n] = {"kind": kind, "value": val, "source": "as-built"}
+                    self.db.execute("INSERT OR REPLACE INTO bindings(name,kind,value,source) VALUES(?,?,?,?)", (n, kind, val, "as-built"))
+                    n_id += 1
+                s = self.st[n]
+                if str(r.get("state", "")).startswith("Done"):
+                    s.update({"stage": 6, "flag": "", "detail": "restored from the hand-over export"})
+                    s["ts"]["6"] = now()
+                self.db.execute("INSERT OR REPLACE INTO devices(name,data) VALUES(?,?)", (n, json.dumps(s)))
+            for b in self.builds:
+                self.bstate[b["key"]].update({"state": "complete", "open_waves": len(b["waves"]), "passed": now()})
+            self.run.update({"state": "complete", "builds": [b["key"] for b in self.builds], "started": now(), "plane": "all"})
+            self.db.commit()
+        self.save_run()
+        self.handover_set(exported={"by": "maintenance install (restored)", "ts": now(), "backups": 0})   # no scheduled backups here
+        self.audit(user, "rma-restore", device, "from %s: %d identities" % (os.path.basename(path), n_id))
+        ok, msg = self.rma_start(device, user, "maintenance")
+        return ok, "restored %d identities; RMA opened on %s: register the replacement in the console" % (n_id, device)
 
     def rma_apply(self, n, source, user):
         with self.lock:
@@ -33705,7 +34069,8 @@ class Estate(Phase2Mixin):
         """)
         # v480: per-person logins -- forced change of a temporary password, plane-scoped operators, disable
         cols = [r[1] for r in c.execute("PRAGMA table_info(users)")]
-        for col, ddl in (("must_change", "INTEGER DEFAULT 0"), ("planes", "TEXT DEFAULT ''"), ("disabled", "INTEGER DEFAULT 0")):
+        for col, ddl in (("must_change", "INTEGER DEFAULT 0"), ("planes", "TEXT DEFAULT ''"), ("disabled", "INTEGER DEFAULT 0"),
+                         ("org", "TEXT DEFAULT 'dwr'")):   # HS v1.24: DWR or customer (Release DWR access)
             if col not in cols:
                 c.execute("ALTER TABLE users ADD COLUMN %s %s" % (col, ddl))
         c.commit()
@@ -33894,6 +34259,16 @@ class Estate(Phase2Mixin):
             for k in ("mac", "serial", "client_id", "circuit"):
                 if ev.get(k):
                     s[k] = ev[k]
+            # HS v1.24: matched by serial with a MAC on the manifest: confirm it, or record the one seen (never blocks)
+            pid = self.devs[n].get("id") or {}
+            if how == "serial" and pid.get("mac") and ev["mac"] and s.get("mac_check") != ev["mac"]:
+                s["mac_check"] = ev["mac"]
+                if ev["mac"] == norm_mac(pid["mac"]):
+                    s["id_note"] = "MAC %s confirmed (manifest)" % ev["mac"]
+                else:
+                    s["id_note"] = "DHCP MAC %s, manifest MAC %s: recorded, not blocking" % (ev["mac"], norm_mac(pid["mac"]))
+                    self.event("%s: matched by serial; its DHCP MAC %s differs from the manifest's %s (recorded)" % (
+                        self.devs[n].get("short", n), ev["mac"], norm_mac(pid["mac"])), "info", n)
             s["last_seen"] = now()
             if ev.get("ip") and ev.get("committed"):
                 s["lease_ip"] = ev["ip"]
@@ -34297,25 +34672,31 @@ class Estate(Phase2Mixin):
         out = []
         for c in b["gate"]:
             r = {"key": c["key"], "label": c["label"], "type": c["type"], "note": c.get("note", ""), "result": "waiting", "kind": c.get("kind", "")}
+            aside = [n for n in devs if self.st[n]["flag"] == "quarantined"]   # HS v1.24: set aside (Quarantine, lab slice)
+            asn = (" (%d set aside)" % len(aside)) if aside else ""
             if c["type"] == "devices_done":
-                hard = [n for n in devs if n not in warn_devs]
+                hard = [n for n in devs if n not in warn_devs and n not in aside]
                 bad = [n for n in hard if self.st[n]["stage"] < 6]
                 soft = [n for n in warn_devs if self.st[n]["stage"] < 6]
                 if bad:
-                    flagged = [n for n in bad if self.st[n]["flag"] in ("failed", "quarantined", "missing")]
+                    flagged = [n for n in bad if self.st[n]["flag"] in ("failed", "missing", "down")]
                     r["result"] = "blocked" if flagged else "running"
-                    r["note"] = "%d of %d done; %s" % (len(hard) - len(bad), len(hard),
+                    r["note"] = "%d of %d done%s; %s" % (len(hard) - len(bad), len(hard), asn,
                                                       ", ".join("%s %s" % (x, self.st[x]["flag"] or STG[self.st[x]["stage"]]) for x in bad[:4]))
                 elif soft:
                     r["result"] = "warn"
                     r["note"] = "%d of %d done; %s not done (warn only)" % (len(devs) - len(soft), len(devs), ", ".join(soft))
+                elif aside:
+                    r["result"] = "warn"
+                    r["note"] = "%d of %d done%s, every identity matched to %s" % (len(hard), len(hard), asn, self.plan["site"]["code"])
                 else:
                     r["result"] = "pass"
                     r["note"] = "%d of %d done, every identity matched to %s" % (len(devs), len(devs), self.plan["site"]["code"])
             elif c["type"] == "reachable":
-                ok = [n for n in devs if self.st[n]["stage"] >= 5 or (n in warn_devs)]
-                r["result"] = "pass" if len(ok) == len(devs) else "running"
-                r["note"] = "%d of %d answer on their management ports" % (len(ok), len(devs))
+                live = [n for n in devs if n not in aside]
+                ok = [n for n in live if (self.st[n]["stage"] >= 5 and self.st[n]["flag"] != "down") or (n in warn_devs)]
+                r["result"] = ("warn" if aside else "pass") if len(ok) == len(live) else "running"
+                r["note"] = "%d of %d answer on their management ports%s" % (len(ok), len(live), asn)
             elif c["type"] == "auto" and not self.gate_res.get((k, c["key"])):
                 self.auto_eval(k, c, r)
             elif c["type"] in ("confirm", "auto"):
@@ -34795,9 +35176,14 @@ class Estate(Phase2Mixin):
                     self.run_auto(k, c)
                 except Exception as e:
                     sys.stderr.write("recheck: %s\n" % e)
-        threading.Thread(target=go, daemon=True).start()
+        th = threading.Thread(target=go, daemon=True)
+        th.start()
         self.audit(user, "gate-recheck", k, "")
-        return True, "re-checking %d automatic check(s)" % len(checks)
+        th.join(60)   # HS v1.24: the console shows the result; a long one goes on in the background
+        if th.is_alive():
+            return True, "re-checking %d automatic check(s): still reading, results appear in the gate" % len(checks)
+        res = [self.auto_res.get((k, c["key"]), {}).get("result", "?") for c in checks]
+        return True, "re-checked %d automatic check(s): %s" % (len(checks), ", ".join("%d %s" % (res.count(x), x) for x in sorted(set(res))))
 
     def gate_override(self, k, user, reason):
         with self.lock:
@@ -34935,6 +35321,7 @@ class Estate(Phase2Mixin):
             return {"server_time": now(), "version": VERSION, "site": self.plan["site"], "digest": self.digest[:8] + "..." + self.digest[-4:],
                     "run": self.run, "builds": builds, "devices": devs, "unclaimed": unc, "kea": self.kea_status,
                     "push_cred": bool(self.push_cred), "access": self.coverage(), "pushing": list(self.pushing.keys()),
+                    "handover": dict(self.handover(), customer_admins=len(self.customer_admins())),   # HS v1.24
                     "runners": self.runner_state, "results": {k: {x: v[x] for x in ("busbw", "target", "by", "ts")} for k, v in self.results.items()},
                     "ha": {"role": self.role, "peer": self.conf.get("peer_url", ""), "last_sync": self.last_sync},
                     "registry": self.plan.get("registry", []), "foreign_sync": self.foreign_sync, "foreign_n": len(self.foreign)}
@@ -34955,6 +35342,7 @@ class Estate(Phase2Mixin):
             evs = [dict(r) for r in self.db.execute("SELECT * FROM events WHERE device=? ORDER BY id DESC LIMIT 40", (n,))]
             return {"plan": d, "state": s, "identity": self.ident.get(n), "events": evs,
                     "backups": [os.path.basename(x) for x in self.backups(n)[:10]],
+                    "backup_seen": {os.path.basename(x): int(os.path.getmtime(x)) for x in self.backups(n)[:10]},   # HS v1.24
                     "push_log": self._tail(os.path.join(self.conf["state_dir"], "push-%s.log" % re.sub(r"[^A-Za-z0-9_-]", "-", n)))}
 
     def _tail(self, p):
@@ -35001,10 +35389,12 @@ class Estate(Phase2Mixin):
     ROLES = ("admin", "operator", "viewer")
     PLANES = ("oob", "edge", "fe", "be")
 
-    def user_add(self, name, role="admin", password=None, planes="", must_change=True):
+    def user_add(self, name, role="admin", password=None, planes="", must_change=True, org="dwr"):
         pw = password or temp_password()
         with self.lock:
             self._user_add(name, role, pw, planes, must_change)
+            self.db.execute("UPDATE users SET org=? WHERE name=?", ("customer" if org == "customer" else "dwr", name))   # HS v1.24
+            self.db.commit()
         return pw
 
     def _user_add(self, name, role, pw, planes="", must_change=True):
@@ -35039,7 +35429,7 @@ class Estate(Phase2Mixin):
 
     def users_view(self):
         with self.lock:
-            rows = [{"name": r["name"], "role": r["role"], "planes": (r["planes"] or "").split(",") if r["planes"] else [],
+            rows = [{"name": r["name"], "role": r["role"], "org": r["org"] or "dwr", "planes": (r["planes"] or "").split(",") if r["planes"] else [],
                      "must_change": bool(r["must_change"]), "disabled": bool(r["disabled"]), "created": r["created"]}
                     for r in self.db.execute("SELECT * FROM users ORDER BY name")]
         return {"users": rows, "coverage": self.coverage()}
@@ -35053,7 +35443,7 @@ class Estate(Phase2Mixin):
             out[k] = sum(1 for r in rows if r[0] == "admin" or (r[0] == "operator" and k in (r[1] or "").split(",")))
         return {"per_plane": out, "short": [k for k in keys if out[k] < 2], "admins": len(self._active_admins())}
 
-    def user_update(self, actor, name, role=None, planes=None, disabled=None):
+    def user_update(self, actor, name, role=None, planes=None, disabled=None, org=None):
         with self.lock:
             r = self.db.execute("SELECT * FROM users WHERE name=?", (name,)).fetchone()
             if not r:
@@ -35069,11 +35459,12 @@ class Estate(Phase2Mixin):
                 pl = self._planes(r["planes"] if planes is None else planes) if role == "operator" else ""
             except ValueError as e:
                 return False, str(e)
-            self.db.execute("UPDATE users SET role=?, planes=?, disabled=? WHERE name=?", (role, pl, dis, name))
+            og = r["org"] if org not in ("dwr", "customer") else org   # HS v1.24
+            self.db.execute("UPDATE users SET role=?, planes=?, disabled=?, org=? WHERE name=?", (role, pl, dis, og, name))
             if dis:
                 self.db.execute("DELETE FROM sessions WHERE user=?", (name,))
             self.db.commit()
-        self.audit(actor, "user-update", name, "role=%s planes=%s disabled=%s" % (role, pl or "-", bool(dis)))
+        self.audit(actor, "user-update", name, "role=%s planes=%s disabled=%s org=%s" % (role, pl or "-", bool(dis), og))
         return True, "updated"
 
     def user_reset(self, actor, name):
@@ -35131,14 +35522,201 @@ class Estate(Phase2Mixin):
             self.db.commit()
         return tok
 
+    # --------------------------------------------------------------------------- hand-over (HS v1.24, HS-DEP-003 phase 6)
+    def customer_admins(self):
+        return [r[0] for r in self.db.execute("SELECT name FROM users WHERE role='admin' AND org='customer' AND COALESCE(disabled,0)=0")]
+
+    def handover(self):
+        return self.kv_get("handover", {}) or {}
+
+    def handover_set(self, **kw):
+        h = self.handover()
+        h.update(kw)
+        self.kv_set("handover", h)
+        return h
+
+    def handover_final_backup(self, user):
+        h = self.handover()
+        if (h.get("final") or {}).get("state") == "running":
+            return False, "the final backup is already running"
+        devs = [n for n in self.devs if self.st[n]["stage"] == 6 and BACKUP_CMD.get(self.devs[n].get("os")) and not self.devs[n].get("aggregate")]
+        self.handover_set(final={"state": "running", "by": user, "ts": now(), "n": len(devs)})
+        def go():
+            res = self.pool_map(lambda n: (n, self.take_backup(n, "final as-built (hand-over)")), devs)
+            bad = [n for n, ok in res if not ok]
+            self.handover_set(final={"state": "done", "by": user, "ts": now(), "n": len(devs), "ok": len(devs) - len(bad), "failed": bad[:200]})
+            self.audit(user, "handover-final-backup", self.plan["site"]["code"], "%d of %d devices" % (len(devs) - len(bad), len(devs)))
+            self.event("Hand-over: final as-built backup of %d of %d device(s)%s" % (len(devs) - len(bad), len(devs),
+                       ("; not possible on " + ", ".join(self.devs[n].get("short", n) for n in bad[:5])) if bad else ""), "warn" if bad else "info")
+        threading.Thread(target=go, daemon=True).start()
+        self.audit(user, "handover-final-backup-start", self.plan["site"]["code"], "%d devices" % len(devs))
+        return True, "final backup of %d device(s) started" % len(devs)
+
+    def asbuilt_overlay(self):
+        # the Day-2 SoT changes (HS-DEP-003 step 6.2): applied over the Final package's source of truth by apply_asbuilt.py
+        out = io.StringIO()
+        w = csv.writer(out)
+        w.writerow(["name", "serial", "mac", "identity", "status", "completed", "rma_ticket", "note"])
+        for n, d in self.devs.items():
+            if d.get("aggregate"):
+                continue
+            s, i, pid = self.st[n], self.ident.get(n) or {}, d.get("id") or {}
+            ser = i["value"] if i.get("kind") == "sn" else (s.get("serial") or pid.get("serial") or "")
+            mac = i["value"] if i.get("kind") == "mac" else (s.get("mac") or pid.get("mac") or "")
+            rma = s.get("rma") or {}
+            note = ("RMA %s: replaced, new %s %s" % (rma.get("ticket") or "", (rma.get("new") or {}).get("kind", ""), (rma.get("new") or {}).get("value", ""))).strip() if rma else ""
+            w.writerow([n, ser, mac, ("%s:%s" % (i["kind"], i["value"])) if i else "", "active" if s["stage"] == 6 else "planned",
+                        iso(s["ts"].get("6")), rma.get("ticket", ""), note])
+        return out.getvalue()
+
+    def handover_zip(self, user):
+        import zipfile
+        site = self.plan["site"]["code"]
+        top = "%s-handover-%s/" % (site, time.strftime("%Y%m%dT%H%M%SZ", time.gmtime()))
+        buf = io.BytesIO()
+        nb = 0
+        with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+            for f in ("asbuilt.csv", "sot-status.csv", "audit.csv", "events.csv"):
+                z.writestr(top + f, self.export(f) or "")
+            z.writestr(top + "sot-asbuilt.csv", self.asbuilt_overlay())
+            z.writestr(top + "apply_asbuilt.py", APPLY_ASBUILT)
+            for n in self.devs:
+                b = self.backups(n)
+                if b:
+                    z.write(b[0], top + "backups/%s.cfg" % re.sub(r"[^A-Za-z0-9_-]", "-", n))
+                    nb += 1
+            fin = self.handover().get("final") or {}
+            z.writestr(top + "README.txt", HANDOVER_README % {"site": site, "by": user, "when": iso(now()), "nb": nb,
+                       "final": ("final as-built backup %s by %s, %s of %s devices" % (iso(fin.get("ts")), fin.get("by"), fin.get("ok"), fin.get("n"))) if fin.get("state") == "done" else "no final as-built backup was taken: the newest backup of each device is included"})
+        self.handover_set(exported={"by": user, "ts": now(), "backups": nb})
+        self.audit(user, "handover-export", site, "%d device backups; scheduled backups off from now (the customer's backup system takes over)" % nb)
+        self.event("Hand-over export downloaded by %s (customer admin): %d device backups; scheduled console backups are off from now" % (user, nb), "info", user=user)
+        return top.rstrip("/") + ".zip", buf.getvalue()
+
+    def _remove_dwr(self, n, pw):
+        d = self.devs[n]
+        os_ = d.get("os", "")
+        spec = REMOVE_DWR.get(os_)
+        if not spec or not d.get("ip"):
+            return n, "skipped", "no removal command for %s" % (os_ or "this device")
+        if self.conf.get("reader_sim_dir"):
+            return n, "removed", "simulated"
+        try:
+            from netmiko import ConnectHandler
+        except ImportError:
+            sys.path.extend(glob.glob("/opt/estate-build/pyenv/lib/python3*/site-packages"))
+            from netmiko import ConnectHandler
+        try:
+            c = ConnectHandler(device_type=DT[os_], host=d["ip"], username=self.conf.get("break_glass_user", "netadmin"), password=pw,
+                               timeout=20, conn_timeout=15, auth_timeout=90, banner_timeout=60)
+        except Exception as e:
+            return n, "failed", "netadmin login: %s" % str(e)[:160]
+        try:
+            cmds, how = spec
+            if how == "shell":
+                for x in cmds:
+                    c.send_command(x, read_timeout=240)
+            else:
+                c.send_config_set(cmds, read_timeout=120)
+                if how == "commit":
+                    c.commit()
+                else:
+                    c.save_config()
+            cfg = c.send_command(BACKUP_CMD[os_], read_timeout=240)
+        except Exception as e:
+            return n, "failed", str(e)[:160]
+        finally:
+            try:
+                c.disconnect()
+            except Exception:
+                pass
+        if DWR_ACCT in cfg:
+            return n, "failed", "dwr-netadmin is still in the configuration"
+        return n, "removed", ""
+
+    def release_host_access(self):
+        # what setup.sh recorded as DWR's on this host: OS accounts locked and expired, their SSH keys and sudo rules removed
+        out = []
+        try:
+            va = json.load(open(self.conf.get("vendor_access", "/etc/fabric/vendor-access.json")))
+        except (OSError, ValueError):
+            return ["no DWR host access recorded (%s): check the host's accounts by hand" % self.conf.get("vendor_access", "/etc/fabric/vendor-access.json")]
+        for acct in va.get("accounts", []):
+            if not re.match(r"^[a-z_][a-z0-9_.-]{0,31}$", acct) or acct == "root":
+                continue
+            r = subprocess.run(["usermod", "-L", "-e", "1", acct], capture_output=True, text=True)
+            out.append("account %s %s" % (acct, "locked and expired" if r.returncode == 0 else "NOT locked: " + (r.stderr or "").strip()[:80]))
+            for ak in glob.glob(os.path.expanduser("~%s/.ssh/authorized_keys*" % acct)):
+                try:
+                    os.replace(ak, ak + ".released-" + time.strftime("%Y%m%d", time.gmtime()))
+                    os.chmod(ak + ".released-" + time.strftime("%Y%m%d", time.gmtime()), 0)
+                    out.append("SSH keys of %s removed (%s)" % (acct, os.path.basename(ak)))
+                except OSError as e:
+                    out.append("SSH keys of %s NOT removed: %s" % (acct, e))
+        for f in va.get("sudoers", []):
+            if f.startswith("/etc/sudoers.d/") and os.path.isfile(f):
+                try:
+                    os.remove(f)
+                    out.append("sudo rule %s removed" % f)
+                except OSError as e:
+                    out.append("sudo rule %s NOT removed: %s" % (f, e))
+        return out
+
+    def release_vendor(self, user, pw, confirm, background=True):
+        h = self.handover()
+        if (h.get("release") or {}).get("state") == "running":
+            return False, "Release DWR access is already running"
+        if not h.get("exported"):
+            return False, "refused: a customer admin downloads the hand-over export first (HS-DEP-003 step 6.1)"
+        ca = self.customer_admins()
+        if len(ca) < 2:
+            return False, "refused: the customer needs two admin logins of its own (it has %d); add them under Logins" % len(ca)
+        if str(confirm.get("typed", "")).strip() != "RELEASE":
+            return False, "type RELEASE to confirm"
+        if confirm.get("tacacs_vpn") != "yes":
+            return False, "refused: confirm DWR's TACACS and remote-access accounts are disabled"
+        if confirm.get("backup_system") != "yes":
+            return False, "refused: confirm the customer's backup system has taken a first backup of every device"
+        if not str(confirm.get("dwr_attest", "")).strip():
+            return False, "refused: record the reference of DWR Networking's written attestation that it keeps no copies"
+        if not pw:
+            return False, "the netadmin password (it removes dwr-netadmin; held in memory for this action only)"
+        devs = [n for n in self.devs if self.st[n]["stage"] == 6 and not self.devs[n].get("aggregate") and self.devs[n].get("os") in REMOVE_DWR]
+        self.handover_set(release={"state": "running", "by": user, "ts": now(), "n": len(devs)})
+        def go():
+            res = self.pool_map(lambda n: self._remove_dwr(n, pw), devs)
+            removed = [n for n, st, w in res if st == "removed"]
+            failed = [(n, w) for n, st, w in res if st == "failed"]
+            with self.lock:
+                dw = [r[0] for r in self.db.execute("SELECT name FROM users WHERE org='dwr' AND COALESCE(disabled,0)=0")]
+                for nm in dw:
+                    self.db.execute("UPDATE users SET disabled=1 WHERE name=?", (nm,))
+                    self.db.execute("DELETE FROM sessions WHERE user=?", (nm,))
+                self.db.commit()
+                self.push_cred = None
+            host = self.release_host_access()
+            rec = {"state": "done" if not failed else "partial", "by": user, "ts": now(), "n": len(devs), "removed": len(removed),
+                   "failed": [{"device": n, "why": w} for n, w in failed][:500], "console_logins_disabled": dw, "host": host,
+                   "confirm": {"tacacs_vpn": True, "backup_system": True, "dwr_attest": str(confirm.get("dwr_attest"))[:200]}}
+            self.handover_set(release=rec)
+            self.audit(user, "release-vendor", self.plan["site"]["code"], json.dumps({k: rec[k] for k in ("removed", "n", "failed", "console_logins_disabled", "host", "confirm")})[:4000])
+            self.event("Release DWR access by %s: dwr-netadmin removed from %d of %d device(s)%s; DWR console logins disabled (%s); push credential cleared; %s" % (
+                user, len(removed), len(devs), ("; FAILED on %d: Retry the release for them" % len(failed)) if failed else "", ", ".join(dw) or "none",
+                "; ".join(host)), "warn" if failed else "info", user=user)
+        if background:
+            threading.Thread(target=go, daemon=True).start()
+            return True, "releasing: dwr-netadmin is being removed from %d device(s); the result appears in Hand-over" % len(devs)
+        go()
+        return True, "done"
+
     def session(self, tok):
         if not tok:
             return None
         with self.lock:
-            r = self.db.execute("SELECT s.user, u.role, u.planes, u.must_change FROM sessions s JOIN users u ON u.name=s.user "
+            r = self.db.execute("SELECT s.user, u.role, u.planes, u.must_change, u.org FROM sessions s JOIN users u ON u.name=s.user "
                                 "WHERE token=? AND expires>? AND COALESCE(u.disabled,0)=0", (tok, now())).fetchone()
         return {"user": r[0], "role": r[1], "planes": (r[2] or "").split(",") if r[2] else [], "must_change": bool(r[3]),
-                "token": tok} if r else None
+                "org": r[4] or "dwr", "token": tok} if r else None
 
 
 # ----------------------------------------------------------------------------------------------- DHCP sniffer
@@ -35437,6 +36015,8 @@ def make_internal_handler(est):
             self.wfile.write(b)
 
         def do_GET(self):
+            if self.path.startswith("/local/handover"):   # HS v1.24
+                return self._j(200, est.handover())
             if self.path.startswith("/local/status"):
                 v = est.state_view()
                 return self._j(200, {"run": v["run"], "builds": [(b["name"], b["state"]) for b in v["builds"]],
@@ -35467,6 +36047,16 @@ def make_internal_handler(est):
             if u.path == "/local/lab-slice":
                 ok, msg = est.lab_slice(data.get("keep") or [], data.get("reason", ""), "cli:root", data.get("macs") or {})
                 return self._j(200 if ok else 409, {"ok": ok, "msg": msg})
+            if u.path == "/local/release-vendor":   # HS v1.24: setup.sh --release-vendor
+                ok, msg = est.release_vendor("cli:root", str(data.get("password", "")), data)
+                return self._j(200 if ok else 409, {"ok": ok, "msg": msg})
+            if u.path == "/local/handover-export":   # HS v1.24: setup.sh --decommission writes it for the customer
+                fn, body = est.handover_zip("cli:root")
+                out = os.path.join(data.get("out") or "/root", fn)
+                with open(out, "wb") as f:
+                    f.write(body)
+                os.chmod(out, 0o600)
+                return self._j(200, {"ok": True, "msg": out})
             if u.path == "/local/promote":
                 ok, msg = est.promote()
                 return self._j(200 if ok else 409, {"ok": ok, "msg": msg})
@@ -35555,7 +36145,7 @@ def make_console_handler(est, console_html):
                 if n not in est.devs:
                     return self._send(404, {"error": "unknown device"})
                 if m2.group(2) == "diff":
-                    return self._send(200, est.diff(n))
+                    return self._send(200, est.diff(n, vs=(q.get("vs") or [""])[0]))   # HS v1.24: ?vs=prev
                 f = os.path.join(est.bdir(n), m2.group(3) or "")
                 if not m2.group(3) or not os.path.isfile(f):
                     return self._send(404, {"error": "no such backup"})
@@ -35572,6 +36162,11 @@ def make_console_handler(est, console_html):
                 if n not in est.devs:
                     return self._send(404, {"error": "unknown device"})
                 return self._send(200, est.device_view(n))
+            if u.path == "/api/handover/export.zip":   # HS v1.24: the customer's admins only
+                if who["role"] != "admin" or who.get("org") != "customer":
+                    return self._send(403, {"ok": False, "msg": "the hand-over export is downloaded by a customer admin"})
+                fn, body = est.handover_zip(who["user"])
+                return self._send(200, body, "application/zip", {"Content-Disposition": "attachment; filename=%s" % fn})
             if u.path.startswith("/api/export/"):
                 body = est.export(u.path.rsplit("/", 1)[1])
                 if body is None:
@@ -35660,7 +36255,7 @@ def make_console_handler(est, console_html):
                     if est.db.execute("SELECT 1 FROM users WHERE name=?", (nm,)).fetchone():
                         return self._send(409, {"ok": False, "msg": "that login exists: reset or update it instead"})
                 try:
-                    pw = est.user_add(nm, data.get("role", "operator"), planes=data.get("planes", ""))
+                    pw = est.user_add(nm, data.get("role", "operator"), planes=data.get("planes", ""), org=data.get("org", "customer"))
                 except ValueError as e:
                     return self._send(409, {"ok": False, "msg": str(e)})
                 est.audit(user, "user-add", data.get("name"), "role=%s planes=%s" % (data.get("role"), data.get("planes", "")))
@@ -35669,7 +36264,7 @@ def make_console_handler(est, console_html):
                 ok, res = est.user_reset(user, str(data.get("name", "")))
                 return self._send(200 if ok else 409, {"ok": ok, "msg": "temporary password issued" if ok else res, "password": res if ok else None})
             if p == "/api/users/update":
-                ok, msg = est.user_update(user, str(data.get("name", "")), data.get("role"), data.get("planes"), data.get("disabled"))
+                ok, msg = est.user_update(user, str(data.get("name", "")), data.get("role"), data.get("planes"), data.get("disabled"), data.get("org"))
                 return self._send(200 if ok else 409, {"ok": ok, "msg": msg})
             if p == "/api/run":
                 ok, msg = est.start_run(data.get("plane", "all"), user, data.get("reason", ""))
@@ -35717,6 +36312,15 @@ def make_console_handler(est, console_html):
                 ok, msg = est.rma_start(n, user, data.get("ticket", ""))
             elif p == "/api/rma/identity":
                 ok, msg = est.rma_identity(n, user, data.get("value", ""))
+            elif p == "/api/rma/upload":   # HS v1.24
+                ok, msg = est.rma_upload(n, data.get("text", ""), user)
+            elif p == "/api/handover/final-backup":   # HS v1.24
+                ok, msg = est.handover_final_backup(user) if who["role"] == "admin" else (False, "admins only")
+            elif p == "/api/release-vendor":   # HS v1.24: customer admins only
+                if who["role"] != "admin" or who.get("org") != "customer":
+                    ok, msg = False, "refused: Release DWR access is for the customer's admins"
+                else:
+                    ok, msg = est.release_vendor(user, str(data.get("password", "")), data)
             elif p == "/api/rma/check":
                 ok, msg = est.rma_check(n, data.get("key", ""), user)
             elif p == "/api/rma/apply":
@@ -35746,7 +36350,7 @@ def make_console_handler(est, console_html):
                 msg = "ok" if ok else "unknown runner"
             elif p == "/api/backup":
                 ok = est.take_backup(n, "requested by " + user)
-                msg = "backed up" if ok else "backup not possible (reader unavailable or unsupported)"
+                msg = ("Backed up %s: %s" % (time.strftime("%H:%MZ", time.gmtime()), ok)) if ok else "backup not possible (reader unavailable or unsupported)"
             elif p == "/api/promote":
                 ok, msg = est.promote() if est.role == "standby" else (False, "already primary")
             else:
@@ -35941,7 +36545,8 @@ def probe_dhcp(nic, wait=4.0):
 def main():
     here = os.path.dirname(os.path.realpath(__file__))
     ap = argparse.ArgumentParser(description="Estate provisioning service (" + VERSION + ")")
-    ap.add_argument("cmd", nargs="?", default="serve", choices=["serve", "init", "status", "start", "pause", "resume", "check", "user", "probe-dhcp", "promote", "result", "fingerprint", "lab-slice"])
+    ap.add_argument("cmd", nargs="?", default="serve", choices=["serve", "init", "status", "start", "pause", "resume", "check", "user", "probe-dhcp", "promote", "result", "fingerprint", "lab-slice",
+                                                               "release-vendor", "handover-export", "record-vendor", "rma-restore"])   # HS v1.24
     ap.add_argument("args", nargs="*")
     ap.add_argument("--plan", default=os.path.join(here, "estate.json"))
     ap.add_argument("--conf", default="/etc/fabric/estate.conf")
@@ -35951,6 +36556,10 @@ def main():
     ap.add_argument("--reason", default="")
     ap.add_argument("--role", default="admin", choices=["admin", "operator", "viewer"])
     ap.add_argument("--planes", default="", help="operator planes, comma-separated: oob,edge,fe,be")
+    ap.add_argument("--org", default="customer", choices=["customer", "dwr"], help="user add: whose login (HS v1.24)")
+    ap.add_argument("--out", default="", help="decommission: folder for the customer's export (HS v1.24)")
+    ap.add_argument("--account", default="", help="record-vendor: DWR OS account(s) on this host, comma-separated (HS v1.24)")
+    ap.add_argument("--device", default="", help="rma-restore: the device being replaced (HS v1.24)")
     ap.add_argument("--admin-pass", default=os.environ.get("ESTATE_ADMIN_PASS", ""), help="init: the initial admin password (changed at first login)")
     ap.add_argument("--nic", default="")
     ap.add_argument("--macs", default="")   # HS v1.23: lab-slice NODE,MAC file (Air: /etc/dhcp/dhcpd.hosts)
@@ -35970,6 +36579,65 @@ def main():
             return 1
         print(hashlib.sha256(der).hexdigest())
         return 0
+    if a.cmd == "record-vendor":   # HS v1.24: what Release DWR access removes from this host
+        accts = [x.strip() for x in a.account.split(",") if x.strip() and x.strip() not in ("none", "root")]
+        rec = {"accounts": accts, "sudoers": [], "ssh_keys": [], "recorded": iso(now())}
+        for f in glob.glob("/etc/sudoers.d/*"):
+            try:
+                if any(re.search(r"^\s*%s\b" % re.escape(x), open(f).read(), re.M) for x in accts):
+                    rec["sudoers"].append(f)
+            except OSError:
+                pass
+        for x in accts:
+            for ak in glob.glob(os.path.expanduser("~%s/.ssh/authorized_keys" % x)):
+                r = subprocess.run(["ssh-keygen", "-lf", ak], capture_output=True, text=True)
+                rec["ssh_keys"] += [{"account": x, "fingerprint": ln.split()[1]} for ln in r.stdout.splitlines() if len(ln.split()) > 1]
+        p = "/etc/fabric/vendor-access.json"
+        with open(p, "w") as f:
+            json.dump(rec, f, indent=1)
+        os.chmod(p, 0o600)
+        print("[ok] DWR host access recorded for Release DWR access: %s" % (", ".join(accts) or "no OS account"))
+        return 0
+    if a.cmd in ("release-vendor", "handover-export"):   # HS v1.24: through the running service (it holds the state)
+        conf = copy.deepcopy(DEFAULTS)
+        try:
+            conf.update(json.load(open(a.conf)))
+        except (OSError, ValueError):
+            pass
+        base, tok = "http://127.0.0.1:%d" % conf["internal_port"], local_token(conf)
+        def post(path, body, t=30):
+            req = urllib.request.Request(base + path, data=json.dumps(body).encode(), headers={"X-Estate-Token": tok, "Content-Type": "application/json"})
+            try:
+                return json.loads(urllib.request.urlopen(req, timeout=t).read().decode())
+            except urllib.error.HTTPError as e:
+                return json.loads(e.read().decode() or "{}")
+        if a.cmd == "handover-export":
+            r = post("/local/handover-export", {"out": a.out or "/root"}, 600)
+            print(("[ok] hand-over export written: %s (give it to the customer; keep no copy)" % r.get("msg")) if r.get("ok") else "[!] %s" % r.get("msg"))
+            return 0 if r.get("ok") else 1
+        import getpass
+        print("Release DWR access removes dwr-netadmin from every device (it signs in as netadmin to do it), disables the DWR")
+        print("console logins, locks DWR's OS accounts on this host and removes their SSH keys and sudo rules, and clears the push credential.")
+        body = {"tacacs_vpn": "yes" if input("DWR's TACACS and remote-access accounts are disabled? [y/N] ").strip().lower() == "y" else "no",
+                "backup_system": "yes" if input("The customer's backup system has a first backup of every device? [y/N] ").strip().lower() == "y" else "no",
+                "dwr_attest": input("Reference of DWR Networking's written attestation that it keeps no copies: ").strip(),
+                "password": getpass.getpass("netadmin password (held for this action only): "),
+                "typed": input("Type RELEASE to go ahead: ").strip()}
+        r = post("/local/release-vendor", body)
+        print(r.get("msg"))
+        if not r.get("ok"):
+            return 1
+        while True:
+            time.sleep(5)
+            h = json.loads(urllib.request.urlopen(base + "/local/handover", timeout=10).read().decode())
+            rel = h.get("release") or {}
+            if rel.get("state") != "running":
+                print("Release DWR access: %s; dwr-netadmin removed from %s of %s device(s)" % (rel.get("state"), rel.get("removed"), rel.get("n")))
+                for x in rel.get("failed", [])[:20]:
+                    print("  FAILED %s: %s" % (x["device"], x["why"]))
+                for x in rel.get("host", []):
+                    print("  host: " + x)
+                return 0 if rel.get("state") == "done" else 1
     if a.cmd in ("status", "start", "pause", "resume", "promote", "result", "lab-slice"):
         conf = copy.deepcopy(DEFAULTS)
         try:
@@ -36008,6 +36676,13 @@ def main():
             print("service not reachable on %s: %s" % (base, e))
             return 1
     est = Estate(a.plan, a.conf, a.kea_template)
+    if a.cmd == "rma-restore":   # HS v1.24: rma-restore HANDOVER.zip --device NAME (service stopped)
+        if not a.args or not a.device:
+            print("usage: estate_build.py rma-restore <hand-over export .zip> --device NAME")
+            return 2
+        ok, msg = est.restore_asbuilt(a.args[0], a.device)
+        print(("[ok] " if ok else "[!] ") + msg)
+        return 0 if ok else 1
     if a.cmd == "check":
         return preflight(est)
     if a.cmd == "init":
@@ -36019,10 +36694,10 @@ def main():
             if why:
                 print("initial admin password: %s" % why)
                 return 2
-            est.user_add("admin", "admin", a.admin_pass)
+            est.user_add("admin", "admin", a.admin_pass, org="dwr")
             print("Console login  user: admin   password: as given   (must be changed at first login)")
         else:
-            pw = est.user_add("admin", "admin")
+            pw = est.user_add("admin", "admin", org="dwr")
             print("Console login  user: admin   password: %s   (temporary: must be changed at first login)" % pw)
         print("Add a second admin and personal logins per plane: estate_build.py user add NAME --role operator --planes fe,edge")
         return 0
@@ -36041,7 +36716,7 @@ def main():
             name = a.args[1]
             if sub == "add":
                 try:
-                    pw = est.user_add(name, a.role, planes=a.planes)
+                    pw = est.user_add(name, a.role, planes=a.planes, org=a.org)
                 except ValueError as e:
                     print(e)
                     return 2
@@ -36119,7 +36794,12 @@ h2{margin:0;font-size:17px}
 .tile .n{font-family:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;font-weight:600}.tile .s{font-size:11px}
 .t0{background:var(--q-bg);color:var(--q-fg);border:1px solid var(--q-bd)}.t1{background:var(--a-bg);color:var(--a-fg);border:1px solid var(--a-bd)}
 .t6{background:#2f8f54;color:#fff;border:1px solid #1f6b3d}.tf{background:#c2410c;color:#fff;border:1px solid #9a3412}
-.tw{background:var(--w-bg);color:var(--w-fg);border:2px dashed var(--w-bd)}.tr{background:var(--r-bg);color:var(--r-fg);border:2px dashed var(--r-bd)}
+.tw{background:var(--w-bg);color:var(--w-fg);border:2px dashed var(--w-bd)}
+button.b-run{border-color:#b45309!important;box-shadow:0 0 0 2px #fcd34d inset;opacity:1!important;cursor:progress}button.b-ok{border-color:#15803d!important;box-shadow:0 0 0 2px #86efac inset}button.b-err{border-color:#b91c1c!important;box-shadow:0 0 0 2px #fca5a5 inset}
+.spin{display:inline-block;width:12px;height:12px;margin-right:6px;vertical-align:-2px;border:2px solid #f59e0b;border-right-color:transparent;border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation:none;border-right-color:#f59e0b}}
+#actMsg{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);max-width:min(720px,calc(100vw - 32px));display:none;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:8px;font-size:13px;z-index:60;box-shadow:0 6px 24px rgba(0,0,0,.18)}
+#actMsg.am-ok{background:#ecfdf3;color:#14532d;border:1px solid #86efac}#actMsg.am-err{background:#fef2f2;color:#7f1d1d;border:1px solid #fca5a5}#actMsg button{background:none;border:0;font-size:16px;line-height:1;cursor:pointer;color:inherit;padding:0 2px}.tr{background:var(--r-bg);color:var(--r-fg);border:2px dashed var(--r-bd)}
 .tsel{outline:3px solid var(--teal);outline-offset:2px}
 .glabel{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
 .filters{display:flex;flex-wrap:wrap;gap:6px}.filters button{min-height:36px;border-radius:999px;font-size:13px}
@@ -36197,7 +36877,7 @@ dialog::backdrop{background:rgba(20,33,43,.45)}
 <section class="card" aria-label="Run" id="runCard">
 <div class="row" style="justify-content:space-between"><h2>Run <span class="sub" id="runSub"></span></h2>
 <div class="row"><select class="f" id="runPlane" aria-label="Plane"><option value="all">All planes</option><option value="oob">OOB</option><option value="edge">Edge-PoP</option><option value="fe">Front end</option><option value="be">Back end</option></select>
-<button class="pri act" id="bStart">Start build</button><button class="act" id="bPause">Pause</button><button class="act" id="bCred">Push credential…</button><button class="act" id="bUsers" title="Personal logins and the planes each operator acts on">Logins…</button><button id="bMyPw" title="Change your password">My password…</button><button id="bLogout">Sign out</button>
+<button class="pri act" id="bStart">Start build</button><button class="act" id="bPause">Pause</button><button class="act" id="bCred">Push credential…</button><button class="act" id="bUsers" title="Personal logins and the planes each operator acts on">Logins…</button><button class="act" id="bHand" title="Final backup, the customer's hand-over export, Release DWR access (HS-DEP-003 phase 6)">Hand-over…</button><button id="bMyPw" title="Change your password">My password…</button><button id="bLogout">Sign out</button>
 <a id="exAsbuilt" href="api/export/asbuilt.csv">As-built</a> · <a href="api/export/sot-status.csv">SoT status</a> · <a href="api/export/audit.csv">Audit</a> · <a href="api/export/events.csv">Events</a></div></div>
 <div class="muted" style="font-size:13px" id="runNote"></div>
 <div id="runners" style="display:flex;flex-direction:column;gap:6px;font-size:13px"></div>
@@ -36278,7 +36958,32 @@ function api(path, body){
     return r.json().then(function(j){ if(!r.ok) throw new Error(j.msg||j.error||('HTTP '+r.status)); return j; });
   });
 }
-function act(path, body){ return api(path, body).then(function(j){ refresh(); return j; }).catch(function(e){ if(e.message!=='login') alert(e.message); }); }
+// HS v1.24: every console action shows its state on the button pressed: amber with a spinner and an in-progress label
+// while it runs (disabled), green with a check mark for 1.5 s when done, red with the message in the status line when it
+// fails. The console redraws every few seconds, so the button is found again by its id or data attribute.
+var LASTBTN=null, BUSY={};
+document.addEventListener('click', function(e){ var b=e.target&&e.target.closest?e.target.closest('button'):null; if(!b || b.closest('#dlg')) return;
+  var sel=b.id?('#'+b.id):''; if(!sel){ for(var i=0;i<b.attributes.length;i++){ var a=b.attributes[i]; if(/^data-/.test(a.name)){ sel='['+a.name+'="'+a.value.replace(/"/g,'\\"')+'"]'; break; } } }
+  LASTBTN={sel:sel, text:b.textContent, t:Date.now()}; }, true);
+var ACTLBL={'api/backup':'Backing up…','api/rma/start':'Starting RMA…','api/rma/identity':'Registering…','api/rma/apply':'Setting…','api/rma/check':'Confirming…',
+  'api/gate/recheck':'Re-checking…','api/gate/confirm':'Confirming…','api/gate/override':'Overriding…','api/bind':'Binding…','api/unbind':'Unbinding…','api/dismiss':'Dismissing…',
+  'api/retry':'Retrying…','api/quarantine':'Quarantining…','api/mark':'Marking…','api/start':'Starting…','api/result':'Saving…','api/runner-retry':'Retrying…','api/release-vendor':'Releasing…','api/handover/final-backup':'Backing up…','api/rma/upload':'Loading…'};
+function busyPaint(){ Object.keys(BUSY).forEach(function(sel){ var x=BUSY[sel]; if(!sel) return; var el=null; try{ el=document.querySelector(sel); }catch(e){} if(!el) return;
+  if(el.dataset.bst===x.st) return; el.dataset.bst=x.st; el.classList.remove('b-run','b-ok','b-err'); el.classList.add('b-'+x.st);
+  if(x.st==='run'){ el.disabled=true; if(el.dataset.lbl===undefined) el.dataset.lbl=el.textContent; el.innerHTML='<span class="spin"></span>'+esc(x.label); }
+  else if(x.st==='ok'){ el.innerHTML='✓ '+esc(x.text); } }); }
+try{ new MutationObserver(function(){ if(Object.keys(BUSY).length) busyPaint(); }).observe(document.body,{childList:true, subtree:true}); }catch(e){}
+function actMsg(m, kind){ var el=$('actMsg'); if(!el){ el=document.createElement('div'); el.id='actMsg'; document.body.appendChild(el); }
+  el.className='am-'+(kind||'ok'); el.innerHTML='<span>'+esc(m)+'</span><button onclick="this.parentNode.style.display=\'none\'" aria-label="Close">×</button>'; el.style.display='flex';
+  clearTimeout(el._t); el._t=setTimeout(function(){ el.style.display='none'; }, kind==='err'?20000:6000); }
+function act(path, body){
+  var lb=LASTBTN&&Date.now()-LASTBTN.t<120000?LASTBTN:null, sel=lb?lb.sel:'', t0=Date.now(); LASTBTN=null;
+  if(sel){ BUSY[sel]={st:'run', label:ACTLBL[path]||'Working…', text:lb.text}; busyPaint(); }
+  var done=function(st, m){ if(!sel) return; BUSY[sel]={st:st, label:'', text:lb.text}; busyPaint();
+    setTimeout(function(){ delete BUSY[sel]; var el=null; try{ el=document.querySelector(sel); }catch(e){} if(el){ el.classList.remove('b-run','b-ok','b-err'); delete el.dataset.bst; el.disabled=false; if(el.dataset.lbl!==undefined){ el.textContent=el.dataset.lbl; delete el.dataset.lbl; } } refresh(); }, st==='ok'?1500:4000); };
+  return api(path, body).then(function(j){ done('ok'); if(j && j.msg && j.msg!=='ok') actMsg(j.msg, 'ok'); refresh(); return j; })
+    .catch(function(e){ if(e.message==='login') return; done('err'); actMsg((ACTLBL[path]||'Action').replace('…','')+' failed: '+e.message, 'err'); });
+}
 function cidMac(c){ c=String(c||'').toLowerCase().replace(/[^0-9a-f]/g,''); if(c.length===14 && c.slice(0,2)==='01') c=c.slice(2); return c.length===12?c.match(/../g).join(':'):''; }   // HS v1.21: the MAC in a type-1 client-ID
 function showLogin(){ $('app').style.display='none'; $('pwView').style.display='none'; $('loginView').style.display='flex'; }   // v515: never both cards
 $('lGo').onclick=function(){
@@ -36364,8 +37069,8 @@ function view(){
   return {T:S.st.server_time, devices:S.st.devices, replay:null};
 }
 // ------------------------------------------------------------------ render
-function tileClass(x){ if(x.flag==='failed'||x.flag==='missing') return 'tf'; if(x.flag==='rma') return 'tr';
-  if(x.flag==='unclaimed'||x.flag==='waiting'||x.flag==='slow'||x.flag==='quarantined'||x.flag==='down'||/^waiting for operator/.test(x.detail||'')) return 'tw';
+function tileClass(x){ if(x.flag==='failed'||x.flag==='missing'||x.flag==='down') return 'tf';   // HS v1.24: down is a failure if(x.flag==='rma') return 'tr';
+  if(x.flag==='unclaimed'||x.flag==='waiting'||x.flag==='slow'||x.flag==='quarantined'||/^waiting for operator/.test(x.detail||'')) return 'tw';
   if(x.stage===6) return 't6'; if(x.stage>0) return 't1'; return 't0'; }
 function stageTxt(n,x){ var d=S.plan.devices[n];
   if(x.flag==='failed') return 'Failed: '+STG[Math.min(6,x.stage+1)]; if(x.flag==='down') return 'Done · not answering'; if(x.flag==='missing') return 'Not called in'; if(x.flag==='unclaimed') return 'Unclaimed?';
@@ -36458,12 +37163,13 @@ function render(){
   if(gb.override) GL=['Overridden','warn']; $('gChip').textContent=GL[0]; $('gChip').className='chip k-'+GL[1];
   var RK={pass:['Pass','done'], warn:['Warn','warn'], confirmed:['Confirmed','done'], blocked:['Blocked','failed'], running:['Running','active'], waiting:['Waiting','queued'], 'needs confirmation':['Confirm','warn']};
   $('gChecks').innerHTML=gb.gate.map(function(c){ var r=RK[c.result]||RK.waiting;
-    return '<li><span class="chip k-'+r[1]+'" style="flex:0 0 86px;justify-content:center">'+r[0]+'</span><span style="display:flex;flex-direction:column;gap:2px;flex:1 1 auto"><span>'+esc(c.label)+'</span><span class="muted" style="font-size:12px">'+esc(c.note)+'</span></span>'
-      +(c.type==='auto'&&c.evidence?'<button data-ge="'+esc(c.key)+'" style="min-height:34px">Evidence</button>':'')
-      +(c.kind==='nccl'&&c.result!=='pass'&&gb.state!=='queued'?'<button class="act" data-nc="1" style="min-height:34px">Enter result…</button>':'')
-      +((c.type==='confirm'||(c.type==='auto'&&/needs confirmation|blocked|warn/.test(c.result)))&&c.result!=='confirmed'&&gb.state!=='queued'?'<button class="act" data-gc="'+esc(c.key)+'" style="min-height:34px">Confirm…</button>':'')+'</li>'; }).join('')
+    var btns=(c.type==='auto'&&c.evidence?'<button data-ge="'+esc(c.key)+'" style="min-height:32px">Evidence</button>':'')
+      +(c.kind==='nccl'&&c.result!=='pass'&&gb.state!=='queued'?'<button class="act" data-nc="1" style="min-height:32px">Enter result…</button>':'')
+      +((c.type==='confirm'||(c.type==='auto'&&/needs confirmation|blocked|warn/.test(c.result)))&&c.result!=='confirmed'&&gb.state!=='queued'?'<button class="act" data-gc="'+esc(c.key)+'" style="min-height:32px">Confirm…</button>':'');
+    return '<li style="align-items:flex-start"><span class="chip k-'+r[1]+'" style="flex:0 0 86px;justify-content:center">'+r[0]+'</span><span style="display:flex;flex-direction:column;gap:4px;flex:1 1 auto;min-width:0"><span>'+esc(c.label)+'</span><span class="muted" style="font-size:12px;overflow-wrap:anywhere">'+esc(c.note)+'</span>'
+      +(btns?'<span class="row" style="gap:6px;flex-wrap:wrap">'+btns+'</span>':'')+'</span></li>'; }).join('')   // HS v1.24: buttons under the text
     +(gb.override?'<li class="muted">Overridden by '+esc(gb.override.user)+': '+esc(gb.override.reason)+'</li>':'');
-  document.querySelectorAll('[data-gc]').forEach(function(e){ e.disabled=!canAct(gb.key); e.onclick=function(){ ask('Confirm gate check', esc(e.parentNode.querySelector('span span').textContent), [{key:'note', label:'Evidence (command output, ticket, who checked)'}]).then(function(v){ if(v) act('api/gate/confirm',{build:gb.key, check:e.dataset.gc, note:v.note}); }); }; });
+  document.querySelectorAll('[data-gc]').forEach(function(e){ e.disabled=!canAct(gb.key); e.onclick=function(){ ask('Confirm gate check', esc(e.closest('li').querySelector('span span').textContent), [{key:'note', label:'Evidence (command output, ticket, who checked)'}]).then(function(v){ if(v) act('api/gate/confirm',{build:gb.key, check:e.dataset.gc, note:v.note}); }); }; });
   document.querySelectorAll('[data-ge]').forEach(function(e){ e.onclick=function(){ api('api/gate-evidence?build='+gb.key+'&check='+e.dataset.ge).then(function(j){
     ask('Evidence', '<div class="mono" style="font-size:12px;white-space:pre-wrap;max-height:50vh;overflow:auto">'+esc((j.note||'')+'\n\n'+Object.keys(j.evidence||{}).map(function(n){ var x=j.evidence[n]; return (x.ok?'PASS ':'FAIL ')+n+': '+x.note+(x.text?('\n'+x.text.slice(-600)):''); }).join('\n\n'))+'</div>', []); }); }; });
   document.querySelectorAll('[data-nc]').forEach(function(e){ e.disabled=!canAct('be'); e.onclick=function(){ ask('NCCL all-reduce result','From acceptance/nccl.sh (Avg bus bandwidth).',[{key:'busbw',label:'Bus bandwidth, GB/s'},{key:'target',label:'Target, GB/s'}]).then(function(v){ if(v) act('api/result',{kind:'nccl', busbw:v.busbw, target:v.target}); }); }; });
@@ -36478,7 +37184,7 @@ function render(){
   $('unc').innerHTML=unc.length?unc.map(function(u){ var sg=(u.suggest||[])[0];
     return '<div style="border:2px dashed var(--w-bd);background:#fffaf0;border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:6px;font-size:13px">'
       +'<div class="mono" style="font-weight:600">'+(u.serial?('Serial '+esc(u.serial)+' · '):'')+'MAC '+esc(u.mac||'—')+(function(){ var c=cidMac(u.client_id); return (c && c!==String(u.mac||'').toLowerCase())?(' · client-ID MAC '+esc(c)):''; })()+'</div>'
-      +'<div>'+esc(u.vendor_class||'')+(u.circuit?(' · called in on '+esc(u.circuit)):'')+(u.ip?(' · holding lease '+esc(u.ip)):'')+'</div>'
+      +'<div>'+esc(u.vendor_class||'')+(/^Cisco N\dK/i.test(u.vendor_class||'')?' · NX-OS POAP':'')+(u.circuit?(' · called in on '+esc(u.circuit)):'')+(u.ip?(' · holding lease '+esc(u.ip)):'')+'</div>'
       +'<div class="muted">'+esc(u.foreign?('Belongs to site '+u.foreign+': refused.'):/retired/.test(u.why||'')?(u.why+': refused.'):('Not in the '+site.code+' inventory'+(sg?('; likely '+sg.device+' ('+sg.why+').'):'.')))+'</div>'
       +(u.foreign||/retired/.test(u.why||'')?'':'<div class="row" style="gap:6px"><button class="act warn" data-u="'+esc(u.key)+'" data-s="'+esc(sg?sg.device:'')+'">Bind…</button><button class="act" data-x="'+esc(u.key)+'" title="Not one of this site\u2019s devices: off the list and the gate (audited)">Dismiss…</button></div>')+'</div>'; }).join('')
     :'<div class="muted" style="font-size:13px">'+(live?'None. Unknown serials that call in appear here for binding.':'Not shown in replay.')+'</div>';
@@ -36547,32 +37253,39 @@ function renderDetail(V, ro){
       else if(a==='quarantine') ask('Quarantine '+n,'Its reservation is withdrawn; logged.',[{key:'reason',label:'Reason'}]).then(function(v){ if(v) act('api/quarantine',{device:n, reason:v.reason}); });
       else if(a==='mark') ask('Mark '+n+' configured','Use once its configuration is applied outside the service.',[{key:'note',label:'Note'}]).then(function(v){ if(v) act('api/mark-configured',{device:n, note:v.note}); });
       else if(a==='unbind') ask('Unbind '+n,'Its identity ('+S.st.devices[n].id+') is released and the device returns to Unclaimed, ready to bind again; logged. Only before Config: after that, use Start RMA.',[]).then(function(v){ if(v) act('api/unbind',{device:n}); });
-      else if(a==='rma') ask('Start RMA for '+n,'Its current serial/MAC is retired and blocked; the replacement provisions with the current configuration.',[{key:'ticket',label:'RMA ticket (optional)'}]).then(function(v){ if(v) act('api/rma/start',{device:n, ticket:v.ticket}).then(loadDetail); });
+      else if(a==='rma') ask('Start RMA for '+n,'Its current serial/MAC is retired and blocked. You register the replacement’s serial or MAC in the next step, in the RMA panel.',[{key:'ticket',label:'Vendor RMA ticket number (optional)'}]).then(function(v){ if(!v) return;
+        var tk=String(v.ticket||'').trim(); if(/^([0-9a-f]{2}[:.-]?){5}[0-9a-f]{2}$/i.test(tk)||/^[0-9a-f]{4}\.[0-9a-f]{4}\.[0-9a-f]{4}$/i.test(tk)) return actMsg('That looks like a MAC address: enter the vendor’s RMA ticket here, and the replacement’s MAC or serial in the RMA panel after.', 'err');   // HS v1.24
+        act('api/rma/start',{device:n, ticket:tk}).then(loadDetail); });
     }; });
   var BK=$('dBk'), bks=dc?(dc.backups||[]):[];
   var items=dc&&dc.state.items?dc.state.items:null;
   if(live && (bks.length || items || (dc && x.stage===6 && !d.aggregate))){ BK.style.display='flex';
     var ih=''; if(items){ var cnt={}; Object.keys(items).forEach(function(h){ var z=items[h].state||'?'; cnt[z]=(cnt[z]||0)+1; });
       ih='<div><b>Per host</b> · '+Object.keys(cnt).map(function(z){ return cnt[z]+' '+z; }).join(' · ')+'</div><div class="log" style="max-height:120px;overflow:auto">'+Object.keys(items).slice(0,200).map(function(h){ return esc(h+': '+items[h].state+(items[h].note?(' -- '+items[h].note):'')); }).join('<br>')+'</div>'; }
-    BK.innerHTML=ih+(d.aggregate?'':('<div class="row"><b>Backups</b><span class="muted">'+(bks.length?bks.length+' kept':'none yet')+'</span><button class="act" id="bkNow" style="min-height:32px">Back up now</button>'+(bks.length?'<button id="bkDiff" style="min-height:32px">Diff vs planned</button>':'')+'</div>'
-      +bks.slice(0,3).map(function(b){ return '<a href="api/device/'+encodeURIComponent(n)+'/backup/'+b+'">'+b+'</a>'; }).join(' · ')));
+    BK.innerHTML=ih+(d.aggregate?'':('<div class="row"><b>Backups</b><span class="muted">'+(bks.length?bks.length+' kept':'none yet')+'</span><button class="act" id="bkNow" style="min-height:32px">Back up now</button>'+(bks.length?'<button id="bkDiff" style="min-height:32px">Diff vs planned</button>':'')+(bks.length>1?'<button id="bkPrev" style="min-height:32px">Diff vs previous</button>':'')+'</div>'
+      +bks.slice(0,3).map(function(b){ var t=(dc.backup_seen||{})[b]; return '<a href="api/device/'+encodeURIComponent(n)+'/backup/'+b+'">'+b+'</a>'+(t?('<span class="muted"> · last confirmed '+new Date(t*1000).toISOString().slice(11,16)+'Z</span>'):''); }).join('<br>')));   // HS v1.24
     var bn=$('bkNow'); if(bn){ bn.disabled=ro; bn.onclick=function(){ act('api/backup',{device:n}).then(loadDetail); }; }
+    var bp=$('bkPrev'); if(bp) bp.onclick=function(){ api('api/device/'+encodeURIComponent(n)+'/diff?vs=prev').then(function(j){   // HS v1.24
+      ask(j.previous+' vs '+j.backup, '<div class="muted">'+j.added+' line(s) added, '+j.removed+' removed</div><div class="mono" style="font-size:12px;white-space:pre;max-height:55vh;overflow:auto">'+esc(j.diff||'identical')+'</div>', []); }); };
     var bd=$('bkDiff'); if(bd) bd.onclick=function(){ api('api/device/'+encodeURIComponent(n)+'/diff').then(function(j){
       // v514: say so when there is nothing to compare, rather than "identical"
       if(!j.backup) return ask('Planned vs backup', '<div class="muted">No backup of this device yet; nothing compared.</div>', []);
       if(j.planned===false) return ask('Planned vs '+j.backup, '<div class="muted">No planned configuration found for this device; nothing compared.</div>', []);
-      ask('Planned vs '+j.backup, '<div class="muted">'+j.added+' line(s) only on the device, '+j.removed+' only in the plan</div><div class="mono" style="font-size:12px;white-space:pre;max-height:55vh;overflow:auto">'+esc(j.diff||'identical')+'</div>', []); }); };
+      ask('Planned vs '+j.backup, '<div class="muted">'+j.removed+' line(s) only in the plan, '+j.added+' only on the device; '+(j.same||0)+' the same'+(j.defaults_hidden?('; '+j.defaults_hidden+' device defaults not shown'):'')+' (order, ranges, quoting and secrets ignored)</div><div class="mono" style="font-size:12px;white-space:pre;max-height:55vh;overflow:auto">'+esc(j.diff||'identical')+'</div>', []); }); };
   } else BK.style.display='none';
   var R=$('dRma'), rma=dc&&dc.state.rma&&dc.state.rma.state==='open'?dc.state.rma:null;
   if(rma && live){ R.style.display='flex';
     var _rv=$('rmaVal'), _rk=_rv?_rv.value:'', _rf=!!_rv&&document.activeElement===_rv, _rs=_rf?_rv.selectionStart:0;   // HS v1.23
-    R.innerHTML='<b>RMA '+esc(rma.ticket||'')+'</b><div>Old identity: <span class="mono">'+esc(rma.old?rma.old.value:'—')+'</span> (retired)'+(rma['new']?(' · new: <span class="mono">'+esc(rma['new'].value)+'</span>'):'')+'</div>'
-      +(rma['new']?'':'<div class="row"><input type="text" id="rmaVal" placeholder="Scan serial or MAC" class="f" style="flex:1 1 180px"><button class="act" id="rmaGo">Register</button></div><div class="muted">Or power the replacement on and bind it from Unclaimed: option 82 shows it on this device’s port.</div>')
+    R.innerHTML='<b>RMA'+(rma.ticket?(' · ticket '+esc(rma.ticket)):'')+'</b><div>Old identity: <span class="mono">'+esc(rma.old?rma.old.value:'—')+'</span> (retired)'+(rma['new']?(' · new: <span class="mono">'+esc(rma['new'].value)+'</span>'):'')+'</div>'
+      +(rma['new']?'':'<div class="row"><input type="text" id="rmaVal" placeholder="Replacement serial or MAC (scan or type)" class="f" style="flex:1 1 180px"><button class="act" id="rmaGo">Register</button></div><div class="muted">Or power the replacement on and bind it from Unclaimed: option 82 shows it on this device’s port.</div>')
+      +'<div class="row"><b>From the customer’s backup system</b><input type="file" id="rmaFile" accept=".cfg,.conf,.txt" style="font-size:12px"></div>'   // HS v1.24
       +'<div class="row"><b>Apply</b><button class="act" data-ap="planned" style="min-height:32px;'+(((rma.apply||{}).source||'planned')==='planned'?'background:#3b2780;color:#fff':'')+'">Planned</button><button class="act" data-ap="backup" style="min-height:32px;'+((rma.apply||{}).source==='backup'?'background:#3b2780;color:#fff':'')+'"'+(bks.length?'':' disabled')+'>Last backup</button>'+(bks.length?'':'<span class="muted">no backup of this device</span>')+'</div>'
       +(rma.mnha?'<div>MNHA: <b>'+esc({hold:'push with preemption held', 'await-sync':'waiting for SRG0 session sync', restore:'restoring preemption', done:'preemption restored'}[rma.mnha]||rma.mnha)+'</b>'+(rma.mnha==='await-sync'?' <button class="act" id="mnhaGo" style="min-height:30px">Sync confirmed: restore</button>':'')+'</div>':'')
       +rma.checklist.map(function(c){ return '<div class="row" style="flex-wrap:nowrap;align-items:flex-start"><span class="chip k-'+(c.done?'done':'warn')+'">'+(c.done?'Done':'Open')+'</span><span style="flex:1 1 auto">'+esc(c.label)+(c.blocks_push?' <span class="muted">(push waits)</span>':'')+(c.note?'<br><span class="muted">'+esc(c.note)+'</span>':'')+'</span>'+(c.done?'':'<button class="act" data-rc="'+c.key+'" style="min-height:32px">Confirm</button>')+'</div>'; }).join('');
     R.querySelectorAll('[data-ap]').forEach(function(b){ if(!b.disabled) b.disabled=ro; b.onclick=function(){ act('api/rma/apply',{device:n, source:b.dataset.ap}).then(loadDetail); }; });
     var mg=$('mnhaGo'); if(mg){ mg.disabled=ro; mg.onclick=function(){ act('api/rma/mnha-restore',{device:n}).then(loadDetail); }; }
+    var _rf2=$('rmaFile'); if(_rf2){ _rf2.disabled=ro; _rf2.onchange=function(){ var fl=this.files&&this.files[0]; if(!fl) return; var rd=new FileReader();   // HS v1.24
+      rd.onload=function(){ act('api/rma/upload',{device:n, text:String(rd.result)}).then(loadDetail); }; rd.readAsText(fl); }; }
     var _nv=$('rmaVal'); if(_nv && _rk){ _nv.value=_rk; } if(_nv && _rf){ _nv.focus(); try{ _nv.setSelectionRange(_rs,_rs); }catch(e){} }   // HS v1.23
     var g=$('rmaGo'); if(g){ g.disabled=ro; g.onclick=function(){ act('api/rma/identity',{device:n, value:$('rmaVal').value}).then(loadDetail); }; }
     R.querySelectorAll('[data-rc]').forEach(function(b){ b.disabled=ro; b.onclick=function(){ act('api/rma/check',{device:n, key:b.dataset.rc}).then(loadDetail); }; });
@@ -36588,28 +37301,55 @@ function planesTxt(u){ return u.role==='admin'?'all':(u.role==='operator'?(u.pla
 function usersDlg(){
   api('api/users').then(function(v){
     var cv=v.coverage||{}, keys=Object.keys(cv.per_plane||{});
-    var rows=v.users.map(function(u){ return '<tr><td class="mono">'+esc(u.name)+'</td><td>'+esc(u.role)+'</td><td>'+esc(planesTxt(u))+'</td><td>'+(u.disabled?'disabled':u.must_change?'change pending':'active')+'</td>'
+    var rows=v.users.map(function(u){ return '<tr><td class="mono">'+esc(u.name)+'</td><td>'+(u.org==='customer'?'Customer':'DWR')+'</td><td>'+esc(u.role)+'</td><td>'+esc(planesTxt(u))+'</td><td>'+(u.disabled?'disabled':u.must_change?'change pending':'active')+'</td>'
       +'<td style="white-space:nowrap"><button class="act" data-ue="'+esc(u.name)+'">Edit</button> <button class="act" data-ur="'+esc(u.name)+'">Reset password</button> <button class="act" data-ud="'+esc(u.name)+'" data-dis="'+(u.disabled?0:1)+'">'+(u.disabled?'Enable':'Disable')+'</button></td></tr>'; }).join('');
     ask('Logins', '<div class="muted" style="margin-bottom:6px">People who can act per plane: '+keys.map(function(k){ var n=cv.per_plane[k]; return '<b'+(n<2?' style="color:#8a4b00"':'')+'>'+esc(k)+' '+n+'</b>'; }).join(' · ')
       +' (two or more recommended; fewer is a warning, never a block). Admins act on every plane.</div>'
-      +'<table style="width:100%;border-collapse:collapse;font-size:13px"><tr><th align="left">User</th><th align="left">Role</th><th align="left">Planes</th><th align="left">State</th><th></th></tr>'+rows+'</table>'
+      +'<table style="width:100%;border-collapse:collapse;font-size:13px"><tr><th align="left">User</th><th align="left">Org</th><th align="left">Role</th><th align="left">Planes</th><th align="left">State</th><th></th></tr>'+rows+'</table>'
       +'<div style="margin-top:10px"><button class="pri act" id="uAdd">Add login…</button></div>', []);
     var done=function(){ $('dlg').close(); setTimeout(usersDlg, 50); };
     var shownPw=function(j){ if(j&&j.password) ask('Temporary password', 'Give this to <b>'+esc(j.name||'')+'</b> privately. It works once: the console asks for a new password at first sign-in.<div class="mono" style="font-size:16px;margin-top:8px;user-select:all">'+esc(j.password)+'</div>', []).then(usersDlg); else usersDlg(); };
     $('uAdd').onclick=function(){ $('dlg').close();
       ask('Add login','Operators act only on the planes listed (oob, edge, fe, be). A temporary password is shown once.',
-        [{key:'name',label:'User name'},{key:'role',label:'Role',options:[['operator','operator'],['admin','admin'],['viewer','viewer (read only)']]},{key:'planes',label:'Planes (operator), comma-separated',value:'fe,edge'}])
+        [{key:'name',label:'User name'},{key:'org',label:'Organization (Release DWR access disables the DWR logins)',options:[['customer','Customer'],['dwr','DWR Networking']]},{key:'role',label:'Role',options:[['operator','operator'],['admin','admin'],['viewer','viewer (read only)']]},{key:'planes',label:'Planes (operator), comma-separated',value:'fe,edge'}])
       .then(function(f){ if(!f) return usersDlg(); api('api/users/add',f).then(function(j){ j.name=f.name; shownPw(j); }).catch(function(e){ alert(e.message); usersDlg(); }); }); };
     document.querySelectorAll('[data-ur]').forEach(function(b){ b.onclick=function(){ var nm=b.dataset.ur; $('dlg').close();
       api('api/users/reset',{name:nm}).then(function(j){ j.name=nm; shownPw(j); }).catch(function(e){ alert(e.message); usersDlg(); }); }; });
     document.querySelectorAll('[data-ud]').forEach(function(b){ b.onclick=function(){ var nm=b.dataset.ud;
       api('api/users/update',{name:nm, disabled:b.dataset.dis==='1'}).then(done).catch(function(e){ alert(e.message); }); }; });
     document.querySelectorAll('[data-ue]').forEach(function(b){ b.onclick=function(){ var nm=b.dataset.ue, u=v.users.filter(function(x){ return x.name===nm; })[0]; $('dlg').close();
-      ask('Edit '+nm,'Role and planes. The last two admins cannot be demoted.',[{key:'role',label:'Role',options:[['operator','operator'],['admin','admin'],['viewer','viewer (read only)']],value:u.role},{key:'planes',label:'Planes (operator)',value:u.planes.join(',')}])
-      .then(function(f){ if(!f) return usersDlg(); api('api/users/update',{name:nm, role:f.role, planes:f.planes}).then(usersDlg).catch(function(e){ alert(e.message); usersDlg(); }); }); }; });
+      ask('Edit '+nm,'Role, planes and organization. The last two admins cannot be demoted.',[{key:'org',label:'Organization',options:[['customer','Customer'],['dwr','DWR Networking']],value:u.org||'dwr'},{key:'role',label:'Role',options:[['operator','operator'],['admin','admin'],['viewer','viewer (read only)']],value:u.role},{key:'planes',label:'Planes (operator)',value:u.planes.join(',')}])
+      .then(function(f){ if(!f) return usersDlg(); api('api/users/update',{name:nm, role:f.role, planes:f.planes, org:f.org}).then(usersDlg).catch(function(e){ alert(e.message); usersDlg(); }); }); }; });
   }).catch(function(e){ if(e.message!=='login') alert(e.message); });
 }
 $('bUsers').onclick=usersDlg;
+// HS v1.24: hand-over (HS-DEP-003 steps 6.1 and 6.5). The export and the release are the customer's admins' to do.
+function handDlg(){
+  api('api/whoami').then(function(me){ var h=(S.st&&S.st.handover)||{}, fin=h.final||{}, ex=h.exported||{}, rel=h.release||{}, cust=me.role==='admin'&&me.org==='customer';
+    var t=function(x){ return x?new Date(x*1000).toISOString().replace('T',' ').slice(0,16)+'Z':''; };
+    var step=function(n,title,state,body){ return '<div style="border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:8px"><div class="row" style="justify-content:space-between"><b>'+n+'. '+title+'</b><span class="chip k-'+(state[1]||'queued')+'">'+esc(state[0])+'</span></div><div class="muted" style="font-size:12.5px;margin-top:4px">'+body+'</div></div>'; };
+    var html=step(1,'Final as-built backup', fin.state==='done'?['Done','done']:fin.state==='running'?['Running','active']:['Not taken','queued'],
+        (fin.state==='done'?('Taken '+t(fin.ts)+' by '+esc(fin.by)+': '+fin.ok+' of '+fin.n+' devices'+(fin.failed&&fin.failed.length?('; not possible on '+esc(fin.failed.slice(0,5).join(', '))):'')+'. '):'')+'Backs up every Done device once more; the export carries the newest backup of each.'
+        +'<div style="margin-top:6px"><button class="act" id="hFinal"'+(me.role!=='admin'||fin.state==='running'?' disabled':'')+'>Take the final backup</button></div>')
+      +step(2,'Hand-over export (customer admin)', ex.ts?['Downloaded','done']:['Not downloaded','queued'],
+        (ex.ts?('Downloaded '+t(ex.ts)+' by '+esc(ex.by)+'. '):'')+'As-built, SoT status and the as-built SoT overlay with apply_asbuilt.py, the device backups, audit and events. From the download on, the console takes no scheduled backups: the customer’s backup system takes over.'
+        +'<div style="margin-top:6px">'+(cust?'<a class="act" href="api/handover/export.zip" id="hEx">Download the hand-over export</a>':'<i>Only a customer admin can download it.</i>')+'</div>')
+      +step(3,'Release DWR access (customer admin, last step)', rel.state==='done'?['Released','done']:rel.state==='partial'?['Partly released','failed']:rel.state==='running'?['Running','active']:['Not released','queued'],
+        (rel.ts?('By '+esc(rel.by)+', '+t(rel.ts)+': dwr-netadmin removed from '+rel.removed+' of '+rel.n+' devices'+(rel.failed&&rel.failed.length?('; failed on '+esc(rel.failed.slice(0,4).map(function(x){ return x.device+' ('+x.why+')'; }).join(', '))):'')+'. '):'')
+        +'Removes dwr-netadmin from every device, disables the DWR console logins, locks DWR’s OS accounts on this host and removes their SSH keys and sudo rules, and clears the push credential. Needs: the export downloaded, two customer admin logins (now '+(h.customer_admins||0)+'), and the confirmations.'
+        +'<div style="margin-top:6px"><button class="act warn" id="hRel"'+(!cust||rel.state==='running'?' disabled':'')+'>Release DWR access…</button></div>');
+    ask('Hand-over', html, []);
+    var f=$('hFinal'); if(f) f.onclick=function(){ $('dlg').close(); act('api/handover/final-backup',{}).then(function(){ setTimeout(handDlg, 400); }); };
+    var e=$('hEx'); if(e) e.onclick=function(){ setTimeout(function(){ refresh(); }, 1500); };
+    var r=$('hRel'); if(r) r.onclick=function(){ $('dlg').close();
+      ask('Release DWR access','This is the last hand-over step and cannot be undone from here. The netadmin password is used for this action only and never stored.',
+        [{key:'tacacs_vpn',label:'DWR’s TACACS and remote-access accounts are disabled',options:[['no','Not yet'],['yes','Yes, confirmed']]},
+         {key:'backup_system',label:'Our backup system has taken a first backup of every device',options:[['no','Not yet'],['yes','Yes, confirmed']]},
+         {key:'dwr_attest',label:'Reference of DWR Networking’s written attestation that it keeps no copies'},
+         {key:'password',label:'netadmin password',type:'password'},{key:'typed',label:'Type RELEASE to go ahead'}])
+      .then(function(v){ if(v) act('api/release-vendor',v).then(function(){ setTimeout(handDlg, 400); }); }); };
+  }); }
+$('bHand').onclick=handDlg;
 $('bReplay').onclick=function(){ api('api/events?since=0&limit=200000').then(function(r){ r.sort(function(a,b){ return a.ts-b.ts||a.id-b.id; }); S.events=r; S.lastId=r.reduce(function(m,e){ return Math.max(m,e.id); },0); S.mode='replay'; S.rt=0; S.rplay=true; render(); }); };
 $('rBack').onclick=function(){ S.mode='live'; S.rplay=false; refresh(); };
 $('rPlay').onclick=function(){ var mx=+$('rPos').max; if(!S.rplay && S.rt>=mx) S.rt=0; S.rplay=!S.rplay; render(); };

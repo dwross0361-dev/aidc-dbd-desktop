@@ -1,3 +1,18 @@
+# AIDC DBD Desktop 2.0.18 (builder HS-v1.24, site runner 1.5.0)
+
+- **Builder HS-v1.24: identities, accounts and hand-over, plus the TC-202 to TC-205 re-run findings.**
+  - **Deployment Console:**
+    - Every button shows that its action is running (amber, spinner), then done (green check) or failed (red, with the reason in a status line instead of a pop-up).
+    - Gate checks no longer count sessions toward set-aside peers or wait on set-aside devices; the down-session list gives the total, newly down first; check buttons sit under the text.
+    - Diff vs planned compares the plan and the switch in one form (ranges, order, quoting, secrets, device defaults), and **Diff vs previous** compares the last two backups. An unchanged backup says so, and each backup shows when it was last confirmed.
+    - A Done switch that stops answering is red and listed under Problems. Start RMA asks for the vendor ticket plainly and refuses a MAC there; an RMA can load a configuration file from the customer's backup system.
+    - Logins are marked **DWR** or **Customer**. A new **Hand-over** dialog: final as-built backup; the hand-over export (customer admins only: as-built, the as-built SoT overlay with apply_asbuilt.py for NetBox or Nautobot, the device backups, audit and events), after which scheduled backups stop; **Release DWR access** (removes dwr-netadmin from every device and confirms it, disables the DWR logins, locks DWR's host accounts and keys, clears the push credential).
+  - **Device accounts on every platform:** netadmin (customer break-glass), dwr-netadmin (DWR, build only) and estate-ro (read-only; the service reads with it).
+  - **Identities:** the manifest import reads serial, MAC and model by column header and keeps both identifiers; NX-OS is matched by the serial POAP sends in DHCP option 61, the MAC a cross-check.
+  - **setup.sh** `--release-vendor` and `--decommission`; the **.run** takes `--rma EXPORT.zip DEVICE` for a maintenance install after decommission. setup.sh reports the real reason PyEZ is not usable.
+  - Checks and backups read the switches in parallel.
+  - **DSX Air:** the service reads as estate-ro; the README adds TC-206 (hand-over and Release DWR access).
+
 # AIDC DBD Desktop 2.0.17 (builder HS-v1.23, site runner 1.5.0)
 
 - **Builder HS-v1.23: the TC-202 to TC-205 findings from DSX Air.**
