@@ -1,3 +1,13 @@
+# AIDC DBD Desktop 2.0.19 (builder HS-v1.25, site runner 1.5.0)
+
+- **Builder HS-v1.25: readiness, and the fixes from the TC-202 to TC-206 run.**
+  - **Readiness** before Start build: customer services, identities, images, push credential, people per plane, disk, certificate and three manual confirmations. Start build waits until each passes or is confirmed, or the rest is accepted with a reason.
+  - **Discovery and Ready N of M:** each device's reported model and switch port are checked against the plan as it calls in; every build card shows how many of its devices are ready; a Readiness export.
+  - **Check before apply (Cumulus):** ZTP stops on a release other than the target, and on a cable the plan does not match (LLDP, right after the apply), with the reason on the device card.
+  - **Software and Cabling checks** in every gate.
+  - **Fixes:** a device whose sessions all go to set-aside peers passes; the gate panel keeps your build across a refresh; Evidence lists sessions with the raw output behind Show raw; Diff vs planned ignores value lists, plan actions and more defaults; dialog buttons show progress and Hand-over updates while open; the export is a button and counts once its receipt is confirmed against its SHA-256; Release DWR access is offered only when it applies; setup.sh refreshes a stale package index by itself.
+  - **DSX Air:** air/topology-tc207.json for TC-207 (one miswire, one older release).
+
 # AIDC DBD Desktop 2.0.18 (builder HS-v1.24, site runner 1.5.0)
 
 - **Builder HS-v1.24: identities, accounts and hand-over, plus the TC-202 to TC-205 re-run findings.**

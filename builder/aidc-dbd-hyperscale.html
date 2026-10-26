@@ -942,7 +942,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.24';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.25';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   var RADIX=64, CAGE=800;
   // ---- FABRIC PROFILE (parameterized per accelerator platform) ----------------------------------------
   // rails == accelerators per host. Each accelerator instance gets its own rail leaf, which is what
@@ -9528,7 +9528,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       '  elif [ -n "$CUR" ] && vlt "$CUR" "$BASELINE"; then',
       '    ci_fail "$CUR is below the baseline $BASELINE and the target image is not served"',
       '  else',
-      '    echo "WARN: target image not served; staying on $CUR (at or above the baseline)"',
+      '    ci_fail "check before apply: running ${CUR:-unknown}, target $TARGET, and the target image is not served (images/): serve it, or install the target, then Retry"',   // HS v1.25
       '  fi',
       'fi'];
   }
@@ -9615,6 +9615,26 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     L.push('nv config apply -y');
     L.push('# HS v1.21: the factory account (cumulus, default password) is locked and expired; the switch is managed as '+ADMIN_USER+' (secrets.env)');
     L.push('passwd -l cumulus >/dev/null && chage -E 0 cumulus');
+    (function(){ var exp=[]; cfg.split('\n').forEach(function(l){ var m=/interface (\S+) link mtu \d+\s+#\s*->\s*(\S+)\s+(\S+)/.exec(l); if(m) exp.push(m[1]+' '+m[2]+' '+m[3]); });   // HS v1.25
+      if(!exp.length) return;
+      L.push('# ---- HS v1.25: cabling check (LLDP against the cable plan), right after the apply: Cumulus switch ports stay down until configured.');
+      L.push('# A neighbor that is not where the plan puts it stops ZTP here, before the switch checks in as configured. A neighbor still in its');
+      L.push('# factory state (hostname cumulus) or not up yet is not checked.');
+      L.push('EXP="'+exp.join('\n')+'"');
+      L.push('if command -v lldpctl >/dev/null 2>&1; then');
+      L.push('  W=-1; for i in $(seq 1 12); do N=$(lldpctl -f keyvalue 2>/dev/null | grep -c "\\.chassis\\.name=" || true); if [ "$N" -gt 0 ] && [ "$N" -eq "$W" ]; then break; fi; W=$N; sleep 10; done');
+      L.push('  KV=$(lldpctl -f keyvalue 2>/dev/null || true)');
+      L.push('  BAD=$(printf "%s\\n" "$EXP" | while read -r lp peer pp; do');
+      L.push('    [ -n "$lp" ] || continue');
+      L.push('    nb=$(printf "%s\\n" "$KV" | sed -n "s/^lldp\\.$lp\\.chassis\\.name=//p" | head -n 1)');
+      L.push('    np=$(printf "%s\\n" "$KV" | sed -n "s/^lldp\\.$lp\\.port\\.ifname=//p" | head -n 1)');
+      L.push('    [ -n "$np" ] || np=$(printf "%s\\n" "$KV" | sed -n "s/^lldp\\.$lp\\.port\\.descr=//p" | head -n 1)');
+      L.push('    if [ -z "$nb" ] || [ "$nb" = "cumulus" ]; then continue; fi');
+      L.push('    if [ "${nb%%.*}" != "$peer" ] || [ "$np" != "$pp" ]; then echo "$lp expected $peer $pp, saw ${nb%%.*} $np"; fi');
+      L.push('  done)');
+      L.push('  if [ -n "$BAD" ]; then echo "$BAD"; ci_fail "cabling check: $(printf "%s" "$BAD" | head -n 3 | tr "\\n" ";") -- fix the cable, then Retry and on the switch: sudo ztp -R"; fi');
+      L.push('  echo "cabling check: no miswire seen ($(printf "%s\\n" "$EXP" | grep -c . || true) planned links)"');
+      L.push('fi'); })();
     L.push('ccurl -fsS -m 5 "http://'+mp.prov+'/ci/'+host+'/config" >/dev/null 2>&1 || true   # check-in: estate service (provision/)');
     L.push('echo "ZTP complete: $(date)"');
     L.push('exit 0');
@@ -24473,6 +24493,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     'echo "       The slice switches are bound by MAC; each takes its address and ZTP script when its wave opens."',
     'echo "       Override a gate that waits on the devices set aside. Stay off the switches until Done: ZTP pauses while an SSH session is open."'].join('\n')+'\n';
   var AIR_NVTEST="#!/bin/bash\n# nvtest.sh CONFIG OUTDIR [EXPECTED] -- runs ON a Cumulus VX node in DSX Air, as root.\n# Pass 1 (syntax): stages every \"nv set\"/\"nv unset\" line one at a time and records each line NVUE rejects, with its\n#   message; the staged changes are then discarded (nv config detach). Nothing is applied.\n# Pass 2 (apply): stages every line again EXCEPT the out-of-band access lines (eth0 address and DHCP, the management\n#   default route, the eth0 control-plane ACL) -- those would cut the Air OOB session -- then applies once and\n#   records the result, the BGP neighbors and the interfaces.\nset -u\nCFG=${1:-}; OUT=${2:-/tmp/nvtest}\n[ -f \"$CFG\" ] || { echo \"nvtest: no configuration file: $CFG\"; exit 2; }\nrm -rf \"$OUT\"; mkdir -p \"$OUT\"; : > \"$OUT/rejected.tsv\"\nOOB='nv set interface eth0 |acl MGMT-IN|nv set vrf mgmt router static'\nstage(){   # $1 = 1 (every line) or 2 (skip the OOB access lines); prints \"<accepted> <rejected> <skipped>\"\n  local n=0 ok=0 bad=0 skip=0 line msg\n  while IFS= read -r line || [ -n \"$line\" ]; do n=$((n+1))\n    case \"$line\" in \"nv set \"*|\"nv unset \"*) ;; *) continue;; esac\n    if [ \"$1\" = 2 ] && printf '%s' \"$line\" | grep -Eq \"$OOB\"; then skip=$((skip+1)); continue; fi\n    if msg=$(eval \"$line\" </dev/null 2>&1); then ok=$((ok+1))\n    else bad=$((bad+1)); [ \"$1\" = 1 ] && printf '%s\\t%s\\t%s\\n' \"$n\" \"$line\" \"$(printf '%s' \"$msg\" | tr '\\n\\t' '  ' | cut -c1-400)\" >> \"$OUT/rejected.tsv\"; fi\n  done < \"$CFG\"\n  echo \"$ok $bad $skip\"\n}\nnv config detach >/dev/null 2>&1\nT0=$(date +%s)\nread -r ok1 bad1 sk1 < <(stage 1)\nnv config detach >/dev/null 2>&1\nread -r ok2 bad2 sk2 < <(stage 2)\nnv config apply -y > \"$OUT/apply.txt\" 2>&1; rc=$?; echo \"exit $rc\" >> \"$OUT/apply.txt\"\nEXP=${3:-0}; i=0   # HS v1.21: wait up to 5 minutes for the expected sessions on the cabled ports (BFD restarts FRR)\nwhile [ $i -lt 20 ]; do sleep 15; i=$((i+1)); n=$(nv show vrf default router bgp neighbor 2>/dev/null | grep -Ec '^swp[0-9s]+ .* established '); [ $i -ge 3 ] && [ \"${n:-0}\" -ge \"$EXP\" ] && break; done\nnv show vrf default router bgp neighbor > \"$OUT/bgp.txt\" 2>&1\nvtysh -c 'show bgp summary' > \"$OUT/bgp-summary.txt\" 2>&1\nnv show interface > \"$OUT/interfaces.txt\" 2>&1\nnv config history > \"$OUT/history.txt\" 2>&1\n{ echo \"config $(basename \"$CFG\")\"; echo \"release $(grep -m1 DISTRIB_RELEASE /etc/lsb-release 2>/dev/null | cut -d= -f2)\";\n  echo \"pass1 accepted $ok1 rejected $bad1\"; echo \"pass2 accepted $ok2 rejected $bad2 skipped-oob $sk2\"; echo \"apply exit $rc\";\n  echo \"seconds $(( $(date +%s) - T0 ))\"; } > \"$OUT/summary.txt\"\ncat \"$OUT/summary.txt\"\n", AIR_RUNTESTS="#!/bin/bash\n# run-tests.sh -- runs on the DSX Air oob-mgmt-server, from the unpacked deploy folder:  bash air/run-tests.sh\n# 1. Renders a throwaway copy of the package with test secrets (every key filled; password hashes are real SHA-512\n#    hashes of a test password), using setup.sh's own render step -- the files the switches get are the real ones.\n# 2. Copies each slice switch's configuration and air/nvtest.sh to it, runs the test on all switches in parallel.\n# 3. Collects the results into air-results/ and air-results.tgz, and writes air-results/REPORT.md.\nset -u\nHERE=$(cd \"$(dirname \"$0\")/..\" && pwd); cd \"$HERE\"\n[ -f setup.sh ] && [ -f air/slice.csv ] || { echo \"[!] run from the unpacked deploy folder: bash air/run-tests.sh\"; exit 1; }\nW=$(mktemp -d); cp -r \"$HERE/.\" \"$W/\"\nH=$(openssl passwd -6 'AirTest-1')\nawk -F= -v h=\"$H\" '/^[A-Z][A-Z0-9_]*=/{k=$1; v=substr($0,index($0,\"=\")+1); if(v==\"\"){ if(k ~ /HASH/) v=h; else if(k ~ /_FILE$/) v=\"/etc/hostname\"; else if(k ~ /ASN/) v=\"64999\"; else if(k ~ /FREQ/) v=\"193100000\"; else v=\"AirTest1\"} print k\"=\"v; next} {print}' \"$W/secrets.env.template\" > \"$W/secrets.env\"\nsed -n \"/^python3 - \\\"\\$SECRETS\\\" <<'PYEOF'/,/^PYEOF/p\" \"$W/setup.sh\" | sed '1d;$d' > \"$W/.render.py\"\n( cd \"$W\" && python3 .render.py secrets.env | tail -2 )\ncommand -v sshpass >/dev/null || { echo \"[i] installing sshpass\"; sudo apt-get install -y sshpass >/dev/null 2>&1 || { echo \"[!] sshpass is needed\"; exit 1; }; }\nread -rsp \"Password for user cumulus on the switches (the simulation's switch login): \" PW; echo\nexport SSHPASS=\"$PW\"\nSSH=\"sshpass -e ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR\"\nSCP=\"sshpass -e scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR\"\nRES=\"$HERE/air-results\"; rm -rf \"$RES\"; mkdir -p \"$RES\"\nwhile IFS=, read -r node role cfg peers; do\n  [ \"$node\" = node ] && continue\n  f=$(basename \"$cfg\")\n  getent hosts \"$node\" >/dev/null || echo \"[!] $node does not resolve here -- check the node name in the simulation (see air/README.md)\"\n  ( { $SSH -o BatchMode=no \"cumulus@$node\" true 2>/dev/null || python3 \"$W/air/firstlogin.py\" \"$node\" cumulus \"$PW\"; } &&   # HS v1.21: the factory login's forced change\n    $SCP \"$W/$cfg\" \"$W/air/nvtest.sh\" \"cumulus@$node:/tmp/\" &&\n    $SSH \"cumulus@$node\" \"sudo -S -p '' bash /tmp/nvtest.sh /tmp/$f /tmp/nvtest $peers\" <<< \"$PW\" &&\n    $SCP -r \"cumulus@$node:/tmp/nvtest\" \"$RES/$node\" ) > \"$RES/$node.log\" 2>&1 &\n  echo \"[..] $node ($role) started\"\ndone < air/slice.csv\necho \"[..] testing in parallel; each switch takes about 10-20 minutes\"\nwait\npython3 air/report.py \"$RES\" air/slice.csv > \"$RES/REPORT.md\"\ntar czf \"$HERE/air-results.tgz\" -C \"$HERE\" air-results\nrm -rf \"$W\"\necho \"[ok] $RES/REPORT.md  and  $HERE/air-results.tgz\"\n", AIR_REPORT="#!/usr/bin/env python3\n# report.py RESULTS_DIR SLICE_CSV -- one Markdown report from the per-switch nvtest results.\nimport os, re, sys, csv, collections\nres, sl = sys.argv[1], sys.argv[2]\n# NVUE lines Cumulus VX cannot honor: it has no Spectrum ASIC, so these are expected to fail in Air and are checked\n# on hardware instead. Anything else that fails is a finding.\nVX = re.compile(r\"link breakout|link speed|nv set qos|telemetry|wjh|roce|histogram|buffer|adaptive-routing|pfc|ecn|ptp\")\nrows = list(csv.DictReader(open(sl)))\nout = [\"# DSX Air Cumulus test\", \"\", \"| Switch | Role | Pass 1 accepted / rejected | Apply | BGP Established on cabled ports / expected |\", \"|---|---|---|---|---|\"]\nfind, vx = collections.OrderedDict(), collections.OrderedDict()\nfor r in rows:\n    n = r[\"node\"]; d = os.path.join(res, n); s = {}\n    try:\n        for ln in open(os.path.join(d, \"summary.txt\")):\n            k, _, v = ln.strip().partition(\" \"); s[k] = v\n    except OSError:\n        out.append(\"| %s | %s | no result (see %s.log) | | |\" % (n, r[\"role\"], n)); continue\n    est = evpn = 0   # HS v1.21: sessions on cabled ports (unnumbered, swpN) against the expected count; EVPN loopback sessions apart\n    try:\n        for ln in open(os.path.join(d, \"bgp.txt\")):\n            if re.search(r\"\\sestablished\\s\", ln, re.I):\n                if re.match(r\"swp\\d\", ln): est += 1\n                else: evpn += 1\n    except OSError: pass\n    out.append(\"| %s | %s | %s | %s | %s / %s |\" % (n, r[\"role\"], s.get(\"pass1\", \"\").replace(\"accepted \", \"\").replace(\" rejected \", \" / \"),\n               \"ok\" if s.get(\"apply\") == \"exit 0\" else s.get(\"apply\", \"?\"), est, r.get(\"peers\", \"\") + (\" (+%d EVPN)\" % evpn if evpn else \"\")))\n    try:\n        for ln in open(os.path.join(d, \"rejected.tsv\")):\n            p = ln.rstrip(\"\\n\").split(\"\\t\")\n            if len(p) < 3: continue\n            key = re.sub(r\"\\b(swp\\d+(s\\d+)?|\\d+(\\.\\d+){3}(/\\d+)?|\\d+)\\b\", \"#\", p[1])\n            bucket = vx if VX.search(p[1]) else find\n            e = bucket.setdefault(key, {\"line\": p[1], \"msg\": p[2], \"where\": []}); e[\"where\"].append(\"%s:%s\" % (n, p[0]))\n    except OSError: pass\ndef sect(title, b):\n    out.extend([\"\", \"## \" + title + \" (%d distinct)\" % len(b), \"\"])\n    for k, e in b.items():\n        out.append(\"- `%s`  \\n  %s  \\n  %s\" % (e[\"line\"], e[\"msg\"][:300], \", \".join(e[\"where\"][:6]) + (\" ...\" if len(e[\"where\"]) > 6 else \"\")))\nsect(\"Rejected lines to fix\", find)\nsect(\"Rejected lines Cumulus VX cannot run (check on Spectrum hardware)\", vx)\nfor r in rows:\n    try: out.extend([\"\", \"### Apply: \" + r[\"node\"], \"\", \"```\", open(os.path.join(res, r[\"node\"], \"apply.txt\")).read()[-1500:], \"```\"])\n    except OSError: pass\nprint(\"\\n\".join(out))\n";
+  var AIR_VX_OLD='cumulus-vx-5.15.0';   // HS v1.25: TC-207's wrong-release unit (any older Cumulus VX image Air offers)
   var AIR_VX='cumulus-vx-5.18.3', AIR_STUB_PORTS=64, AIR_MEM=4096, AIR_DISK=20, AIR_OOB_GB=6, AIR_ORG_GB=60;   // HS v1.21: Air's minimum switch size; its default org limit
   function _airModel(d){   // HS v1.21: the node's model label in Air (labels.model)
     var m='';
@@ -24532,15 +24553,29 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       free.forEach(function(p){ links.push([{interface:p, node:o.d.name}, 'unconnected']); });
       o.stubs=0; o.free=free.length; rows.push([o.d.name, o.why.replace(/,/g,';'), o.d.cfg, o.peers].join(',')); });
     var topo=JSON.stringify({format:'JSON', name:(clientCode||'SITE')+'-cumulus-test', ztp:null, content:{nodes:nodes, links:links}}, null, 1);
-    return {S:S, topo:topo, slice:'node,role,cfg,peers\n'+rows.join('\n')+'\n', breakouts:'node,port,mode\n'+bko.join('\n')+(bko.length?'\n':''),
+    // HS v1.25 (TC-207): the same slice with one miswire (two of the first spine's leaf cables swapped at the spine end) and
+    // one unit on an older release (the second front-end leaf)
+    var t7=null, t7note=[];
+    try{ var sp=S.filter(function(o){ return /back-end spine/.test(o.why); })[0], lv={}; S.forEach(function(o){ if(/rail leaf/.test(o.why)) lv[o.d.name]=1; });
+      var L2=JSON.parse(JSON.stringify(links)), N2=JSON.parse(JSON.stringify(nodes)), pick=[];
+      if(sp) L2.forEach(function(l, i){ if(l[1]==='unconnected') return; var e=l[0].node===sp.d.name?[0,1]:l[1].node===sp.d.name?[1,0]:null; if(!e || !lv[l[e[1]].node]) return;
+        if(pick.length<2 && pick.every(function(p){ return L2[p.i][p.o].node!==l[e[1]].node; })) pick.push({i:i, s:e[0], o:e[1]}); });
+      if(pick.length===2){ var a=L2[pick[0].i][pick[0].s].interface, b=L2[pick[1].i][pick[1].s].interface;
+        L2[pick[0].i][pick[0].s].interface=b; L2[pick[1].i][pick[1].s].interface=a;
+        t7note.push('miswire: '+sp.d.name+' '+a+' now goes to '+L2[pick[0].i][pick[0].o].node+' '+L2[pick[0].i][pick[0].o].interface+', and '+sp.d.name+' '+b+' to '+L2[pick[1].i][pick[1].o].node+' '+L2[pick[1].i][pick[1].o].interface+' (the plan has them the other way round)'); }
+      var fl2=S.filter(function(o){ return /front-end leaf/.test(o.why); })[1] || S.filter(function(o){ return /front-end leaf/.test(o.why); })[0];
+      if(fl2){ N2[fl2.d.name].os=AIR_VX_OLD; t7note.push('wrong release: '+fl2.d.name+' runs '+AIR_VX_OLD+' (target '+AIR_VX+')'); }
+      if(t7note.length) t7=JSON.stringify({format:'JSON', name:(clientCode||'SITE')+'-cumulus-tc207', ztp:null, content:{nodes:N2, links:L2}}, null, 1);
+    }catch(e){ t7=null; }
+    return {S:S, topo:topo, topo207:t7, note207:t7note, slice:'node,role,cfg,peers\n'+rows.join('\n')+'\n', breakouts:'node,port,mode\n'+bko.join('\n')+(bko.length?'\n':''),
       nSw:S.length, nStub:Object.keys(nodes).length-S.length, nLinks:links.length};
   }
   function airTopology(){ var B=_airBuild(); return B?B.topo:''; }
   function airFiles(){   // v537: every file of the kit, in bundle order
     var B=_airBuild(); if(!B) return [];
-    return [['air/topology.json', B.topo], ['air/slice.csv', B.slice], ['air/breakouts.csv', B.breakouts], ['air/nvtest.sh', AIR_NVTEST],
+    return [['air/topology.json', B.topo]].concat(B.topo207?[['air/topology-tc207.json', B.topo207], ['air/tc207.txt', 'TC-207 (HS v1.25): import air/topology-tc207.json instead of air/topology.json.\n'+B.note207.join('\n')+'\n']]:[]).concat([['air/slice.csv', B.slice], ['air/breakouts.csv', B.breakouts], ['air/nvtest.sh', AIR_NVTEST],
             ['air/run-tests.sh', AIR_RUNTESTS], ['air/report.py', AIR_REPORT], ['air/firstlogin.py', AIR_FIRSTLOGIN], ['air/ztp.sh', AIR_ZTP],
-            ['air/ztp-host.sh', AIR_ZTPHOST], ['air/README.md', airReadme(B)]];   // HS v1.21, v1.22, v1.23
+            ['air/ztp-host.sh', AIR_ZTPHOST], ['air/README.md', airReadme(B)]]);   // HS v1.21, v1.22, v1.23, v1.25
   }
   function airReadme(B){
     B=B||_airBuild(); if(!B) return '';
@@ -24616,7 +24651,15 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       '2. Hand-over: Take the final backup; then Download the hand-over export (sot-asbuilt.csv, apply_asbuilt.py, backups/).',
       '3. Release DWR access: the two confirmations, an attestation reference, the netadmin password, RELEASE.',
       '4. Pass: dwr-netadmin removed from every Done slice switch (Hand-over shows n of n); ssh dwr-netadmin@<switch> is refused;',
-      '   the DWR console login (admin) is disabled; scheduled console backups are off (event log).']).join('\n');
+      '   the DWR console login (admin) is disabled; scheduled console backups are off (event log).','',
+      '## TC-207: readiness, check before apply, cabling and software checks (HS v1.25)','',
+      '1. Import air/topology-tc207.json instead of air/topology.json (air/tc207.txt names the miswire and the wrong-release unit).',
+      '   If Air rejects the older image name, pick any older Cumulus VX release for that node in Air.',
+      '2. Console: Readiness... before Start build (confirm the three manual items, accept the lab services with a reason); each build',
+      '   card shows Ready N of M as its devices call in.',
+      '3. Pass: the wrong-release leaf stops at its check before apply ("running ..., target 5.18.3"); the two rail leaves on the swapped',
+      '   cables stop at the cabling check ("swpX expected <spine> swpY, saw <spine> swpZ"); the spine reaches Done and the Back end gate',
+      '   Cabling check names both links; Software passes on the Done switches. Readiness report: Export > Readiness.']).join('\n');
   }
   // v499 (lab): the cluster configuration as one standalone SRX -- node 0's settings, node 0's reth members.
   function fwStandalone(t){
@@ -25444,7 +25487,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     B.push('');
     B.push('pkg_install() {  # pkg_install <apt-name> <rhel-name>');
     B.push('  local aptn="$1" rhn="$2"');
-    B.push('  if [[ $PM == apt ]]; then apt-get -o DPkg::Lock::Timeout=600 install -y --no-install-recommends "$aptn"; else $PM install -y "$rhn"; fi   # HS v1.21: no compilers via Recommends');
+    B.push('  if [[ $PM == apt ]]; then apt-get -o DPkg::Lock::Timeout=600 install -y --no-install-recommends "$aptn" || { echo "[..] package index out of date: refreshing it and trying again"; apt-get -o DPkg::Lock::Timeout=600 update -qq; apt-get -o DPkg::Lock::Timeout=600 install -y --no-install-recommends "$aptn"; }; else $PM install -y "$rhn"; fi   # HS v1.21, v1.25: no compilers via Recommends; a stale index is refreshed');   // HS v1.25
     B.push('}');
     B.push('[[ $PM == apt ]] && apt-get -o DPkg::Lock::Timeout=600 update -qq || true   # HS v1.23: waits for the package lock');
     B.push('');
@@ -26871,6 +26914,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
               be_block:'10.'+beSecondOctet()+'.'+siteOctet()+'.0/19', asn_block:siteAsnBase()+'-'+siteAsnTop(),
               prov_ip:prov, registry:'unregistered', builder:BUILDER_VER};
     try{ site.customer=identLegal(); site.build=identBuild(); site.delivered_by='DWR Networking'; }catch(e){}   // v505
+    try{ var _sv={}; [['ntp',['ntp1','ntp2']],['dns',['dns1','dns2']],['syslog',['syslog1','syslog2']],['tacacs',['tacacs1','tacacs2']],['radius',['radius1','radius2']]].forEach(function(g){   // HS v1.25
+      _sv[g[0]]=g[1].map(function(k){ return ops(k, k.toUpperCase()); }).filter(function(v){ return v && v.charAt(0)!=='<'; }); }); site.services=_sv; }catch(e){}
     try{ site.registry=registryState().state; }catch(e){}
     var W={oob:[[],[],[],[],[]], edge:[[],[],[],[],[]], fe:[[],[],[],[]], be:[[],[],[]]}, devs=[];
     function put(e,b,w){ devs.push(e); W[b][w].push(e.name); }
@@ -26934,7 +26979,10 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
              {key:'ul', type:'auto', kind:'bgp', devices:W.be[0].concat(W.be[1]), label:'Underlay up, ECMP to every spine'},
              {key:'roce', type:'auto', kind:'roce', devices:W.be[1], label:'RoCE QoS verified (PFC and ECN in effect on every rail leaf)'},
              {key:'nccl', type:'auto', kind:'nccl', devices:[], label:'NCCL all-reduce acceptance at target bus bandwidth'}]}
-    ].map(function(b){ return {key:b.key, num:b.num, name:b.name, gate:b.gate,
+    ].map(function(b){ var _ad=[].concat.apply([], b.w).filter(function(n){ var e=devs.filter(function(x){ return x.name===n; })[0]; return e && !e.aggregate && e.ip; });   // HS v1.25
+      if(_ad.length) b.gate=b.gate.slice(0,2).concat([{key:'software', type:'auto', kind:'software', devices:_ad, label:'Software: every device at its target release'},
+                                                      {key:'cabling', type:'auto', kind:'cabling', devices:_ad, label:'Cabling: LLDP neighbors match the cable plan'}], b.gate.slice(2));
+      return {key:b.key, num:b.num, name:b.name, gate:b.gate,
       waves:b.waves.map(function(w,i){ var o={key:b.key+'-'+(i+1), name:w[0], devices:b.w[i]}; if(w[1]) o.warn_only=true; return o; })
                    .filter(function(w){ return w.devices.length; })}; });
     var rows={}, order=[];
@@ -32739,7 +32787,93 @@ CMDS = {
              "eos": ["show priority-flow-control"], "nxos": ["show interface priority-flow-control"],
              "srl": ["info flat qos"]},
 }
-DWR_ACCT = "dwr-netadmin"
+VERSION_CMD = {"cumulus": "cat /etc/lsb-release", "junos": "show version", "eos": "show version", "nxos": "show version",
+               "srl": "info from state system information version", "sros": "show version", "iosxr": "show version", "iosxe": "show version"}   # HS v1.25
+LLDP_CMD = {"cumulus": "nv show interface lldp -o json", "junos": "show lldp neighbors | display json", "eos": "show lldp neighbors | json",
+            "nxos": "show lldp neighbors detail | json", "srl": "info from state system lldp interface * neighbor * | as json"}
+
+
+def vnum(v):
+    return ".".join(re.findall(r"\d+", v or ""))
+
+
+def same_dev(seen, name, short):
+    s = (seen or "").split(".")[0].lower()
+    return bool(s) and s in (name.lower(), (short or "").lower())
+
+
+def lldp_pairs(t):
+    # HS v1.25: {local port: (neighbor name, neighbor port)} from any vendor's LLDP JSON, or Linux lldpctl keyvalue; None if
+    # nothing was understood (the check then falls back to a confirmation)
+    out = {}
+    s = (t or "").strip()
+    if s[:1] in "{[":
+        try:
+            obj = json.loads(s)
+        except ValueError:
+            obj = None
+        def find(o, keys):
+            if isinstance(o, dict):
+                for k in keys:
+                    if k in o and isinstance(unwrap(o[k]), (str, int)):
+                        return str(unwrap(o[k]))
+                for v in o.values():
+                    r = find(v, keys)
+                    if r:
+                        return r
+            elif isinstance(o, list):
+                for v in o:
+                    r = find(v, keys)
+                    if r:
+                        return r
+            return ""
+        NAME = ["system-name", "system_name", "systemName", "lldp-remote-system-name", "sys_name", "chassis-name", "name"]
+        PORT = ["port-id", "port_id", "portId", "lldp-remote-port-id", "ifname", "port-name", "port_description", "port-description", "description"]
+        def walk(o):
+            if isinstance(o, dict):
+                for k, v in o.items():
+                    if re.match(r"^(swp|eth|Ethernet|et-|xe-|ge-|mgmt|e\d|ethernet-)\S*$", str(k)) and isinstance(v, (dict, list)):
+                        nm = find(v, NAME[:-1]) or find(v, ["name"])
+                        pd = None
+                        def pfind(o):
+                            if isinstance(o, dict):
+                                for kk, vv in o.items():
+                                    if kk in ("port", "port-info", "remote-port") and isinstance(vv, dict):
+                                        return vv
+                                    r = pfind(vv)
+                                    if r is not None:
+                                        return r
+                            elif isinstance(o, list):
+                                for vv in o:
+                                    r = pfind(vv)
+                                    if r is not None:
+                                        return r
+                            return None
+                        pd = pfind(v)
+                        pt = (find(pd, ["ifname", "name", "id", "port-id"]) if pd is not None else "") or find(v, PORT)
+                        if nm:
+                            out[str(k)] = (nm, pt)
+                    else:
+                        walk(v)
+            elif isinstance(o, list):
+                for v in o:
+                    walk(v)
+        if obj is not None:
+            walk(obj)
+            return out
+    for ln in s.splitlines():   # lldpctl -f keyvalue
+        m = re.match(r"^lldp\.([^.]+)\.(chassis\.name|port\.ifname|port\.descr)=(.*)$", ln.strip())
+        if m:
+            a = out.setdefault(m.group(1), ["", ""])
+            if m.group(2) == "chassis.name":
+                a[0] = m.group(3)
+            elif not a[1] or m.group(2) == "port.ifname":
+                a[1] = m.group(3)
+    out = {k: tuple(v) for k, v in out.items() if v[0]}
+    return out if out else None
+
+
+DWR_ACCT = "dwr-netadmin" 
 # HS v1.24: Release DWR access removes DWR's build account in each OS's syntax, then reads the configuration back
 REMOVE_DWR = {"cumulus": (["nv unset system aaa user dwr-netadmin", "nv config apply -y"], "shell"),
               "eos": (["no username dwr-netadmin"], "save"), "nxos": (["no username dwr-netadmin"], "save"),
@@ -32901,7 +33035,8 @@ DIFF_DEFAULTS = {"cumulus": re.compile(
     r"^nv set (system aaa (class|role) |system aaa user (cumulus|telemetry) |system api state |system config (auto-save|backup) |"
     r"system control-plane acl acl-default-|system ntp server \d\.cumulusnetworks\.pool\.ntp\.org |system docker vrf |"
     r"interface \S+ type (eth|swp|loopback)$|interface eth0 ipv4 dhcp-client set-hostname |system ssh-server state enabled$|"
-    r"system lldp tlv egress-policy |router bgp state enabled$|system aaa user \S+ full-name |interface eth0 vrf mgmt$)")}
+    r"system lldp tlv egress-policy |router bgp state enabled$|system aaa user \S+ full-name |interface eth0 vrf mgmt$|qos roce state enabled$|system wjh state enabled$|vrf default router bgp state enabled$|"
+    r"vrf \S+ router static \S+ address-family ipv4-unicast$)")}   # HS v1.25
 
 
 def nv_expand(lst):
@@ -32932,6 +33067,15 @@ def cfg_norm(t, os_=""):
         s = SECRET_KW.sub(lambda m: m.group(1) + " <secret>", s)
         s = re.sub(r"\$nvsec\$\S+", "<secret>", s).replace("'", "").replace('"', "")
         s = re.sub(r"\s+", " ", s).strip()
+        if os_ == "cumulus":   # HS v1.25
+            if s.startswith("nv ") and not s.startswith(("nv set ", "nv unset ")):
+                continue   # nv config apply / save: actions, not configuration
+            s = re.sub(r"^(nv set vrf \S+ router static \S+ via \S+) type ipv4-address$", r"\1", s)
+            mv = re.match(r"^(.* )(\d+(?:,\d+)+)$", s)
+            if mv:   # traffic-class 0,3 is stored as one line, planned as two
+                for v in mv.group(2).split(","):
+                    out.update(cfg_norm(mv.group(1) + v, os_))
+                continue
         m = re.match(r"^(nv set interface )(\S+)( .*)$", s)
         if os_ == "cumulus" and m and ("," in m.group(2) or re.search(r"\d-\d", m.group(2))):
             for x in nv_expand(m.group(2)):
@@ -33013,6 +33157,170 @@ class Phase2Mixin(object):
         finally:
             c.disconnect()
 
+    def discover(self, n, ev):
+        # HS v1.25: discovery (HS-DEP-003 step 4.4). The model a device reports (Cisco "Cisco <PID>", Juniper
+        # "Juniper-<model>-<serial>", Arista "Arista ... DCS-...") and the switch port it calls in on (DHCP option 82)
+        # against the plan. A mismatch stops the device before its wave serves it; Retry accepts it (audited).
+        s, d = self.st[n], self.devs[n]
+        vc = ev.get("vendor_class") or ""
+        seen = (ev.get("model") or "") or ((re.search(r"^Cisco\s+(\S+)", vc) or re.search(r"\b((?:DCS|CCS)-\S+)", vc) or [None, ""])[1] if vc else "")
+        dz = s.setdefault("disc", {})
+        nm = lambda x: re.sub(r"[^a-z0-9]", "", (x or "").lower())
+        if seen and d.get("model"):
+            ok = nm(d["model"]) in nm(seen) or nm(seen) in nm(d["model"])
+            dz["model"] = {"seen": seen, "planned": d["model"], "ok": ok}
+        circ = ev.get("circuit") or ""
+        ml = d.get("mgmt_link") or {}
+        if circ and ml.get("port"):
+            parts = re.split(r"[:|]", circ)
+            port = norm_port(parts[-1])
+            sw = parts[0] if len(parts) > 1 else ""
+            ok = port == norm_port(ml["port"]) and (not sw or sw.lower() in ml.get("switch", "").lower() or ml.get("switch", "").lower().endswith(sw.lower()))
+            dz["port"] = {"seen": circ, "planned": "%s %s" % (ml.get("switch", ""), ml.get("port")), "ok": ok}
+        bad = [k for k in ("model", "port") if dz.get(k) and dz[k]["ok"] is False]
+        if bad and not s.get("disc_ok") and s["flag"] != "failed" and s["stage"] < 4:
+            why = "; ".join("%s %s, planned %s" % (k, dz[k]["seen"], dz[k]["planned"]) for k in bad)
+            s["flag"] = "failed"
+            s["detail"] = "discovery: " + why + " -- fix the unit or its cable, then Retry (Retry also accepts it as is)"
+            self.event("%s: discovery mismatch: %s" % (d.get("short", n), why), "fail", n)
+
+    def ready(self, n):
+        # HS v1.25: ready = called in, identity matched, and model and management port as planned (where reported)
+        s = self.st[n]
+        if s["flag"] == "quarantined" or self.devs[n].get("aggregate"):
+            return None
+        dz = s.get("disc") or {}
+        bad = [k for k in ("model", "port") if dz.get(k) and dz[k]["ok"] is False and not s.get("disc_ok")]
+        if bad:
+            return False
+        return bool(self.ident.get(n)) and (s["stage"] >= 1 or bool(s.get("last_seen")))
+
+    def readiness_csv(self):
+        out = io.StringIO()
+        w = csv.writer(out)
+        w.writerow(["device", "build", "wave", "called_in", "identity", "model_planned", "model_seen", "port_planned", "port_seen", "ready", "why"])
+        for n, d in self.devs.items():
+            r = self.ready(n)
+            if r is None:
+                continue
+            s, dz = self.st[n], self.st[n].get("disc") or {}
+            bk, wi = self.wave_of.get(n, ("", 0))
+            why = "" if r else ("not called in" if not (s["stage"] >= 1 or s.get("last_seen")) else "no identity" if not self.ident.get(n) else
+                               "; ".join("%s %s, planned %s" % (k, dz[k]["seen"], dz[k]["planned"]) for k in ("model", "port") if dz.get(k) and dz[k]["ok"] is False))
+            w.writerow([n, bk, wi + 1, iso(s.get("last_seen")), (self.ident.get(n) or {}).get("value", ""), d.get("model", ""), (dz.get("model") or {}).get("seen", ""),
+                        ((d.get("mgmt_link") or {}).get("switch", "") + " " + (d.get("mgmt_link") or {}).get("port", "")).strip(), (dz.get("port") or {}).get("seen", ""),
+                        "yes" if r else "no", why])
+        return out.getvalue()
+
+    READY_CONFIRM = [("ra", "Remote access (RA-VPN) and the LTE break-glass path to the OOB network tested"),
+                     ("carriers", "Carrier hand-offs delivered and labeled (circuit IDs recorded)"),
+                     ("racking", "Racking, power and cabling signed off by the contractor")]
+
+    def readiness(self):
+        # HS v1.25: what must hold before Start build. fail holds Start build; warn is accepted with a reason; the manual
+        # confirmations are recorded with a note. Kept in the as-built record (hand-over export: readiness.json).
+        items, rc = [], self.kv_get("readiness", {}) or {}
+        def add(key, label, result, note):
+            items.append({"key": key, "label": label, "result": result, "note": note})
+        sv = self.plan["site"].get("services") or {}
+        def udp(ip, port, payload):
+            try:
+                so = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                so.settimeout(2)
+                so.sendto(payload, (ip, port))
+                so.recvfrom(512)
+                so.close()
+                return True
+            except OSError:
+                return False
+        def tcp(ip, port):
+            try:
+                socket.create_connection((ip, port), timeout=2).close()
+                return True
+            except OSError:
+                return False
+        ntp_q = b"\x1b" + 47 * b"\0"
+        dns_q = b"\x12\x34\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x01"
+        probes = [("ntp", lambda ip: udp(ip, 123, ntp_q)), ("dns", lambda ip: udp(ip, 53, dns_q)), ("tacacs", lambda ip: tcp(ip, 49))]
+        if self.conf.get("reader_sim_dir"):
+            probes = [(k, lambda ip: True) for k, _ in probes]
+        down, up = [], []
+        for k, f in probes:
+            for ip in sv.get(k, []):
+                (up if f(ip) else down).append("%s %s" % (k.upper(), ip))
+        add("services", "Customer services answer at their planned addresses (NTP, DNS, TACACS)", "fail" if down else ("pass" if up else "warn"),
+            ("not answering: " + ", ".join(down)) if down else ("%d answer" % len(up) if up else "no service addresses in the plan"))
+        if sv.get("syslog") or sv.get("radius"):
+            add("udp-services", "Syslog and RADIUS (UDP, no reply to test)", "warn", "check at their servers: " + ", ".join(sv.get("syslog", []) + sv.get("radius", [])))
+        live = [n for n in self.devs if self.st[n]["flag"] != "quarantined" and not self.devs[n].get("aggregate")]
+        noid = [n for n in live if not self.ident.get(n)]
+        macfirst = [n for n in live if self.devs[n].get("os") in ("cumulus", "eos", "iosxr") and (self.ident.get(n) or {}).get("kind") == "sn"]
+        seen, dup = {}, []
+        for n in live:
+            v = (self.ident.get(n) or {}).get("value")
+            if v:
+                if v in seen:
+                    dup.append("%s (%s, %s)" % (v, self.devs[seen[v]].get("short", seen[v]), self.devs[n].get("short", n)))
+                seen[v] = n
+        add("identities", "Every identity can match its platform", "fail" if (macfirst or dup) else ("warn" if noid else "pass"),
+            "; ".join(x for x in (("%d MAC-matched device(s) bound by serial: %s" % (len(macfirst), ", ".join(self.devs[n].get("short", n) for n in macfirst[:4]))) if macfirst else "",
+                                  ("identifier used twice: " + ", ".join(dup[:3])) if dup else "",
+                                  ("%d device(s) without an identity: they appear under Unclaimed when they call in" % len(noid)) if noid else "") if x) or "%d devices" % len(live))
+        miss, badsum = [], []
+        for im in self.plan.get("images", []):
+            p = os.path.join(self.conf["web_root"], "images", im.get("file", ""))
+            if not os.path.isfile(p):
+                miss.append(im.get("file"))
+            elif im.get("sha256"):
+                h = hashlib.sha256()
+                with open(p, "rb") as f:
+                    for blk in iter(lambda: f.read(1 << 20), b""):
+                        h.update(blk)
+                if h.hexdigest() != im["sha256"]:
+                    badsum.append(im["file"])
+        add("images", "Target images present, checksums match", "fail" if badsum else ("warn" if miss else "pass"),
+            "; ".join(x for x in (("checksum mismatch: " + ", ".join(badsum)) if badsum else "", ("missing: %s (a device not on its target release stops at its check before apply)" % ", ".join(miss[:3]) + (" +%d" % (len(miss) - 3) if len(miss) > 3 else "")) if miss else "") if x) or "%d image(s)" % len(self.plan.get("images", [])))
+        needs_push = any(self.devs[n].get("push") for n in live)
+        add("push", "Push credential entered (Junos, SR Linux)", ("pass" if self.push_cred else "fail") if needs_push else "pass", "" if needs_push else "no pushed platform in this build")
+        cv = self.coverage()
+        add("people", "Two people able to act on every plane", "warn" if cv["short"] else "pass", ("fewer than two on " + ", ".join(cv["short"])) if cv["short"] else "")
+        ha = self.plan.get("ha") or {}
+        if ha.get("enabled"):
+            age = now() - (self.last_sync or 0)
+            add("standby", "Standby provisioning host in sync", "pass" if age < 300 else "warn", "last sync %s" % (iso(self.last_sync) or "never"))
+        try:
+            st = os.statvfs(self.conf["state_dir"])
+            free = st.f_bavail * st.f_frsize / 1e9
+        except OSError:
+            free = 0
+        add("disk", "Disk space for state and backups", "fail" if free < 2 else ("warn" if free < 10 else "pass"), "%.1f GB free" % free)
+        try:
+            pem = open(self.conf["tls_cert"]).read()
+            selfs = "BEGIN CERTIFICATE" in pem and subprocess.run(["openssl", "x509", "-noout", "-issuer", "-subject"], input=pem, capture_output=True, text=True).stdout.count("CN") >= 2 and \
+                len(set(l.split("=", 1)[1].strip() for l in subprocess.run(["openssl", "x509", "-noout", "-issuer", "-subject"], input=pem, capture_output=True, text=True).stdout.splitlines() if "=" in l)) == 1
+        except (OSError, ValueError):
+            selfs = True
+        add("cert", "Console certificate from the customer's CA", "warn" if selfs else "pass", "self-signed: replace it from certs/ once the CA is up" if selfs else "")
+        for k, lbl in self.READY_CONFIRM:
+            c = rc.get(k)
+            add("c-" + k, lbl, "confirmed" if c else "confirm", ("%s: %s" % (c["by"], c["note"])) if c else "")
+        acc = rc.get("_accept")
+        fails = [i for i in items if i["result"] in ("fail", "confirm")]
+        return {"items": items, "fails": len(fails), "accepted": acc, "ok": not fails or bool(acc and acc.get("n", 0) >= len(fails))}
+
+    def readiness_confirm(self, user, key, note):
+        rc = self.kv_get("readiness", {}) or {}
+        if key == "_accept":
+            r = self.readiness()
+            rc["_accept"] = {"by": user, "note": note, "ts": now(), "n": r["fails"]}
+        elif key in [k for k, _ in self.READY_CONFIRM]:
+            rc[key] = {"by": user, "note": note, "ts": now()}
+        else:
+            return False, "unknown item"
+        self.kv_set("readiness", rc)
+        self.audit(user, "readiness-" + ("accept" if key == "_accept" else "confirm"), key, note)
+        return True, "recorded"
+
     def peers_of(self, n):
         # HS v1.24: each BGP neighbor's device, from the planned configuration's neighbor comments ("... # PEER"):
         # nothing added to estate.json. Read once per device.
@@ -33070,13 +33378,19 @@ class Phase2Mixin(object):
             order = new + [x for x in down if x not in new]   # newly down first
             need = int(c.get("min", 1))
             ok = len(sess) >= need and len(est) == len(sess)
+            if not sess and aside:   # HS v1.25: every session goes to a set-aside device: nothing to check here
+                return True, "no session to check: all %d toward set-aside peers" % len(aside), "set aside: %d session(s)\n\x00RAW\n%s" % (len(aside), "\n".join(texts))
             note = "%d of %d sessions established" % (len(est), len(sess))
             if aside:
                 note += " (%d toward set-aside peers not counted)" % len(aside)
             if down:
                 note += "; %d down: %s%s" % (len(down), ", ".join("%s %s%s" % (p, st.lower(), " (new)" if (p, st) in new else "")
                                                                 for p, st in order[:6]), (" +%d more" % (len(down) - 6)) if len(down) > 6 else "")
-            return ok, note, "\n".join(texts)
+            pn = lambda p: (self.devs.get(self.peer_name(peers.get(p)), {}).get("short") or peers.get(p) or "?")
+            summ = ["%-10s %-28s %s" % (p, pn(p), st.lower() + (" (new)" if (p, st) in new else "")) for p, st in order] + \
+                   ["%-10s %-28s %s" % (p, pn(p), st.lower()) for p, st in sess if p in est]
+            summ.append("set aside (not counted): %d session(s)" % len(aside))
+            return ok, note, "\n".join(summ) + "\n\x00RAW\n" + "\n".join(texts)   # HS v1.25: summary first, raw after
         if kind == "mnha":
             cmds = CMDS["mnha"].get(os_)
             if not cmds:
@@ -33107,7 +33421,59 @@ class Phase2Mixin(object):
             else:
                 ok = "pfc" in t.lower()
             return ok, "PFC/ECN %s" % ("in effect" if ok else "not found"), t
+        if kind == "software":   # HS v1.25: release against the device's profile
+            tgt = ((self.devs[n].get("release") or {}).get("target") or "").strip()
+            if not tgt:
+                return True, "no target release in the profile", ""
+            cmd = VERSION_CMD.get(os_)
+            if not cmd:
+                raise ReaderUnavailable("no version check for " + os_)
+            t = self.read(n, [cmd])[0]
+            ok = tgt.lower() in t.lower() or vnum(tgt) in [vnum(x) for x in re.findall(r"\d+[\d.()A-Za-z-]*\d", t)]
+            got = (re.search(r"DISTRIB_RELEASE=(\S+)", t) or re.search(r"(?:version|Version|VERSION)[^\n]{0,20}?(\d+[\w.()-]*)", t))
+            return ok, ("at %s" % tgt) if ok else ("running %s, target %s" % (got.group(1) if got else "?", tgt)), t
+        if kind == "cabling":   # HS v1.25: LLDP against the cable plan (the planned configuration's "# -> PEER PORT" lines)
+            exp = self.expected_links(n)
+            if not exp:
+                return True, "no planned links on this device", ""
+            cmd = LLDP_CMD.get(os_)
+            if not cmd:
+                raise ReaderUnavailable("no LLDP check for " + os_)
+            t = self.read(n, [cmd])[0]
+            seen = lldp_pairs(t)
+            if seen is None:
+                raise ReaderUnavailable("the LLDP output was not understood")
+            bad, ok_n, skip = [], 0, 0
+            for lp, (pd, pp) in sorted(exp.items()):
+                pn_ = self.peer_name(pd)
+                ps = self.st.get(pn_, {})
+                got = seen.get(lp) or seen.get(norm_port(lp))
+                if got and got[0].split(".")[0].lower() == "cumulus":
+                    got = None   # a neighbor still in its factory state
+                if ps.get("flag") == "quarantined" or (not got and ps.get("stage", 0) < 4):
+                    skip += 1   # the far end is set aside, or not configured yet and silent: nothing to see
+                    continue
+                if not got:
+                    bad.append("%s: expected %s %s, no neighbor" % (lp, self.devs.get(pn_, {}).get("short", pd), pp))
+                elif not same_dev(got[0], pn_, self.devs.get(pn_, {}).get("short", "")) or norm_port(got[1]) != norm_port(pp):
+                    bad.append("%s: expected %s %s, saw %s %s" % (lp, self.devs.get(pn_, {}).get("short", pd), pp, got[0], got[1]))
+                else:
+                    ok_n += 1
+            note = "%d link(s) as planned" % ok_n + ((" (%d not checked: far end set aside or not configured)" % skip) if skip else "")
+            if bad:
+                note = "%d miswired or missing: %s; %s" % (len(bad), "; ".join(bad[:4]) + (" +%d more" % (len(bad) - 4) if len(bad) > 4 else ""), note)
+            return not bad, note, "\n".join(bad) + ("\n" if bad else "") + "\x00RAW\n" + t
         raise ReaderUnavailable("unknown check " + kind)
+
+    def expected_links(self, n):
+        if not hasattr(self, "_exp"):
+            self._exp = {}
+        if n not in self._exp:
+            m = {}
+            for x in re.finditer(r"interface (\S+) link mtu \d+\s+#\s*->\s*(\S+)\s+(\S+)", self.planned_text(n) or ""):
+                m[x.group(1)] = (x.group(2), x.group(3))
+            self._exp[n] = m
+        return self._exp[n]
 
     # ------------------------------------------------------------------------------------- gate checks
     def run_auto(self, k, c):
@@ -33148,7 +33514,8 @@ class Phase2Mixin(object):
                 why = why or err
                 continue
             ok, note, text = r3
-            ev[n] = {"ok": ok, "note": note, "text": (text or "")[-1500:]}
+            t1, _, raw = (text or "").partition("\x00RAW\n")
+            ev[n] = {"ok": ok, "note": note, "text": t1[-4000:] if raw else (text or "")[-1500:], "raw": raw[-2500:]}   # HS v1.25
             if not ok:
                 bad.append(n)
         t = now()
@@ -34259,6 +34626,7 @@ class Estate(Phase2Mixin):
             for k in ("mac", "serial", "client_id", "circuit"):
                 if ev.get(k):
                     s[k] = ev[k]
+            self.discover(n, ev)   # HS v1.25
             # HS v1.24: matched by serial with a MAC on the manifest: confirm it, or record the one seen (never blocks)
             pid = self.devs[n].get("id") or {}
             if how == "serial" and pid.get("mac") and ev["mac"] and s.get("mac_check") != ev["mac"]:
@@ -35077,6 +35445,9 @@ class Estate(Phase2Mixin):
     def retry(self, n, user, reserve=False):
         with self.lock:
             s = self.st[n]
+            if str(s.get("detail", "")).startswith("discovery:"):   # HS v1.25: Retry after a discovery mismatch accepts the unit as is
+                s["disc_ok"] = True
+                self.audit(user, "discovery-accept", n, s.get("detail", ""))
             s["flag"] = ""
             s["attempts"] += 1
             s["stage"] = 1 if (reserve and s["stage"] >= 1) else 0
@@ -35302,7 +35673,8 @@ class Estate(Phase2Mixin):
                 builds.append({"key": b["key"], "name": b["name"], "num": b["num"], "state": bs["state"], "waves": waves,
                                "gate": self.gate_eval(b["key"]) if bs["state"] != "queued" else
                                [{"key": c["key"], "label": c["label"], "type": c["type"], "note": c.get("note", ""), "result": "waiting"} for c in b["gate"]],
-                               "override": bs.get("override"), "passed": bs.get("passed", 0), "held": bs.get("held", "")})
+                               "override": bs.get("override"), "passed": bs.get("passed", 0), "held": bs.get("held", ""),
+                               "ready": (lambda rs: [sum(1 for x in rs if x), len(rs)])([r for r in (self.ready(n) for w in b["waves"] for n in w["devices"]) if r is not None])})   # HS v1.25
             devs = {}
             for n, s in self.st.items():
                 i = self.ident.get(n)
@@ -35373,6 +35745,8 @@ class Estate(Phase2Mixin):
                 w.writerow(["time", "user", "action", "target", "detail"])
                 for r in self.db.execute("SELECT * FROM audit ORDER BY id"):
                     w.writerow([iso(r["ts"]), r["user"], r["action"], r["target"], r["detail"]])
+            elif what == "readiness.csv":   # HS v1.25
+                return self.readiness_csv()
             elif what == "events.csv":
                 w.writerow(["time", "level", "device", "stage", "flag", "text", "user"])
                 for r in self.db.execute("SELECT * FROM events ORDER BY id"):
@@ -35578,6 +35952,8 @@ class Estate(Phase2Mixin):
         with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
             for f in ("asbuilt.csv", "sot-status.csv", "audit.csv", "events.csv"):
                 z.writestr(top + f, self.export(f) or "")
+            z.writestr(top + "readiness.csv", self.readiness_csv())   # HS v1.25
+            z.writestr(top + "readiness.json", json.dumps(self.readiness(), indent=1))
             z.writestr(top + "sot-asbuilt.csv", self.asbuilt_overlay())
             z.writestr(top + "apply_asbuilt.py", APPLY_ASBUILT)
             for n in self.devs:
@@ -35588,10 +35964,25 @@ class Estate(Phase2Mixin):
             fin = self.handover().get("final") or {}
             z.writestr(top + "README.txt", HANDOVER_README % {"site": site, "by": user, "when": iso(now()), "nb": nb,
                        "final": ("final as-built backup %s by %s, %s of %s devices" % (iso(fin.get("ts")), fin.get("by"), fin.get("ok"), fin.get("n"))) if fin.get("state") == "done" else "no final as-built backup was taken: the newest backup of each device is included"})
-        self.handover_set(exported={"by": user, "ts": now(), "backups": nb})
-        self.audit(user, "handover-export", site, "%d device backups; scheduled backups off from now (the customer's backup system takes over)" % nb)
-        self.event("Hand-over export downloaded by %s (customer admin): %d device backups; scheduled console backups are off from now" % (user, nb), "info", user=user)
-        return top.rstrip("/") + ".zip", buf.getvalue()
+        body = buf.getvalue()
+        sha = hashlib.sha256(body).hexdigest()
+        self.handover_set(built={"by": user, "ts": now(), "backups": nb, "sha256": sha, "name": top.rstrip("/") + ".zip"})   # HS v1.25
+        self.audit(user, "handover-export-built", site, "%d device backups; sha256 %s" % (nb, sha))
+        self.event("Hand-over export built for %s: %d device backups (sha256 %s...); it counts once its receipt is confirmed" % (user, nb, sha[:12]), "info", user=user)
+        return top.rstrip("/") + ".zip", body
+
+    def handover_received(self, user, sha):
+        # HS v1.25: the customer confirms it holds the file (its SHA-256); only then is the export handed over
+        b = self.handover().get("built") or {}
+        sha = re.sub(r"[^0-9a-f]", "", str(sha or "").lower())
+        if not b.get("sha256"):
+            return False, "download the hand-over export first"
+        if len(sha) < 12 or not b["sha256"].startswith(sha):
+            return False, "that does not match the export's SHA-256 (%s...): check the file you saved, or download it again" % b["sha256"][:6]
+        self.handover_set(exported={"by": user, "ts": now(), "backups": b.get("backups", 0), "sha256": b["sha256"], "name": b.get("name")})
+        self.audit(user, "handover-export", self.plan["site"]["code"], "receipt confirmed (sha256 %s); scheduled backups off from now" % b["sha256"])
+        self.event("Hand-over export received by %s (sha256 confirmed): scheduled console backups are off from now" % user, "info", user=user)
+        return True, "receipt confirmed: the export is handed over; scheduled console backups are off" 
 
     def _remove_dwr(self, n, pw):
         d = self.devs[n]
@@ -35667,7 +36058,7 @@ class Estate(Phase2Mixin):
         if (h.get("release") or {}).get("state") == "running":
             return False, "Release DWR access is already running"
         if not h.get("exported"):
-            return False, "refused: a customer admin downloads the hand-over export first (HS-DEP-003 step 6.1)"
+            return False, "refused: a customer admin downloads the hand-over export and confirms its receipt first (HS-DEP-003 step 6.1)"
         ca = self.customer_admins()
         if len(ca) < 2:
             return False, "refused: the customer needs two admin logins of its own (it has %d); add them under Logins" % len(ca)
@@ -36056,6 +36447,7 @@ def make_internal_handler(est):
                 with open(out, "wb") as f:
                     f.write(body)
                 os.chmod(out, 0o600)
+                est.handover_received("cli:root", hashlib.sha256(body).hexdigest())   # HS v1.25: written by root to the customer's folder
                 return self._j(200, {"ok": True, "msg": out})
             if u.path == "/local/promote":
                 ok, msg = est.promote()
@@ -36166,7 +36558,10 @@ def make_console_handler(est, console_html):
                 if who["role"] != "admin" or who.get("org") != "customer":
                     return self._send(403, {"ok": False, "msg": "the hand-over export is downloaded by a customer admin"})
                 fn, body = est.handover_zip(who["user"])
-                return self._send(200, body, "application/zip", {"Content-Disposition": "attachment; filename=%s" % fn})
+                return self._send(200, body, "application/zip", {"Content-Disposition": "attachment; filename=%s" % fn,
+                                                                 "X-SHA256": hashlib.sha256(body).hexdigest()})
+            if u.path == "/api/readiness":   # HS v1.25
+                return self._send(200, est.readiness())
             if u.path.startswith("/api/export/"):
                 body = est.export(u.path.rsplit("/", 1)[1])
                 if body is None:
@@ -36267,7 +36662,12 @@ def make_console_handler(est, console_html):
                 ok, msg = est.user_update(user, str(data.get("name", "")), data.get("role"), data.get("planes"), data.get("disabled"), data.get("org"))
                 return self._send(200 if ok else 409, {"ok": ok, "msg": msg})
             if p == "/api/run":
+                rd = est.readiness()   # HS v1.25: Start build is held on a failing or unconfirmed readiness item
+                if not rd["ok"] and est.run["state"] in ("idle",):
+                    return self._send(409, {"ok": False, "readiness": True, "msg": "Readiness: %d item(s) fail or wait for confirmation: open Readiness…" % rd["fails"]})
                 ok, msg = est.start_run(data.get("plane", "all"), user, data.get("reason", ""))
+            elif p == "/api/readiness/confirm":   # HS v1.25
+                ok, msg = est.readiness_confirm(user, str(data.get("key", "")), str(data.get("note", ""))[:300]) if str(data.get("note", "")).strip() else (False, "a note or reason")
             elif p == "/api/pause":
                 with est.lock:
                     if est.run["state"] in ("complete", "idle"):
@@ -36316,6 +36716,8 @@ def make_console_handler(est, console_html):
                 ok, msg = est.rma_upload(n, data.get("text", ""), user)
             elif p == "/api/handover/final-backup":   # HS v1.24
                 ok, msg = est.handover_final_backup(user) if who["role"] == "admin" else (False, "admins only")
+            elif p == "/api/handover/received":   # HS v1.25: customer admins only
+                ok, msg = est.handover_received(user, data.get("sha", "")) if (who["role"] == "admin" and who.get("org") == "customer") else (False, "a customer admin confirms receipt")
             elif p == "/api/release-vendor":   # HS v1.24: customer admins only
                 if who["role"] != "admin" or who.get("org") != "customer":
                     ok, msg = False, "refused: Release DWR access is for the customer's admins"
@@ -36556,6 +36958,7 @@ def main():
     ap.add_argument("--reason", default="")
     ap.add_argument("--role", default="admin", choices=["admin", "operator", "viewer"])
     ap.add_argument("--planes", default="", help="operator planes, comma-separated: oob,edge,fe,be")
+    ap.add_argument("--readiness", action="store_true", help="check: the Readiness panel's items (HS v1.25)")
     ap.add_argument("--org", default="customer", choices=["customer", "dwr"], help="user add: whose login (HS v1.24)")
     ap.add_argument("--out", default="", help="decommission: folder for the customer's export (HS v1.24)")
     ap.add_argument("--account", default="", help="record-vendor: DWR OS account(s) on this host, comma-separated (HS v1.24)")
@@ -36684,6 +37087,12 @@ def main():
         print(("[ok] " if ok else "[!] ") + msg)
         return 0 if ok else 1
     if a.cmd == "check":
+        if a.readiness or (a.args and a.args[0] == "readiness"):   # HS v1.25
+            r = est.readiness()
+            for i in r["items"]:
+                print("%-10s %s%s" % (i["result"].upper(), i["label"], ("  -- " + i["note"]) if i["note"] else ""))
+            print("Ready: Start build is open." if r["ok"] else "Start build is held: %d item(s) fail or wait for confirmation (console: Readiness)" % r["fails"])
+            return 0 if r["ok"] else 1
         return preflight(est)
     if a.cmd == "init":
         if est.db.execute("SELECT count(*) FROM users").fetchone()[0]:
@@ -36877,8 +37286,8 @@ dialog::backdrop{background:rgba(20,33,43,.45)}
 <section class="card" aria-label="Run" id="runCard">
 <div class="row" style="justify-content:space-between"><h2>Run <span class="sub" id="runSub"></span></h2>
 <div class="row"><select class="f" id="runPlane" aria-label="Plane"><option value="all">All planes</option><option value="oob">OOB</option><option value="edge">Edge-PoP</option><option value="fe">Front end</option><option value="be">Back end</option></select>
-<button class="pri act" id="bStart">Start build</button><button class="act" id="bPause">Pause</button><button class="act" id="bCred">Push credential…</button><button class="act" id="bUsers" title="Personal logins and the planes each operator acts on">Logins…</button><button class="act" id="bHand" title="Final backup, the customer's hand-over export, Release DWR access (HS-DEP-003 phase 6)">Hand-over…</button><button id="bMyPw" title="Change your password">My password…</button><button id="bLogout">Sign out</button>
-<a id="exAsbuilt" href="api/export/asbuilt.csv">As-built</a> · <a href="api/export/sot-status.csv">SoT status</a> · <a href="api/export/audit.csv">Audit</a> · <a href="api/export/events.csv">Events</a></div></div>
+<button class="pri act" id="bStart">Start build</button><button class="act" id="bPause">Pause</button><button class="act" id="bCred">Push credential…</button><button class="act" id="bReady" title="What must hold before Start build (HS-DEP-003 step 3.8)">Readiness…</button><button class="act" id="bUsers" title="Personal logins and the planes each operator acts on">Logins…</button><button class="act" id="bHand" title="Final backup, the customer's hand-over export, Release DWR access (HS-DEP-003 phase 6)">Hand-over…</button><button id="bMyPw" title="Change your password">My password…</button><button id="bLogout">Sign out</button>
+<a id="exAsbuilt" href="api/export/asbuilt.csv">As-built</a> · <a href="api/export/readiness.csv">Readiness</a> · <a href="api/export/sot-status.csv">SoT status</a> · <a href="api/export/audit.csv">Audit</a> · <a href="api/export/events.csv">Events</a></div></div>
 <div class="muted" style="font-size:13px" id="runNote"></div>
 <div id="runners" style="display:flex;flex-direction:column;gap:6px;font-size:13px"></div>
 </section>
@@ -36946,7 +37355,7 @@ dialog::backdrop{background:rgba(20,33,43,.45)}
 (function(){
 'use strict';
 var STG=['Expected','DHCP','Bootstrap','Image','Config','Verified','Done'];
-var S={plan:null, st:null, who:null, events:[], lastId:0, sel:null, bsel:null, filter:'all', mode:'live', rt:0, rplay:false, speed:240, rtimer:null};
+var S={plan:null, st:null, who:null, events:[], lastId:0, sel:null, bsel:(function(){ try{ return localStorage.getItem('estate.bsel'); }catch(e){ return null; } })(), filter:'all', mode:'live', rt:0, rplay:false, speed:240, rtimer:null};
 var $=function(id){ return document.getElementById(id); };
 var esc=function(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); };
 function api(path, body){
@@ -36962,12 +37371,12 @@ function api(path, body){
 // while it runs (disabled), green with a check mark for 1.5 s when done, red with the message in the status line when it
 // fails. The console redraws every few seconds, so the button is found again by its id or data attribute.
 var LASTBTN=null, BUSY={};
-document.addEventListener('click', function(e){ var b=e.target&&e.target.closest?e.target.closest('button'):null; if(!b || b.closest('#dlg')) return;
+document.addEventListener('click', function(e){ var b=e.target&&e.target.closest?e.target.closest('button'):null; if(!b || (b.closest('#dlg') && b.value)) return;   // HS v1.25: a dialog's own buttons too, not OK/Cancel
   var sel=b.id?('#'+b.id):''; if(!sel){ for(var i=0;i<b.attributes.length;i++){ var a=b.attributes[i]; if(/^data-/.test(a.name)){ sel='['+a.name+'="'+a.value.replace(/"/g,'\\"')+'"]'; break; } } }
   LASTBTN={sel:sel, text:b.textContent, t:Date.now()}; }, true);
 var ACTLBL={'api/backup':'Backing up…','api/rma/start':'Starting RMA…','api/rma/identity':'Registering…','api/rma/apply':'Setting…','api/rma/check':'Confirming…',
   'api/gate/recheck':'Re-checking…','api/gate/confirm':'Confirming…','api/gate/override':'Overriding…','api/bind':'Binding…','api/unbind':'Unbinding…','api/dismiss':'Dismissing…',
-  'api/retry':'Retrying…','api/quarantine':'Quarantining…','api/mark':'Marking…','api/start':'Starting…','api/result':'Saving…','api/runner-retry':'Retrying…','api/release-vendor':'Releasing…','api/handover/final-backup':'Backing up…','api/rma/upload':'Loading…'};
+  'api/retry':'Retrying…','api/quarantine':'Quarantining…','api/mark':'Marking…','api/start':'Starting…','api/result':'Saving…','api/runner-retry':'Retrying…','api/release-vendor':'Releasing…','api/handover/final-backup':'Backing up…','api/rma/upload':'Loading…','api/handover/received':'Confirming…'};
 function busyPaint(){ Object.keys(BUSY).forEach(function(sel){ var x=BUSY[sel]; if(!sel) return; var el=null; try{ el=document.querySelector(sel); }catch(e){} if(!el) return;
   if(el.dataset.bst===x.st) return; el.dataset.bst=x.st; el.classList.remove('b-run','b-ok','b-err'); el.classList.add('b-'+x.st);
   if(x.st==='run'){ el.disabled=true; if(el.dataset.lbl===undefined) el.dataset.lbl=el.textContent; el.innerHTML='<span class="spin"></span>'+esc(x.label); }
@@ -37103,7 +37512,7 @@ function render(){
   $('runSub').textContent='· '+st.run.state+(st.run.plane?(' ('+st.run.plane+')'):'');
   $('bPause').textContent=st.run.state==='paused'?'Resume':'Pause';
   $('runNote').textContent=(st.push_cred?'Push credential held in memory. ':'No push credential yet: Junos and SR Linux devices wait at Bootstrap until one is entered. ')+(st.pushing.length?('Pushing: '+st.pushing.join(', ')):'');
-  document.querySelectorAll('.act').forEach(function(b){ b.disabled=ro; });
+  document.querySelectorAll('.act').forEach(function(b){ if(!b.closest('#dlg')) b.disabled=ro; });   // HS v1.25: a dialog's buttons keep their state
   $('bCred').disabled=!live||S.who.role!=='admin'; $('bUsers').style.display=S.who.role==='admin'?'':'none';
   var ax=st.access||{}, sh=(ax.short||[]);
   $('accessWarn').style.display=(sh.length||ax.admins<2)?'flex':'none';
@@ -37125,7 +37534,9 @@ function render(){
   $('iChk').textContent=called===0?('No devices have called in yet. Expecting '+Object.keys(P.devices).filter(function(n){ return !P.devices[n].aggregate; }).length+' tracked devices on '+site.oob_block+'.')
     :(called+' devices called in and matched to '+site.code+' by serial, MAC or reserved address · '+refused+' refused · '+(unc.length-refused)+' unclaimed.');
   // builds
-  var curKey=null; st.builds.forEach(function(b){ if(!curKey && b.state!=='complete' && b.state!=='queued') curKey=b.key; }); curKey=curKey||st.builds[0].key;
+  var curKey=null; st.builds.forEach(function(b){ if(!curKey && b.state!=='complete' && b.state!=='queued') curKey=b.key; });
+  if(!curKey) curKey=st.builds.every(function(b){ return b.state==='complete'; })?st.builds[st.builds.length-1].key:st.builds[0].key;   // HS v1.25
+  if(S.bsel && !st.builds.some(function(b){ return b.key===S.bsel; })) S.bsel=null;
   var BL={queued:['Queued','queued'], building:['Building','active'], blocked:['Blocked','failed'], gate:['Gate checks','active'], complete:['Complete','done']};
   $('builds').innerHTML=st.builds.map(function(b){
     var all=[]; b.waves.forEach(function(w){ all=all.concat(w.devices); });
@@ -37134,7 +37545,7 @@ function render(){
     var bl=BL[state]||BL.queued, sel=(S.bsel||curKey)===b.key;
     return '<button class="bcard'+(sel?' sel':'')+'" data-b="'+b.key+'"><div class="row" style="justify-content:space-between"><div style="text-align:left"><div class="mono muted" style="font-size:12px">BUILD '+b.num+'</div><div style="font-size:18px;font-weight:700">'+esc(b.name)+'</div></div><span class="chip k-'+bl[1]+'">'+bl[0]+'</span></div>'
       +'<div class="pbar"><div style="width:'+(all.length?Math.round(100*done/all.length):0)+'%;background:'+(state==='blocked'?'#c2410c':state==='complete'?'#2f8f54':'#3b6fd8')+'"></div></div>'
-      +'<div class="row muted" style="justify-content:space-between;font-size:12px"><span>'+done+' of '+all.length+' done</span><span>gate: '+b.gate.length+' checks</span></div>'
+      +'<div class="row muted" style="justify-content:space-between;font-size:12px"><span>'+done+' of '+all.length+' done'+(live&&b.ready&&b.state!=='complete'&&b.ready[1]?(' · <b style="color:'+(b.ready[0]===b.ready[1]?'#14532d':'#6b3d0a')+'">Ready '+b.ready[0]+' of '+b.ready[1]+'</b>'):'')+'</span><span>gate: '+b.gate.length+' checks</span></div>'   // HS v1.25
       +(live&&b.held?'<div style="font-size:12px;color:#c2410c;text-align:left;margin-top:4px">Wave held: '+esc(b.held)+' (Retry, or Quarantine to go on)</div>':'')
       +b.waves.map(function(w){ var n=w.devices.length, d=w.devices.filter(function(x){ return V.devices[x].stage===6; }).length,
           wb=w.devices.some(function(x){ return /failed|missing|unclaimed/.test(V.devices[x].flag); }),
@@ -37142,7 +37553,7 @@ function render(){
           col=(d===0&&!w.devices.some(function(x){ return V.devices[x].stage>0||V.devices[x].flag; }))?'#c3ccd1':wb?'#c2410c':d===n?'#2f8f54':'#3b6fd8';
           return '<div class="wave"><span class="dot" style="background:'+col+'"></span><span style="flex:1 1 auto;text-align:left">'+esc(w.name)+(w.warn_only?' <span class="muted">(warn only)</span>':'')+'</span><span class="mono muted" style="font-size:12px">'+cnt+'</span></div>'; }).join('')+'</button>';
   }).join('');
-  document.querySelectorAll('[data-b]').forEach(function(e){ e.onclick=function(){ S.bsel=e.dataset.b; render(); }; });
+  document.querySelectorAll('[data-b]').forEach(function(e){ e.onclick=function(){ S.bsel=e.dataset.b; try{ localStorage.setItem('estate.bsel', S.bsel); }catch(x){} render(); }; });   // HS v1.25
   // grid
   var FL=[['all','All'],['oob','OOB'],['edge','Edge-PoP'],['fe','Front end'],['be','Back end'],['problems','Problems']];
   $('filters').innerHTML=FL.map(function(f){ return '<button data-f="'+f[0]+'" class="'+(S.filter===f[0]?'on':'')+'">'+f[1]+'</button>'; }).join('');
@@ -37171,7 +37582,10 @@ function render(){
     +(gb.override?'<li class="muted">Overridden by '+esc(gb.override.user)+': '+esc(gb.override.reason)+'</li>':'');
   document.querySelectorAll('[data-gc]').forEach(function(e){ e.disabled=!canAct(gb.key); e.onclick=function(){ ask('Confirm gate check', esc(e.closest('li').querySelector('span span').textContent), [{key:'note', label:'Evidence (command output, ticket, who checked)'}]).then(function(v){ if(v) act('api/gate/confirm',{build:gb.key, check:e.dataset.gc, note:v.note}); }); }; });
   document.querySelectorAll('[data-ge]').forEach(function(e){ e.onclick=function(){ api('api/gate-evidence?build='+gb.key+'&check='+e.dataset.ge).then(function(j){
-    ask('Evidence', '<div class="mono" style="font-size:12px;white-space:pre-wrap;max-height:50vh;overflow:auto">'+esc((j.note||'')+'\n\n'+Object.keys(j.evidence||{}).map(function(n){ var x=j.evidence[n]; return (x.ok?'PASS ':'FAIL ')+n+': '+x.note+(x.text?('\n'+x.text.slice(-600)):''); }).join('\n\n'))+'</div>', []); }); }; });
+    ask('Evidence', '<div style="max-height:55vh;overflow:auto"><div class="mono" style="font-size:12px;white-space:pre-wrap">'+esc(j.note||'')+'</div>'+Object.keys(j.evidence||{}).map(function(n){ var x=j.evidence[n];   // HS v1.25
+      return '<div style="margin-top:10px"><b style="color:'+(x.ok?'#14532d':'#9a3412')+'">'+(x.ok?'PASS':'FAIL')+'</b> <span class="mono">'+esc((S.plan.devices[n]||{}).short||n)+'</span>: '+esc(x.note)
+        +(x.text?'<div class="mono" style="font-size:12px;white-space:pre;overflow-x:auto;margin-top:4px">'+esc(x.text)+'</div>':'')
+        +(x.raw?'<details style="margin-top:4px"><summary style="cursor:pointer;font-size:12px">Show raw</summary><div class="mono" style="font-size:11px;white-space:pre-wrap">'+esc(x.raw)+'</div></details>':'')+'</div>'; }).join('')+'</div>', []); }); }; });
   document.querySelectorAll('[data-nc]').forEach(function(e){ e.disabled=!canAct('be'); e.onclick=function(){ ask('NCCL all-reduce result','From acceptance/nccl.sh (Avg bus bandwidth).',[{key:'busbw',label:'Bus bandwidth, GB/s'},{key:'target',label:'Target, GB/s'}]).then(function(v){ if(v) act('api/result',{kind:'nccl', busbw:v.busbw, target:v.target}); }); }; });
   $('gOverride').disabled=!canAct(gb.key)||gb.state==='complete'||gb.state==='queued';
   $('gRecheck').disabled=!canAct(gb.key)||gb.state==='queued'||!gb.gate.some(function(c){ return c.type==='auto'; });   // HS v1.23
@@ -37263,7 +37677,7 @@ function renderDetail(V, ro){
     var ih=''; if(items){ var cnt={}; Object.keys(items).forEach(function(h){ var z=items[h].state||'?'; cnt[z]=(cnt[z]||0)+1; });
       ih='<div><b>Per host</b> · '+Object.keys(cnt).map(function(z){ return cnt[z]+' '+z; }).join(' · ')+'</div><div class="log" style="max-height:120px;overflow:auto">'+Object.keys(items).slice(0,200).map(function(h){ return esc(h+': '+items[h].state+(items[h].note?(' -- '+items[h].note):'')); }).join('<br>')+'</div>'; }
     BK.innerHTML=ih+(d.aggregate?'':('<div class="row"><b>Backups</b><span class="muted">'+(bks.length?bks.length+' kept':'none yet')+'</span><button class="act" id="bkNow" style="min-height:32px">Back up now</button>'+(bks.length?'<button id="bkDiff" style="min-height:32px">Diff vs planned</button>':'')+(bks.length>1?'<button id="bkPrev" style="min-height:32px">Diff vs previous</button>':'')+'</div>'
-      +bks.slice(0,3).map(function(b){ var t=(dc.backup_seen||{})[b]; return '<a href="api/device/'+encodeURIComponent(n)+'/backup/'+b+'">'+b+'</a>'+(t?('<span class="muted"> · last confirmed '+new Date(t*1000).toISOString().slice(11,16)+'Z</span>'):''); }).join('<br>')));   // HS v1.24
+      +bks.slice(0,3).map(function(b){ var t=(dc.backup_seen||{})[b]; return '<div style="white-space:nowrap"><a href="api/device/'+encodeURIComponent(n)+'/backup/'+b+'">'+b+'</a>'+(t?('<span class="muted"> · last confirmed '+new Date(t*1000).toISOString().slice(11,16)+'Z</span>'):'')+'</div>'; }).join('')));   // HS v1.24, v1.25
     var bn=$('bkNow'); if(bn){ bn.disabled=ro; bn.onclick=function(){ act('api/backup',{device:n}).then(loadDetail); }; }
     var bp=$('bkPrev'); if(bp) bp.onclick=function(){ api('api/device/'+encodeURIComponent(n)+'/diff?vs=prev').then(function(j){   // HS v1.24
       ask(j.previous+' vs '+j.backup, '<div class="muted">'+j.added+' line(s) added, '+j.removed+' removed</div><div class="mono" style="font-size:12px;white-space:pre;max-height:55vh;overflow:auto">'+esc(j.diff||'identical')+'</div>', []); }); };
@@ -37292,7 +37706,20 @@ function renderDetail(V, ro){
   } else R.style.display='none';
 }
 // ------------------------------------------------------------------ controls
-$('bStart').onclick=function(){ var pl=$('runPlane').value; act('api/run',{plane:pl}); };
+$('bStart').onclick=function(){ var pl=$('runPlane').value; api('api/run',{plane:pl}).then(function(){ refresh(); }).catch(function(e){ if(e.message==='login') return; if(/^Readiness/.test(e.message)) readyDlg(); else actMsg('Start failed: '+e.message,'err'); }); };   // HS v1.25
+function readyDlg(){   // HS v1.25: the Readiness panel
+  api('api/readiness').then(function(r){ var RK={pass:['Pass','done'], warn:['Warn','warn'], fail:['Fail','failed'], confirm:['Confirm','warn'], confirmed:['Confirmed','done']};
+    var html='<div class="muted" style="margin-bottom:8px">Start build waits until every item passes or is confirmed; a warning is noted. Fails can be accepted with a reason (audited, in the as-built record).</div><ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px">'
+      +r.items.map(function(i){ var k=RK[i.result]||RK.warn; return '<li class="row" style="align-items:flex-start;flex-wrap:nowrap;gap:8px"><span class="chip k-'+k[1]+'" style="flex:0 0 86px;justify-content:center">'+k[0]+'</span><span style="flex:1 1 auto"><span>'+esc(i.label)+'</span>'+(i.note?'<br><span class="muted" style="font-size:12px">'+esc(i.note)+'</span>':'')
+        +(i.result==='confirm'?'<br><button class="act" data-rc2="'+esc(i.key.slice(2))+'" style="min-height:30px;margin-top:4px">Confirm…</button>':'')+'</span></li>'; }).join('')+'</ul>'
+      +(r.accepted?'<div class="muted" style="margin-top:8px">Accepted by '+esc(r.accepted.by)+': '+esc(r.accepted.note)+'</div>':'')
+      +'<div class="row" style="margin-top:10px;gap:6px"><button class="act" id="rdRe">Re-check</button>'+(r.fails?'<button class="act warn" id="rdAcc">Accept '+r.fails+' item(s) with a reason…</button>':'')+'<span class="muted" style="font-size:12px">'+(r.ok?'Ready: Start build is open.':'Start build is held.')+'</span></div>';
+    ask('Readiness', html, []);
+    var re=$('rdRe'); if(re) re.onclick=function(){ $('dlg').close(); readyDlg(); };
+    var ac=$('rdAcc'); if(ac) ac.onclick=function(){ $('dlg').close(); ask('Accept readiness items','The items that fail or wait for confirmation are accepted as they are; your reason goes into the audit log and the as-built record.',[{key:'note',label:'Reason'}]).then(function(v){ if(v) act('api/readiness/confirm',{key:'_accept', note:v.note}).then(function(){ setTimeout(readyDlg, 300); }); else readyDlg(); }); };
+    document.querySelectorAll('[data-rc2]').forEach(function(b){ b.onclick=function(){ var k=b.dataset.rc2; $('dlg').close(); ask('Confirm','Who checked it, and how (ticket, test, sign-off).',[{key:'note',label:'Note'}]).then(function(v){ if(v) act('api/readiness/confirm',{key:k, note:v.note}).then(function(){ setTimeout(readyDlg, 300); }); else readyDlg(); }); }; });
+  }).catch(function(e){ if(e.message!=='login') actMsg(e.message,'err'); }); }
+$('bReady').onclick=readyDlg;
 $('bPause').onclick=function(){ act('api/pause',{}); };
 $('bCred').onclick=function(){ ask('Push credential','Used by the service to push Junos and SR Linux configurations. Held in memory only; never written to disk.',[{key:'user',label:'User',value:'netadmin'},{key:'password',label:'Password',type:'password'}]).then(function(v){ if(v) act('api/push-credential',v); }); };
 $('bMyPw').onclick=function(){ showPw(false); $('pwWho').textContent='Change your password: at least 12 characters, not your user name. Your other sessions end.'; $('pwCancel').style.display=''; };
@@ -37324,23 +37751,34 @@ function usersDlg(){
 }
 $('bUsers').onclick=usersDlg;
 // HS v1.24: hand-over (HS-DEP-003 steps 6.1 and 6.5). The export and the release are the customer's admins' to do.
-function handDlg(){
-  api('api/whoami').then(function(me){ var h=(S.st&&S.st.handover)||{}, fin=h.final||{}, ex=h.exported||{}, rel=h.release||{}, cust=me.role==='admin'&&me.org==='customer';
+function handDlg(inPlace){   // HS v1.24, v1.25: updates in place while open
+  api('api/whoami').then(function(me){ var h=(S.st&&S.st.handover)||{}, fin=h.final||{}, bu=h.built||{}, ex=h.exported||{}, rel=h.release||{}, cust=me.role==='admin'&&me.org==='customer';
     var t=function(x){ return x?new Date(x*1000).toISOString().replace('T',' ').slice(0,16)+'Z':''; };
     var step=function(n,title,state,body){ return '<div style="border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:8px"><div class="row" style="justify-content:space-between"><b>'+n+'. '+title+'</b><span class="chip k-'+(state[1]||'queued')+'">'+esc(state[0])+'</span></div><div class="muted" style="font-size:12.5px;margin-top:4px">'+body+'</div></div>'; };
+    var relDone=rel.state==='done', canRel=cust&&!!ex.ts&&!relDone&&rel.state!=='running';
     var html=step(1,'Final as-built backup', fin.state==='done'?['Done','done']:fin.state==='running'?['Running','active']:['Not taken','queued'],
         (fin.state==='done'?('Taken '+t(fin.ts)+' by '+esc(fin.by)+': '+fin.ok+' of '+fin.n+' devices'+(fin.failed&&fin.failed.length?('; not possible on '+esc(fin.failed.slice(0,5).join(', '))):'')+'. '):'')+'Backs up every Done device once more; the export carries the newest backup of each.'
-        +'<div style="margin-top:6px"><button class="act" id="hFinal"'+(me.role!=='admin'||fin.state==='running'?' disabled':'')+'>Take the final backup</button></div>')
-      +step(2,'Hand-over export (customer admin)', ex.ts?['Downloaded','done']:['Not downloaded','queued'],
-        (ex.ts?('Downloaded '+t(ex.ts)+' by '+esc(ex.by)+'. '):'')+'As-built, SoT status and the as-built SoT overlay with apply_asbuilt.py, the device backups, audit and events. From the download on, the console takes no scheduled backups: the customer’s backup system takes over.'
-        +'<div style="margin-top:6px">'+(cust?'<a class="act" href="api/handover/export.zip" id="hEx">Download the hand-over export</a>':'<i>Only a customer admin can download it.</i>')+'</div>')
-      +step(3,'Release DWR access (customer admin, last step)', rel.state==='done'?['Released','done']:rel.state==='partial'?['Partly released','failed']:rel.state==='running'?['Running','active']:['Not released','queued'],
+        +'<div style="margin-top:6px"><button class="act" id="hFinal"'+(me.role!=='admin'||fin.state==='running'||relDone?' disabled':'')+'>Take the final backup</button></div>')
+      +step(2,'Hand-over export (customer admin)', ex.ts?['Received','done']:bu.ts?['Downloaded, not confirmed','warn']:['Not downloaded','queued'],
+        (ex.ts?('Receipt confirmed '+t(ex.ts)+' by '+esc(ex.by)+'. '):bu.ts?('Built '+t(bu.ts)+' for '+esc(bu.by)+' ('+esc(bu.name||'')+'). '):'')
+        +'As-built, SoT status and the as-built SoT overlay with apply_asbuilt.py, the device backups, audit and events. It counts once its receipt is confirmed against the file’s SHA-256; from then on the console takes no scheduled backups.'
+        +(bu.sha256?('<div class="mono" style="font-size:11.5px;margin-top:6px;word-break:break-all">SHA-256 '+esc(bu.sha256)+'</div><div style="font-size:11.5px">Windows: Get-FileHash -Algorithm SHA256 &lt;file&gt; · Linux/macOS: sha256sum &lt;file&gt;</div>'):'')
+        +'<div class="row" style="margin-top:6px;gap:6px">'+(cust?('<button class="act" id="hEx"'+(relDone?' disabled':'')+'>Download the hand-over export</button>'+(bu.ts&&!ex.ts?'<button class="act pri" id="hRcv">Confirm receipt…</button>':'')):'<i>Only a customer admin can download it.</i>')+'</div>')
+      +step(3,'Release DWR access (customer admin, last step)', relDone?['Released','done']:rel.state==='partial'?['Partly released','failed']:rel.state==='running'?['Running','active']:['Not released','queued'],
         (rel.ts?('By '+esc(rel.by)+', '+t(rel.ts)+': dwr-netadmin removed from '+rel.removed+' of '+rel.n+' devices'+(rel.failed&&rel.failed.length?('; failed on '+esc(rel.failed.slice(0,4).map(function(x){ return x.device+' ('+x.why+')'; }).join(', '))):'')+'. '):'')
-        +'Removes dwr-netadmin from every device, disables the DWR console logins, locks DWR’s OS accounts on this host and removes their SSH keys and sudo rules, and clears the push credential. Needs: the export downloaded, two customer admin logins (now '+(h.customer_admins||0)+'), and the confirmations.'
-        +'<div style="margin-top:6px"><button class="act warn" id="hRel"'+(!cust||rel.state==='running'?' disabled':'')+'>Release DWR access…</button></div>');
-    ask('Hand-over', html, []);
-    var f=$('hFinal'); if(f) f.onclick=function(){ $('dlg').close(); act('api/handover/final-backup',{}).then(function(){ setTimeout(handDlg, 400); }); };
-    var e=$('hEx'); if(e) e.onclick=function(){ setTimeout(function(){ refresh(); }, 1500); };
+        +'Removes dwr-netadmin from every device, disables the DWR console logins, locks DWR’s OS accounts on this host and removes their SSH keys and sudo rules, and clears the push credential. Needs: the export received, two customer admin logins (now '+(h.customer_admins||0)+'), and the confirmations.'
+        +'<div style="margin-top:6px"><button class="act warn" id="hRel"'+(canRel?'':' disabled')+'>Release DWR access…</button></div>');
+    if(inPlace){ if(!($('dlg').open && $('dlgT').textContent==='Hand-over')) return; $('dlgB').innerHTML=html; } else ask('Hand-over', html, []);
+    var f=$('hFinal'); if(f) f.onclick=function(){ act('api/handover/final-backup',{}).then(function(){ setTimeout(function(){ handDlg(true); }, 600); }); };
+    var e=$('hEx'); if(e) e.onclick=function(){ var sel='#hEx'; BUSY[sel]={st:'run', label:'Building the export…', text:'Download the hand-over export'}; busyPaint(); var fn='handover.zip';
+      fetch('api/handover/export.zip',{credentials:'same-origin', headers:{'X-Requested-With':'estate-console'}}).then(function(r){ if(!r.ok) return r.json().then(function(j){ throw new Error(j.msg||j.error||('HTTP '+r.status)); });
+          var cd=r.headers.get('Content-Disposition')||'', m=/filename=([^;]+)/.exec(cd); if(m) fn=m[1].trim(); return r.blob(); })
+        .then(function(b){ var u=URL.createObjectURL(b), a=document.createElement('a'); a.href=u; a.download=fn; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(u); }, 60000);
+          BUSY[sel]={st:'ok', label:'', text:'Download the hand-over export'}; busyPaint(); setTimeout(function(){ delete BUSY[sel]; refresh(); setTimeout(function(){ handDlg(true); }, 800); }, 1500);
+          actMsg('Saved '+fn+'. Check its SHA-256 against the one in Hand-over, then Confirm receipt.', 'ok'); })
+        .catch(function(x){ BUSY[sel]={st:'err', label:'', text:'Download the hand-over export'}; busyPaint(); setTimeout(function(){ delete BUSY[sel]; handDlg(true); }, 4000); actMsg('Export failed: '+x.message, 'err'); }); };
+    var rc=$('hRcv'); if(rc) rc.onclick=function(){ $('dlg').close(); ask('Confirm receipt','Compute the SHA-256 of the file you saved and enter its first 12 characters. This confirms the customer holds the export: scheduled console backups stop, and Release DWR access opens.',[{key:'sha',label:'First 12 characters of the file’s SHA-256'}])
+      .then(function(v){ if(v) act('api/handover/received',{sha:v.sha}).then(function(){ setTimeout(handDlg, 500); }); else handDlg(); }); };
     var r=$('hRel'); if(r) r.onclick=function(){ $('dlg').close();
       ask('Release DWR access','This is the last hand-over step and cannot be undone from here. The netadmin password is used for this action only and never stored.',
         [{key:'tacacs_vpn',label:'DWR’s TACACS and remote-access accounts are disabled',options:[['no','Not yet'],['yes','Yes, confirmed']]},
@@ -37349,6 +37787,7 @@ function handDlg(){
          {key:'password',label:'netadmin password',type:'password'},{key:'typed',label:'Type RELEASE to go ahead'}])
       .then(function(v){ if(v) act('api/release-vendor',v).then(function(){ setTimeout(handDlg, 400); }); }); };
   }); }
+setInterval(function(){ try{ if($('dlg').open && $('dlgT').textContent==='Hand-over') handDlg(true); }catch(e){} }, 3000);   // HS v1.25: live while open
 $('bHand').onclick=handDlg;
 $('bReplay').onclick=function(){ api('api/events?since=0&limit=200000').then(function(r){ r.sort(function(a,b){ return a.ts-b.ts||a.id-b.id; }); S.events=r; S.lastId=r.reduce(function(m,e){ return Math.max(m,e.id); },0); S.mode='replay'; S.rt=0; S.rplay=true; render(); }); };
 $('rBack').onclick=function(){ S.mode='live'; S.rplay=false; refresh(); };
