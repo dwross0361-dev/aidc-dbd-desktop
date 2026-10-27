@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// AIDC DBD Layout service (DWR Networking), 2.0.20: the DC Layout Builder's data past 512 racks.
+// AIDC DBD Layout service (DWR Networking), 2.0.20 (progress stages 2.0.21): the DC Layout Builder's data past 512 racks.
 // A Chromium window has about 4 GB of JavaScript memory whatever the app asks for, and a 1,625-rack design with its two
 // million links does not fit beside the builder or the Layout Builder's own drawing. This Node process rebuilds the design
 // from its site-runner file (fingerprint checked, as the site runner does), builds the physical model, and holds it in the
@@ -16,7 +16,15 @@ if (!HTML || !process.send) { console.error('usage: started by AIDC DBD with an 
 const T0 = Date.now(), secs = () => Math.round((Date.now() - T0) / 1000);
 const mem = () => Math.round(process.memoryUsage().heapUsed / 1048576).toLocaleString('en-US') + ' MB';
 const log = (m) => console.log(new Date().toISOString() + '  ' + m + ' (heap ' + mem() + ')');
-const progress = (t) => { log(t); try { process.send({ progress: t }); } catch (e) {} };
+// 2.0.21: progress is structured -- the stage, its text, counts, and the time estimates the window's progress panel uses
+let lastP = 0;
+const progress = (t, x) => { const e = Object.assign({ text: t }, x || {}); if (!e.quiet) log(t);
+  const now = Date.now(); if (e.throttle && now - lastP < 300) return; lastP = now; delete e.throttle; delete e.quiet;
+  try { process.send({ progress: e }); } catch (err) {} };
+// seconds per design link, measured on a 1,625-rack design (rebuild 29 us, physical model 50 us, placement 2 us per link);
+// RATE scales them to this workstation once the rebuild has been timed
+let RATE = 1;
+const estOf = (n, rate) => ({ load: 3, rebuild: Math.max(2, n * 29e-6 * rate), model: Math.max(2, n * 50e-6 * rate), place: Math.max(1, n * 2.2e-6 * rate) });
 
 let SRC = null;   // the builder release, read once
 function src() { if (!SRC) SRC = fs.readFileSync(HTML, 'utf8'); return SRC; }
@@ -34,7 +42,8 @@ function shim(w) {
 // ---- the design -> the physical model, in a builder page of its own (closed afterwards: only the model stays)
 async function buildModel(file) {
   if (!file || file.format !== 'aidc-dbd-site-runner/1') throw new Error('the builder window did not send a site-runner design');
-  progress('Loading the builder (' + Number(file.racks || 0).toLocaleString('en-US') + ' racks)…');
+  const nL = Number(file.links || 0);
+  progress('Loading the builder (' + Number(file.racks || 0).toLocaleString('en-US') + ' racks)…', { stage: 'load', est: estOf(nL, RATE) });
   const errs = [], vc = new VirtualConsole(); vc.on('jsdomError', (e) => { const m = String(e && e.message || e); if (!/Not implemented/.test(m)) errs.push(m.slice(0, 200)); });
   const dom = new JSDOM(src(), { runScripts: 'dangerously', pretendToBeVisual: true, url: 'file:///aidc-layout/builder.html', virtualConsole: vc, beforeParse: shim });
   try {
@@ -42,16 +51,17 @@ async function buildModel(file) {
     const R = dom.window.__aidcRunner;
     if (!R || typeof R.phys !== 'function') throw new Error('this builder release has no Layout service entry point (HS-v1.26 or later)' + (errs.length ? ': ' + errs[0] : ''));
     if (R.version() !== file.builder) throw new Error('the design comes from ' + file.builder + ' but the app carries ' + R.version());
-    progress('Rebuilding the design from its settings…');
-    const L = R.load(file, {});
+    progress('Rebuilding the design from its settings…', { stage: 'rebuild' });
+    const t1 = Date.now(), L = R.load(file, {});
+    if (nL > 20000) { RATE = Math.min(20, Math.max(0.05, ((Date.now() - t1) / 1000) / (nL * 29e-6))); }   // this workstation against the reference
     if (!L.match) throw new Error('the rebuilt design (fingerprint ' + L.fingerprint + ') is not the one in the builder window (' + L.expected + '). The Layout service rebuilds the design from its settings; hand edits on the canvas are not carried. Save the design, load it again, then open the DC Layout Builder.');
-    progress('Building the physical model (' + L.devices.toLocaleString('en-US') + ' devices, ' + L.links.toLocaleString('en-US') + ' design links)…');
+    progress('Building the physical model (' + L.devices.toLocaleString('en-US') + ' devices, ' + L.links.toLocaleString('en-US') + ' design links)…', { stage: 'model', devices: L.devices, est: estOf(nL, RATE) });
     return R.phys();
   } finally { try { dom.window.close(); } catch (e) {} }
 }
 
 // ---- the Layout Builder page, headless, holding the model
-let PAGE = null, OUT = '.', LAST = null;
+let PAGE = null, OUT = '.', LAST = null, EXPORT_N = 0;
 function uniquePath(dir, name) {   // every version kept: name, name (2), name (3) ...
   let p = path.join(dir, name); if (!fs.existsSync(p)) return p;
   const ext = path.extname(name), base = name.slice(0, name.length - ext.length);
@@ -67,22 +77,24 @@ function page() {
   PAGE = new JSDOM(html, { runScripts: 'dangerously', pretendToBeVisual: true, url: 'file:///aidc-layout/layout.html', virtualConsole: vc, beforeParse: shim });
   const w = PAGE.window;
   w.__dctOut = (name, data) => { const p = uniquePath(OUT, name); fs.writeFileSync(p, typeof data === 'string' ? data : Buffer.from(data)); w.__dctLast = LAST = p; };
-  w.__dctOpen = (name) => { const p = uniquePath(OUT, name), fd = fs.openSync(p, 'w');
-    return { write: (t) => { fs.writeSync(fd, t); }, close: () => { fs.closeSync(fd); w.__dctLast = LAST = p; return p; } }; };
+  w.__dctOpen = (name) => { const p = uniquePath(OUT, name), fd = fs.openSync(p, 'w'); let rows = 0;
+    return { write: (t) => { fs.writeSync(fd, t); let i = -1; while ((i = t.indexOf('\n', i + 1)) >= 0) rows++; progress('Writing ' + name, { stage: 'export', done: rows, total: EXPORT_N, throttle: true, quiet: true }); },
+      close: () => { fs.closeSync(fd); w.__dctLast = LAST = p; return p; } }; };
+  w.__dctTick = (i, n) => progress('Writing the PDF', { stage: 'export', done: i, total: n, throttle: true, quiet: true });
   if (!w.__dctRemote) throw new Error('the DC Layout Builder page has no service side (HS-v1.26 or later)');
   return w.__dctRemote;
 }
 const plain = (x) => JSON.parse(JSON.stringify(x));   // objects of the page's realm, as plain data for the channel
 
 const OPS = {
-  async start(a) { const D = page(), m = await buildModel(a.file); progress('Placing ' + m.cabinets.length.toLocaleString('en-US') + ' cabinets and checking ' + m.links.length.toLocaleString('en-US') + ' links…');
-    const r = D.load(m, false); progress('Ready: ' + m.cabinets.length.toLocaleString('en-US') + ' cabinets, ' + m.links.length.toLocaleString('en-US') + ' links (' + secs() + ' s)'); return plain({ head: r.head, note: '' }); },
-  async refresh(a) { const D = page(), m = await buildModel(a.file); progress('Applying the refreshed model, keeping your edits…');
-    const r = D.load(m, true); progress('Ready: ' + m.cabinets.length.toLocaleString('en-US') + ' cabinets, ' + m.links.length.toLocaleString('en-US') + ' links'); return plain({ head: r.head, note: r.note }); },
+  async start(a) { const D = page(), m = await buildModel(a.file); progress('Placing ' + m.cabinets.length.toLocaleString('en-US') + ' cabinets and checking ' + m.links.length.toLocaleString('en-US') + ' links…', { stage: 'place', cabinets: m.cabinets.length, links: m.links.length });
+    const r = D.load(m, false); progress('Ready: ' + m.cabinets.length.toLocaleString('en-US') + ' cabinets, ' + m.links.length.toLocaleString('en-US') + ' links (' + secs() + ' s)', { stage: 'ready', cabinets: m.cabinets.length, links: m.links.length }); return plain({ head: r.head, note: '' }); },
+  async refresh(a) { const D = page(), m = await buildModel(a.file); progress('Applying the refreshed model, keeping your edits…', { stage: 'place', cabinets: m.cabinets.length, links: m.links.length });
+    const r = D.load(m, true); progress('Ready: ' + m.cabinets.length.toLocaleString('en-US') + ' cabinets, ' + m.links.length.toLocaleString('en-US') + ' links', { stage: 'ready', cabinets: m.cabinets.length, links: m.links.length }); return plain({ head: r.head, note: r.note }); },
   sync(a) { return plain(page().sync(a)); },
   links(a) { return plain(page().links(a)); },
   cable(a) { return plain(page().cable(a)); },
-  export(a) { OUT = a.out || OUT; progress('Writing all links (' + a.kind.toUpperCase() + ')…'); LAST = null; const p = page().exportAll(a.kind); if (!p && !LAST) throw new Error('nothing was written'); return { path: p || LAST }; },
+  export(a) { OUT = a.out || OUT; EXPORT_N = page().counts().links; progress('Writing all links (' + a.kind.toUpperCase() + ')…', { stage: 'export', done: 0, total: EXPORT_N }); LAST = null; const p = page().exportAll(a.kind); if (!p && !LAST) throw new Error('nothing was written'); return { path: p || LAST }; },
   save(a) { OUT = a.out || OUT; LAST = null; page().save(); if (!LAST) throw new Error('nothing was written'); return { path: LAST }; },
   openFile(a) {
     const st = fs.statSync(a.path); if (st.size > 400 * 1048576) throw new Error(path.basename(a.path) + ' is ' + Math.round(st.size / 1048576) + ' MB. A large-site layout saved here is small (its links come from the design); a full physical model this size is opened by refreshing from the Fabric Designer instead.');

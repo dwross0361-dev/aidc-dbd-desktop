@@ -201,7 +201,7 @@ function startSvc(w, file) {
   const out = (d) => { try { fs.appendFileSync(logf, d); } catch (e) {} };
   s.child.stdout.on('data', out); s.child.stderr.on('data', out);
   s.child.on('message', (m) => {
-    if (m && m.progress != null) { if (!w.isDestroyed()) w.webContents.send('layout-progress', String(m.progress)); return; }
+    if (m && m.progress != null) { if (!w.isDestroyed()) w.webContents.send('layout-progress', typeof m.progress === 'object' ? m.progress : String(m.progress)); return; }   // 2.0.21: stages, counts, estimates
     const p = m && s.pend.get(m.id); if (!p) return; s.pend.delete(m.id); if (m.err) p.reject(new Error(m.err)); else p.resolve(m.res); });
   const gone = (why) => { if (s.dead) return; s.dead = why + '. Refresh from Fabric Designer starts it again (details: ' + logf + ')';
     for (const p of s.pend.values()) p.reject(new Error(s.dead)); s.pend.clear(); };

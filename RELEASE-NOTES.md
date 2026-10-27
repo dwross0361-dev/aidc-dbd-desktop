@@ -1,3 +1,10 @@
+# AIDC DBD Desktop 2.0.21 (builder HS-v1.27, site runner 1.6.0)
+
+- **DC Layout Builder past 512 racks: a progress panel.** While the Layout service builds the model (and on Refresh from Fabric Designer), a panel shows the four stages (load the builder, rebuild the design, build the physical model, place cabinets and check every link), one progress bar, the elapsed time and an estimate of the time left, and the counts as they become known.
+  - Inside the rebuild and the physical-model build the bar moves on an estimate, marked as one, and jumps to the true point when the stage ends. The estimate is scaled to the workstation once the rebuild has been timed.
+  - The site-wide files (all links, CSV or PDF) show real progress, rows written of the total, and the saved path in the panel.
+  - An error appears in the panel, with the reason and the log location, instead of a pop-up.
+
 # AIDC DBD Desktop 2.0.20 (builder HS-v1.26, site runner 1.6.0)
 
 - **DC Layout Builder past 512 racks: large-site mode.** A 1,625-rack design crashed the builder window when the Layout Builder opened.

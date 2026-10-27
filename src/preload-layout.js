@@ -3,5 +3,5 @@
 const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('aidcLayout', {
   q: (op, args) => ipcRenderer.invoke('layout-q', op, args || {}),
-  onProgress: (fn) => { ipcRenderer.on('layout-progress', (e, t) => { try { fn(String(t)); } catch (err) {} }); }
+  onProgress: (fn) => { ipcRenderer.on('layout-progress', (e, t) => { try { fn(t && typeof t === 'object' ? t : String(t)); } catch (err) {} }); }
 });
