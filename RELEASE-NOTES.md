@@ -1,3 +1,13 @@
+# AIDC DBD Desktop 2.0.22 (builder HS-v1.28, site runner 1.6.0)
+
+- **NVIDIA SN6600 is the air-cooled, AC-powered 3RU model** (920-9N63F-00RI-3C0), and the default wherever an SN6600 is chosen: back end, front-end leaf and spine.
+  - 64 × 1.6T OSFP cages (128 × 800G), 1 QSFP112, 2 SFP28; 200–240 VAC on four PSUs; air-cooled, port-side intake; 52 kg; 3.94 kW typical with fully retimed optics. Standard network cabinet with AC PDUs; four cords per switch in the power plan.
+  - The liquid-cooled, DC-busbar 2RU model is **SN6600-LD**, unchanged (MGX v1.2 rack, power shelves, liquid).
+  - Designs saved before this release named the LD "NV-SN6600": they load as the SN6600-LD, with a notice.
+  - DC Layout Builder: the SN6600 faceplate from NVIDIA's product image (management, QSFP112 and two SFP28 along the top; 64 cages in four rows of 16, two blocks of eight; cage numbering assumed).
+  - To confirm with NVIDIA: PSU rating and inlet, maximum power, cage numbering.
+- **Network cabinets are filled by power outlets and branch breakers as well as rack units and kW**, for every AC platform. A cabinet takes switches only while each side's PDU has an outlet of the right class for every cord, on a branch that carries it with the other side failed (80%). With the SN6600 that is six per cabinet (about 21 kW, 12 C19 per PDU); the middle-of-row block grows wider. Cord placement prefers a branch that still holds the cord.
+
 # AIDC DBD Desktop 2.0.21 (builder HS-v1.27, site runner 1.6.0)
 
 - **DC Layout Builder past 512 racks: a progress panel.** While the Layout service builds the model (and on Refresh from Fabric Designer), a panel shows the four stages (load the builder, rebuild the design, build the physical model, place cabinets and check every link), one progress bar, the elapsed time and an estimate of the time left, and the counts as they become known.
