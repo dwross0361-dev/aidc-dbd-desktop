@@ -1,3 +1,7 @@
+# AIDC DBD Desktop 2.0.23 (builder HS-v1.29, site runner 1.6.0)
+
+- **A progress meter while a change is applied to a large design.** A setting change or Build from rack count on a design past 128 racks (or one whose last redraw took over 1.5 s) runs in stages, rebuild the design, then recompute the plans and redraw, each ticked with its time and the expected time from the last run on that design size. Further changes made meanwhile are applied after it, with one redraw. The window still pauses inside each stage; moving the build out of the window is planned for v2.1.
+
 # AIDC DBD Desktop 2.0.22 (builder HS-v1.28, site runner 1.6.0)
 
 - **NVIDIA SN6600 is the air-cooled, AC-powered 3RU model** (920-9N63F-00RI-3C0), and the default wherever an SN6600 is chosen: back end, front-end leaf and spine.

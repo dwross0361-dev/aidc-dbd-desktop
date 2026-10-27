@@ -942,7 +942,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.28';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.29';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   var RADIX=64, CAGE=800;
   // ---- FABRIC PROFILE (parameterized per accelerator platform) ----------------------------------------
   // rails == accelerators per host. Each accelerator instance gets its own rail leaf, which is what
@@ -6918,11 +6918,11 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     }finally{ RESTORING=false; }
     autosaveSoon();
   }
-  function loadMeter(name){   // HS v1.13
+  function loadMeter(name, title){   // HS v1.13 (HS v1.29: a title of its own)
     var o=document.createElement('div'); o.id='load-meter';
     o.style.cssText='position:fixed;inset:0;z-index:2147482000;background:rgba(20,30,40,.28);display:flex;align-items:center;justify-content:center';
     o.innerHTML='<div style="width:460px;max-width:calc(100vw - 32px);background:#fff;border-radius:10px;box-shadow:0 10px 40px rgba(0,0,0,.25);padding:16px 18px;font:13px/1.45 system-ui,Segoe UI,sans-serif;color:#1E2A33">'
-      +'<div style="font-weight:600;margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Loading '+escHtml(name)+'</div>'
+      +'<div style="font-weight:600;margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(title?escHtml(title):'Loading '+escHtml(name))+'</div>'
       +'<div style="height:8px;background:#E3EAE8;border-radius:4px;overflow:hidden"><div class="lm-bar" style="height:100%;width:0;background:#0F6E56;transition:width .2s"></div></div>'
       +'<div class="lm-step" style="margin-top:8px;font-weight:600"></div><div class="lm-list" style="margin-top:6px;font-size:12px;color:#4B5A63;font-family:var(--mono)"></div>'
       +'<div style="margin-top:8px;font-size:11px;color:#6A6F75">The window pauses while each step runs. A large design takes a few minutes.</div></div>';
@@ -29421,6 +29421,42 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     status:function(){ var s=document.getElementById('status'); return s?s.textContent:''; } };
   // in the runner there is no screen: the main canvas (every rack, leaf and inventory row as page elements) is not drawn
   render=(function(f){ return function(){ if(window.__AIDC_HEADLESS) return; return f.apply(this, arguments); }; })(render);
+  (function(){   // HS v1.29: applying a change to a large design -- staged, with a meter
+    var USER=0, Q=null, COST_KEY='aidc.applyCost';
+    var arm=function(){ if(RESTORING || window.__AIDC_HEADLESS) return; USER++; setTimeout(function(){ USER=Math.max(0,USER-1); }, 0); };
+    document.addEventListener('change', function(e){ var t=e.target; if(t && t.closest && t.closest('#load-meter')) return; arm(); }, true);
+    document.addEventListener('click', function(e){ var t=e.target; if(t && t.closest && t.closest('#buildfab')) arm(); }, true);
+    var cost=function(){ try{ return JSON.parse(localStorage.getItem(COST_KEY)||'null')||{}; }catch(e){ return {}; } };
+    var racks=function(){ try{ return byType('rack').length; }catch(e){ return 0; } };
+    var big=function(){ var c=cost(); return racks()>128 || (c.drawMs>1500 && c.racks===racks()); };
+    var est=function(k){ var c=cost(), n=racks(); if(!c[k] || !c.racks || !n) return ''; var s=Math.round(c[k]/1000*n/c.racks); return s<2?'':' (about '+(s>=60?Math.floor(s/60)+':'+('0'+(s%60)).slice(-2)+' min':s+' s')+' last time)'; };
+    var save=function(k, ms){ var c=cost(); if(c.racks!==racks()) c={racks:racks()}; c[k]=ms; try{ localStorage.setItem(COST_KEY, JSON.stringify(c)); }catch(e){} };
+    function queue(kind, f, self, args){
+      if(!Q){ Q={rebuild:[], draw:null, running:false};
+        setTimeout(function(){
+          var q=Q, names=[]; if(q.rebuild.length) names.push('Rebuild the design ('+racks().toLocaleString('en-US')+' racks)'+est('buildMs')); names.push('Recompute the plans and redraw'+est('drawMs'));
+          var m=loadMeter('', 'Applying the change'); m.plan(names); q.running=true;
+          var steps=[], t0=0;
+          if(q.rebuild.length) steps.push(function(){ t0=Date.now(); while(q.rebuild.length){ var j=q.rebuild.shift(); j.f.apply(j.self, j.args); } save('buildMs', Date.now()-t0); });
+          steps.push(function(){ t0=Date.now(); var d=q.draw; q.draw=null; if(d) d.f.apply(d.self, d.args); save('drawMs', Date.now()-t0);
+            if(q.rebuild.length){ var j; while((j=q.rebuild.shift())) j.f.apply(j.self, j.args); if(q.draw){ d=q.draw; q.draw=null; d.f.apply(d.self, d.args); } } });   // changes made while it ran
+          runSteps(steps, m, 0, function(){ Q=null; }, function(e){ Q=null; setStatus('\u26a0 The change was not applied completely: '+(e && e.message || e)); });
+        }, 30); }
+      if(kind==='rebuild') Q.rebuild.push({f:f, self:self, args:args}); else Q.draw={f:f, self:self, args:args};
+    }
+    var inStep=false;
+    buildFromRacks=(function(f){ return function(){
+      if(Q && Q.running && !inStep){ queue('rebuild', f, this, arguments); return; }
+      if(!Q && !(USER>0 && big())) return f.apply(this, arguments);
+      if(inStep) return f.apply(this, arguments);
+      queue('rebuild', function(){ inStep=true; try{ return f.apply(this, arguments); } finally{ inStep=false; } }, this, arguments); }; })(buildFromRacks);
+    render=(function(f){ return function(){
+      if(window.__AIDC_HEADLESS) return;
+      if(Q){ queue('draw', f, this, arguments); return; }   // inside a queued rebuild, or a change made while one runs: drawn once, last
+      if(USER>0 && big()){ queue('draw', f, this, arguments); return; }
+      var t0=Date.now(), r=f.apply(this, arguments); if(!RESTORING) try{ var ms=Date.now()-t0; if(ms>300) save('drawMs', ms); }catch(e){}
+      return r; }; })(render);
+  })();
   function pkgReadiness(final){   // v510
     var mp=mgmtPlan(), inv={}, oss=[], dg=planDigest(); try{ inv=deployOsInventory(); oss=Object.keys(inv); }catch(e){}
     var http=oss.some(function(o){ return /^(junos|cumulus|eos|srl|sros)$/.test(o); }), tftp=!!(inv.nxos||inv.iosxe), nDev=0; try{ nDev=deployPlanes().all.length; }catch(e){}
