@@ -39,10 +39,11 @@ if (!process.env.AIDC_RUNNER_CHILD) {
 }
 const HTML = arg('html'), DESIGN = arg('design'), OUT = arg('out', '.');
 const PARITY_ONLY = argv.includes('--parity-only');
-if (!PARITY_ONLY && (!HTML || !DESIGN)) { console.error('usage: node aidc-runner.js --html <builder .html> --design <site-runner .json> --out <folder> [--heap MB] [--package-only|--run-only|--parity-only] [--review] [--settings [--racks N]] [--no-sleep-hold]'); process.exit(2); }
+if (!PARITY_ONLY && (!HTML || !DESIGN)) { console.error('usage: node aidc-runner.js --html <builder .html> --design <site-runner .json> --out <folder> [--heap MB] [--package-only|--run-only|--parity-only] [--review] [--settings [--racks N]] [--cable-matrix xlsx|pdf] [--no-sleep-hold]'); process.exit(2); }
 const RACKS = +arg('racks', 0) || 0, SETTINGS = argv.includes('--settings') || RACKS > 0;
 const REVIEW = argv.includes('--review');
 const ONLY = argv.includes('--package-only') ? 'package' : argv.includes('--run-only') ? 'run' : 'both';
+const CABLE = arg('cable-matrix', null);   // 1.6.0 (app 2.0.20): the builder's Cable Matrix past 512 racks, measured here
 const { JSDOM, VirtualConsole } = require('jsdom');
 const NC = require('@napi-rs/canvas');
 
@@ -138,6 +139,17 @@ vc.on('error', (e) => pageErr.push(String(e).slice(0, 300)));
   const waitFile = async (re, ms) => { const end = Date.now() + ms; while (Date.now() < end) { const f = captured.find((c) => re.test(c.name)); if (f) return f; await new Promise((r) => setTimeout(r, 1000)); } return null; };
   const save = async (f) => { const p = path.join(OUT, (SETTINGS ? 'TEST-FROM-SETTINGS-' : '') + f.name.replace(/[^A-Za-z0-9._-]/g, '_')); fs.writeFileSync(p, Buffer.from(await f.blob.arrayBuffer())); f.blob = null; return p; };
 
+  if (CABLE) {   // the Cable Matrix alone: every cable once, with its measured length
+    if (typeof R.cable !== 'function') die(path.basename(HTML) + ' has no Cable matrix entry point (HS-v1.26 or later)');
+    log('Cable matrix (' + (CABLE === 'pdf' ? 'PDF' : 'Excel') + '): placing cabinets and measuring every run...');
+    await R.cable(CABLE);
+    const f = await waitFile(/-cable-matrix\.(xlsx|pdf)$/, 6 * 3600 * 1000);
+    if (!f) die('the cable matrix did not complete' + (R.status() ? ': ' + R.status().slice(0, 200) : ''));
+    const p = await save(f); clearInterval(tick); log('cable matrix: ' + path.basename(p) + ' (' + mem() + ')');
+    if (pageErr.length) log('page messages: ' + pageErr.slice(0, 5).join(' | '));
+    log('done: cable matrix, build ' + L.build + ', design fingerprint ' + L.fingerprint);
+    fs.writeFileSync(path.join(OUT, 'site-runner.log'), logLines.join('\n') + '\n'); process.exit(0);
+  }
   let pkg = null, run = null, planDg = '';
   if (ONLY !== 'run') {
     log((REVIEW ? 'Review' : 'Final') + ' Blueprint package...');

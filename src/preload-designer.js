@@ -2,13 +2,13 @@
 'use strict';
 const { contextBridge, ipcRenderer } = require('electron');
 
-let layoutFn = null, menuFn = null, saveFn = null;
+let fileFn = null, menuFn = null, saveFn = null;
 contextBridge.exposeInMainWorld('aidcDesktop', {
   version: 'desktop',
   big: (process.argv.find((a) => a.indexOf('--aidc-big=') === 0) || '').slice(11) || '',
   job: (req) => ipcRenderer.invoke('job', req).then((r) => { if (r && r.error) note('⚠ ' + r.error); return r; }),
   openLayout: (req) => ipcRenderer.send('open-layout', req),
-  onLayoutRequest: (fn) => { layoutFn = fn; },
+  onLayoutFileRequest: (fn) => { fileFn = fn; },   // 2.0.20: the Layout service rebuilds the design from this
   onMenu: (fn) => { menuFn = fn; },
   ready: (info) => ipcRenderer.send('ready', info),
   saveDesign: (o) => ipcRenderer.invoke('save-design', o),
@@ -17,11 +17,11 @@ contextBridge.exposeInMainWorld('aidcDesktop', {
 });
 ipcRenderer.on('menu', (e, a) => { if (menuFn) menuFn(a); });
 ipcRenderer.on('save-request', async (e, id) => { let r = null; try { r = saveFn ? await saveFn() : null; } catch (err) { r = { error: String(err && err.message || err) }; } ipcRenderer.send('save-reply', id, r); });
-ipcRenderer.on('layout-request', async (e, id) => {
-  let res;
-  try { if (!layoutFn) throw new Error('the builder is not ready'); res = await layoutFn((part) => ipcRenderer.send('layout-chunk', id, part)); }
-  catch (err) { res = { error: String(err && err.message || err) }; }
-  ipcRenderer.send('layout-parts', id, res); res = null;
+ipcRenderer.on('layout-file-request', async (e, id) => {
+  let r;
+  try { if (!fileFn) throw new Error('the builder is not ready'); r = { file: await fileFn() }; }
+  catch (err) { r = { error: String(err && err.message || err) }; }
+  ipcRenderer.send('layout-file-reply', id, r);
 });
 
 // ---- the panel (bottom right): one card per job, the latest saves
@@ -41,7 +41,7 @@ function note(text, path) {
   row.appendChild(btn('Dismiss', () => c.remove())); c.appendChild(row);
   if (!path) setTimeout(() => c.remove(), 15000);
 }
-const KIND = (j) => j.kind === 'both' ? 'Final package and .run' : j.kind === 'run' ? '.run' : (j.mode === 'review' ? 'Review package' : 'Final package');
+const KIND = (j) => j.kind === 'cable' ? 'Cable matrix (' + (j.mode === 'pdf' ? 'PDF' : 'Excel') + ')' : j.kind === 'both' ? 'Final package and .run' : j.kind === 'run' ? '.run' : (j.mode === 'review' ? 'Review package' : 'Final package');
 ipcRenderer.on('job-start', (e, j) => {
   const c = card(), h = el('div', 'font-weight:600', 'Site runner: ' + KIND(j) + ' — ' + (j.build || '') + ' (' + Number(j.racks || 0).toLocaleString('en-US') + ' racks)');
   const st = el('div', 'color:#0b6b6b;margin-top:2px', 'starting…'), log = el('pre', 'margin:6px 0 0;max-height:150px;overflow:auto;background:#f5f7f9;border-radius:6px;padding:6px;font:11px/1.35 Consolas,monospace;white-space:pre-wrap');

@@ -2,12 +2,13 @@
 
 DWR Networking internal. The AIDC DBD Hyperscale builder as a Windows app, with the site runner built in.
 
-- **The builder** runs unchanged in the main window (builder `HS-v1.25`).
+- **The builder** runs unchanged in the main window (builder `HS-v1.26`).
 - **Saves:** every download lands in your project folder. Nothing is overwritten: a second copy is saved as `name (2)`.
 - **Past 512 racks**, the Final package, the Review package and the .run are built by the built-in site runner.
-  - The runner is a separate process with the memory the builder window and Windows leave, so the browser's 4 GB tab limit no longer applies.
+  - The runner is a separate process with the workstation's memory, so a window's 4 GB limit does not apply to it.
   - A panel shows progress and has a Cancel button. When a job finishes, **Open folder** shows the output.
-- **DC Layout Builder:** past 512 racks it opens in its own window with its own memory.
+- **DC Layout Builder:** past 512 racks it opens in its own window in **large-site mode**: a Layout service (a separate process with the workstation's memory) rebuilds the design, holds every link and measures every run; the window holds the cabinets and devices and asks the service for a device's links, a cabinet's power cords, the site-wide checks and length schedule, and the site-wide files.
+- **Cable matrix past 512 racks:** the builder's Cable Matrix (Excel or PDF) is measured and written by the site runner.
 - **No Wait/Exit dialogs.**
 
 ## Install
@@ -28,18 +29,21 @@ DWR Networking internal. The AIDC DBD Hyperscale builder as a Windows app, with 
 |---|---|
 | Final package and .run | Both, then the parity check: every device configuration in the package must be byte-identical to the .run's. This is the delivery build. |
 | Final package / Review package / .run only | One output. |
-| DC Layout Builder | The layout tool (own window past 512 racks). |
+| DC Layout Builder | The layout tool. Past 512 racks: its own window in large-site mode, with a Layout service. |
 | Export site-runner file | The file for the command-line runner on another machine. |
 | Show DSX Air test files… | Takes air/ out of a .run (checksum verified) into `<run name>-air/` next to it, for the DSX Air import. |
 
 - **Up to 512 racks**, the Blueprint package and Deploy buttons work in the window, as in the browser.
 - **Past 512 racks**, those buttons and the menu items send the job to the site runner.
 - **Output folders:** each job writes to its own folder in the project folder, `{BUILD}-{job}-{date-time}/`. The folder holds the package and/or .run, the site-runner file it was built from, and `site-runner.log`.
-- **The fingerprint gate:** the runner rebuilds the design from its settings and refuses to build unless the design fingerprint matches the window's. "Does not match" means the canvas has hand edits the settings don't carry.
+- **The fingerprint gate:** the runner and the Layout service rebuild the design from its settings and refuse unless the design fingerprint matches the window's. "Does not match" means the canvas has hand edits the settings don't carry.
+- **Large-site layouts:** Save layout writes the cabinets, devices and your physical edits to the project folder, without the links (they come from the design when the file is opened here again). The all-links CSV and PDF are written to the project folder by the Layout service. Refresh from Fabric Designer takes the design as the builder window has it now and keeps your edits.
 
 ## Memory and workstation
 
-- The builder window gets 40% of RAM (4–16 GB). The site runner gets what is left after the builder window and 4 GB for Windows, up to 75% (32 GB: 13.0 and 15.4 GB).
+- **Each window has about 4 GB of JavaScript memory**, whatever the workstation has: Chromium, which Electron is built on, compiles its JavaScript engine with that limit. (2.0.14 to 2.0.19 asked for up to 16 GB and showed that figure; the request had no effect. The About box and the crash log now show the window's real limit.) That is why anything large past 512 racks runs in a separate Node process.
+- The site runner and the Layout service get up to 75% of RAM, leaving at least 8 GB (32 GB: 24 GB).
+- Measured, Layout (2.0.20): a 1,625-rack design with 2.1 million links, the Layout service 4.2 GB peak and about 2.5 minutes to start; the Layout window under 100 MB.
 - Measured: 295K GPUs (4,096 racks), 14.3 GB peak for the site runner, 99 minutes on an i7-8700T with 32 GB.
 
 | Site | RAM |

@@ -1,3 +1,15 @@
+# AIDC DBD Desktop 2.0.20 (builder HS-v1.26, site runner 1.6.0)
+
+- **DC Layout Builder past 512 racks: large-site mode.** A 1,625-rack design crashed the builder window when the Layout Builder opened.
+  - **The cause:** each window has about 4 GB of JavaScript memory, whatever the workstation has, because Chromium builds its JavaScript engine that way. 2.0.14 to 2.0.19 asked for up to 16 GB and showed that figure, but the request had no effect. The builder window was building the whole physical model (2.1 million links) beside the design and ran out.
+  - **Now:** a **Layout service**, a separate process with the workstation's memory, rebuilds the design from its settings (fingerprint checked, as the site runner does), holds every link and measures every run. The Layout window holds the cabinets and devices and asks the service for a device's links (cable matrix, faceplate), a cabinet's power cords, the site-wide checks and length schedule. The builder window no longer builds the model for it.
+  - Moves, cabinet order and geometry are mirrored to the service, so lengths and checks follow your edits. Refresh from Fabric Designer takes the design as the builder window has it now and keeps your edits.
+  - **Save layout** writes the cabinets, devices and edits without the links; opening that file here applies the edits to the design. **All links (CSV/PDF)** is written to the project folder by the service.
+  - Measured on the 1,625-rack design: the service starts in about 2.5 minutes and peaks at 4.2 GB; the Layout window stays under 100 MB (188 MB with three times that floor, 7,524 cabinets).
+- **Cable matrix past 512 racks:** the builder's Cable Matrix (Excel or PDF) is measured and written by the site runner, as a job in the panel. Building it in the window had the same memory problem.
+- **Fixed:** past 512 racks, every faceplate in the Layout Builder failed to open (a variable name clash). Every edit re-checked port speeds slowly on large sites; the check is now cached.
+- The About box and the crash log show a window's real memory limit, and the crash dialog says when a large design can run a window out of memory.
+
 # AIDC DBD Desktop 2.0.19 (builder HS-v1.25, site runner 1.5.0)
 
 - **Builder HS-v1.25: readiness, and the fixes from the TC-202 to TC-206 run.**
