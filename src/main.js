@@ -25,6 +25,7 @@ const RES = app.isPackaged ? process.resourcesPath : path.join(__dirname, '..');
 const BUILDER = path.join(RES, 'builder', 'aidc-dbd-hyperscale.html');
 const RUNNER = path.join(RES, 'runner', 'aidc-runner.js');
 const LAYOUT_SVC = path.join(RES, 'runner', 'aidc-layout.js');
+const DESIGN_SVC = path.join(RES, 'runner', 'aidc-design.js');   // 2.0.24
 const NODE = app.isPackaged ? path.join(RES, 'node', process.platform === 'win32' ? 'node.exe' : 'node') : (process.env.AIDC_NODE || 'node');
 
 // ---- settings: the project folder
@@ -120,9 +121,12 @@ function watchCrash(w, label) {
   w.webContents.on('render-process-gone', async (e, d) => {
     const why = CRASH_WHY[d.reason] || ('it stopped (' + d.reason + ')');
     const lim = HEAPS.get(label) || RENDER_HEAP;
-    const line = new Date().toISOString() + '  ' + label + ': ' + d.reason + ' (exit ' + d.exitCode + '), RAM ' + RAM_MB + ' MB, window memory limit ' + lim + ' MB, site runner and Layout service limit ' + RUNNER_HEAP + ' MB, runner jobs running ' + jobs.size + ', Layout services running ' + svcs.size;
+    const line = new Date().toISOString() + '  ' + label + ': ' + d.reason + ' (exit ' + d.exitCode + '), RAM ' + RAM_MB + ' MB, window memory limit ' + lim + ' MB, site runner and Layout service limit ' + RUNNER_HEAP + ' MB, runner jobs running ' + jobs.size + ', Layout services running ' + svcs.size + ', design service ' + (dsvc && !dsvc.dead ? 'running' : 'not running');
     const log = path.join(app.getPath('userData'), 'crash-log.txt');
+    const t = new Date(), p2 = (n) => String(n).padStart(2, '0');   // 2.0.24: each crash in its own file, the local time in its name
+    const one = path.join(app.getPath('userData'), 'crash-log-' + t.getFullYear() + '-' + p2(t.getMonth() + 1) + '-' + p2(t.getDate()) + '-' + p2(t.getHours()) + p2(t.getMinutes()) + p2(t.getSeconds()) + '.txt');
     try { fs.appendFileSync(log, line + '\n'); } catch (err) {}
+    try { fs.writeFileSync(one, line + '\nlocal time ' + t.toString() + '\napp ' + app.getVersion() + ', builder ' + (BUILDER_INFO.builder || '?') + '\n'); } catch (err) {}
     if (label === 'builder window') { builderBusy = false; clearTimeout(builderIdle); keepAwake(); }
     if (w.isDestroyed()) return;
     const r = await dialog.showMessageBox(w, { type: 'error', buttons: ['Reload', 'Close'], defaultId: 0, cancelId: 1, noLink: true, title: 'AIDC DBD',
@@ -130,7 +134,7 @@ function watchCrash(w, label) {
       detail: (d.reason === 'oom' ? 'Close other programs, or wait for a running site-runner job to finish, then reload. ' : '') +
         (d.reason === 'crashed' || d.reason === 'oom' ? 'A window has about ' + lim.toLocaleString('en-US') + ' MB of memory for the design, whatever the workstation has; a very large design can run it out. Packages, the .run, the cable matrix and the DC Layout Builder\'s links past 512 racks are built outside the window. ' : '') +
         (label === 'builder window' ? 'After Reload, open your last saved design with File > Load if it does not come back on its own. ' : '') +
-        (jobs.size ? 'Site-runner jobs keep running; they are separate. ' : '') + 'Logged to ' + log });
+        (jobs.size ? 'Site-runner jobs keep running; they are separate. ' : '') + (label === 'builder window' ? 'Past 512 racks, Infra, BoM, Facility, Release check, the OOB link count, the physical model and the Day-2 SoT are built in the design service, outside the window. ' : '') + 'Logged to ' + one });
     if (w.isDestroyed()) return;
     if (r.response === 0) w.webContents.reload(); else if (w !== main) w.close();
   });
@@ -297,4 +301,30 @@ function menu() {
 let _nv = null; function NODE_VER() { if (_nv) return _nv; try { _nv = require('child_process').execFileSync(NODE, ['-v'], { windowsHide: true }).toString().trim(); } catch (e) { _nv = 'not found'; } return _nv; }
 
 app.whenReady().then(() => { loadCfg(); hookDownloads(); menu(); createMain(); });
-app.on('window-all-closed', () => { for (const c of jobs.values()) { try { c.kill(); } catch (e) {} } app.quit(); });
+app.on('window-all-closed', () => { for (const c of jobs.values()) { try { c.kill(); } catch (e) {} } if (dsvc && dsvc.child) { try { dsvc.child.kill(); } catch (e) {} } app.quit(); });
+
+// ---- the design service (2.0.24): past 512 racks the builder window's heavy views run here (Infra, BoM, Facility, Release
+// check, the OOB link count, the Physical model and Day-2 SoT exports), on a copy of the design rebuilt from its site-runner file
+let dsvc = null;
+function designSvc() {
+  if (dsvc && !dsvc.dead) return dsvc;
+  const s = { child: null, seq: 0, pend: new Map(), chain: Promise.resolve(), dead: null };
+  const logf = path.join(app.getPath('userData'), 'design-service.log');
+  try { s.child = spawn(NODE, ['--max-old-space-size=' + RUNNER_HEAP, DESIGN_SVC, '--html', BUILDER], { stdio: ['ignore', 'pipe', 'pipe', 'ipc'], serialization: 'advanced', windowsHide: true }); }
+  catch (err) { s.dead = 'the design service did not start: ' + err.message; return (dsvc = s); }
+  const out = (d) => { try { fs.appendFileSync(logf, d); } catch (e) {} };
+  s.child.stdout.on('data', out); s.child.stderr.on('data', out);
+  s.child.on('message', (m) => {
+    if (m && m.progress != null) { send('design-progress', m.progress); return; }
+    const p = m && s.pend.get(m.id); if (!p) return; s.pend.delete(m.id); if (m.err) p.reject(new Error(m.err)); else p.resolve(m.res); });
+  const gone = (why) => { if (s.dead) return; s.dead = why + ' (details: ' + logf + '); the next request starts it again';
+    for (const p of s.pend.values()) p.reject(new Error(s.dead)); s.pend.clear(); };
+  s.child.on('error', (err) => gone('the design service stopped: ' + err.message));
+  s.child.on('exit', (code, sig) => gone('the design service stopped (' + (sig || 'exit ' + code) + ')'));
+  return (dsvc = s);
+}
+ipcMain.handle('design-q', async (e, op, args) => {
+  args = args || {};
+  if (op === 'open' || op === 'event' || op === 'export') { const dir = projectDir(main); if (!dir) throw new Error('no project folder chosen'); args.out = dir; }
+  return svcCall(designSvc(), op, args);
+});

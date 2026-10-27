@@ -13,7 +13,9 @@ contextBridge.exposeInMainWorld('aidcDesktop', {
   ready: (info) => ipcRenderer.send('ready', info),
   saveDesign: (o) => ipcRenderer.invoke('save-design', o),
   promptSync: (m, d) => ipcRenderer.sendSync('prompt-sync', m, d),
-  onSaveRequest: (fn) => { saveFn = fn; }
+  onSaveRequest: (fn) => { saveFn = fn; },
+  design: (op, args) => ipcRenderer.invoke('design-q', op, args || {}),   // 2.0.24: the design service
+  onDesignProgress: (fn) => { ipcRenderer.on('design-progress', (e, p) => { try { fn(p); } catch (err) {} }); }
 });
 ipcRenderer.on('menu', (e, a) => { if (menuFn) menuFn(a); });
 ipcRenderer.on('save-request', async (e, id) => { let r = null; try { r = saveFn ? await saveFn() : null; } catch (err) { r = { error: String(err && err.message || err) }; } ipcRenderer.send('save-reply', id, r); });

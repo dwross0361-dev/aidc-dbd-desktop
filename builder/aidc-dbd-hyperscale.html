@@ -942,7 +942,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.29';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.30';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   var RADIX=64, CAGE=800;
   // ---- FABRIC PROFILE (parameterized per accelerator platform) ----------------------------------------
   // rails == accelerators per host. Each accelerator instance gets its own rail leaf, which is what
@@ -5140,6 +5140,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   function _phWarm(){ if(byType('rack').length<=128 && !_phWarm.busy){ _phWarm.busy=true; try{ physModel(); }catch(e){} finally{ _phWarm.busy=false; } }   // small sites: cheap enough to count now
     try{ var q=window.__aidcPhysKey(); return q[0]===q[1] && !!q[2] && !!q[3] && !!q[4]; }catch(e){ return false; } }
   function oobHealthData(){
+    if(window.__oobRemote && window.__oobRemote.b===_phKey()) return window.__oobRemote.v;   // HS v1.30: counted by the design service
     var w=_phWarm(), b=_phKey(), k=b+'|'+(w?1:0); if(_oobHM.k===k) return _oobHM.v;
     var mp=_phMp(), mg=allMgtSw(mp), MP=MGMT_PORTS_PER_SW||48, aU=0, wLf=null, lo=mp.fabLo||{}, f=w?_phFab(mp, b):null, N=f?f.nodes:{};
     var nodes=[], cl={};
@@ -5167,6 +5168,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     var v={fab:!!f, mgN:mg.length, aU:aU, aT:mg.length*MP, wLf:wLf, sp:st.spine, ssp:st.ssp, rows:rows};
     _oobHM={k:k, v:v}; return v;
   }
+  window.__aidcOobData=function(){ return {b:_phKey(), v:oobHealthData()}; };   // HS v1.30: the design service's side
+  window.__aidcPhysWarm=function(){ physModel(); };
+  window.__aidcOobRefresh=function(){ renderPlaneHealth._k=null; planeIpHtml0._k=null; try{ _phRun(); }catch(e){} };
   window.__aidcCountOob=function(){   // builds the physical model once, then fills in the OOB link stats
     setStatus('Counting OOB links: building the layout model…');
     setTimeout(function(){ try{ physModel(); }catch(e){} renderPlaneHealth._k=null; planeIpHtml0._k=null; _phRun(); setStatus('OOB links counted.'); }, 30);
@@ -28234,6 +28238,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     return out;
   }
 
+  function _viewCap(){ try{ return byType('rack').length>((window.aidcDesktop && +window.aidcDesktop.big)||+window.__aidcBig||512)?2000:0; }catch(e){ return 0; } }   // HS v1.30
+  function _capNote(shown, all, what){ return '<div class="bom-note" style="margin-top:8px">Showing the first <b>'+shown.toLocaleString('en-US')+'</b> of '+all.toLocaleString('en-US')+' '+what+'. Download, PDF and Copy carry the full list, as does the Blueprint package.</div>'; }
   function renderMgmtModal(){
     var mp=mgmtPlan();
     if(!cfgSwitches().length){ setStatus('Build a fabric first'); return; }
@@ -28256,7 +28262,9 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
           +'<div style="font-family:var(--mono);font-size:10.5px;margin:0 0 8px">'+esc(b.bb.note||'')+'<br>'+(b.bb.segments||[]).map(function(sg){ return '<b>'+sg.seg+'</b>: '+sg.hosts+' hosts \u00b7 shelves '+sg.N+'+'+sg.N+' \u00b7 '+(sg.capLabel||('one side '+sg.sideKw+' kW'))+' vs '+sg.avgKw+' kW avg / '+sg.peakKw+' kW peak \u00b7 '+sg.avgA+' A avg, '+sg.peakA+' A peak of '+sg.ampacity+' A'; }).join('<br>')
           +'<br>Shelves: '+b.shelves.map(function(s){return esc(s.name)+' ['+s.side+']';}).join(', ')+'</div>';
       });
+      var _pc=_viewCap(), _pn=0, _pa=0;   // HS v1.30
       pp.cabs.forEach(function(c){
+        _pa+=c.rows.length; if(_pc && _pn>=_pc) return; _pn+=c.rows.length;
         q+='<div style="font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:1px;margin:12px 0 4px">'+esc(c.cab.toUpperCase())+' \u00b7 '+c.cls+' \u00b7 '+c.volts+'V \u00b7 '+esc(c.input)+' per PDU \u00b7 '+c.rows.length+' cords</div>';
         q+='<div style="font-family:var(--mono);font-size:10.5px;margin:0 0 4px">'+c.pdus.map(function(p){ return '<b>'+esc(p.name)+'</b> '+esc(p.model)+' \u00b7 '+(p.phaseKw||[]).join(' / ')+' kW \u00b7 <span style="color:'+((p.imb||0)>15?'var(--red)':'var(--muted)')+'">'+(p.imb!=null?p.imb+'%':'\u2014')+'</span>'
           +(p.br?' \u00b7 worst branch '+p.br.worst.cb+' '+p.br.worst.failKw+' of '+p.br.cap+' kW failed-side'+(p.br.over?' <span style="color:var(--red)"><b>'+p.br.over+' of '+p.br.n+' branches over</b></span>':''):''); }).join(' &nbsp;|&nbsp; ')+'</div>';
@@ -28267,6 +28275,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
         });
         q+='</table>';
       });
+      if(_pc && _pa>_pn) q+=_capNote(_pn, _pa, 'cords (whole cabinets shown)');
       document.getElementById('mgmt-target').innerHTML=q;
       return;
     }
@@ -28342,13 +28351,15 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       t+='</table>';
       t+=cap('DEVICE OOB ADDRESSES ('+nEnd+')');
       t+='<table style="width:100%;border-collapse:collapse;font-size:12px">'+hdr(['Device','Type','Segment','Mgmt iface','OOB IP','MGT switch / port']);
-      var ri=0;
+      var ri=0, _cp=_viewCap();
       mp.order.forEach(function(id){var o=mp.oob[id]; if(o.dev.type==='mgmt-virtual') return;
+        if(_cp && ri>=_cp){ ri++; return; }   // HS v1.30
         var td='style="padding:4px 9px;border:1px solid var(--line)"', tdm='style="padding:4px 9px;border:1px solid var(--line);font-family:var(--mono)"';
         t+='<tr'+((ri++)%2?' style="background:var(--panel)"':'')+'><td '+td+'>'+o.dev.name+'</td><td '+td+'>'+o.dev.type+'</td><td '+td+'>'+o.segName+'</td>'
           +'<td '+tdm+'>'+mgmtIfName(o.dev)+'</td><td '+tdm+'>'+o.ip+o.mask+'</td><td '+tdm+'>'+(o.sw?o.sw+' '+o.port:'')+'</td></tr>';
       });
       t+='</table>';
+      if(_cp && ri>_cp) t+=_capNote(_cp, ri, 'devices');
     } else {
       // Was a single concatenated blob of every config -- readable only by scrolling, and with
       // no way to reach one device. Same index the backend and frontend planes use.
@@ -31864,7 +31875,82 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
         setStatus('Saving the design…'); d.saveDesign(o).then(function(p){ setStatus(p?('Saved the design to '+p):'Save canceled'); }, function(e){ setStatus('⚠ Save failed: '+(e&&e.message||e)); }); };
       d.onMenu(function(a){ if(a==='job-both') deskJob('both'); else if(a==='job-package') deskJob('package','final'); else if(a==='job-review') deskJob('package','review'); else if(a==='job-run') deskJob('run');
         else if(a==='site-runner') document.getElementById('runnerexp').click(); else if(a==='layout') openDct(); });
+      if(d.design) dsHook(d);   // HS v1.30
       d.ready({builder:BUILDER_VER, app:APP_NAME}); }
+    // ---- HS v1.30: the design service -------------------------------------------------------------------------------------
+    function dsHook(d){
+      var bigD=function(){ return byType('rack').length>BIG; }, DSM=null, DSM0=null, QUIET=false, RV=null;
+      var base=function(p){ return String(p).split(/[\\\/]/).pop(); };
+      if(d.onDesignProgress) d.onDesignProgress(function(e){ if(!DSM || !e || typeof e!=='object') return;
+        if(e.stage==='load' || e.stage==='rebuild'){ DSM0=true; DSM.go(0); DSM.pct(e.stage==='load'?8:30, e.text); }
+        else if(e.stage==='view'){ if(!DSM0) DSM.label(0, 'Design already in the design service'); DSM.go(1); DSM.pct(70, e.text); } });
+      function run(op, args, title){
+        var f; try{ f=siteRunnerFile(); }catch(e){ setStatus('⚠ Design service: '+e.message); return Promise.reject(e); }
+        DSM=loadMeter('', title); DSM0=false; DSM.plan(['Rebuild the design in the design service', 'Build the view']); DSM.go(0);
+        args.file=f;
+        return d.design(op, args).then(function(r){ var m=DSM; DSM=null; m.done(); return r; }, function(e){ var m=DSM; DSM=null; m.fail();
+          var msg=String(e && e.message || e).replace(/^Error invoking remote method '[^']*': (Error: )?/, ''); setStatus('⚠ Design service: '+msg); throw e; }); }
+      // the mirrored view: an overlay holding the view as the service has it; the window's own modals stay hidden and intact
+      function pathOf(el, root){ var p=[]; while(el && el!==root){ var par=el.parentElement; if(!par) return null; p.unshift(Array.prototype.indexOf.call(par.children, el)); el=par; } return el===root?p:null; }
+      function rvClose(){ if(RV && RV.el.parentNode) RV.el.parentNode.removeChild(RV.el); RV=null; }
+      function rvApply(r){
+        if(r.files && r.files.length) setStatus('Saved to the project folder: '+r.files.map(base).join(', '));
+        if(r.clip!=null){ try{ navigator.clipboard.writeText(r.clip); setStatus('Copied to the clipboard'); }catch(e){} }
+        if(!r.html) return;
+        var box=RV.el.firstChild, tg=box.querySelector('[id$="-target"]'), st=tg?tg.scrollTop:0;
+        box.innerHTML=r.html; var tg2=box.querySelector('[id$="-target"]'); if(tg2) tg2.scrollTop=st;
+        var V=r.vals||{}; Object.keys(V).forEach(function(id){ var el=box.querySelector('#'+CSS.escape(id)); if(!el) return; if('checked' in V[id]) el.checked=V[id].checked; else el.value=V[id].value;
+          var real=document.getElementById(id); if(!real || real===el || CTRL_ORDER.indexOf(id)<0) return;   // a design setting changed in the view: the window's design follows
+          var now=('checked' in V[id])?real.checked!==V[id].checked:real.value!==V[id].value; if(!now) return;
+          if('checked' in V[id]) real.checked=V[id].checked; else real.value=V[id].value;
+          QUIET=true; try{ real.dispatchEvent(new Event('change', {bubbles:true})); }catch(e){} finally{ QUIET=false; } });
+        if(r.status) setStatus(r.status);
+        if(r.open===false) rvClose(); }
+      function send(ev){
+        if(!RV || RV.busy) return; RV.busy=true; var box=RV.el.firstChild; box.style.opacity='.6'; box.style.cursor='progress';
+        ev.kind=RV.kind;
+        var m=null, tm=setTimeout(function(){ m=loadMeter('', 'Updating the view (design service)'); m.plan(['Build the view in the design service']); m.go(0); }, 1500);
+        var end=function(ok){ clearTimeout(tm); if(m){ if(ok) m.done(); else m.fail(); } };
+        d.design('event', ev).then(function(r){ end(true); if(!RV) return; RV.busy=false; box.style.opacity=''; box.style.cursor=''; rvApply(r); },
+          function(e){ end(false); if(!RV) return; RV.busy=false; box.style.opacity=''; box.style.cursor=''; setStatus('⚠ Design service: '+String(e && e.message || e).replace(/^Error invoking remote method '[^']*': (Error: )?/, '')); }); }
+      function rvOpen(kind, title){
+        return run('open', {kind:kind}, title).then(function(r){
+          rvClose(); var el=document.createElement('div'); el.id='ds-modal'; el.className='rmodal on'; el.innerHTML='<div class="modal-box"></div>'; document.body.appendChild(el);
+          RV={kind:kind, el:el, busy:false};
+          el.addEventListener('click', function(e){ var box=el.firstChild, t=e.target; if(!box.contains(t)){ if(t===el) rvClose(); return; }
+            if(t.closest('select,option')) return;   // a select is sent on change
+            var inp=t.closest('input,textarea'); if(inp && !/^(checkbox|radio)$/.test(inp.type)) return;   // typing stays local, sent on change
+            e.preventDefault(); e.stopPropagation();
+            var b=t.closest('button,a,input,label,[onclick],[role],[tabindex],[data-v],[data-k],[data-tab]');
+            if(!b){ var c=t; for(var i=0;i<4 && c && c!==box && !b;i++){ try{ if(getComputedStyle(c).cursor==='pointer') b=c; }catch(x){} c=c.parentElement; } }
+            if(!b) return;
+            if(b.tagName==='LABEL'){ var li=b.querySelector('input'); if(li) b=li; else return; }
+            if(/^close/.test(b.id||'')){ rvClose(); return; }
+            var p=pathOf(b, box); if(p) send({type:'click', path:p}); }, true);
+          el.addEventListener('change', function(e){ var box=el.firstChild, t=e.target; if(!box.contains(t)) return; e.stopPropagation();
+            if(/^(checkbox|radio)$/.test(t.type)) return; var p=pathOf(t, box); if(p) send({type:'change', path:p, value:t.value}); }, true);
+          el.addEventListener('keydown', function(e){ if(e.key==='Escape') rvClose(); });
+          rvApply(r); }, function(){}); }
+      // routed past 512 racks
+      var wrapBtn=function(id, fn){ var b=document.getElementById(id); if(!b) return; var o=b.onclick; b.onclick=function(){ if(bigD()) return fn(); return o && o.apply(this, arguments); }; };
+      wrapBtn('mgmtbtn', function(){ rvOpen('infra', 'Infra (design service)'); });
+      wrapBtn('bombtn', function(){ rvOpen('bom', 'Bill of Materials (design service)'); });
+      wrapBtn('facbtn', function(){ rvOpen('facility', 'Facility plan (design service)'); });
+      wrapBtn('relbtn', function(){ rvOpen('release', 'Release check (design service)'); });
+      wrapBtn('physjson', function(){ run('export', {what:'phys'}, 'Physical model (design service)').then(function(r){ setStatus('Saved to the project folder: '+r.files.map(base).join(', ')); }, function(){}); });
+      wrapBtn('sotbtn', function(){ run('export', {what:'sot'}, 'Day-2 SoT (design service)').then(function(r){ setStatus('Saved to the project folder: '+r.files.map(base).join(', ')); }, function(){}); });
+      var _co=window.__aidcCountOob;
+      window.__aidcCountOob=function(){ if(!bigD()) return _co.apply(this, arguments);
+        run('oob', {}, 'Counting the OOB links (design service)').then(function(r){ window.__oobRemote=r; window.__aidcOobRefresh(); setStatus('OOB links counted by the design service.'); }, function(){}); return false; };
+      // a design setting in the mirrored view moves the window's design without redrawing the heavy view here
+      var quiet=function(f){ return function(){ if(QUIET && bigD()) return; return f.apply(this, arguments); }; };
+      renderMgmtModal=quiet(renderMgmtModal); renderBoM=quiet(renderBoM); renderFacility=quiet(renderFacility); renderRelease=quiet(renderRelease);
+      // the memory guard: views still built in the window check its free memory first on a large design
+      var guard=function(id, what){ var b=document.getElementById(id); if(!b) return; var o=b.onclick; b.onclick=function(){
+        if(bigD()){ try{ var pm=performance.memory; if(pm && pm.usedJSHeapSize>0.5*pm.jsHeapSizeLimit){ setStatus('⚠ '+what+' was not opened: this '+byType('rack').length.toLocaleString('en-US')+'-rack design already uses '+Math.round(pm.usedJSHeapSize/1048576).toLocaleString('en-US')+' MB of the window’s '+Math.round(pm.jsHeapSizeLimit/1048576).toLocaleString('en-US')+' MB, and building it here could crash the window. The Blueprint package carries it.'); return; } }catch(e){} }
+        return o && o.apply(this, arguments); }; };
+      guard('renderbtn', 'Render'); guard('febtn', 'FE Render'); guard('cfgbtn', 'Config'); guard('deploybtn', 'Deploy');
+    }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', hook); else setTimeout(hook, 0);
   })();
   (function(){ function uiScope(fn){ return function(){ if(__MEMO) return fn.apply(this, arguments); __MEMO={}; window.__UISCOPE=true;   // HS v1.08
