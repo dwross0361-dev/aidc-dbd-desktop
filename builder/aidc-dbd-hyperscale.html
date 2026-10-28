@@ -942,7 +942,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.36';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.37';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   var RADIX=64, CAGE=800;
   // ---- FABRIC PROFILE (parameterized per accelerator platform) ----------------------------------------
   // rails == accelerators per host. Each accelerator instance gets its own rail leaf, which is what
@@ -30180,6 +30180,16 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     }
     return changed;
   }
+  function _dropDesignCaches(){   // HS v1.37: every cache that holds a design (each is rebuilt when next asked for)
+    var z=function(f){ try{ f(); }catch(e){} };
+    z(function(){ _dix={arr:null,len:-1,map:null}; }); z(function(){ _tix={arr:null,len:-1,map:null}; });
+    z(function(){ _lix={arr:null, len:-1, port:null, cage:null, dev:null}; }); z(function(){ _lkCount=null; _lkIx=null; _lkStamp=null; });
+    z(function(){ _fpMemo={key:null, pm:null}; }); z(function(){ _feHM={k:null, v:null}; _oobHM={k:null, v:null}; }); z(function(){ _fabMemo={k:null, v:null}; });
+    z(function(){ _bacMemo=null; }); z(function(){ _spxMemo=null; }); z(function(){ _hyMemo=null; }); z(function(){ _mgMemo=null; });
+    z(function(){ _PHY={key:null, devs:null, links:null, v:null}; }); z(function(){ _phMpM={k:null, v:null}; }); z(function(){ _phFab._k=null; _phFab._v=null; });
+    z(function(){ renderIpAsn._m=null; }); z(function(){ renderPlanes._k=null; }); z(function(){ planeIpHtml0._k=null; planeIpHtml0._v=null; planeIpHtml0._b=null; });
+    z(function(){ renderPlaneHealth._k=null; }); z(function(){ window.__oobRemote=null; });
+  }
   function buildFromRacks(){
     syncControls();            // the dropdown is the source of truth, not the last event we saw
     resetCablePlan();          // geometry changes with profile/rack count -- re-derive lengths
@@ -30191,6 +30201,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     SITE_CODE=deriveCode(document.getElementById('clientname').value); clientCode=namePrefixFor(SITE_CODE);   // v510
     // reset
     devs=[];links=[];seq={rack:0,leaf:0,spine:0,ssp:0,stor:0};sel=null;traceOff={};
+    _dropDesignCaches();   // HS v1.37: the old design goes now, not after the new one is built
 
     // ---- organize by POD: a pod is the set of racks one rail leaf serves ----
     var podCount=Math.max(1,Math.ceil(N/RACKS_PER_POD));
@@ -31805,8 +31816,14 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     function safe(s){ return String(s==null?'':s).replace(/[\u2194\u2192\u2190\u2264\u2265\u2248\u2212\u00d8\u2009\u202f\u00d7]/g,function(c){return _sym[c];})
                        .replace(/[^\x00-\xff\u2013\u2014\u2018\u2019\u201c\u201d\u2020\u2021\u2022\u2026\u20ac\u2122]/g,'?'); }
     var pdf=new window.jspdf.jsPDF({orientation:'landscape', unit:'pt', format:'letter'});
+    try{ var _T=pdf.internal.events.getTopics(), _AR=window.jspdf.jsPDF.API.processArabic;   // HS v1.37: Latin-only text, no Arabic or RTL passes
+      ['preProcessText','postProcessText'].forEach(function(k){ var o=_T[k]; if(!o) return; Object.keys(o).forEach(function(tok){ var f=o[tok][0]; if(f===_AR || /doBidiReorder/.test(String(f))) delete o[tok]; }); }); }catch(e){}
     var PW=pdf.internal.pageSize.getWidth(), PH=pdf.internal.pageSize.getHeight(), M=30, W=PW-2*M, page=0, y=0;
     var fr=[0.035,0.15,0.085,0.15,0.085,0.14,0.055,0.19,0.055,0.055], cw=fr.map(function(f){ return f*W; }); sub=safe(sub);
+    var _SC=new Map(), _SP=new Map();   // HS v1.37: safe() and splitTextToSize() once per distinct value (bounded)
+    var safeC=function(v){ var k=String(v==null?'':v), r=_SC.get(k); if(r===undefined){ if(_SC.size>200000) _SC.clear(); r=safe(k); _SC.set(k, r); } return r; };
+    var splitC=function(t, w){ var f=pdf.getFont(), k=f.fontName+'|'+f.fontStyle+'|'+pdf.getFontSize()+'|'+w+'|'+t, r=_SP.get(k);
+      if(r===undefined){ if(_SP.size>200000) _SP.clear(); r=pdf.splitTextToSize(t, w); _SP.set(k, r); } return r.slice(); };
     function footer(){ pdf.setFontSize(7.5); pdf.setTextColor(120); pdf.text(APP_NAME, M, PH-16); pdf.text('Page '+page, PW-M, PH-16, {align:'right'}); }
     specs.forEach(function(s){
       var head=s.header.map(safe), title=safe(s.title);
@@ -31825,7 +31842,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
           pdf.setFont('helvetica','bold'); pdf.setFontSize([9.5,8.5,7.5][_L]); pdf.setTextColor(_L<2?255:25); pdf.text(pdf.splitTextToSize(safe(r.sep), W-10)[0], M+5, y+[13,11,10][_L]);
           pdf.setFont('helvetica','normal'); pdf.setTextColor(25); y+=h1; shade=false; return; }
         pdf.setFontSize(7);
-        var cells=r.map(function(v,i){ return pdf.splitTextToSize(safe(v), cw[i]-5); }), hgt=Math.max.apply(null, cells.map(function(c){ return c.length; }))*8.4+4;
+        var cells=r.map(function(v,i){ return splitC(safeC(v), cw[i]-5); }), hgt=Math.max.apply(null, cells.map(function(c){ return c.length; }))*8.4+4;
         if(y+hgt>PH-M-12) header();
         shade=!shade; if(shade){ pdf.setFillColor(244,247,250); pdf.rect(M, y, W, hgt, 'F'); }
         var x=M; cells.forEach(function(c,i){ pdf.setFont('helvetica', i===1?'bold':'normal'); if(i>=8||i===0) pdf.text(c, x+cw[i]-3, y+9, {align:'right'}); else pdf.text(c, x+3, y+9); x+=cw[i]; });
@@ -31913,7 +31930,12 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       if(d.onLayoutFileRequest) d.onLayoutFileRequest(function(){ return siteRunnerFile(); });   // HS v1.26: Refresh from Fabric Designer
       var deskSave=function(){ if(!byType('rack').length) return null;   // HS v1.08
         var cli=(document.getElementById('clientname').value||''), c2=cli.trim().replace(/[^A-Za-z0-9]/g,''), n=byType('rack').length;
+        if(n>512 && d.onSaveStream) return {name:(c2||'gpu-fabric')+(n?'-'+n+'rack':'')+'.json', stream:true, racks:n};   // HS v1.37: written in parts when saved
         return {name:(c2||'gpu-fabric')+(n?'-'+n+'rack':'')+'.json', text:JSON.stringify(designSaveObject(cli),null,2), racks:n}; };
+      if(d.onSaveStream) d.onSaveStream(async function(id){   // HS v1.37: the design in parts, straight to the file
+        var cli=(document.getElementById('clientname').value||''), blob=jsonBytes1(designSaveObject(cli), true), STEP=8388608;
+        for(var i=0;i<blob.size;i+=STEP){ var b=new Uint8Array(await blob.slice(i, i+STEP).arrayBuffer()); await d.saveChunk(id, b, false); }
+        await d.saveChunk(id, null, true); });
       if(d.onSaveRequest) d.onSaveRequest(function(){ return deskSave(); });
       var _sb=document.getElementById('save');
       if(_sb && d.saveDesign) _sb.onclick=function(){ var o=deskSave(); if(!o){ setStatus('Build a fabric first'); return; }

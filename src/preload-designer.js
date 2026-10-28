@@ -12,6 +12,8 @@ contextBridge.exposeInMainWorld('aidcDesktop', {
   onMenu: (fn) => { menuFn = fn; },
   ready: (info) => ipcRenderer.send('ready', info),
   saveDesign: (o) => ipcRenderer.invoke('save-design', o),
+  onSaveStream: (fn) => { ipcRenderer.on('save-stream', (e, id) => { Promise.resolve().then(() => fn(id)).catch((err) => ipcRenderer.send('save-stream-failed', id, String(err && err.message || err))); }); },   // 2.0.29
+  saveChunk: (id, bytes, done) => ipcRenderer.invoke('save-chunk', id, bytes, !!done),
   promptSync: (m, d) => ipcRenderer.sendSync('prompt-sync', m, d),
   onSaveRequest: (fn) => { saveFn = fn; },
   design: (op, args) => ipcRenderer.invoke('design-q', op, args || {}),   // 2.0.24: the design service

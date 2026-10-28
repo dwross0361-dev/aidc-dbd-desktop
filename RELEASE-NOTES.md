@@ -1,3 +1,10 @@
+# AIDC DBD Desktop 2.0.29 (builder HS-v1.37, site runner 1.6.0)
+
+- **No crash on Exit with a large design.** Exit, and Save, made the whole design into one text inside the window, and Exit did it before asking whether to save. At 1,625 racks that ran the window out of memory. Now Exit asks first. A design past 512 racks is written in parts that stream straight into the file: 3 s and 68 MB at 800 racks. It's the same JSON that Load reads, indented by one space instead of two. Up to 512 racks, saving is unchanged.
+- **A rebuild lets go of the old design first.** During a rebuild, caches still held the old design while the new one was built, so the window briefly held both. At 1,625 racks a back-end platform change peaked at 2.3 to 2.9 GB; at 4,096 racks it would have passed the window's 3.5 GB. The caches are now cleared where the rebuild starts. With the window capped at 1.8 GB, 2.0.28 crashed on that change at 1,625 racks and 2.0.29 completes it, with the same design.
+- **The Cable Matrix PDF builds about 25% faster, with the same bytes.** Repeated values are cleaned and split once. The PDF library's Arabic and right-to-left passes are switched off, since this document's text is always Latin.
+- **One file per crash.** Each crash is logged only to its own dated file, `crash-log-YYYY-MM-DD-HHMMSS.txt` in `%APPDATA%\AIDC DBD`, with the local time and the app and builder versions. The cumulative `crash-log.txt` is no longer written; an existing one is left where it is.
+
 # AIDC DBD Desktop 2.0.28 (builder HS-v1.36, site runner 1.6.0)
 
 - **DC Layout Builder: Find device answers at once on a large site.** At 800 racks, pressing Enter took over 9 minutes, and at 1,625 racks it hung the Layout tool. It now takes about half a second.

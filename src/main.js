@@ -11,7 +11,7 @@ const path = require('path'), fs = require('fs'), os = require('os'), { spawn } 
 const RAM_MB = Math.floor(os.totalmem() / 1048576);
 // 2.0.20: a window's JavaScript memory stops near 4 GB whatever --max-old-space-size asks (Chromium builds V8 with pointer
 // compression). 2.0.14 to 2.0.19 asked for up to 16 GB and reported that figure; the limit shown now is read from each window.
-const RENDER_HEAP = 4096;
+const RENDER_HEAP = +process.env.AIDC_RENDER_HEAP || 4096;   // AIDC_RENDER_HEAP: testing only
 // the site runner and the Layout service: Node processes, not windows, so they get the workstation's memory
 const RUNNER_HEAP = Math.max(8192, Math.min(Math.floor(RAM_MB * 0.75), RAM_MB - 8192));
 app.commandLine.appendSwitch('js-flags', '--max-old-space-size=' + RENDER_HEAP);
@@ -81,10 +81,29 @@ ipcMain.on('prompt-sync', (e, message, def) => {
 });
 
 // ---- Save: a native dialog; and the same offer when the app closes
+// 2.0.29: a large design is not made into one text in the window (past ~512 racks that text runs the window out of memory, or
+// past the longest string it can hold); the window streams it in parts straight into the file
+let streamSeq = 0; const streams = new Map();
+ipcMain.handle('save-chunk', (e, id, bytes, done) => {
+  const st = streams.get(id); if (!st) throw new Error('no save in progress');
+  if (bytes && bytes.length) fs.writeSync(st.fd, Buffer.from(bytes));
+  if (done) { fs.closeSync(st.fd); streams.delete(id); try { fs.renameSync(st.tmp, st.path); } catch (err) { st.resolve(null); throw err; } st.resolve(st.path); }
+  return true;
+});
+ipcMain.on('save-stream-failed', (e, id, msg) => { const st = streams.get(id); if (!st) return; streams.delete(id); try { fs.closeSync(st.fd); fs.unlinkSync(st.tmp); } catch (err) {} st.reject(new Error(msg || 'the design was not written')); });
+function streamSave(filePath) {
+  return new Promise((resolve, reject) => {
+    if (!main || main.isDestroyed()) { reject(new Error('the builder window is closed')); return; }
+    const id = ++streamSeq, tmp = filePath + '.part';
+    streams.set(id, { fd: fs.openSync(tmp, 'w'), tmp, path: filePath, resolve, reject });
+    main.webContents.send('save-stream', id);
+  });
+}
 async function saveDesignFile(o) {
-  if (!o || !o.text) return null;
-  const r = await dialog.showSaveDialog(main, { title: 'Save the design', defaultPath: path.join(CFG.projectDir || app.getPath('documents'), o.name || 'design.json'), filters: [{ name: 'AIDC DBD design', extensions: ['json'] }] });
+  if (!o || !(o.text || o.stream)) return null;
+  const r = process.env.AIDC_TEST_SAVE ? { filePath: process.env.AIDC_TEST_SAVE } : await dialog.showSaveDialog(main, { title: 'Save the design', defaultPath: path.join(CFG.projectDir || app.getPath('documents'), o.name || 'design.json'), filters: [{ name: 'AIDC DBD design', extensions: ['json'] }] });
   if (r.canceled || !r.filePath) return null;
+  if (o.stream) return streamSave(r.filePath);
   fs.writeFileSync(r.filePath, o.text); return r.filePath;
 }
 ipcMain.handle('save-design', (e, o) => saveDesignFile(o));
@@ -122,10 +141,8 @@ function watchCrash(w, label) {
     const why = CRASH_WHY[d.reason] || ('it stopped (' + d.reason + ')');
     const lim = HEAPS.get(label) || RENDER_HEAP;
     const line = new Date().toISOString() + '  ' + label + ': ' + d.reason + ' (exit ' + d.exitCode + '), RAM ' + RAM_MB + ' MB, window memory limit ' + lim + ' MB, site runner and Layout service limit ' + RUNNER_HEAP + ' MB, runner jobs running ' + jobs.size + ', Layout services running ' + svcs.size + ', design service ' + (dsvc && !dsvc.dead ? 'running' : 'not running');
-    const log = path.join(app.getPath('userData'), 'crash-log.txt');
-    const t = new Date(), p2 = (n) => String(n).padStart(2, '0');   // 2.0.24: each crash in its own file, the local time in its name
+    const t = new Date(), p2 = (n) => String(n).padStart(2, '0');   // 2.0.24: each crash in its own file, the local time in its name (2.0.29: the only crash file)
     const one = path.join(app.getPath('userData'), 'crash-log-' + t.getFullYear() + '-' + p2(t.getMonth() + 1) + '-' + p2(t.getDate()) + '-' + p2(t.getHours()) + p2(t.getMinutes()) + p2(t.getSeconds()) + '.txt');
-    try { fs.appendFileSync(log, line + '\n'); } catch (err) {}
     try { fs.writeFileSync(one, line + '\nlocal time ' + t.toString() + '\napp ' + app.getVersion() + ', builder ' + (BUILDER_INFO.builder || '?') + '\n'); } catch (err) {}
     if (label === 'builder window') { builderBusy = false; clearTimeout(builderIdle); keepAwake(); }
     if (w.isDestroyed()) return;
