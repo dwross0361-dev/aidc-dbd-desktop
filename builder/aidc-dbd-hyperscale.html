@@ -942,7 +942,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.31';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.33';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   var RADIX=64, CAGE=800;
   // ---- FABRIC PROFILE (parameterized per accelerator platform) ----------------------------------------
   // rails == accelerators per host. Each accelerator instance gets its own rail leaf, which is what
@@ -3301,6 +3301,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   // unresponsive. One index, rebuilt only when the link list changes (a new array or a new length),
   // turns each lookup into a hash hit.
   var _lix={arr:null, len:-1, port:null, cage:null, dev:null};
+  var _natRank=new Map();   // HS v1.33: port suffix -> natural-order rank (strings only, so it holds across designs)
   var _NATC = (typeof Intl!=='undefined' && Intl.Collator) ? new Intl.Collator(undefined,{numeric:true}) : {compare:function(a,b){ return a<b?-1:a>b?1:0; }};   // v480
   function linkIdx(){
     if(_lix.arr===links && _lix.len===links.length) return _lix;
@@ -7785,8 +7786,10 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
         }
       }
       // edge links, skipping any the fabric maps already carry
-      var seen={}; links.forEach(function(l){ seen[[l.a,l.ap,l.b,l.bp].join('|')]=1; seen[[l.b,l.bp,l.a,l.ap].join('|')]=1; });
-      EDGE_LINKS.forEach(function(l){ if(!seen[[l.a,l.ap,l.b,l.bp].join('|')]) links.push(l); });
+      var _j=function(x){ return x==null?'':String(x); }, _k=function(a,ap,b,bp){ return _j(a)+'|'+_j(ap)+'|'+_j(b)+'|'+_j(bp); };   // HS v1.33: as join('|')
+      var _ed={}; EDGE_LINKS.forEach(function(l){ _ed[_j(l.a)]=1; _ed[_j(l.b)]=1; });   // a key can only match on the edge links' own devices
+      var seen={}; links.forEach(function(l){ if(!_ed[_j(l.a)] && !_ed[_j(l.b)]) return; seen[_k(l.a,l.ap,l.b,l.bp)]=1; seen[_k(l.b,l.bp,l.a,l.ap)]=1; });
+      EDGE_LINKS.forEach(function(l){ if(!seen[_k(l.a,l.ap,l.b,l.bp)]) links.push(l); });
     }
     // ---- platform model and pair membership on every item (faceplates; pair-split checks) ----
     var msk=null; try{ msk=mgmtSku(); }catch(e){}
@@ -7958,9 +7961,10 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       var sizePatch=function(){
         if(!_pdev){ var rowOf={}, beOf={}; cab.forEach(function(c){ c.items.forEach(function(it){ rowOf[it.name]=c.row; if(/^be-/.test(it.role||'')) beOf[it.name]=1; }); }); _pdev={};
           var _ln=laneFab()&&ACC_PER_CAGE>1, _seen={}, _cage=function(p){ var m=/^(swp\d+)s\d+$/.exec(p)||/^(et-\d+\/\d+\/\d+):\d+$/.exec(p)||/^(Ethernet\d+)\/\d+$/.exec(p)||/^(ethernet-\d+\/\d+)\/\d+$/.exec(p); return m?m[1]:p; };   // v546
-          links.forEach(function(L){ var k=null; [[L.a,L.b,L.ap],[L.b,L.a,L.bp]].forEach(function(e){ var r0=rowOf[e[0]], r1=rowOf[e[1]]; if(r0==null || r1==null || r1===r0) return;
-            if(_ln && beOf[e[0]] && e[2]!=null){ var _ck=e[0]+'|'+_cage(String(e[2])); if(_seen[_ck]) return; _seen[_ck]=1; }   // v546: one trunk per cage
-            if(k===null) k=/cat ?6|copper|rj45|1000base-t/i.test(String(L.media||''))?'cu':'fi'; (_pdev[e[0]]=_pdev[e[0]]||{fi:0,cu:0})[k]++; }); }); }
+          var L, k, end=function(e0, e1, e2){ var r0=rowOf[e0], r1=rowOf[e1]; if(r0==null || r1==null || r1===r0) return;   // HS v1.33: no arrays per link
+            if(_ln && beOf[e0] && e2!=null){ var _ck=e0+'|'+_cage(String(e2)); if(_seen[_ck]) return; _seen[_ck]=1; }   // v546: one trunk per cage
+            if(k===null) k=/cat ?6|copper|rj45|1000base-t/i.test(String(L.media||''))?'cu':'fi'; (_pdev[e0]=_pdev[e0]||{fi:0,cu:0})[k]++; };
+          for(var _li=0; _li<links.length; _li++){ L=links[_li]; k=null; end(L.a, L.b, L.ap); end(L.b, L.a, L.bp); } }
         var P={}; cab.forEach(function(c){ if(c.cls==='compute') return; var p={fi:0,cu:0}; c.items.forEach(function(it){ var q=_pdev[it.name]; if(q){ p.fi+=q.fi; p.cu+=q.cu; } }); P[c.id]=p; });
         cab.forEach(function(c){ if(c.cls==='compute' || c.floorUnit) return; var p=P[c.id]||{fi:0,cu:0};
           c.patchPorts={fiber:p.fi, copper:p.cu}; c.patchU=Math.ceil(p.fi/FE_RACK.mpoPerU)+Math.ceil(p.cu/FE_RACK.rj45PerU); });
@@ -8180,6 +8184,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
 
     // Port Mapping
     var pmRows=[];
+    var _MED=new Array(links.length), _MEB=new Array(links.length), _SPD=new Array(links.length);   // HS v1.33: the media of link i, a->b and (when it is the same) b->a
     links.forEach(function(l,i){
       var pa=l.a.split('|'),pb=l.b.split('|'),da=dev(pa[0]),db=dev(pb[0]);
       var speed='',role='';
@@ -8189,7 +8194,9 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       });
       if(!speed){role=(da.type==='spine'&&db.type==='ssp')||(db.type==='spine'&&da.type==='ssp')?'spine-uplink':'fabric';speed='800G';}
       if(laneFab()) speed=laneG()+'G';   // v551: every back-end port runs at the lane speed
-      pmRows.push([i+1, da.name, da.type, label(l.a), db.name, db.type, label(l.b), speed, role].concat(_capture?[beCableMedia(da,db,l.a,l.b)]:[]));   // v514: media rides the capture only
+      _SPD[i]=speed;   // HS v1.33
+      var _md=beCableMedia(da,db,l.a,l.b); _MED[i]=_md; _MEB[i]=(da.type==='leaf' && db.type==='leaf')?null:_md;   // HS v1.33: symmetric unless both ends are leaves
+      pmRows.push([i+1, da.name, da.type, label(l.a), db.name, db.type, label(l.b), speed, role].concat(_capture?[_md]:[]));   // v514: media rides the capture only
     });
     // group Port Mapping by Role with a labeled separator band between each role
     var ROLE_ORDER=['uplink','downlink','spine-uplink','fabric'];
@@ -8219,14 +8226,25 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     // Build an adjacency: for each device, list each of its ports and the far end.
     pmRows=null; groups=null;   // v539
     var cmByDev={};
-    function pushEnd(localPid, farPid){
-      var lp=localPid.split('|'), d=dev(lp[0]); if(!d)return;
-      var far=dev(farPid.split('|')[0]);
+    function _natSortEnds(ends, d){
+      var P=d.name+':', L=P.length, i, n=ends.length;
+      for(i=0;i<n;i++) if(String(ends[i][0]).lastIndexOf(P,0)!==0) break;
+      if(i<n){ ends.sort(function(x,y){ return _NATC.compare(String(x[0]),String(y[0])); }); return; }
+      var R=_natRank, miss={}, mk=[];
+      for(i=0;i<n;i++){ var k=String(ends[i][0]).slice(L); if(!R.has(k) && !miss[k]){ miss[k]=1; mk.push(k); } }
+      if(mk.length){ var all=Array.from(R.keys()).concat(mk).sort(function(a,b){ return _NATC.compare(a,b); }); R.clear(); for(i=0;i<all.length;i++) R.set(all[i], i); }
+      var w=new Array(n); for(i=0;i<n;i++) w[i]={r:R.get(String(ends[i][0]).slice(L)), e:ends[i]};
+      w.sort(function(a,b){ return a.r-b.r; }); for(i=0;i<n;i++) ends[i]=w[i].e;
+    }
+    function pushEnd(localPid, farPid, _m, _s, _d, _f){
+      var d=_d!==undefined?_d:dev(localPid.split('|')[0]); if(!d)return;   // HS v1.33: the devices from the caller when it has them
+      var far=_f!==undefined?_f:dev(farPid.split('|')[0]);
       // speed/media from the leaf cage if either end is a leaf; else fabric 800G
       var speed='800G', media='';
+      if(_s!=null) speed=_s; else {   // HS v1.33: the port mapping's speed for this link when it is the same
       [localPid,farPid].forEach(function(pid){var pr=pid.split('|'),dd=dev(pr[0]);if(dd&&dd.type==='leaf'){var c=dd.cages[+pr[1]];if(c){speed=c.bk===1?'800G':c.bk===2?'400G':(800/c.bk)+'G';}}});
-      if(laneFab()) speed=laneG()+'G';   // v551
-      media=beCableMedia(d, far, localPid, farPid);   // v514: one derivation, shared with the physical model
+      if(laneFab()) speed=laneG()+'G'; }   // v551
+      media=_m!=null?_m:beCableMedia(d, far, localPid, farPid);   // v514: one derivation, shared with the physical model (HS v1.33: once per link)
       (cmByDev[d.id]=cmByDev[d.id]||[]).push([label(localPid), far?far.name:'?', label(farPid), speed, media]);
     }
     // v514: the cable media of a back-end link from its two ends (Cable Map and physical model)
@@ -8246,7 +8264,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
         return _MM[_mk]; }
       return cat.indexOf('rack')>=0?(bkTxt||'host link'):cat==='leaf-spine'?'800G AOC (leaf\u2192spine)':cat==='spine-ssp'?'800G AOC (spine\u2192SSP)':'AOC';
     }
-    links.forEach(function(l){ pushEnd(l.a,l.b); pushEnd(l.b,l.a); });
+    links.forEach(function(l,i){ var ll=_MEB[i]===null, da=dev(l.a.split('|')[0]), db=dev(l.b.split('|')[0]);
+      pushEnd(l.a,l.b,_MED[i],_SPD[i],da,db); pushEnd(l.b,l.a,_MEB[i],ll?null:_SPD[i],db,da); }); _MED=_MEB=_SPD=null;
     // device order: leaves (by pod/name), spines, ssps, racks — the order a cabler walks the row
     var cmOrder=['leaf','spine','ssp','rack'];
     var cmDevs=devs.slice().filter(function(d){return cmByDev[d.id];}).sort(function(a,b){
@@ -8260,9 +8279,9 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       // sort each device's cables by local port name for tidy sequential following
       // NATURAL order. A string sort put et-0/0/10 before et-0/0/2, so a cabler walking the
       // list jumped around the faceplate.
-      ends.sort(function(x,y){ return _NATC.compare(String(x[0]),String(y[0])); });
+      _natSortEnds(ends, d);   // HS v1.33: the same order, ranked
       cmRows.push({sep:d.name+'  ('+d.type+(d.rail!==undefined?', rail '+d.rail:'')+')  \u2014  '+ends.length+' cable'+(ends.length===1?'':'s')});
-      ends.forEach(function(e,i){ e.unshift(i+1); e.splice(2,0,'\u2192'); cmRows.push(e); });   // v539: in place
+      ends.forEach(function(e,i){ var n=e.length; e.length=n+2; for(var k=n-1;k>=1;k--) e[k+2]=e[k]; e[2]='\u2192'; e[1]=e[0]; e[0]=i+1; cmRows.push(e); });   // v539: in place (HS v1.33: no unshift/splice)
     });
     // The frontend has its own sheet (FE Cable Map) rather than a section here. Keeping it in
     // both places would mean two renderings of the same cable, and the first time one of them
@@ -8533,7 +8552,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     var short=function(id){ var d=dev(id); return d?beShortName(d.name):id; };   // v515
     var natural=function(a,b){ return String(a).localeCompare(String(b),undefined,{numeric:true}); };
     var L0=leaves.slice().sort(function(a,b){ return natural(a.name,b.name); })[0];
-    var L0links=links.filter(function(l){ return P(l.a)[0]===L0.id||P(l.b)[0]===L0.id; })
+    var _ip=function(p,id){ return p===id || p.startsWith(id+'|'); };   // HS v1.33: P(p)[0]===id, without the split
+    var L0links=links.filter(function(l){ return _ip(l.a,L0.id)||_ip(l.b,L0.id); })
       .map(function(l){ return P(l.a)[0]===L0.id?{me:l.a,far:l.b}:{me:l.b,far:l.a}; });
     var dnL=L0links.filter(function(x){ var d=dev(P(x.far)[0]); return d&&d.type==='rack'; })
       .sort(function(a,b){ return natural(ifn(a.me),ifn(b.me)); });
@@ -8556,8 +8576,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
         null]);
       // rail symmetry, checked rather than asserted
       var rk0=P(dnL[0].far)[0], h0=P(dnL[0].far)[1];
-      var hostLinks=links.filter(function(l){ var a=P(l.a), b=P(l.b);
-        return (a[0]===rk0&&a[1]===h0)||(b[0]===rk0&&b[1]===h0); })
+      var _hp=rk0+'|'+h0, hostLinks=links.filter(function(l){   // HS v1.33: a prefix test
+        return l.a===_hp || l.a.startsWith(_hp+'|') || l.b===_hp || l.b.startsWith(_hp+'|'); })
         .map(function(l){ return P(l.a)[0]===rk0?l.b:l.a; });
       var ports={}; hostLinks.forEach(function(pid){ var l=label(pid); ports[l.slice(l.indexOf(':')+1)]=1; });
       var nRail=hostLinks.length;
@@ -8591,7 +8611,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     // SPINE SIDE: read from the first spine
     if(nS){
       var S0=spines.slice().sort(function(a,b){ return natural(a.name,b.name); })[0];
-      var sl=links.filter(function(l){ return P(l.a)[0]===S0.id||P(l.b)[0]===S0.id; })
+      var sl=links.filter(function(l){ return _ip(l.a,S0.id)||_ip(l.b,S0.id); })
         .map(function(l){ return P(l.a)[0]===S0.id?{me:l.a,far:l.b}:{me:l.b,far:l.a}; })
         .sort(function(a,b){ return (+P(a.me)[1])-(+P(b.me)[1]); });
       var toLeaf=sl.filter(function(x){ var d=dev(P(x.far)[0]); return d&&d.type==='leaf'; });
@@ -30968,6 +30988,9 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     try{ return fn.apply(this, arguments); } finally{ __MEMO=null; } }; }
   sotExport=__memoScope(sotExport); viewerHtml=__memoScope(viewerHtml); designDocPdf=__memoScope(designDocPdf);
   fePairMap=__memo('fePairMap', fePairMap);   // HS v1.06
+  exportXlsx=(function(f){ return function(){ var keep=label, C=new Map();   // HS v1.33: one label per port per export
+    label=function(pid){ var v=C.get(pid); if(v===undefined){ v=keep(pid); C.set(pid, v); } return v; };
+    try{ return f.apply(this, arguments); } finally{ label=keep; } }; })(exportXlsx);
   window.__aidcMemoHold=function(m){ if(m==='fresh') __MEMO={}; else if(m==='keep'){ if(!__MEMO) __MEMO={}; } else __MEMO=null; window.__UISCOPE=!!__MEMO; };   // HS v1.30: the design service (a view's memo, as render holds one)
   window.__aidcWarmOob=function(){ try{ oobFab(); }catch(e){} };
   renderMgmtModal=__memoScope(renderMgmtModal); renderBoM=__memoScope(renderBoM); renderFacility=__memoScope(renderFacility); renderRelease=__memoScope(renderRelease);   // HS v1.30

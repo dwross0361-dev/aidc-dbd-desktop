@@ -1,3 +1,7 @@
+# AIDC DBD Desktop 2.0.26 (builder HS-v1.33, site runner 1.6.0)
+
+- **The physical model builds about twice as fast, with identical outputs.** At 162 racks it takes about 1.6 s, down from 3.2 s. At 512 racks it takes about 10 s, down from 18 s. Everything that builds it is faster: front-panel changes up to 512 racks (the cabinet row), Infra, BoM, Facility, Physical model, the DC Layout Builder, the cable maps and packages. Packages, the physical model, the SoT and every Excel sheet are byte-identical to 2.0.25's, timestamps aside. HS-v1.32 was a development build that was never released.
+
 # AIDC DBD Desktop 2.0.25 (builder HS-v1.31, site runner 1.6.0)
 
 - **Mgmt switch configs: a device click shows that device's config in about 1 to 2 seconds at 1,625 racks (it took 75 to 200 s).** A click had rebuilt the whole view, and each device's config rebuilt the management plan, physical model and OOB fabric. The view and its exports now build those once. Past 512 racks, the design service keeps them across clicks that change nothing and builds the OOB fabric when the configs view opens. Expect about 2 minutes on that switch at 1,625 racks; device clicks after that are quick. Download of all 3,501 configs takes about 6 s.
