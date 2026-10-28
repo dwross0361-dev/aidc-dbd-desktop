@@ -942,7 +942,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.33';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.35';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   var RADIX=64, CAGE=800;
   // ---- FABRIC PROFILE (parameterized per accelerator platform) ----------------------------------------
   // rails == accelerators per host. Each accelerator instance gets its own rail leaf, which is what
@@ -3289,9 +3289,14 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     devs.push(d); return id;
   }
   var _dix={arr:null,len:-1,map:null};
-  function dev(id){ if(_dix.arr!==devs||_dix.len!==devs.length){ var m=new Map(); devs.forEach(function(d){ m.set(d.id,d); }); _dix={arr:devs,len:devs.length,map:m}; } return _dix.map.get(id); }
+  function dev(id){ if(_dix.arr!==devs||_dix.len!==devs.length){
+      if(_dix.arr===devs && devs.length>_dix.len){ for(var i=_dix.len;i<devs.length;i++) _dix.map.set(devs[i].id, devs[i]); _dix.len=devs.length; }   // HS v1.35: devices only appended
+      else { var m=new Map(); devs.forEach(function(d){ m.set(d.id,d); }); _dix={arr:devs,len:devs.length,map:m}; } }
+    return _dix.map.get(id); }
   var _tix={arr:null,len:-1,map:null};   // v521: per-type index, rebuilt when devs is replaced or grows/shrinks (as _dix)
-  function byType(t){ if(_tix.arr!==devs||_tix.len!==devs.length){ var m={}; devs.forEach(function(d){ (m[d.type]=m[d.type]||[]).push(d); }); _tix={arr:devs,len:devs.length,map:m}; }
+  function byType(t){ if(_tix.arr!==devs||_tix.len!==devs.length){
+      if(_tix.arr===devs && devs.length>_tix.len){ var m0=_tix.map; for(var i=_tix.len;i<devs.length;i++){ var d0=devs[i]; (m0[d0.type]=m0[d0.type]||[]).push(d0); } _tix.len=devs.length; }   // HS v1.35: appended
+      else { var m={}; devs.forEach(function(d){ (m[d.type]=m[d.type]||[]).push(d); }); _tix={arr:devs,len:devs.length,map:m}; } }
     var a=_tix.map[t]; return a?a.slice():[]; }
 
   // endpoint keys: leaf cage subports -> "leaf-1/cage/sub"; rack -> "rack-1/rdu/idx" or "/st"
@@ -3309,13 +3314,15 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     if(_lix.arr===links && links.length>_lix.len) from=_lix.len;      // links were only appended: index the new ones
     else _lix={arr:links, len:0, port:new Map(), cage:new Map(), dev:new Map(), devN:new Map(), nbr:new Map()};
     var port=_lix.port, cage=_lix.cage, devp=_lix.dev, devN=_lix.devN, nbr=_lix.nbr;
-    for(var i=from;i<links.length;i++){ var l=links[i];
-      var _da=l.a.split('|')[0], _db=l.b.split('|')[0];   // v480: links per device and neighbor counts
+    var _nb=function(x, y){ var m=nbr.get(x); if(!m){ m=new Map(); nbr.set(x,m); } m.set(y,(m.get(y)||0)+1); };   // HS v1.35: no arrays per link
+    var _pe=function(p, pr, l){ if(!port.has(p)) port.set(p,l);
+      var ck=pr[0]+'|'+pr[1]; cage.set(ck,(cage.get(ck)||0)+1);
+      var s=devp.get(pr[0]); if(!s){ s=new Set(); s._l=[]; devp.set(pr[0],s); } var _pn=+pr[1]; if(!s.has(_pn)){ s.add(_pn); s._l.push(_pn); } };   // HS v1.06: arrival order
+    for(var i=from;i<links.length;i++){ var l=links[i], _pa=l.a.split('|'), _pb=l.b.split('|');
+      var _da=_pa[0], _db=_pb[0];   // v480: links per device and neighbor counts
       devN.set(_da,(devN.get(_da)||0)+1); if(_db!==_da) devN.set(_db,(devN.get(_db)||0)+1);
-      [[_da,_db],[_db,_da]].forEach(function(z){ var m=nbr.get(z[0]); if(!m){ m=new Map(); nbr.set(z[0],m); } m.set(z[1],(m.get(z[1])||0)+1); });
-      [l.a,l.b].forEach(function(p){ if(!port.has(p)) port.set(p,l); var pr=p.split('|');
-        var ck=pr[0]+'|'+pr[1]; cage.set(ck,(cage.get(ck)||0)+1);
-        var s=devp.get(pr[0]); if(!s){ s=new Set(); s._l=[]; devp.set(pr[0],s); } var _pn=+pr[1]; if(!s.has(_pn)){ s.add(_pn); s._l.push(_pn); } }); }   // HS v1.06: arrival order
+      _nb(_da,_db); _nb(_db,_da);
+      _pe(l.a,_pa,l); _pe(l.b,_pb,l); }
     _lix.len=links.length;
     return _lix;
   }
@@ -10504,8 +10511,9 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     // passes in practice. Measuring beats forecasting when the input arrives late.
     // A function so it can run again once the console servers exist: they are sized later,
     // and they band like every other class (OB-117/251/252) rather than taking spare ports.
-    function assignPods(){ podIds.forEach(function(p){
-      var ids=order.filter(function(i){ return !isFe[i] && !oob[i].rackLocal && !oob[i].toCore && String(oob[i].dev.pod)===String(p); });
+    function assignPods(){ var _byPod={}; order.forEach(function(i){ if(!isFe[i] && !oob[i].rackLocal && !oob[i].toCore){ var k=String(oob[i].dev.pod); (_byPod[k]=_byPod[k]||[]).push(i); } });   // HS v1.35: one pass
+      podIds.forEach(function(p){
+      var ids=_byPod[String(p)]||[];
       for(var guard=0; guard<8; guard++){
         var mine=mgSwitches.filter(function(s){ return _podOf(s.scope)==String(p); });
         // OB-117: span the BMC band across as many of the pod's switches as the other bands
@@ -10537,12 +10545,15 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     // FE cabinet switches are numbered after the pod switches. A pod that grows a switch
     // during assignment would otherwise share a name with an FE switch.
     function renumberFe(){
+      var _bySw=null;   // HS v1.35: OOB entries by switch name, built on the first rename and kept as names change
       feSwitches.forEach(function(s,fk){
         var old=s.name, nu=oobName('MGT', mgSwitches.length+fk+1);
         if(old===nu) return;
         s.name=nu;
         if(oob['mgsw:'+s.id]) oob['mgsw:'+s.id].dev=synth(nu,'mgmt-access',null);
-        Object.keys(oob).forEach(function(k){ if(oob[k].sw===old) oob[k].sw=nu; });
+        if(!_bySw){ _bySw={}; Object.keys(oob).forEach(function(k){ var w=oob[k].sw; if(w==null) return; (_bySw[w]=_bySw[w]||[]).push(k); }); }
+        var ks=_bySw[old]; if(!ks || !ks.length) return; delete _bySw[old];
+        ks.forEach(function(k){ oob[k].sw=nu; }); _bySw[nu]=(_bySw[nu]||[]).concat(ks);
       });
     }
     assignPods(); renumberFe();
@@ -16229,7 +16240,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     if(_hyMemo && _hyMemo.k.every(function(v,i){ return v===k[i]; })) return _hyMemo.v;
     var why=[], hosts=0; R.forEach(function(r){ hosts+=(r.hosts||0); });
     if(R.length){
-      _hyProbe=true; var keepD=_OOB_DENSE, keepE=OOB_ERRORS, keepM=(typeof __MEMO!=='undefined')?__MEMO:null; if(keepM) __MEMO=null;
+      _hyProbe=true; var keepD=_OOB_DENSE, keepE=OOB_ERRORS, keepM=(typeof __MEMO!=='undefined')?__MEMO:null; if(keepM) __MEMO={};   // HS v1.35: a memo of its own, not none
       try{
         OOB_ERRORS=[]; mgmtPlan();
         var oe=OOB_ERRORS.filter(function(m){ return /falls outside the segment|outside every segment|not addressed|band .*holds/.test(m); });
@@ -29474,8 +29485,10 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
           var m=loadMeter('', 'Applying the change'); m.plan(names); q.running=true;
           var steps=[], t0=0;
           if(q.rebuild.length) steps.push(function(){ t0=Date.now(); while(q.rebuild.length){ var j=q.rebuild.shift(); j.f.apply(j.self, j.args); } save('buildMs', Date.now()-t0); });
-          steps.push(function(){ t0=Date.now(); var d=q.draw; q.draw=null; if(d) d.f.apply(d.self, d.args); save('drawMs', Date.now()-t0);
-            if(q.rebuild.length){ var j; while((j=q.rebuild.shift())) j.f.apply(j.self, j.args); if(q.draw){ d=q.draw; q.draw=null; d.f.apply(d.self, d.args); } } });   // changes made while it ran
+          var _page=function(fn){ if(byType('rack').length<=512 || __MEMO) return fn(); __MEMO={}; window.__UISCOPE=true;   // HS v1.35: the page memo a redraw runs in
+            try{ return fn(); } finally{ __MEMO=null; window.__UISCOPE=false; } };
+          steps.push(function(){ t0=Date.now(); var d=q.draw; q.draw=null; if(d) _page(function(){ d.f.apply(d.self, d.args); }); save('drawMs', Date.now()-t0);
+            if(q.rebuild.length){ var j; while((j=q.rebuild.shift())) j.f.apply(j.self, j.args); if(q.draw){ d=q.draw; q.draw=null; _page(function(){ d.f.apply(d.self, d.args); }); } } });   // changes made while it ran
           runSteps(steps, m, 0, function(){ Q=null; }, function(e){ Q=null; setStatus('\u26a0 The change was not applied completely: '+(e && e.message || e)); });
         }, 30); }
       if(kind==='rebuild') Q.rebuild.push({f:f, self:self, args:args}); else Q.draw={f:f, self:self, args:args};

@@ -1,3 +1,11 @@
+# AIDC DBD Desktop 2.0.27 (builder HS-v1.35, site runner 1.6.0)
+
+- **Settings changes on large designs are two to three times faster, with identical results.** At 1,625 racks an edge-router change takes 13 s (it took 26 s), a back-end platform change 40 s (104 s) and a rack-count change 59 s (126 s). The design, its fingerprint and the whole front page come out the same.
+  - Since 2.0.23, a change applied with the progress meter redrew outside the page cache. Past 512 racks that cache holds every plan to one derivation per redraw, so the redraw derived the same plans many times. It runs inside the cache again.
+  - The device and per-type indexes were rebuilt every time a device was added. They now grow in place.
+  - The hyperscale-site check ran without any cache. It now has its own.
+  - The OOB pod assignment, FE switch renumbering and the link index did repeated or wasteful work. They now do each pass once.
+
 # AIDC DBD Desktop 2.0.26 (builder HS-v1.33, site runner 1.6.0)
 
 - **The physical model builds about twice as fast, with identical outputs.** At 162 racks it takes about 1.6 s, down from 3.2 s. At 512 racks it takes about 10 s, down from 18 s. Everything that builds it is faster: front-panel changes up to 512 racks (the cabinet row), Infra, BoM, Facility, Physical model, the DC Layout Builder, the cable maps and packages. Packages, the physical model, the SoT and every Excel sheet are byte-identical to 2.0.25's, timestamps aside. HS-v1.32 was a development build that was never released.
