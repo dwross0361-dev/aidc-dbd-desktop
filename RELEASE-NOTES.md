@@ -1,3 +1,9 @@
+# AIDC DBD Desktop 2.0.28 (builder HS-v1.36, site runner 1.6.0)
+
+- **DC Layout Builder: Find device answers at once on a large site.** At 800 racks, pressing Enter took over 9 minutes, and at 1,625 racks it hung the Layout tool. It now takes about half a second.
+  - Find re-ran the whole site layout and, in large-site mode, re-synced with the Layout service, only to select a cabinet. Nothing moves when a device is found, so it now selects the cabinet the way a click on the floor plan does.
+  - The suggestion list held every device in the site (39,355 at 800 racks). Opening the faceplate under it jammed the window. Past 500 devices, the list now shows the first 50 names that match what you type, names that start with it first.
+
 # AIDC DBD Desktop 2.0.27 (builder HS-v1.35, site runner 1.6.0)
 
 - **Settings changes on large designs are two to three times faster, with identical results.** At 1,625 racks an edge-router change takes 13 s (it took 26 s), a back-end platform change 40 s (104 s) and a rack-count change 59 s (126 s). The design, its fingerprint and the whole front page come out the same.
