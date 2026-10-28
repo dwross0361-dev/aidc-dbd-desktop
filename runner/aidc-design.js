@@ -84,6 +84,7 @@ async function ensureDesign(file) {
   if (R.version() !== file.builder) { dom.window.close(); throw new Error('the design comes from ' + file.builder + ' but the app carries ' + R.version()); }
   progress('Rebuilding the design (' + Number(file.racks || 0).toLocaleString('en-US') + ' racks) from its settings…', { stage: 'rebuild', est });
   const L = R.load(file, {});
+  if (dom.window.__aidcMemoHold) dom.window.__aidcMemoHold('off');
   if (!L.match) { dom.window.close(); throw new Error('the rebuilt design (fingerprint ' + L.fingerprint + ') is not the one in the builder window (' + L.expected + '). The design service rebuilds the design from its settings; hand edits on the canvas are not carried. Save the design, load it again, then try again.'); }
   DOM = dom; FP = file.fingerprint; return true;
 }
@@ -116,19 +117,26 @@ function byPath(kind, p) {
 const OPS = {
   async open(a) { await ensureDesign(a.file); progress('Building the view…', { stage: 'view' }); captured = []; clip = null;
     const b = W().document.getElementById(MODALS[a.kind].open); if (!b || !b.onclick) throw new Error('no ' + a.kind + ' view in this builder');
+    if (W().__aidcMemoHold) W().__aidcMemoHold('off');
     b.onclick(); await settle(200);
+    if (W().__aidcMemoHold) W().__aidcMemoHold('fresh');   // one memo for the clicks in this view that change nothing
     const r = snapshot(a.kind); r.files = await flushFiles(a.out); progress('Ready', { stage: 'ready' }); return r; },
   async event(a) { if (!DOM) throw new Error('the design service has no design loaded (it restarted); open the view again');
     captured = []; clip = null; const el = byPath(a.kind, a.path), w = W();
+    // a device picked in Mgmt switch configs, or Copy / Download / PDF / Visio, changes nothing: the memo is kept; anything else starts it fresh
+    const keep = a.type === 'click' && !!(el.closest('.cfg-tab') || /^mgmt(copy|download|pdf|visio)$/.test(el.id || ''));
+    if (w.__aidcMemoHold) w.__aidcMemoHold(keep ? 'keep' : 'off');   // a change runs as the window runs it
     if (a.type === 'change' || a.type === 'input') { if ('checked' in a) el.checked = !!a.checked; else el.value = a.value; el.dispatchEvent(new w.Event(a.type, { bubbles: true })); }
     else el.dispatchEvent(new w.MouseEvent('click', { bubbles: true, cancelable: true }));
     await settle(a.wait || 120);
+    if (!keep && w.__aidcMemoHold) w.__aidcMemoHold('fresh');
+    if (!keep && a.kind === 'infra' && w.__aidcWarmOob) { const v = w.document.getElementById('mgmtview'); if (v && v.value === 'config') { progress('Building the OOB fabric for the switch configs…', { stage: 'view' }); w.__aidcWarmOob(); } }
     const r = snapshot(a.kind); r.files = await flushFiles(a.out); r.clip = clip; return r; },
-  async oob(a) { await ensureDesign(a.file); progress('Counting the OOB links (building the physical model)…', { stage: 'view' });
+  async oob(a) { await ensureDesign(a.file); if (W().__aidcMemoHold) W().__aidcMemoHold('fresh'); progress('Counting the OOB links (building the physical model)…', { stage: 'view' });
     const w = W(); if (typeof w.__aidcOobData !== 'function') throw new Error('this builder release has no OOB service entry point');
     try { w.__aidcPhysWarm && w.__aidcPhysWarm(); } catch (e) {}
     const r = w.__aidcOobData(); progress('Ready', { stage: 'ready' }); return JSON.parse(JSON.stringify(r)); },
-  async export(a) { await ensureDesign(a.file); progress('Writing the ' + (a.what === 'sot' ? 'Day-2 SoT' : 'physical model') + '…', { stage: 'view' }); captured = [];
+  async export(a) { await ensureDesign(a.file); if (W().__aidcMemoHold) W().__aidcMemoHold('fresh'); progress('Writing the ' + (a.what === 'sot' ? 'Day-2 SoT' : 'physical model') + '…', { stage: 'view' }); captured = [];
     const id = a.what === 'sot' ? 'sotbtn' : 'physjson', b = W().document.getElementById(id); if (!b || !b.onclick) throw new Error('no ' + id + ' in this builder');
     b.onclick(); for (let i = 0; i < 600 && !captured.length; i++) await settle(500); await settle(300);
     const files = await flushFiles(a.out); if (!files.length) throw new Error('nothing was written'); progress('Ready', { stage: 'ready' }); return { files }; }

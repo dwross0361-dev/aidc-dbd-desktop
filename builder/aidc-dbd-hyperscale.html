@@ -942,7 +942,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.30';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.31';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   var RADIX=64, CAGE=800;
   // ---- FABRIC PROFILE (parameterized per accelerator platform) ----------------------------------------
   // rails == accelerators per host. Each accelerator instance gets its own rail leaf, which is what
@@ -28394,7 +28394,12 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     // same class and a different attribute.
     var idx=document.getElementById('mgmt-cfg-tabs');
     if(idx) Array.prototype.forEach.call(idx.querySelectorAll('.cfg-tab'),function(b){
-      b.onclick=function(){ mgmtCfgActive=b.getAttribute('data-mgdev'); renderMgmtModal(); };
+      b.onclick=function(){ mgmtCfgActive=b.getAttribute('data-mgdev');   // HS v1.30: one device's config, not the whole view
+        var c=(md||[]).filter(function(d){ return d.key===mgmtCfgActive; })[0], out=document.getElementById('mgmt-cfg-out');
+        if(!c || !out){ renderMgmtModal(); return; }
+        Array.prototype.forEach.call(idx.querySelectorAll('.cfg-tab'), function(x){ x.classList.toggle('on', x===b); });
+        out.textContent=__memoScope(function(){ return c.gen(style); })(); out.scrollTop=0;
+        var nb=out.parentNode.nextElementSibling, bb=nb && nb.querySelector('b'); if(bb) bb.textContent=c.name; };
     });
   }
   function openMgmt(){
@@ -30963,6 +30968,10 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     try{ return fn.apply(this, arguments); } finally{ __MEMO=null; } }; }
   sotExport=__memoScope(sotExport); viewerHtml=__memoScope(viewerHtml); designDocPdf=__memoScope(designDocPdf);
   fePairMap=__memo('fePairMap', fePairMap);   // HS v1.06
+  window.__aidcMemoHold=function(m){ if(m==='fresh') __MEMO={}; else if(m==='keep'){ if(!__MEMO) __MEMO={}; } else __MEMO=null; window.__UISCOPE=!!__MEMO; };   // HS v1.30: the design service (a view's memo, as render holds one)
+  window.__aidcWarmOob=function(){ try{ oobFab(); }catch(e){} };
+  renderMgmtModal=__memoScope(renderMgmtModal); renderBoM=__memoScope(renderBoM); renderFacility=__memoScope(renderFacility); renderRelease=__memoScope(renderRelease);   // HS v1.30
+  mgmtConfigText=__memoScope(mgmtConfigText); oobAllocText=__memoScope(oobAllocText); pduPlanText=__memoScope(pduPlanText); telemetryText=__memoScope(telemetryText); exportOobAllocXlsx=__memoScope(exportOobAllocXlsx);
   render=(function(f){ var g=function(){ if(__MEMO) return f.apply(this, arguments); __MEMO={}; window.__UISCOPE=true; try{ return f.apply(this, arguments); } finally{ __MEMO=null; window.__UISCOPE=false; } };   // HS v1.08: a page scope
     return function(){ return (byType('rack').length>512 ? g : f).apply(this, arguments); }; })(render);   // HS v1.06: one drawing pass, each plan derived once
   render=(function(f){ var pend=false; return function(){   // HS v1.08: one drawing pass after a restore
@@ -31897,8 +31906,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
         if(r.files && r.files.length) setStatus('Saved to the project folder: '+r.files.map(base).join(', '));
         if(r.clip!=null){ try{ navigator.clipboard.writeText(r.clip); setStatus('Copied to the clipboard'); }catch(e){} }
         if(!r.html) return;
-        var box=RV.el.firstChild, tg=box.querySelector('[id$="-target"]'), st=tg?tg.scrollTop:0;
-        box.innerHTML=r.html; var tg2=box.querySelector('[id$="-target"]'); if(tg2) tg2.scrollTop=st;
+        var box=RV.el.firstChild, sc={}; Array.prototype.forEach.call(box.querySelectorAll('[id]'), function(x){ if(x.scrollTop) sc[x.id]=x.scrollTop; });
+        box.innerHTML=r.html; Object.keys(sc).forEach(function(id){ var x=box.querySelector('#'+CSS.escape(id)); if(x) x.scrollTop=sc[id]; });
         var V=r.vals||{}; Object.keys(V).forEach(function(id){ var el=box.querySelector('#'+CSS.escape(id)); if(!el) return; if('checked' in V[id]) el.checked=V[id].checked; else el.value=V[id].value;
           var real=document.getElementById(id); if(!real || real===el || CTRL_ORDER.indexOf(id)<0) return;   // a design setting changed in the view: the window's design follows
           var now=('checked' in V[id])?real.checked!==V[id].checked:real.value!==V[id].value; if(!now) return;

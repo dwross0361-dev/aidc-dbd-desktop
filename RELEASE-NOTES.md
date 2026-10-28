@@ -1,3 +1,8 @@
+# AIDC DBD Desktop 2.0.25 (builder HS-v1.31, site runner 1.6.0)
+
+- **Mgmt switch configs: a device click shows that device's config in about 1 to 2 seconds at 1,625 racks (it took 75 to 200 s).** A click had rebuilt the whole view, and each device's config rebuilt the management plan, physical model and OOB fabric. The view and its exports now build those once. Past 512 racks, the design service keeps them across clicks that change nothing and builds the OOB fabric when the configs view opens. Expect about 2 minutes on that switch at 1,625 racks; device clicks after that are quick. Download of all 3,501 configs takes about 6 s.
+- **The mirrored view keeps every list's scroll position** after a click, the device list included.
+
 # AIDC DBD Desktop 2.0.24 (builder HS-v1.30, site runner 1.6.0)
 
 - **The design service: the heavy views on a large design are built outside the window.** Past 512 racks, Infra, BoM, Facility, Release check, the OOB link count, Physical model and Day-2 SoT run in a separate process that has the workstation's memory. It works from a copy of the design rebuilt from its site-runner file. The view comes back into the window as usual, with a progress meter while it builds. Clicks and changes in the view go to the service, a design setting changed there carries back to the window's design, and downloads are saved to the project folder. The first view on a design takes the rebuild time; later views reuse that copy until the design changes.
