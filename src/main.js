@@ -111,16 +111,19 @@ let saveSeq = 0; const saveWait = new Map();
 ipcMain.on('save-reply', (e, id, r) => { const f = saveWait.get(id); if (f) { saveWait.delete(id); f(r); } });
 function requestSave() { return new Promise((resolve) => { if (!main || main.isDestroyed()) { resolve(null); return; } const id = ++saveSeq; saveWait.set(id, resolve); main.webContents.send('save-request', id); }); }
 async function askBeforeClose() {
+  if (jobs.size) {   // 2.0.30: its own warning, Keep running the default -- a job stopped here loses its output
+    const list = [...jobInfo.values()].map((j) => '\u2022 ' + j.what + ', running ' + Math.max(1, Math.round((Date.now() - j.t0) / 60000)) + ' min').join('\n');
+    const r = await dialog.showMessageBox(main, { type: 'warning', buttons: ['Keep running', 'Close and stop ' + (jobs.size > 1 ? 'them' : 'it')], defaultId: 0, cancelId: 0, noLink: true,
+      title: 'AIDC DBD', message: (jobs.size > 1 ? jobs.size + ' site-runner jobs are' : 'A site-runner job is') + ' still running',
+      detail: list + '\n\nClosing the app stops ' + (jobs.size > 1 ? 'them' : 'it') + ', and what ' + (jobs.size > 1 ? 'they have' : 'it has') + ' not finished writing is lost.' });
+    if (r.response === 0) return;
+  }
   const o = await requestSave();
-  const busy = jobs.size ? '\n\nA site-runner job is still running; closing the app stops it.' : '';
   if (o && !o.error) {
     const r = await dialog.showMessageBox(main, { type: 'question', buttons: ['Save\u2026', "Don't save", 'Cancel'], defaultId: 0, cancelId: 2, noLink: true,
-      title: 'AIDC DBD', message: 'Save the current design before closing?', detail: (o.racks ? o.racks.toLocaleString('en-US') + ' racks. ' : '') + 'The design file can be opened again with Load.' + busy });
+      title: 'AIDC DBD', message: 'Save the current design before closing?', detail: (o.racks ? o.racks.toLocaleString('en-US') + ' racks. ' : '') + 'The design file can be opened again with Load.' });
     if (r.response === 2) return;
     if (r.response === 0) { const p = await saveDesignFile(o); if (!p) return; }
-  } else if (busy) {
-    const r = await dialog.showMessageBox(main, { type: 'warning', buttons: ['Close', 'Cancel'], defaultId: 1, cancelId: 1, title: 'AIDC DBD', message: 'Close AIDC DBD?', detail: busy.trim() });
-    if (r.response === 1) return;
   }
   closing = true; if (main && !main.isDestroyed()) main.close();
 }
@@ -179,14 +182,14 @@ function keepAwake() {
 app.on('will-quit', () => { if (awakeId >= 0) { try { powerSaveBlocker.stop(awakeId); } catch (e) {} } });
 
 // ---- the site runner jobs
-const jobs = new Map(); let jobSeq = 0;
+const jobs = new Map(), jobInfo = new Map(); let jobSeq = 0;   // 2.0.30: what each job is and when it started (the close warning)
 ipcMain.handle('job', async (e, req) => {
   const dir = projectDir(main); if (!dir) return { error: 'no project folder chosen' };
   const f = req.file || {}, kind = req.kind, id = ++jobSeq;
   const tag = kind === 'cable' ? 'cable-matrix-' + (req.mode === 'pdf' ? 'pdf' : 'xlsx') : kind === 'both' ? 'package-and-run' : kind === 'run' ? 'run' : (req.mode === 'review' ? 'review-package' : 'final-package');
   const out = uniquePath(dir, (f.build || 'build') + '-' + tag + '-' + stamp());
   fs.mkdirSync(out, { recursive: true });
-  const design = path.join(out, (f.build || 'build') + '-site-runner.json');
+  const design = path.join(out, 'input-design-site-runner.json');   // 2.0.30: named for what it is, so only the export carries the export's name
   fs.writeFileSync(design, JSON.stringify(f, null, 1));
   const args = ['--max-old-space-size=' + RUNNER_HEAP, RUNNER, '--html', BUILDER, '--design', design, '--out', out, '--heap', String(RUNNER_HEAP)];
   if (kind === 'cable') args.push('--cable-matrix', req.mode === 'pdf' ? 'pdf' : 'xlsx');   // 2.0.20
@@ -194,14 +197,14 @@ ipcMain.handle('job', async (e, req) => {
   let child;
   try { child = spawn(NODE, args, { env: Object.assign({}, process.env, { AIDC_RUNNER_CHILD: '1' }), windowsHide: true }); }
   catch (err) { return { error: 'the site runner did not start: ' + err.message }; }
-  jobs.set(id, child);
+  jobs.set(id, child); jobInfo.set(id, { what: kind === 'cable' ? 'Cable matrix (' + (req.mode === 'pdf' ? 'PDF' : 'Excel') + ')' : kind === 'both' ? 'Final package and .run' : kind === 'run' ? '.run' : (req.mode === 'review' ? 'Review package' : 'Final package'), t0: Date.now() });
   if (awakeId >= 0) send('job-log', { id, line: 'Sleep blocked while this job runs.' }); keepAwake();
   send('job-start', { id, kind, mode: req.mode || 'final', build: f.build, racks: f.racks, out });
   let buf = '';
   const onData = (d) => { buf += d.toString(); let i; while ((i = buf.indexOf('\n')) >= 0) { const line = buf.slice(0, i).replace(/\r$/, ''); buf = buf.slice(i + 1); if (line.trim()) send('job-log', { id, line }); } };
   child.stdout.on('data', onData); child.stderr.on('data', onData);
   child.on('error', (err) => send('job-log', { id, line: 'STOPPED: the site runner did not start: ' + err.message }));
-  child.on('close', (code) => { jobs.delete(id); keepAwake(); if (!jobs.size && !builderBusy) send('job-log', { id, line: 'Sleep released.' }); if (buf.trim()) send('job-log', { id, line: buf.trim() }); send('job-done', { id, code, out }); });
+  child.on('close', (code) => { jobs.delete(id); jobInfo.delete(id); keepAwake(); if (!jobs.size && !builderBusy) send('job-log', { id, line: 'Sleep released.' }); if (buf.trim()) send('job-log', { id, line: buf.trim() }); send('job-done', { id, code, out }); });
   return { id, out };
 });
 ipcMain.on('job-cancel', (e, id) => { const c = jobs.get(id); if (c) { try { c.kill(); } catch (err) {} } });

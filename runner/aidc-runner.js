@@ -57,7 +57,8 @@ const die = (m) => { log('STOPPED: ' + m); try { fs.mkdirSync(OUT, { recursive: 
 const captured = [];   // {name, blob}
 function shim(w) {
   const store = new Map(); let n = 0;
-  w.__AIDC_HEADLESS = true;   // the builder skips drawing its main canvas
+  w.__AIDC_HEADLESS = true;
+  if (process.env.AIDC_CM_VOL) w.__cmVolPages = +process.env.AIDC_CM_VOL;   // test hook: smaller PDF volumes   // the builder skips drawing its main canvas
   // native hashes for the package manifest, the .run checksums and the zip CRCs (1.5.0; builder HS-v1.20 uses them, older ones ignore them)
   const crypto = require('crypto');
   w.__aidcSha256 = (b) => crypto.createHash('sha256').update(b).digest('hex');
@@ -137,17 +138,33 @@ vc.on('error', (e) => pageErr.push(String(e).slice(0, 300)));
   // ---- a status line every 15 s (the page reports its steps on its status line)
   let last = ''; const tick = setInterval(() => { const s = R.status(); if (s !== last) { last = s; log('  ' + s.slice(0, 160) + '  (' + mem() + ')'); } }, 15000);
   const waitFile = async (re, ms) => { const end = Date.now() + ms; while (Date.now() < end) { const f = captured.find((c) => re.test(c.name)); if (f) return f; await new Promise((r) => setTimeout(r, 1000)); } return null; };
-  const save = async (f) => { const p = path.join(OUT, (SETTINGS ? 'TEST-FROM-SETTINGS-' : '') + f.name.replace(/[^A-Za-z0-9._-]/g, '_')); fs.writeFileSync(p, Buffer.from(await f.blob.arrayBuffer())); f.blob = null; return p; };
+  const pageMsgs = () => (pageErr.length ? ' (page: ' + pageErr.slice(0, 3).join(' | ') + ')' : '');
+  const save = async (f) => {   // 1.7.0 (app 2.0.30): a file the page handed over empty stops the run, saying so
+    if (!f.blob || typeof f.blob.arrayBuffer !== 'function') die('the builder handed over ' + f.name + ' with no content' + (R.status() ? ': ' + R.status().slice(0, 200) : '') + pageMsgs());
+    const p = path.join(OUT, (SETTINGS ? 'TEST-FROM-SETTINGS-' : '') + f.name.replace(/[^A-Za-z0-9._-]/g, '_')); fs.writeFileSync(p, Buffer.from(await f.blob.arrayBuffer())); f.blob = null; return p; };
 
   if (CABLE) {   // the Cable Matrix alone: every cable once, with its measured length
     if (typeof R.cable !== 'function') die(path.basename(HTML) + ' has no Cable matrix entry point (HS-v1.26 or later)');
     log('Cable matrix (' + (CABLE === 'pdf' ? 'PDF' : 'Excel') + '): placing cabinets and measuring every run...');
-    await R.cable(CABLE);
-    const f = await waitFile(/-cable-matrix\.(xlsx|pdf)$/, 6 * 3600 * 1000);
-    if (!f) die('the cable matrix did not complete' + (R.status() ? ': ' + R.status().slice(0, 200) : ''));
-    const p = await save(f); clearInterval(tick); log('cable matrix: ' + path.basename(p) + ' (' + mem() + ')');
+    // 1.7.0: a large PDF arrives as several files (one per build step, in volumes); each is written to disk as it arrives
+    let fin = false, ferr = null; const saved = [];
+    Promise.resolve().then(() => R.cable(CABLE)).then(() => { fin = true; }, (e) => { ferr = e; fin = true; });
+    const drain = async () => { for (const c of captured) { if (c.saved || !/-cable-matrix.*\.(xlsx|pdf)$/.test(c.name)) continue; c.saved = true;
+      const p = await save(c); saved.push(p); log('cable matrix: ' + path.basename(p) + ' (' + mem() + ')'); } };
+    const end = Date.now() + 6 * 3600 * 1000;
+    // the page's job ends when its status says Exported (the Excel workbook is written after the export call returns) or failed
+    const over = () => /^Exported|^\u26a0|failed/i.test(R.status() || '');
+    let finAt = 0;
+    while (Date.now() < end) { if (fin && !finAt) finAt = Date.now(); if (fin && (over() || Date.now() - finAt > 600000)) break; await drain(); await new Promise((r) => setTimeout(r, 1000)); }
+    await drain(); clearInterval(tick);
+    const st = R.status() || '';
+    if (ferr) die('the cable matrix failed: ' + (ferr && ferr.message || ferr) + (saved.length ? ' (' + saved.length + ' file(s) written before it stopped)' : '') + pageMsgs());
+    if (!fin) die('the cable matrix did not finish in 6 hours' + (saved.length ? ' (' + saved.length + ' file(s) written)' : ''));
+    if (/^⚠|failed/i.test(st)) die(st.slice(0, 300) + (saved.length ? ' (' + saved.length + ' file(s) written before it stopped)' : '') + pageMsgs());
+    if (!saved.length) die('the cable matrix did not complete' + (st ? ': ' + st.slice(0, 200) : '') + pageMsgs());
+    if (st) log(st.slice(0, 240));
     if (pageErr.length) log('page messages: ' + pageErr.slice(0, 5).join(' | '));
-    log('done: cable matrix, build ' + L.build + ', design fingerprint ' + L.fingerprint);
+    log('done: cable matrix, ' + saved.length + ' file' + (saved.length > 1 ? 's' : '') + ', build ' + L.build + ', design fingerprint ' + L.fingerprint);
     fs.writeFileSync(path.join(OUT, 'site-runner.log'), logLines.join('\n') + '\n'); process.exit(0);
   }
   let pkg = null, run = null, planDg = '';

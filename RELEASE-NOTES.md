@@ -1,3 +1,14 @@
+# AIDC DBD Desktop 2.0.30 (builder HS-v1.38, site runner 1.7.0)
+
+- **Large Cable Matrix PDFs are written in volumes.** At 1,625 racks the PDF is about 130,000 pages. The PDF library holds a whole document as one string, which tops out at about 25,000 of these pages, so the export failed after an hour with nothing written. Past 140,000 cables the matrix is now written as one PDF per build step (`…-cable-matrix-step0-power.pdf` through `…-step4-back-end-vol4.pdf`), with any step over 10,000 pages split into numbered volumes. Each file is saved as soon as it's finished. At 512 racks: 8 files and 40,220 pages in about 4 minutes. Smaller matrices are still one PDF, page for page as before.
+- **A failed PDF says so.** If the PDF library can't write a file, the job stops at once with the reason, instead of waiting and then failing on an empty file.
+- **The DC Layout Builder's all-links PDF** rolls into volumes of 10,000 pages the same way.
+- **The BoM PDF and Excel are 3 to 4 times faster.** They derived the front-end pairs, the DPU plan and the site checks again for every row that asked, and classed every link seven times. At 512 racks the PDF went from 15.4 s to 3.6 s, with the same content.
+- **Release check shows the selected rack's power.** The rack-power rows showed the GB300 NVL72 figures (135 kW, confirmed) on every NVL72 profile. On Vera Rubin NVL72 they now read 210 kW, inferred from industry reporting, pending the OEM's QuickSpecs. The gate counts 7 unconfirmed inputs instead of 5. GB300 is unchanged.
+- **Fabric health labels.** "Network devices" counted only the back end, so it now reads "Back-end switches". The power line reads "BE network racks … (N switches, ~W each with their rack equipment)".
+- **Closing the app with a job running asks first.** A separate warning lists each running site-runner job and how long it has run. **Keep running** is the default.
+- **The design file a job runs from is named `input-design-site-runner.json`**, so the only file named for an export is the export itself.
+
 # AIDC DBD Desktop 2.0.29 (builder HS-v1.37, site runner 1.6.0)
 
 - **No crash on Exit with a large design.** Exit, and Save, made the whole design into one text inside the window, and Exit did it before asking whether to save. At 1,625 racks that ran the window out of memory. Now Exit asks first. A design past 512 racks is written in parts that stream straight into the file: 3 s and 68 MB at 800 racks. It's the same JSON that Load reads, indented by one space instead of two. Up to 512 racks, saving is unchanged.
