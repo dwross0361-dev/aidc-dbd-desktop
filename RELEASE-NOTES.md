@@ -1,3 +1,17 @@
+# AIDC DBD Desktop 2.0.36 (builder HS-v1.44, site runner 1.7.0)
+
+- **Tuned back-end profiles (stage 3 of 3).** A platform tuned at one site now ships tuned to the next.
+  - **Export profile** (Deployment Console, on the Back-end tuning line) is available once a version is approved and T1–T4 have passed. It writes `tuning-profile-<model>-<release>-<id>.json` with the model, OS and release, the values, the test summary, the NIC and port speed you enter, and a SHA-256 checksum. It carries no names, addresses or counters, so the file can leave the site.
+  - **Tuned profiles** (builder toolbar) imports the file and checks the checksum. A profile that was edited after export is refused.
+  - **The design records the profile it uses**, so a rebuild in the site runner reproduces the same configs. To build a design without a profile, use **Don't use a profile in this design**.
+- **What a profile changes.**
+  - The back-end configs carry the measured values: Junos ECN, PFC and watchdog; EOS ECN and watchdog; NX-OS ECN; and Cumulus ECN on TC3, written only where the values differ from the RoCE defaults.
+  - The markers read `TUNED (profile …, proven on <release>, <date>)`, or `VERIFIED` for defaults that passed.
+  - The Release check row **Back-end lossless thresholds** reads confirmed, and OD-T02 closes for that platform.
+  - The Console's v0 starts from the profile.
+- **Release match is major.minor.** A profile proven on another release is still applied, but its markers stay TUNE with "re-run acceptance", and the Release check row reads inferred. The row isn't load-bearing, because thresholds are set at acceptance, not for construction.
+- **Without a profile, the configs are unchanged.**
+
 # AIDC DBD Desktop 2.0.35 (builder HS-v1.43, site runner 1.7.0)
 
 - **Back-end tuning in the Deployment Console (stage 2 of 3).** When lossless acceptance fails on the test pod, you tune from the back-end gate instead of editing switches by hand.

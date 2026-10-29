@@ -749,6 +749,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   <select id="cabu" title="Network cabinet height for every MoR, EoR, FE/edge and OOB cabinet. 2U at the top is kept for cable entry; each device takes a cable manager and each cabinet a patch field sized to its cross-row links" style="height:30px;margin-left:4px" autocomplete="off"><option value="42">Net cabinets 42U</option><option value="45">Net cabinets 45U</option><option value="48" selected>Net cabinets 48U</option><option value="52">Net cabinets 52U</option></select><select id="rownet" title="Row network: one block of cabinets in the middle of the row (leaves, spines, OOB access, consoles and storage together), or a middle-of-row pair for the leaves plus end-of-row cabinets for the spines" style="height:30px;margin-left:4px" autocomplete="off"><option value="block" selected>Row network: one block</option><option value="split">Row network: MoR + EoR</option></select><select id="floorcols" title="Floor columns: the rows are laid out in 1 to 4 side-by-side columns (vertical stacks of rows), a 3 m aisle between columns. Sets the floor plan and every cable run length." style="height:30px;margin-left:4px" autocomplete="off"><option value="1" selected>Floor: 1 column</option><option value="2">Floor: 2 columns</option><option value="3">Floor: 3 columns</option><option value="4">Floor: 4 columns</option></select><label style="font-size:12px;margin-left:6px;display:inline-flex;align-items:center;gap:4px" title="Break columns at pod boundaries where the row counts allow, so a pod's leaf-to-spine cables stay off the cross tray"><input type="checkbox" id="floorpods"> keep pods in one column</label><label style="font-size:12px;margin-left:8px;display:inline-flex;align-items:center;gap:4px" title="AOC reach: a run longer than this becomes structured cabling (transceivers, MPO patch cords and trunks through column-head patch panels)">AOC reach <input id="aocreach" type="number" min="5" max="150" step="5" value="30" style="width:56px;height:28px" autocomplete="off"> m</label><label style="font-size:12px;margin-left:8px;display:inline-flex;align-items:center;gap:4px" title="Data hall size (IT MW). A site with more than one hall is laid out as a grid of halls, each with its own network rows; the core network sits in a CORE block.">Hall <input id="hallmw" type="number" min="2" max="60" step="1" value="10" style="width:52px;height:28px" autocomplete="off"> MW</label><select id="netfeed" title="Network-cabinet feed per side: sets the MoR/EoR/FE/OOB power budget" style="height:30px;margin-left:4px" autocomplete="off"><option value="208/30">Net feed 208V 30A</option><option value="208/50" selected>Net feed 208V 50A</option><option value="415/16">Net feed 415V 16A</option><option value="415/32">Net feed 415V 32A</option><option value="415/60">Net feed 415V 60A</option></select><select id="oobspine" title="OOB spine layer for rack-scale (NVL72) in-rack SN2201s: Auto adds it only when the OOB core runs out of ports" style="height:30px;margin-left:4px" autocomplete="off"><option value="auto">OOB spine: auto</option><option value="always">OOB spine: always</option><option value="off">OOB spine: off</option></select><select id="cpower" title="Compute-rack power: ORv3 HPR busbar with power shelves (split = two 1,400 A segments of four hosts, vendor-certified), or AC rack PDUs" style="height:30px;margin-left:4px" autocomplete="off"><option value="busbar-split">Compute: split busbar 2x1400A</option><option value="busbar-single">Compute: single busbar 1400A</option><option value="ac">Compute: AC PDUs</option></select><select id="rowfeed" title="How compute rows are fed: overhead busway A/B (half-row runs, 480 V in North America, 415 V elsewhere) or home-run circuits per power shelf / PDU" style="height:30px;margin-left:4px" autocomplete="off"><option value="busway">Rows: busway A/B</option><option value="circuits">Rows: home-run circuits</option></select><select id="netfoot" title="FE / Edge PoP cabinet footprint in the physical model" style="height:30px;margin-left:4px" autocomplete="off"><option value="consolidated">FE+EDG: 1 cabinet pair</option><option value="separate">FE+EDG: separate pairs</option></select>
   <span style="width:1px;height:24px;background:var(--line-strong);margin:0 3px"></span>
   <button class="btn" id="sharelink" title="Copy a link that reproduces this exact design &mdash; paste it to a teammate">&#128279; Share link</button>
+  <button class="btn" id="tprofbtn" title="Tuned back-end profiles: import the profile the Deployment Console exports after lossless acceptance; later sites ship with the measured values">Tuned profiles</button>
   <button class="btn" id="registerbtn" title="Click: register this site and download the registry &#183; Shift-click: import a registry &#183; Alt-click: copy the source snippet">Register site</button>
   <button class="btn" id="save">Save</button>
   <button class="btn" id="runnerexp" title="Export this design for the DWR site runner: the settings it is rebuilt from, this release and the design fingerprint. The runner builds the Final package and the .run off the browser (mega sites).">Site runner</button>
@@ -942,7 +943,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.43';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.44';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   var RADIX=64, CAGE=800;
   // ---- FABRIC PROFILE (parameterized per accelerator platform) ----------------------------------------
   // rails == accelerators per host. Each accelerator instance gets its own rail leaf, which is what
@@ -6761,7 +6762,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     return {skuRev:SKU_REV, ctrls:(CTRL_ORDER?ctrlSnapshot():undefined),   // v513: the controls (profile, FE, vendors...), as autosave keeps them
       fe:{on:!!FE.on, tenants:FE.tenants, classBTenants:FE.classBTenants, hostEnforcement:!!FE.hostEnforcement, leafModel:FE.leafModel, spineModel:FE.spineModel,
         spineAutoScale:!!FE.spineAutoScale, targetOversub:FE.targetOversub, edgeModel:FE.edgeModel, spares:!!FE.spares, spareOptics:FE.spareOptics, lbMode:'ingress-dpu' /* v518: constant, for older builders */, fwMode:FE.fwMode},
-      clientName:clientName,clientCode:clientCode,siteCode:SITE_CODE,devs:devs,links:links,seq:seq,circuits:SITE_CIRCUITS,deviceIds:DEVICE_IDS,siteParams:SITE_PARAMS,hostTenants:HOST_TENANT,labC9kv:LAB_C9KV,netFootprint:NET_FOOTPRINT,netFeed:NET_FEED,cabU:CAB_U,rowNet:ROW_NET,floorCols:FLOOR_COLS,floorPods:FLOOR_PODS,aocReach:AOC_REACH_M,hallMw:HALL_MW,deviations:DEVIATIONS,siteVariances:SITE_VARIANCES,feFw:{secVendor:secVendor,model:FE.fwModel}, storageNodesPerPod:FE.storageNodesPerPod, storageGen:FE.storageGen||'nitro3x2',vastRdma:!!FE.vastRdma,hbnDscpOk:!!FE.hbnDscpOk,ident:JSON.parse(JSON.stringify(IDENT)), oobSpineMode:OOB_SPINE_MODE, computePower:COMPUTE_POWER, busbarSegments:BUSBAR.segments, rowFeed:ROW_FEED, vrOem:VR_OEM, beUnderlay:BE_UNDERLAY, feUnderlay:FE_UNDERLAY, oobTransport:OOB_TRANSPORT, busbarRule:BUSBAR.shelfRule, busbarRack:BUSBAR.rack, provHa:!!PROV_HA, designBasis:DESIGN_BASIS, measuredHostKw:MEASURED_HOST_KW,vendorIn:VENDOR_IN,shelvesToPeak:BUSBAR.shelvesToPeak, mgmtFw:mgmtSecVendorSel, borderModel:FE.borderModel, bgModel:FE.bgModel, dciHubModel:FE.dciHubModel,ops:OPS,siteRegistry:registryAll(),regionCode:REGION_CODE,siteIndex:SITE_INDEX,beModel:beModel};
+      clientName:clientName,clientCode:clientCode,siteCode:SITE_CODE,devs:devs,links:links,seq:seq,circuits:SITE_CIRCUITS,deviceIds:DEVICE_IDS,siteParams:SITE_PARAMS,hostTenants:HOST_TENANT,labC9kv:LAB_C9KV,netFootprint:NET_FOOTPRINT,netFeed:NET_FEED,cabU:CAB_U,rowNet:ROW_NET,floorCols:FLOOR_COLS,floorPods:FLOOR_PODS,aocReach:AOC_REACH_M,hallMw:HALL_MW,deviations:DEVIATIONS,siteVariances:SITE_VARIANCES,feFw:{secVendor:secVendor,model:FE.fwModel}, storageNodesPerPod:FE.storageNodesPerPod, storageGen:FE.storageGen||'nitro3x2',vastRdma:!!FE.vastRdma,hbnDscpOk:!!FE.hbnDscpOk,ident:JSON.parse(JSON.stringify(IDENT)), oobSpineMode:OOB_SPINE_MODE, computePower:COMPUTE_POWER, busbarSegments:BUSBAR.segments, rowFeed:ROW_FEED, vrOem:VR_OEM, beUnderlay:BE_UNDERLAY, feUnderlay:FE_UNDERLAY, oobTransport:OOB_TRANSPORT, busbarRule:BUSBAR.shelfRule, busbarRack:BUSBAR.rack, provHa:!!PROV_HA, designBasis:DESIGN_BASIS, measuredHostKw:MEASURED_HOST_KW,vendorIn:VENDOR_IN,shelvesToPeak:BUSBAR.shelvesToPeak, mgmtFw:mgmtSecVendorSel, borderModel:FE.borderModel, bgModel:FE.bgModel, dciHubModel:FE.dciHubModel,ops:OPS,siteRegistry:registryAll(),regionCode:REGION_CODE,siteIndex:SITE_INDEX,beModel:beModel,beTuned:(BE_TUNED===false)?false:((beTunedActive()||{}).p)};   // HS v1.44
   }
   // v513: what a design file may contain. Names reach markup and configs, so they must match a safe charset;
   // anything else is refused before any state changes. Returns '' when the file is acceptable.
@@ -6796,6 +6797,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     if(b.hostTenants!=null && (typeof b.hostTenants!=='object' || Object.keys(b.hostTenants).some(function(k){ return !NAME.test(k) || !num(b.hostTenants[k]); }))) return 'invalid tenant assignments';
     if(b.ctrls!=null){ if(typeof b.ctrls!=='object') return 'invalid control settings';
       if(Object.keys(b.ctrls).some(function(k){ var v=b.ctrls[k]; return !(typeof v==='boolean' || typeof v==='number' || (typeof v==='string' && v.length<=80 && !TXT.test(v) && !/"/.test(v))); })) return 'invalid control settings'; }
+    if(b.beTuned!=null && b.beTuned!==false){ var _tw=tprofCheck(b.beTuned); if(_tw) return 'invalid tuned profile: '+_tw; }   // HS v1.44
     var LISTS=['circuits','deviations','siteVariances','siteRegistry'];
     for(var q=0;q<LISTS.length;q++) if(b[LISTS[q]]!=null && !Array.isArray(b[LISTS[q]])) return 'invalid '+LISTS[q]+' list';
     return '';
@@ -6882,6 +6884,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
           // The registry rides the topology file for the same reason the circuits do: so a
           // saved design reproduces with the record of which site it IS, across versions.
           if(b.siteRegistry&&b.siteRegistry.length){ registrySet(b.siteRegistry, REG_LOAD_ORIGIN||'the topology file'); }
+          BE_TUNED=(b.beTuned===false)?false:((b.beTuned&&typeof b.beTuned==='object')?b.beTuned:undefined);   // HS v1.44
           if(b.regionCode){ REGION_CODE=b.regionCode; }
           if(b.siteIndex){ SITE_INDEX=Math.max(1,Math.min(8,Math.round(+b.siteIndex)||1)); }
           (function(){ var r=document.getElementById('regioncode'), x=document.getElementById('siteidx');   // v513: controls follow the file
@@ -15298,12 +15301,23 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     }
     // ---------- TIER 3 ----------
     if(tier>=3){
-      L.push('# ---- RoCEv2 lossless (DCQCN: PFC + ECN + DSCP classify). NUMBERS ARE PLACEHOLDERS; ordering normative ----');
+      L.push('# ---- RoCEv2 lossless (DCQCN: PFC + ECN + DSCP classify). '+TQ()+'; ordering normative ----');   // HS v1.44
       L.push('nv set qos roce mode lossless   # NVIDIA RoCE profile: DSCP 26 lossless with PFC + ECN, CNP DSCP 48');
       L.push('# RoCE mode sets the classification itself: DSCP 26 -> priority 3 lossless (PFC), CNP DSCP 48 -> priority 6');
       L.push('# (no manual DSCP map or PFC lines: they duplicate the profile and some releases reject them alongside it)');
+      var _tun=beTunedActive();   // HS v1.44: a tuned profile sets ECN on TC3 where it differs from the RoCE defaults
+      if(!_tun){
       L.push('# ECN on TC3: the RoCE lossless profile defaults (NVIDIA: min ~150 KB, max ~1.5 MB, probability');
       L.push('# 100) stand until the measured incast profile sets them (TUNE / OD-T02, BE-135).');
+      } else {
+        var _mn=TV('ECN_MIN_KB',150), _mx=TV('ECN_MAX_KB',1500), _pr=TV('ECN_PROB',100);
+        L.push('# ECN on TC3: '+TM('TUNE / OD-T02, BE-135'));
+        if(!_tun.p.defaults_verified && (_mn!==150 || _mx!==1500 || _pr!==100)){
+          L.push('# the profile\u2019s ECN thresholds in place of the RoCE defaults (CONFIRM the congestion-control syntax on the first unit)');
+          L.push('nv set qos congestion-control default-global traffic-class 3 min-threshold '+(_mn*1024));
+          L.push('nv set qos congestion-control default-global traffic-class 3 max-threshold '+(_mx*1024));
+          L.push('nv set qos congestion-control default-global traffic-class 3 probability '+_pr); }
+      }
       L.push('# PFC watchdog (BE-142): REQUIRED -- pause-storm protection, not tuning');
       fab.concat(hosts).forEach(function(i){ L.push('nv set interface '+i+' qos pfc-watchdog state enable'); });   // v499: 5.18.3 takes enable/disable here
     }
@@ -15510,7 +15524,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       L.push('policy-map type queuing ROCE-OUT');
       L.push('  class type queuing c-out-8q-q3');
       L.push('    bandwidth remaining percent 50');
-      L.push('    random-detect minimum-threshold '+ECN_TUNE.minKB+' kbytes maximum-threshold '+ECN_TUNE.maxKB+' kbytes drop-probability '+ECN_TUNE.prob+' weight 0 ecn   ! TUNE (OD-T02, BE-135)');
+      L.push('    random-detect minimum-threshold '+TV('ECN_MIN_KB',ECN_TUNE.minKB)+' kbytes maximum-threshold '+TV('ECN_MAX_KB',ECN_TUNE.maxKB)+' kbytes drop-probability '+TV('ECN_PROB',ECN_TUNE.prob)+' weight 0 ecn   ! '+TM('TUNE (OD-T02, BE-135)'));   // HS v1.44
       L.push('  class type queuing c-out-8q-q6');
       L.push('    priority level 1   ! notification class ahead of the data class, and NOT flow-controlled');
       L.push('!');
@@ -15696,14 +15710,14 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       L.push('qos profile ROCE');
       L.push(/7060X6/.test(beModel)?'   uc-tx-queue 3':'   tx-queue 3');   // Tomahawk-class 7060X6: unicast queues (Arista RoCE guide)
       L.push('      bandwidth guaranteed 100   ! watchdog prerequisite (value as in Arista\u2019s example; set the rate per platform guide)');
-      L.push('      random-detect ecn minimum-threshold '+ECN_TUNE.minKB+' kbytes maximum-threshold '+ECN_TUNE.maxKB+' kbytes max-mark-probability '+ECN_TUNE.prob+'   ! TUNE (OD-T02, BE-135)');
+      L.push('      random-detect ecn minimum-threshold '+TV('ECN_MIN_KB',ECN_TUNE.minKB)+' kbytes maximum-threshold '+TV('ECN_MAX_KB',ECN_TUNE.maxKB)+' kbytes max-mark-probability '+TV('ECN_PROB',ECN_TUNE.prob)+'   ! '+TM('TUNE (OD-T02, BE-135)'));   // HS v1.44
       L.push(/7060X6/.test(beModel)?'   uc-tx-queue 6':'   tx-queue 6');
       L.push('      priority strict   ! congestion notifications ahead of data');      L.push('!');
       L.push('! ---- PFC watchdog (BE-142): REQUIRED -- pause-storm protection, not tuning ----');
       // Arista EOS user manual (DCBX and Flow Control): units are SECONDS; timeout and recovery-time
       // 0.01-60, polling-interval 0.005-30 and at most half the smaller of the two.
-      L.push('priority-flow-control pause watchdog default timeout 0.2   ! s paused before action (TUNE / OD-T06)');
-      L.push('priority-flow-control pause watchdog default recovery-time 0.2   ! s, auto recovery after the storm ends');
+      L.push('priority-flow-control pause watchdog default timeout '+TV('WD_TIMEOUT_S',0.2)+'   ! s paused before action ('+TW('TUNE / OD-T06')+')');   // HS v1.44
+      L.push('priority-flow-control pause watchdog default recovery-time '+TV('WD_RECOVERY_S',0.2)+'   ! s, auto recovery after the storm ends');
       L.push('priority-flow-control pause watchdog default polling-interval 0.1   ! s, <= min(timeout, recovery)/2');
       L.push('priority-flow-control pause watchdog action drop   ! drop on the stuck queue (alternatives: errdisable, notify-only)');
     }
@@ -24066,14 +24080,17 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       // fabric always marks before it pauses. v65 set Kmin/Kmax but left xoff at the platform
       // default, which means the ordering was unverified -- and a fabric ordered wrong looks
       // correct at rest and pauses itself on the first real incast.
-      var ECN_KMIN=20, ECN_KMAX=80;   // TUNE (OD-T02): ECN fill-level percentages
+      var ECN_KMIN=TV('KMIN',20), ECN_KMAX=TV('KMAX',80), ECN_PROB=TV('PROB',100);   // TUNE (OD-T02): ECN fill-level percentages; HS v1.44: the tuned profile
       // Junos OS Evolved sets PFC thresholds per PFC account in MICROSECONDS of source-port speed (0-100000), not as a
       // percentage of a shared-buffer partition (the QFX classic form, rejected by Evolved). PFC_XOFF_US / PFC_XON_US are
       // the Evolved form; headroom follows the cable length.
-      var PFC_XOFF_US=40, PFC_XON_US=30, PFC_CABLE_M=100;   // TUNE (OD-T02)
-      S.push(['# ---- congestion budget (BE-138). NUMBERS ARE PLACEHOLDERS; the ORDERING is normative. ----',
-              '# TUNE / OD-T02: Kmin/Kmax/xoff/xon pending STD-BE-001 platform selection + a measured incast',
-              '# profile. Do NOT adopt these figures unchanged from a reference design (BE-135).',
+      var PFC_XOFF_US=TV('XOFF',40), PFC_XON_US=TV('XON',30), PFC_CABLE_M=TV('CABLE',100);   // TUNE (OD-T02); HS v1.44: the tuned profile
+      var _tun=beTunedActive();   // HS v1.44
+      S.push(['# ---- congestion budget (BE-138). '+TQ()+'; the ORDERING is normative. ----'].concat(_tun?
+             ['# '+TM('TUNE / OD-T02')+': Kmin/Kmax/xoff/xon'+(_tun.ok?' measured on this platform (OD-T02 closed).':'.'),
+              '# Re-run lossless acceptance after a change of OS release, NIC firmware, port speed or plane count (BE-135).']:
+             ['# TUNE / OD-T02: Kmin/Kmax/xoff/xon pending STD-BE-001 platform selection + a measured incast',
+              '# profile. Do NOT adopt these figures unchanged from a reference design (BE-135).']).concat([
               '# INVARIANT: ECN Kmin ('+ECN_KMIN+'%) < ECN Kmax ('+ECN_KMAX+'%) of queue fill, and the queue depth at Kmax < PFC xoff ('+PFC_XOFF_US+' us).',
               '# Junos OS Evolved: PFC xoff/xon are per PFC account in microseconds of port speed (validated against the',
               '# Junos OS Evolved '+QFX_EVO_TARGET+' YANG). ORDERING CHECK on the first unit: the queue depth at ECN Kmax must sit below xoff.',
@@ -24081,7 +24098,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
               'class-of-service congestion-notification-profile ROCE-PFC input pfc-account ROCE-ACCT xon '+PFC_XON_US+'   # PFC xon (us)',
               'class-of-service congestion-notification-profile ROCE-PFC input pfc-account ROCE-ACCT pfc-priority 3',
               'class-of-service congestion-notification-profile ROCE-PFC input dscp code-point 011010 pfc-account-name ROCE-ACCT',
-              'class-of-service congestion-notification-profile ROCE-PFC input cable-length '+PFC_CABLE_M+'   # m: sizes the headroom (BDP + MTU, BE-138)']);
+              'class-of-service congestion-notification-profile ROCE-PFC input cable-length '+PFC_CABLE_M+'   # m: sizes the headroom (BDP + MTU, BE-138)']));
       // ---- PFC watchdog (BE-142). REQUIRED, not optional. -------------------------
       // Without it, one stuck or misbehaving lossless queue pauses its upstream, which
       // pauses ITS upstream, until the fabric deadlocks in a pause storm that no amount of
@@ -24093,16 +24110,16 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       // long a queue may stay paused before dropping beats pausing, and how long to hold
       // the drop before restoring. Neither depends on the incast measurement.
       // VERIFY SYNTAX against the EVO release in service before push.
-      var PFC_WD_DETECT = 200, PFC_WD_RESTORE = 200;   // ms
+      var PFC_WD_DETECT = TV('WD_DETECT_MS',200), PFC_WD_RESTORE = TV('WD_RECOVERY_MS',200);   // ms; HS v1.44: the tuned profile
       // Juniper PFC-watchdog guide: enabled on the congestion-notification profile; detection is a
       // count of poll intervals (default 100 ms x 2 = 200 ms), recovery in ms (default 200).
-      S.push(['# ---- PFC watchdog (BE-142) -- pause-storm protection, not tuning (TUNE / OD-T06) ----',
+      S.push(['# ---- PFC watchdog (BE-142) -- pause-storm protection, not tuning ('+TW('TUNE / OD-T06')+') ----',   // HS v1.44
               'class-of-service congestion-notification-profile ROCE-PFC pfc-watchdog',
               'class-of-service congestion-notification-profile ROCE-PFC pfc-watchdog poll-interval 100   # ms',
               'class-of-service congestion-notification-profile ROCE-PFC pfc-watchdog detection '+Math.round(PFC_WD_DETECT/100)+'   # poll intervals = '+PFC_WD_DETECT+' ms paused before action',
               'class-of-service congestion-notification-profile ROCE-PFC pfc-watchdog watchdog-action drop   # bounded local drop, then restore',
               'class-of-service congestion-notification-profile ROCE-PFC pfc-watchdog recovery '+PFC_WD_RESTORE+'   # ms before the queue resumes']);
-      S.push(['class-of-service drop-profiles ROCE-ECN interpolate fill-level [ '+ECN_KMIN+' '+ECN_KMAX+' ] drop-probability [ 0 100 ]',   // TUNE: Kmin/Kmax
+      S.push(['class-of-service drop-profiles ROCE-ECN interpolate fill-level [ '+ECN_KMIN+' '+ECN_KMAX+' ] drop-probability [ 0 '+ECN_PROB+' ]',   // TUNE: Kmin/Kmax (HS v1.44: the profile's probability)
               'class-of-service schedulers ROCE-SCHED drop-profile-map loss-priority any protocol any drop-profile ROCE-ECN',
               'class-of-service schedulers ROCE-SCHED explicit-congestion-notification',
               'class-of-service schedulers ROCE-SCHED transmit-rate percent 50',
@@ -27133,7 +27150,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       var _tp=function(L){ var p=(L||[]).filter(function(n){ return /-Pod1-/.test(n); }); return p.length?p:(L||[]); };   // HS v1.42: the test pod
       runners.push({key:'accept', kind:'accept', label:'Lossless acceptance (T1-T4)', targets:[railAgg], conf:['accept_cmd'], after:'rails',
         devices:_tp(W.be[1]).concat(_tp(W.be[0])), tests:['T1','T2','T3','T4'], criteria:{line_rate_pct:95, fairness_pct:10}, timeout_s:7200}); }
-    var tuning=(function(){ try{ return hsTuning(); }catch(e){ return {}; } })();   // HS v1.43
+    var tuning=(function(){ try{ var t=hsTuning(), a=beTunedActive(); if(t.params && a) t.profile=a.p.id; return t; }catch(e){ return {}; } })();   // HS v1.43 / v1.44
     var images=[]; try{ osProfilesInUse().forEach(function(u){ Object.keys(u.images||{}).forEach(function(f){ images.push({file:f, sha256:null, profile:u.key}); }); }); }catch(e){}
     return {schema:1, builder:BUILDER_VER, generated:new Date().toISOString(), site:site,
             dhcp:{subnet_id:1, device_subnet:dv.net, services_subnet:sv.net, gateway:dv.gw, relays:[dv.irbA, dv.irbB],
@@ -27261,7 +27278,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       '| Host rail checks (provision/rail_check.sh) | estate.conf host_ssh |',
       '| NCCL acceptance | estate.conf nccl_cmd (e.g. ssh to the head node running acceptance/nccl.sh); TARGET_BUSBW |',
       '| Lossless acceptance T1-T4 | estate.conf accept_cmd with {TEST} for the test and {POD} for the pod (e.g. ssh to the head node running HOSTFILE=pod{POD}.hosts acceptance/lossless.sh {TEST}); TARGET_BUSBW |',
-      '| Back-end tuning (overlays) | push credential, or WRITE_USER / WRITE_PASSWORD in secrets.env; Approve is an admin login |','',
+      '| Back-end tuning (overlays) | push credential, or WRITE_USER / WRITE_PASSWORD in secrets.env; Approve is an admin login |',
+      '| Tuned profile export | an approved version and T1-T4 passed; the file goes to DWR for the builder (Tuned profiles) |','',
       'Add the service key (/etc/fabric/estate_ssh_key.pub) to root\u2019s authorized_keys on WEKA nodes and GPU hosts. A runner that is not configured leaves its devices to the operator (Mark configured).','',
       '## Standby provisioning host','',
       'Deploy > Standby provisioning host adds a second host at '+(PROV_HA?provStandbyIp():'the next services address')+': Kea runs as a hot-standby pair, the cores relay to both, and the primary sends its state to the standby every minute (ESTATE_SYNC_TOKEN, same on both). Install it with sudo ./setup.sh --standby. If the primary is lost: estate_build.py promote on the standby, add the provisioning address (every bootstrap URL carries it) to its bond0, and restart estate-build. The primary pins the standby’s console certificate before it sends the token: set "peer_cert_sha256" in the primary’s estate.conf to the value setup.sh (or estate_build.py fingerprint) printed on the standby; left blank, the first certificate seen is pinned and logged for you to compare. A replaced certificate is refused until the new value is set.','',
@@ -27271,21 +27289,123 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       '/etc/fabric/estate.conf (JSON) takes alert_webhook, smtp_host, smtp_to, smtp_from. Exports in the console: as-built, SoT status, audit, events (CSV).']);
     return R.join('\n');
   }
+  // ---- HS v1.44: tuned back-end profiles (stage 3 of 3). The Deployment Console exports the approved tuning of a
+  // platform as a profile; the builder keeps profiles in its library and a design pins the one it uses, so later sites
+  // ship with the measured values. A profile is design data only: model, release, values and a test summary -- no
+  // names, addresses or counters. BE_TUNED: undefined = the library's match for the model; false = none; an object =
+  // the pinned profile (saved with the design).
+  document.addEventListener('click', function(e){ var t=e.target; if(t && t.id==='tprofbtn') tunedPanel(); });
+  var TPROF_KEY='aidc-dbd.tunedProfiles.v1', BE_TUNED=undefined, _tprofCache=null;
+  function tprofCanon(o){ if(o===null || typeof o!=='object') return JSON.stringify(o);
+    if(Array.isArray(o)) return '['+o.map(tprofCanon).join(',')+']';
+    return '{'+Object.keys(o).sort().map(function(k){ return JSON.stringify(k)+':'+tprofCanon(o[k]); }).join(',')+'}'; }
+  function tprofSum(p){ var c={}; Object.keys(p).forEach(function(k){ if(k!=='sha256') c[k]=p[k]; }); return sha256Hex(new TextEncoder().encode(tprofCanon(c))); }
+  // '' when the profile is well formed and its checksum holds; otherwise why not
+  function tprofCheck(p){
+    var TXT=/[<>`\u0000-\u001f]/, str=function(v,n){ return typeof v==='string' && v.length<=(n||120) && !TXT.test(v); };
+    if(!p || typeof p!=='object' || p.schema!=='aidc-tuned-profile/1') return 'not a tuned profile (schema aidc-tuned-profile/1)';
+    if(!str(p.id,80) || !/^[A-Za-z0-9._-]+$/.test(p.id)) return 'invalid profile id';
+    if(!str(p.model,40) || !/^[A-Za-z0-9-]+$/.test(p.model)) return 'invalid model';
+    if(!/^(junos|eos|nxos|cumulus)$/.test(String(p.os))) return 'invalid OS';
+    if(!str(p.release,40) || !/^[A-Za-z0-9._()-]+$/.test(p.release)) return 'invalid release';
+    if(!p.values || typeof p.values!=='object' || Object.keys(p.values).some(function(k){ return !/^[A-Z0-9_]{1,24}$/.test(k) || typeof p.values[k]!=='number' || !isFinite(p.values[k]); })) return 'invalid values';
+    if(['approved','note','nic','port','approved_by_role','based_on'].some(function(k){ return p[k]!=null && !str(p[k],200); })) return 'invalid text field';
+    if(p.defaults_verified!=null && typeof p.defaults_verified!=='boolean') return 'invalid defaults flag';
+    if(p.tests!=null && (typeof p.tests!=='object' || Object.keys(p.tests).some(function(k){ return !/^T[1-6]$/.test(k) || !str(String(p.tests[k]),40); }))) return 'invalid test summary';
+    if(!/^[0-9a-f]{64}$/.test(String(p.sha256||''))) return 'no checksum';
+    if(tprofSum(p)!==p.sha256) return 'checksum does not match: the profile was changed after export';
+    return '';
+  }
+  function tprofAll(){ if(_tprofCache) return _tprofCache; var L=[];
+    try{ L=JSON.parse(localStorage.getItem(TPROF_KEY)||'[]'); }catch(e){ L=[]; }
+    _tprofCache=(Array.isArray(L)?L:[]).filter(function(p){ return !tprofCheck(p); }); return _tprofCache; }
+  function tprofPut(L){ _tprofGen++; _tprofCache=L.slice(); try{ localStorage.setItem(TPROF_KEY, JSON.stringify(L)); }catch(e){} }
+  function relMM(r){ var m=String(r||'').match(/(\d+)\D+(\d+)/); return m?(+m[1])+'.'+(+m[2]):String(r||''); }
+  function beTargetRelease(m){ try{ var p=osProfileFor(m||beModel); return p?(p.target||p.tv||''):''; }catch(e){ return ''; } }
+  // the profile this design's back end uses: {p, ok (release matches at major.minor), target} or null
+  var _tbaK=null, _tbaV=null, _tprofGen=0;
+  function beTunedActive(){
+    var k=String(beModel||'')+'|'+(BE_TUNED===false?'F':(BE_TUNED&&BE_TUNED.sha256)||'U')+'|'+_tprofGen;
+    if(k!==_tbaK){ _tbaV=beTunedActive0(); _tbaK=k; } return _tbaV; }
+  function beTunedActive0(){
+    var m=String(beModel||''), p=null;
+    if(BE_TUNED===false) return null;
+    if(BE_TUNED && typeof BE_TUNED==='object') p=BE_TUNED.model===m?BE_TUNED:null;
+    else { var c=tprofAll().filter(function(x){ return x.model===m; }), tg=relMM(beTargetRelease(m));
+      c.sort(function(a,b){ return ((relMM(b.release)===tg)-(relMM(a.release)===tg)) || String(b.approved||'').localeCompare(String(a.approved||'')); });
+      p=c[0]||null; }
+    if(!p) return null;
+    var tgt=beTargetRelease(m);
+    return {p:p, ok:!tgt || relMM(p.release)===relMM(tgt), target:tgt};
+  }
+  function TV(k, d){ var a=beTunedActive(); return (a && a.p.values && typeof a.p.values[k]==='number')?a.p.values[k]:d; }
+  function TM(base){ var a=beTunedActive(); if(!a) return base;
+    if(!a.ok) return base+' -- profile '+a.p.id+' proven on '+a.p.release+', target '+a.target+': re-run acceptance';
+    if(a.p.defaults_verified) return 'VERIFIED ('+(a.p.os==='cumulus'?'NVIDIA defaults':'package values')+', '+a.p.release+', profile '+a.p.id+')';
+    return 'TUNED (profile '+a.p.id+', proven on '+a.p.release+', '+String(a.p.approved||'').slice(0,10)+')'; }
+  function TW(base){ var a=beTunedActive(); return (a && a.ok)?'profile '+a.p.id:base; }   // the watchdog timers' marker
+  function TQ(){ var a=beTunedActive(); return (a && a.ok)?'NUMBERS FROM '+(a.p.defaults_verified?'VERIFIED':'TUNED')+' PROFILE '+a.p.id:'NUMBERS ARE PLACEHOLDERS'; }
+  // the Release check row (not load-bearing: thresholds are set at acceptance, not for construction)
+  function beTunedInfo(){ var a=beTunedActive();
+    if(!a) return {value:'package starting values (TUNE markers)', status:'placeholder', src:'measured at lossless acceptance on the first pod (OD-T02); import the Console\u2019s tuned profile to close it'};
+    if(!a.ok) return {value:'profile '+a.p.id+' (proven on '+a.p.release+')', status:'inferred', src:'target release is '+a.target+': re-run lossless acceptance on it and import the new profile'};
+    return {value:'profile '+a.p.id+(a.p.defaults_verified?' (defaults verified)':''), status:'confirmed', src:'proven on '+a.p.release+', approved '+String(a.p.approved||'').slice(0,10)+(a.p.tests?'; '+Object.keys(a.p.tests).sort().map(function(t){ return t+' '+a.p.tests[t]; }).join(', '):'')+'; OD-T02 closed for '+a.p.model}; }
+  function tunedPanel(){
+    var old=document.getElementById('tprofOverlay'); if(old) old.remove();
+    var ov=document.createElement('div'); ov.id='tprofOverlay';
+    ov.style.cssText='position:fixed;inset:0;background:rgba(15,20,25,.45);z-index:9999;display:flex;align-items:center;justify-content:center';
+    var box=document.createElement('div');
+    box.style.cssText='background:#fff;border-radius:12px;max-width:min(900px,94vw);width:92%;max-height:88vh;overflow:auto;padding:18px 20px;font-family:var(--body);box-shadow:0 18px 60px rgba(0,0,0,.3)';
+    var esc=function(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); };
+    var BTN='height:30px;border-radius:7px;border:1px solid var(--line-strong);background:#fff;padding:0 10px;cursor:pointer;font-size:12px';
+    var PRI='height:32px;border-radius:7px;border:0;background:var(--teal);color:#fff;font-weight:600;padding:0 14px;cursor:pointer;font-size:12.5px';
+    function changed(msg, bad){ _tprofCache=null; _tprofGen++; try{ if(byType('rack').length) buildFromRacks(); else render(); }catch(e){} draw(msg, bad); }
+    function draw(msg, bad){
+      var L=tprofAll(), a=beTunedActive(), m=String(beModel||'');
+      var rows=L.map(function(p,i){ var here=a && a.p.sha256===p.sha256;
+        return '<tr style="border-top:1px solid var(--line-strong)">'
+          +'<td style="padding:6px;font-family:var(--mono);font-size:12px">'+esc(p.id)+'</td>'
+          +'<td style="padding:6px;font-size:12px">'+esc(p.model)+' \u00b7 '+esc(p.os)+' '+esc(p.release)+'<br><span style="color:#64748b">'+esc(Object.keys(p.values).map(function(k){ return k+' '+p.values[k]; }).join(', '))+'</span></td>'
+          +'<td style="padding:6px;font-size:12px;white-space:nowrap">'+esc(String(p.approved||'').slice(0,10))+(p.defaults_verified?'<br>defaults verified':'')+'</td>'
+          +'<td style="padding:6px;font-size:11.5px">'+(here?'<span style="color:#15803d;font-weight:600">in use</span>'+(a.ok?'':' <span style="color:#b45309">(release differs)</span>'):(p.model===m?'matches this back end':'<span style="color:#64748b">other platform</span>'))+'</td>'
+          +'<td style="padding:6px;text-align:right;white-space:nowrap">'+(p.model===m&&!here?'<button data-use="'+i+'" style="'+BTN+'">Use</button> ':'')+'<button data-del="'+i+'" style="'+BTN+'">Remove</button></td></tr>'; }).join('');
+      box.innerHTML='<div style="display:flex;align-items:center;gap:10px"><h3 style="margin:0;font-size:16px;flex:1 1 auto">Tuned back-end profiles</h3><button id="tpX" style="'+BTN+'">Close</button></div>'
+        +'<p style="font-size:12.5px;color:#475569;margin:8px 0 10px">Import the profile the Deployment Console exports once a platform passes lossless acceptance. A design uses the profile for its back-end model; its configs then carry the measured values, TUNE markers become TUNED, and OD-T02 closes in the Release check. A profile proven on another release (major.minor) is used, but stays marked for re-test.</p>'
+        +'<div style="font-size:12.5px;margin-bottom:10px">This design: <b>'+esc(m)+'</b>, target '+esc(beTargetRelease(m)||'\u2014')+' \u00b7 '+(a?('profile <span style="font-family:var(--mono)">'+esc(a.p.id)+'</span>'+(BE_TUNED&&typeof BE_TUNED==='object'?' (pinned in the design)':' (from the library)')):(BE_TUNED===false?'no profile (turned off for this design)':'no profile: package starting values'))+'</div>'
+        +(L.length?'<table style="width:100%;border-collapse:collapse">'+rows+'</table>':'<div style="font-size:12.5px;color:#64748b">No profiles in the library.</div>')
+        +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button id="tpImp" style="'+PRI+'">Import profile\u2026</button>'
+        +(a||BE_TUNED===false?'<button id="tpOff" style="'+BTN+';height:32px">'+(BE_TUNED===false?'Use the library\u2019s match':'Don\u2019t use a profile in this design')+'</button>':'')+'</div>'
+        +(msg?'<div style="margin-top:10px;font-size:12.5px;color:'+(bad?'#b91c1c':'#15803d')+'">'+esc(msg)+'</div>':'');
+      box.querySelector('#tpX').onclick=function(){ ov.remove(); };
+      box.querySelectorAll('[data-use]').forEach(function(b){ b.onclick=function(){ BE_TUNED=tprofAll()[+b.dataset.use]; changed('Using '+BE_TUNED.id+' in this design.'); }; });
+      box.querySelectorAll('[data-del]').forEach(function(b){ b.onclick=function(){ var L2=tprofAll().slice(), p=L2.splice(+b.dataset.del,1)[0]; tprofPut(L2);
+        changed('Removed '+p.id+' from the library'+(BE_TUNED&&BE_TUNED.sha256===p.sha256?' (this design keeps its pinned copy)':'')+'.'); }; });
+      var off=box.querySelector('#tpOff'); if(off) off.onclick=function(){ BE_TUNED=(BE_TUNED===false)?undefined:false; changed(BE_TUNED===false?'This design uses the package starting values.':'This design uses the library\u2019s match.'); };
+      box.querySelector('#tpImp').onclick=function(){ var f=document.createElement('input'); f.type='file'; f.accept='.json,application/json';
+        f.onchange=function(){ var r=new FileReader(); r.onload=function(){ var p=null; try{ p=JSON.parse(r.result); }catch(e){ return draw('Not JSON: '+e.message, true); }
+          var why=tprofCheck(p); if(why) return draw('Not imported: '+why+'.', true);
+          var L2=tprofAll().filter(function(x){ return x.sha256!==p.sha256; }); L2.push(p); tprofPut(L2);
+          if(p.model===String(beModel||'')) BE_TUNED=p;
+          changed('Imported '+p.id+(p.model===String(beModel||'')?' and used it in this design.':' (for '+p.model+').')); };
+          r.readAsText(f.files[0]); }; f.click(); };
+    }
+    ov.appendChild(box); ov.onclick=function(e){ if(e.target===ov) ov.remove(); }; document.body.appendChild(ov); draw();
+  }
   function hsTuning(){   // HS v1.43: the back end's tunable values and the configuration lines that set them
-    var m=String(beModel||''), E={minKB:150, maxKB:1500, prob:100};   // ECN_TUNE: the generators' starting band
+    var m=String(beModel||''), E={minKB:TV('ECN_MIN_KB',150), maxKB:TV('ECN_MAX_KB',1500), prob:TV('ECN_PROB',100)};   // HS v1.44: the tuned profile   // ECN_TUNE: the generators' starting band
     var ecn=[{key:'ECN_MIN_KB', label:'ECN minimum threshold', unit:'KB', base:E.minKB, min:10, max:20000, step:1},
              {key:'ECN_MAX_KB', label:'ECN maximum threshold', unit:'KB', base:E.maxKB, min:20, max:40000, step:1},
              {key:'ECN_PROB', label:'ECN maximum mark probability', unit:'%', base:E.prob, min:1, max:100, step:1}];
     var ecnRule=[['ECN_MIN_KB','<','ECN_MAX_KB']];
     if(/QFX/.test(m)) return {os:'junos', note:'committed with commit confirmed (rolls itself back unless confirmed)',
-      params:[{key:'KMIN', label:'ECN Kmin', unit:'% fill', base:(typeof ECN_KMIN!=='undefined'?ECN_KMIN:20), min:1, max:99, step:1},
-              {key:'KMAX', label:'ECN Kmax', unit:'% fill', base:(typeof ECN_KMAX!=='undefined'?ECN_KMAX:80), min:2, max:100, step:1},
-              {key:'PROB', label:'ECN mark probability at Kmax', unit:'%', base:100, min:1, max:100, step:1},
-              {key:'XOFF', label:'PFC xoff', unit:'us', base:(typeof PFC_XOFF_US!=='undefined'?PFC_XOFF_US:40), min:1, max:1000, step:1},
-              {key:'XON', label:'PFC xon', unit:'us', base:(typeof PFC_XON_US!=='undefined'?PFC_XON_US:30), min:1, max:1000, step:1},
-              {key:'CABLE', label:'PFC headroom cable length', unit:'m', base:(typeof PFC_CABLE_M!=='undefined'?PFC_CABLE_M:100), min:1, max:10000, step:1},
-              {key:'WD_DETECT_MS', label:'PFC watchdog detection', unit:'ms', base:(typeof PFC_WD_DETECT!=='undefined'?PFC_WD_DETECT:200), min:100, max:1500, step:100},
-              {key:'WD_RECOVERY_MS', label:'PFC watchdog recovery', unit:'ms', base:(typeof PFC_WD_RESTORE!=='undefined'?PFC_WD_RESTORE:200), min:100, max:60000, step:100}],
+      params:[{key:'KMIN', label:'ECN Kmin', unit:'% fill', base:TV('KMIN',20), min:1, max:99, step:1},
+              {key:'KMAX', label:'ECN Kmax', unit:'% fill', base:TV('KMAX',80), min:2, max:100, step:1},
+              {key:'PROB', label:'ECN mark probability at Kmax', unit:'%', base:TV('PROB',100), min:1, max:100, step:1},
+              {key:'XOFF', label:'PFC xoff', unit:'us', base:TV('XOFF',40), min:1, max:1000, step:1},
+              {key:'XON', label:'PFC xon', unit:'us', base:TV('XON',30), min:1, max:1000, step:1},
+              {key:'CABLE', label:'PFC headroom cable length', unit:'m', base:TV('CABLE',100), min:1, max:10000, step:1},
+              {key:'WD_DETECT_MS', label:'PFC watchdog detection', unit:'ms', base:TV('WD_DETECT_MS',200), min:100, max:1500, step:100},
+              {key:'WD_RECOVERY_MS', label:'PFC watchdog recovery', unit:'ms', base:TV('WD_RECOVERY_MS',200), min:100, max:60000, step:100}],
       rules:[['KMIN','<','KMAX'],['XON','<','XOFF']],
       lines:['delete class-of-service drop-profiles ROCE-ECN interpolate',
              'set class-of-service drop-profiles ROCE-ECN interpolate fill-level [ {KMIN} {KMAX} ] drop-probability [ 0 {PROB} ]',
@@ -27295,8 +27415,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
              'set class-of-service congestion-notification-profile ROCE-PFC pfc-watchdog detection {WD_DETECT_MS/100}',
              'set class-of-service congestion-notification-profile ROCE-PFC pfc-watchdog recovery {WD_RECOVERY_MS}']};
     if(/^AR-/.test(m)) return {os:'eos', note:'saved to the startup configuration once applied',
-      params:ecn.concat([{key:'WD_TIMEOUT_S', label:'PFC watchdog timeout', unit:'s', base:0.2, min:0.2, max:60, step:0.01},
-                         {key:'WD_RECOVERY_S', label:'PFC watchdog recovery time', unit:'s', base:0.2, min:0.2, max:60, step:0.01}]),
+      params:ecn.concat([{key:'WD_TIMEOUT_S', label:'PFC watchdog timeout', unit:'s', base:TV('WD_TIMEOUT_S',0.2), min:0.2, max:60, step:0.01},
+                         {key:'WD_RECOVERY_S', label:'PFC watchdog recovery time', unit:'s', base:TV('WD_RECOVERY_S',0.2), min:0.2, max:60, step:0.01}]),
       rules:ecnRule,
       lines:['qos profile ROCE', (/7060X6/.test(m)?'   uc-tx-queue 3':'   tx-queue 3'),
              '      random-detect ecn minimum-threshold {ECN_MIN_KB} kbytes maximum-threshold {ECN_MAX_KB} kbytes max-mark-probability {ECN_PROB}',
@@ -31470,6 +31590,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     add('Storage',STORAGE_PLATFORM.vendorLabel+' node power', STORAGE_PLATFORM.kw+' kW per node', /maximum/.test(STORAGE_PLATFORM.kwSrc||'')?'derived':'placeholder', STORAGE_PLATFORM.kwSrc||'not published');
     if(!stoIsWeka() && !/WEKA/.test(STORAGE_PLATFORM.note) && /CONFIRM/.test(STORAGE_PLATFORM.note)) add('Storage','Platform figures to confirm', STORAGE_PLATFORM.label, 'placeholder', 'see the storage note: port count, minimum cluster or power not published', false);
     add('Site','Hall geometry (aisles, row pitch, tray height)', '2.0 m cold / 1.2 m hot aisle', 'placeholder', 'site survey', false);
+    try{ var _tq=beTunedInfo(); add('Network','Back-end lossless thresholds (PFC / ECN)', _tq.value, _tq.status, _tq.src, false); }catch(e){}   // HS v1.44
     var blockers=L.filter(function(x){ return x.lb && /inferred|placeholder|missing|analog/.test(x.status); });
     return {rows:L, blockers:blockers, ready:blockers.length===0};
   }
@@ -34253,6 +34374,49 @@ class Phase2Mixin(object):
         overall = "blocked" if "blocked" in res else ("unavailable" if ("unavailable" in res or missing) else "pass")
         note = ", ".join("%s %s" % (t, T[t]["result"]) for t in sorted(T)) + ((" (not run: %s)" % ", ".join(missing)) if missing else "") + " (%s)" % r.get("by", "")
         return {"result": overall, "note": note, "evidence": ev}
+
+    # ------------------------------------------------------------------------------------- tuned profile export (HS v1.44)
+    def tuning_profile(self, user, nic="", port=""):
+        """The approved tuning as a platform profile for the builder: design values only -- model, release, values and a
+        test summary; no names, addresses or counters (the hand-over export keeps those)."""
+        tp, t = self.tuning_plan(), self.tuning_state()
+        if not tp.get("params"):
+            return False, "this design has no tunable back-end values", None
+        ap = t.get("approved")
+        if not ap:
+            return False, "approve a tuning version first", None
+        acc = self.accept_eval()
+        conf = self.gate_res.get(("be", "accept"))
+        if acc.get("result") != "pass" and not conf:
+            return False, "lossless acceptance T1-T4 has not passed: " + acc.get("note", ""), None
+        every = self.tuning_scope("all")
+        d = self.devs.get(every[0], {}) if every else {}
+        vals = {}
+        for k, x in (self.tuning_values(ap["v"]) or {}).items():
+            x = float(x)
+            vals[k] = int(x) if x == int(x) else round(x, 6)
+        tests = {k: str((v or {}).get("result", "")) for k, v in ((self.results.get("accept") or {}).get("tests") or {}).items() if re.match(r"^T[1-6]$", k)}
+        if conf:   # confirmed by hand on the gate: what the runner did not score counts as confirmed
+            for k in ("T1", "T2", "T3", "T4"):
+                if tests.get(k) != "pass":
+                    tests[k] = "confirmed"
+        for k in ("t5", "t6"):
+            if self.gate_res.get(("be", k)):
+                tests[k.upper()] = "confirmed"
+        clean = lambda v: re.sub(r"[^\x20-\x7e]", "", re.sub(r"[<>`]", "", str(v or "")))[:200]
+        rl = d.get("release", "")
+        model, rel = str(d.get("model", "")), str(rl.get("target", "") if isinstance(rl, dict) else rl)
+        p = {"schema": "aidc-tuned-profile/1", "model": model, "os": tp.get("os", d.get("os", "")), "release": rel,
+             "values": vals, "defaults_verified": ap["v"] == 0 and not tp.get("profile"),
+             "approved": iso(ap.get("ts")), "approved_by_role": "admin", "tests": tests,
+             "note": clean(next((x.get("note", "") for x in t["versions"] if x["v"] == ap["v"]), "package values" if ap["v"] == 0 else "")),
+             "nic": clean(nic), "port": clean(port), "based_on": tp.get("profile") or "package starting values"}
+        canon = lambda o: json.dumps(o, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        p["id"] = re.sub(r"[^A-Za-z0-9._-]", "-", "%s-%s-%s" % (model, ".".join(re.findall(r"\d+", rel)[:2]), hashlib.sha256(canon(p).encode("utf-8")).hexdigest()[:8]))
+        p["sha256"] = hashlib.sha256(canon(p).encode("utf-8")).hexdigest()
+        self.audit(user, "tuning-profile-export", p["id"], "v%d" % ap["v"])
+        self.event("Tuned profile %s exported by %s (v%d)" % (p["id"], user, ap["v"]), "info", user=user)
+        return True, p["id"], p
 
     # ------------------------------------------------------------------------------------- tuning overlays (HS v1.43)
     # A tuning change is a numbered version of the plan's tunable values (version 0 = the package's own). The Console
@@ -37576,7 +37740,7 @@ def make_console_handler(est, console_html):
                 need = data.get("build", "")
             elif p == "/api/run":
                 need = data.get("plane", "all")
-            elif p == "/api/result" or p in ("/api/tuning/propose", "/api/tuning/apply", "/api/tuning/rollout"):   # HS v1.43
+            elif p == "/api/result" or p in ("/api/tuning/propose", "/api/tuning/apply", "/api/tuning/rollout", "/api/tuning/profile"):   # HS v1.43
                 need = "be"
             elif p == "/api/tuning/approve":
                 need = None   # the platform profile: admins only
@@ -37681,6 +37845,9 @@ def make_console_handler(est, console_html):
                         est.audit(user, "mnha-restore", n, "sync confirmed by operator")
                         est.event("%s: session sync confirmed by %s; restoring preemption" % (est.devs[n].get("short", n), user), "warn", n, user=user)
                     msg = "ok" if ok else "not waiting for sync"
+            elif p == "/api/tuning/profile":   # HS v1.44: the approved tuning, as a profile for the builder
+                ok, msg, prof = est.tuning_profile(user, data.get("nic", ""), data.get("port", ""))
+                return self._send(200 if ok else 409, {"ok": ok, "msg": msg, "profile": prof})
             elif p == "/api/tuning/propose":   # HS v1.43
                 ok, msg = est.tuning_propose(data.get("values") or {}, str(data.get("note", ""))[:300], user)
             elif p == "/api/tuning/apply":
@@ -38547,7 +38714,7 @@ function render(){
     var btns=(c.type==='auto'&&c.evidence?'<button data-ge="'+esc(c.key)+'" style="min-height:32px">Evidence</button>':'')
       +(c.kind==='nccl'&&c.result!=='pass'&&gb.state!=='queued'?'<button class="act" data-nc="1" style="min-height:32px">Enter result…</button>':'')
       +(c.kind==='accept'&&c.result!=='pass'&&gb.state!=='queued'?'<button class="act" data-ac="1" style="min-height:32px">Upload results…</button>':'')
-      +(c.kind==='tuned'&&st.tuning&&gb.state!=='queued'?'<button class="act" data-tu="propose" style="min-height:32px">Propose…</button><button class="act" data-tu="apply" style="min-height:32px">Apply / roll back…</button><button class="act" data-tu="approve" style="min-height:32px">Approve…</button><button class="act" data-tu="rollout" style="min-height:32px">Roll out</button>':'')
+      +(c.kind==='tuned'&&st.tuning&&gb.state!=='queued'?'<button class="act" data-tu="propose" style="min-height:32px">Propose…</button><button class="act" data-tu="apply" style="min-height:32px">Apply / roll back…</button><button class="act" data-tu="approve" style="min-height:32px">Approve…</button><button class="act" data-tu="rollout" style="min-height:32px">Roll out</button>'+(st.tuning.approved?'<button class="act" data-tu="profile" style="min-height:32px">Export profile\u2026</button>':''):'')
       +((c.type==='confirm'||(c.type==='auto'&&/needs confirmation|blocked|warn/.test(c.result)))&&c.result!=='confirmed'&&gb.state!=='queued'?'<button class="act" data-gc="'+esc(c.key)+'" style="min-height:32px">Confirm…</button>':'');
     return '<li style="align-items:flex-start"><span class="chip k-'+r[1]+'" style="flex:0 0 86px;justify-content:center">'+r[0]+'</span><span style="display:flex;flex-direction:column;gap:4px;flex:1 1 auto;min-width:0"><span>'+esc(c.label)+'</span><span class="muted" style="font-size:12px;overflow-wrap:anywhere">'+esc(c.note)+'</span>'
       +(c.kind==='tuned'&&st.tuning?tuneTable(st.tuning):'')
@@ -38576,6 +38743,13 @@ function render(){
         ask('Approve the platform profile', 'The approved version is the one every back-end switch must run before the gate passes, and the one Roll out applies. Approve after T1 to T4 pass on the test pod with it.',
           [{key:'v', label:'Version', options:vers, value:String(T.versions.length?T.versions[T.versions.length-1].v:0)}])
         .then(function(v){ if(v) act('api/tuning/approve',{v:+v.v}); }); }
+      else if(a==='profile'){   // HS v1.44
+        ask('Export the tuned profile', 'The approved version as a platform profile for the AIDC DBD builder: model, release, values and the test summary. No names, addresses or counters leave the site.',
+          [{key:'nic', label:'NIC model and firmware (for the record)'}, {key:'port', label:'Port speed and planes (for the record)'}])
+        .then(function(v){ if(!v) return; api('api/tuning/profile',{nic:v.nic, port:v.port}).then(function(j){
+          var b=new Blob([JSON.stringify(j.profile, null, 1)+'\n'], {type:'application/json'}), u=URL.createObjectURL(b), x=document.createElement('a');
+          x.href=u; x.download='tuning-profile-'+j.profile.id+'.json'; document.body.appendChild(x); x.click(); setTimeout(function(){ URL.revokeObjectURL(u); x.remove(); }, 2000);
+          actMsg('Exported '+j.profile.id, 'ok'); }).catch(function(e){ if(e.message!=='login') actMsg(e.message, 'err'); }); }); }
       else ask('Roll out v'+((T.approved||{}).v||0), 'Applies the approved version pod by pod; after each pod a T2/T3 smoke test runs on it (accept_cmd with {POD}) and a failure stops the rollout there.', [])
         .then(function(v){ if(v) act('api/tuning/rollout',{}); }); }; });
   document.querySelectorAll('[data-ac]').forEach(function(e){ e.disabled=!canAct('be'); e.onclick=function(){ ask('Lossless acceptance results','Paste the output of acceptance/lossless.sh for T1 to T4. Uploaded by hand, the switch-side criteria are then confirmed from the switches.',[{key:'text',label:'Output',area:true}]).then(function(v){ if(v) act('api/result',{kind:'accept', text:v.text}); }); }; });   // HS v1.42
