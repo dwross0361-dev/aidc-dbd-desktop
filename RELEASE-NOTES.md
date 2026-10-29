@@ -1,3 +1,13 @@
+# AIDC DBD Desktop 2.0.34 (builder HS-v1.42, site runner 1.7.0)
+
+- **Back-end lossless acceptance in the Deployment Console** (stage 1 of 3, per the BEF Lossless Tuning and Acceptance Procedure). The back-end gate gains four lines ahead of NCCL:
+  - **Lossless preconditions:** every planned MTU, PFC, ECN, watchdog and RoCE line is in the running configuration of every rail leaf and spine, compared after normalization against the planned config.
+  - **Lossless acceptance T1–T4:** the Console runs `acceptance/lossless.sh` on the head node over SSH, one test at a time (estate.conf `accept_cmd`, with `{TEST}`). It reads the test pod's switch counters before and after each test (PFC on priority 3, ECN marks and drops on the RoCE queue, watchdog events), adds the NIC counters the script reports, and scores the pass criteria: line rate, no lossless drops, marks before pauses, incast fairness, no spine PFC under all-to-all, and bus bandwidth at target. Each criterion is listed under Evidence.
+  - **T5 and T6** (failure and watchdog tests) are operator confirmations.
+  - **Without the runner**, Upload results takes the script's output; the switch-side criteria are then confirmed by hand.
+- **Counters the Console can't read are never passed.** Each switch vendor reports PFC and ECN counters in its own format. The Console reads each vendor's structured (JSON) output, and any counter it doesn't recognize shows as "confirm by hand". Confirm the readers on the first unit of each platform.
+- **The Total racks field** shows four digits.
+
 # AIDC DBD Desktop 2.0.33 (builder HS-v1.41, site runner 1.7.0)
 
 - **Cable Matrix tab order:** Build order, Cabling rules, 0 Power, 1 OOB Cable Map, 2 Edge PoP, 3 FEF Cable Map, 4 BEF Cable Map. The rules are read before any cable is pulled, so they now sit beside the build order, and the Build order note says to read them first. The order is the same in the Cable Matrix workbook and the Final package's design workbook. Nothing else changes; the plan digest is the same as in 2.0.32.

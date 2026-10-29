@@ -657,7 +657,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
   <span style="width:1px;height:24px;background:var(--line-strong);margin:0 3px"></span>
   <label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600" title="How many compute racks the site has. This is what sizes the build.">Total racks:
-    <input id="rackcount" type="number" min="1" max="4096" value="8" style="width:56px;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 8px;font-family:var(--mono);margin:0 4px" autocomplete="off"> racks
+    <input id="rackcount" type="number" min="1" max="4096" value="8" style="width:80px;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 8px;font-family:var(--mono);margin:0 4px" autocomplete="off"> racks
   </label>
   <label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600" title="Backend leaf, spine and super-spine platform. Sets the vendor for backend port naming and configs.">BE platform:
     <select id="be-model" style="height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--mono);font-size:11px;margin:0 4px" autocomplete="off"></select>
@@ -942,7 +942,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.41';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.42';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   var RADIX=64, CAGE=800;
   // ---- FABRIC PROFILE (parameterized per accelerator platform) ----------------------------------------
   // rails == accelerators per host. Each accelerator instance gets its own rail leaf, which is what
@@ -20447,7 +20447,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       '3. MTU: from every leaf loopback to every other: ping -M do -s 8972 (front end and back end), and 9000-byte',
       '     frames from each GPU host\'s storage interface to a storage node.',
       '4. CONTROL PLANE: every BGP session Established; every DPU VTEP reachable from every other (front end).',
-      '5. BACK END: NCCL (nccl-tests), see nccl.sh -- per rail, then all rails; busbw at or above the target below.',
+      '5. BACK END: lossless acceptance on the test pod (lossless.sh T1-T4, scored by the Deployment Console, then T5/T6),',
+      '   then NCCL (nccl-tests), see nccl.sh -- per rail, then all rails; busbw at or above the target below.',
       '6. STORAGE: weka/03-checks.sh, then a fio read from one host per pod (record the result for the baseline).',
       '7. INGRESS: per tenant, curl https://<VIP> from outside; the BNK Gateway shows the request (metering).'];
     F.unshift(['acceptance/README.md', T.join('\n')]);
@@ -20459,6 +20460,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       'echo \"$out\"',
       'busbw=$(echo \"$out\" | awk \'/Avg bus bandwidth/ {print $NF}\')',
       'awk -v b=\"$busbw\" -v t=\"$TARGET\" \'BEGIN{ if (b+0 >= t+0) { print \"PASS busbw \" b \" GB/s\"; exit 0 } else { print \"FAIL busbw \" b \" < \" t; exit 1 } }\''].join('\n')]);
+    F.push(['acceptance/lossless.sh', "#!/usr/bin/env bash\n# acceptance/lossless.sh -- back-end lossless acceptance, one test per run (BEF Lossless Tuning and Acceptance Procedure).\n#   lossless.sh T1   every path of the test pod at line rate: a ring of host-to-host ib_write_bw runs, in parallel\n#   lossless.sh T2   incast: ACCEPT_INCAST senders (default 8) into one receiver port, at once\n#   lossless.sh T3   NCCL all-to-all across the test pod\n#   lossless.sh T4   NCCL all-reduce across the test pod\n# The Deployment Console runs it on the head node (estate.conf accept_cmd, with {TEST} for the test) and reads the\n# switch counters before and after each run. By hand: run all four and paste the output into the console\n# (Back end gate > Upload results); the switch-side criteria are then confirmed by hand.\n# Needs perftest and nccl-tests on every host in HOSTFILE (the test pod, one host per line), passwordless SSH from\n# here, RoCEv2 GID index ACCEPT_GID (default 3). NIC counters: NVIDIA mlx5 names, summed over every host's HCA.\nset -uo pipefail\nT=${1:-${ACCEPT_TEST:-}}; [ -n \"$T\" ] || { echo \"usage: lossless.sh T1|T2|T3|T4\"; exit 2; }\nHOSTFILE=${HOSTFILE:?hostfile}; HCA=${ACCEPT_HCA:-mlx5_0}; GID=${ACCEPT_GID:-3}\nDUR=${ACCEPT_SECONDS:-600}; T1S=${ACCEPT_T1_SECONDS:-30}; GPH=${ACCEPT_GPUS_PER_HOST:-8}\nmapfile -t H < <(grep -v '^[[:space:]]*#' \"$HOSTFILE\" | awk 'NF{print $1}')\n[ \"${#H[@]}\" -ge 2 ] || { echo \"ACCEPT $T error=need_two_hosts\"; exit 2; }\nSSH=\"ssh -o BatchMode=yes -o ConnectTimeout=10\"\nKEYS=\"rx_prio3_pause tx_prio3_pause rx_discards_phy out_of_sequence packet_seq_err np_ecn_marked_roce_packets np_cnp_sent rp_cnp_handled\"\nnic() {\n  for h in \"${H[@]}\"; do\n    $SSH \"$h\" \"d=\\$(ls /sys/class/infiniband/$HCA/device/net 2>/dev/null | head -1); [ -n \\\"\\$d\\\" ] && ethtool -S \\$d 2>/dev/null;\n      for f in out_of_sequence packet_seq_err np_ecn_marked_roce_packets np_cnp_sent rp_cnp_handled; do\n        echo \\\"\\$f: \\$(cat /sys/class/infiniband/$HCA/ports/1/hw_counters/\\$f 2>/dev/null || echo 0)\\\"; done\" 2>/dev/null\n  done | awk -v keys=\"$KEYS\" 'BEGIN{n=split(keys,k,\" \"); for(i=1;i<=n;i++) w[k[i]]=1}\n    {gsub(\":\",\"\",$1); if(($1 in w) && $2 ~ /^[0-9]+$/) s[$1]+=$2} END{for(x in w) print x, s[x]+0}'\n}\nbw() { awk 'NF==5 && $1 ~ /^[0-9]+$/ {v=$4} END{print v+0}'; }\nstats() { awk '{x[NR]=$1; s+=$1; if(NR==1||$1<mn) mn=$1; if($1>mx) mx=$1} END{if(NR) printf \"min_gbps=%.2f max_gbps=%.2f mean_gbps=%.2f sum_gbps=%.2f n=%d\", mn, mx, s/NR, s, NR}'; }\nRATE=$($SSH \"${H[0]}\" \"cat /sys/class/infiniband/$HCA/ports/1/rate 2>/dev/null\" | awk '{print $1+0}')\nB=$(nic); TMP=$(mktemp -d); rc=0\ncase \"$T\" in\n  T1)\n    n=${#H[@]}\n    for i in $(seq 0 $((n-1))); do s=${H[$i]}; p=$((18515+i))\n      $SSH \"$s\" \"timeout $((T1S+90)) ib_write_bw -d $HCA -x $GID -p $p -D $T1S --report_gbits -F -q 4\" >/dev/null 2>&1 & done\n    sleep 3\n    for i in $(seq 0 $((n-1))); do s=${H[$i]}; c=${H[$(((i+1)%n))]}; p=$((18515+i))\n      ( $SSH \"$c\" \"ib_write_bw -d $HCA -x $GID -p $p -D $T1S --report_gbits -F -q 4 $s\" 2>/dev/null | bw > \"$TMP/$i\" ) & done\n    wait; out=$(cat \"$TMP\"/* | stats); echo \"ACCEPT T1 port_gbps=${RATE:-0} $out\" ;;\n  T2)\n    R=${H[0]}; N=${ACCEPT_INCAST:-8}; [ \"$N\" -gt $((${#H[@]}-1)) ] && N=$((${#H[@]}-1))\n    for i in $(seq 1 \"$N\"); do p=$((19515+i)); $SSH \"$R\" \"timeout $((DUR+90)) ib_write_bw -d $HCA -x $GID -p $p -D $DUR --report_gbits -F -q 4\" >/dev/null 2>&1 & done\n    sleep 3\n    for i in $(seq 1 \"$N\"); do p=$((19515+i)); c=${H[$i]}\n      ( $SSH \"$c\" \"ib_write_bw -d $HCA -x $GID -p $p -D $DUR --report_gbits -F -q 4 $R\" 2>/dev/null | bw > \"$TMP/$i\" ) & done\n    wait; out=$(cat \"$TMP\"/* | stats); echo \"ACCEPT T2 port_gbps=${RATE:-0} senders=$N $out\" ;;\n  T3|T4)\n    NP=$(( ${#H[@]} * GPH )); prog=alltoall_perf; args=\"-b 1K -e 1G -f 2 -g 1\"\n    [ \"$T\" = T4 ] && { prog=all_reduce_perf; args=\"-b 8G -e 8G -f 2 -g 1\"; }\n    o=$(mpirun -np \"$NP\" --hostfile \"$HOSTFILE\" -x NCCL_IB_HCA -x NCCL_DEBUG=WARN $prog $args 2>&1); rc=$?\n    echo \"$o\" | tail -20\n    echo \"ACCEPT $T busbw=$(echo \"$o\" | awk '/Avg bus bandwidth/ {v=$NF} END{print v+0}') exit=$rc\" ;;\n  *) echo \"usage: lossless.sh T1|T2|T3|T4\"; exit 2 ;;\nesac\nA=$(nic)\njoin <(echo \"$B\" | sort) <(echo \"$A\" | sort) | awk -v t=\"$T\" '{d=$3-$2; if(d<0) d=$3; print \"NIC\", t, $1, d}'\nrm -rf \"$TMP\"; exit $rc\n"]);   // HS v1.42
     return F;
   }
   // ---- INFERENCE POD NETWORKING (Captain, 8 Oct 2026): pod routes via the DPU -------------------------------
@@ -25836,7 +25838,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     B.push("[[ -f /etc/fabric/estate.conf ]] || python3 - \"$PWD\" \"$ROLE\" \"$PEER\" \"$BIND_IP\" > /etc/fabric/estate.conf <<'PYEOF'");
     B.push("import json, sys");
     B.push("c = {\"bundle_dir\": sys.argv[1], \"role\": sys.argv[2], \"tftp_root\": \"/srv/tftp\", \"alert_webhook\": \"\", \"smtp_host\": \"\", \"smtp_to\": \"\", \"smtp_from\": \"\",");
-    B.push("     \"weka_nodes\": {}, \"host_ssh\": {}, \"nccl_cmd\": \"\", \"sites\": [], \"backup_every_h\": 6}");
+    B.push("     \"weka_nodes\": {}, \"host_ssh\": {}, \"nccl_cmd\": \"\", \"accept_cmd\": \"\", \"sites\": [], \"backup_every_h\": 6}");
     B.push("if sys.argv[3]: c[\"peer_url\"] = sys.argv[3]");
     B.push("if sys.argv[4]: c.update(http_bind=sys.argv[4], console_bind=sys.argv[4], tftp_bind=sys.argv[4])");
     B.push("print(json.dumps(c, indent=1))");
@@ -27091,7 +27093,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
              {key:'reach', type:'reachable', label:'Management reachable'},
              {key:'ul', type:'auto', kind:'bgp', devices:W.be[0].concat(W.be[1]), label:'Underlay up, ECMP to every spine'},
              {key:'roce', type:'auto', kind:'roce', devices:W.be[1], label:'RoCE QoS verified (PFC and ECN in effect on every rail leaf)'},
-             {key:'nccl', type:'auto', kind:'nccl', devices:[], label:'NCCL all-reduce acceptance at target bus bandwidth'}]}
+             {key:'lossless', type:'auto', kind:'lossless', devices:W.be[0].concat(W.be[1]), label:'Lossless preconditions: every planned MTU, PFC, ECN, watchdog and RoCE line in effect on every rail leaf and spine'}, {key:'accept', type:'auto', kind:'accept', devices:[], label:'Lossless acceptance T1-T4 on the test pod (procedure pass criteria)'}, {key:'t5', type:'confirm', label:'Lossless acceptance T5: a link, then a spine, lost under all-to-all -- no pause storm, no lossless drops'}, {key:'t6', type:'confirm', label:'Lossless acceptance T6: a stuck receiver caught by the PFC watchdog within its timer, the pause kept local'}, {key:'nccl', type:'auto', kind:'nccl', devices:[], label:'NCCL all-reduce acceptance at target bus bandwidth'}]}
     ].map(function(b){ var _ad=[].concat.apply([], b.w).filter(function(n){ var e=devs.filter(function(x){ return x.name===n; })[0]; return e && !e.aggregate && e.ip; });   // HS v1.25
       if(_ad.length) b.gate=b.gate.slice(0,2).concat([{key:'software', type:'auto', kind:'software', devices:_ad, label:'Software: every device at its target release'},
                                                       {key:'cabling', type:'auto', kind:'cabling', devices:_ad, label:'Cabling: LLDP neighbors match the cable plan'}], b.gate.slice(2));
@@ -27123,12 +27125,15 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     if(railAgg){ var _hs=Object.keys(hostSet).sort();
       runners.push({key:'rails', kind:'rails', label:'Host rail checks', targets:[railAgg], hosts_conf:'host_ssh', conf:['host_ssh'],
         script:'provision/rail_check.sh', hosts:_hs, rails_per_host:Math.max(1, Math.round(byName[railAgg].aggregate/Math.max(1,_hs.length)))});
-      runners.push({key:'nccl', kind:'nccl', label:'NCCL all-reduce acceptance', targets:[railAgg], conf:['nccl_cmd'], after:'rails'}); }
+      runners.push({key:'nccl', kind:'nccl', label:'NCCL all-reduce acceptance', targets:[railAgg], conf:['nccl_cmd'], after:'rails'});
+      var _tp=function(L){ var p=(L||[]).filter(function(n){ return /-Pod1-/.test(n); }); return p.length?p:(L||[]); };   // HS v1.42: the test pod
+      runners.push({key:'accept', kind:'accept', label:'Lossless acceptance (T1-T4)', targets:[railAgg], conf:['accept_cmd'], after:'rails',
+        devices:_tp(W.be[1]).concat(_tp(W.be[0])), tests:['T1','T2','T3','T4'], criteria:{line_rate_pct:95, fairness_pct:10}, timeout_s:7200}); }
     var images=[]; try{ osProfilesInUse().forEach(function(u){ Object.keys(u.images||{}).forEach(function(f){ images.push({file:f, sha256:null, profile:u.key}); }); }); }catch(e){}
     return {schema:1, builder:BUILDER_VER, generated:new Date().toISOString(), site:site,
             dhcp:{subnet_id:1, device_subnet:dv.net, services_subnet:sv.net, gateway:dv.gw, relays:[dv.irbA, dv.irbB],
                   hold_pool:dv.at(PROV_HOLD.from)+' - '+dv.at(PROV_HOLD.to)},
-            builds:B, devices:devs, images:images, runners:runners,
+            builds:B, devices:devs, images:images, runners:runners, acceptance:{criteria:{line_rate_pct:95, fairness_pct:10}},
             ha:{enabled:!!PROV_HA, primary:prov, standby:PROV_HA?provStandbyIp():''},
             registry:(function(){ try{ return registryAll().map(function(r){ return {code:r.client, name:r.name, region:r.region, site:r.site}; }); }catch(e){ return []; } })(),
             floor:order.map(function(r){ return {row:r, cabinets:rows[r]}; })};
@@ -27249,7 +27254,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       '| WEKA cluster build (weka/01-03 over SSH) | estate.conf weka_nodes {name: address}; NIC0_DEV, NIC1_DEV, DRIVE_CORES, COMPUTE_CORES, NVME_DEVICES, DATA_DRIVES, PARITY_DRIVES, CAPACITY |',
       '| DPU image install (bfb-install on each host) | estate.conf host_ssh {host: address}; the BFB in images/ |',
       '| Host rail checks (provision/rail_check.sh) | estate.conf host_ssh |',
-      '| NCCL acceptance | estate.conf nccl_cmd (e.g. ssh to the head node running acceptance/nccl.sh); TARGET_BUSBW |','',
+      '| NCCL acceptance | estate.conf nccl_cmd (e.g. ssh to the head node running acceptance/nccl.sh); TARGET_BUSBW |',
+      '| Lossless acceptance T1-T4 | estate.conf accept_cmd with {TEST} for the test (e.g. ssh to the head node running HOSTFILE=pod1.hosts acceptance/lossless.sh {TEST}); TARGET_BUSBW |','',
       'Add the service key (/etc/fabric/estate_ssh_key.pub) to root\u2019s authorized_keys on WEKA nodes and GPU hosts. A runner that is not configured leaves its devices to the operator (Mark configured).','',
       '## Standby provisioning host','',
       'Deploy > Standby provisioning host adds a second host at '+(PROV_HA?provStandbyIp():'the next services address')+': Kea runs as a hot-standby pair, the cores relay to both, and the primary sends its state to the standby every minute (ESTATE_SYNC_TOKEN, same on both). Install it with sudo ./setup.sh --standby. If the primary is lost: estate_build.py promote on the standby, add the provisioning address (every bootstrap URL carries it) to its bond0, and restart estate-build. The primary pins the standby’s console certificate before it sends the token: set "peer_cert_sha256" in the primary’s estate.conf to the value setup.sh (or estate_build.py fingerprint) printed on the standby; left blank, the first certificate seen is pinned and logged for you to compare. A replaced certificate is refused until the new value is set.','',
@@ -33115,6 +33121,98 @@ CMDS = {
              "eos": ["show priority-flow-control"], "nxos": ["show interface priority-flow-control"],
              "srl": ["info flat qos"]},
 }
+# HS v1.42: back-end lossless acceptance (BEF Lossless Tuning and Acceptance Procedure). Switch counters are read as the
+# OS's structured output where it has one. CONFIRM on the first unit: each vendor names these counters its own way, and
+# an output this reader does not understand leaves the criterion to be confirmed by hand -- never a pass.
+CNT_CMDS = {
+    "cumulus": ["@per-if:nv show interface {if} counters qos -o json", "nv show qos pfc-watchdog -o json"],
+    "junos": ["show interfaces queue | display json", "show interfaces extensive | display json"],
+    "eos": ["show priority-flow-control counters detail | json", "show interfaces counters queue detail | json",
+            "show priority-flow-control counters watchdog | json"],
+    "nxos": ["show interface priority-flow-control detail | json", "show queuing interface | json", "show queuing pfc-queue detail | json"],
+}
+LOSSLESS_RE = re.compile(r"(\bmtu\b|pfc|priority-flow-control|\becn\b|explicit-congestion|congestion-notification|random-detect|qos roce|"
+                         r"watchdog|no-loss|lossless|class-of-service|\bqos\b)", re.I)
+ACC_Q3 = re.compile(r"(prio(rity)?|pg|tc|traffic[-_ ]?class|queue|cos|fc)[-_ /]?3(\D|$)")
+
+
+def acc_flat(o, pre="", out=None):
+    out = {} if out is None else out
+    if isinstance(o, dict):
+        for k, v in o.items():
+            acc_flat(v, pre + "/" + str(k).lower(), out)
+    elif isinstance(o, list):
+        for i, v in enumerate(o):
+            acc_flat(v, pre + "/" + str(i), out)
+    elif not isinstance(o, bool):
+        try:
+            out[pre] = float(o)
+        except (TypeError, ValueError):
+            pass
+    return out
+
+
+def acc_flat_text(t):
+    t = (t or "").strip()
+    if not t or t.lower().startswith(("error", "%", "invalid", "syntax error")):
+        return {}
+    try:
+        return acc_flat(json.loads(t))
+    except ValueError:
+        pass
+    out = {}
+    for l in t.splitlines():
+        m = re.match(r"^\s*([A-Za-z][\w ./()-]*?)\s*[:=]\s*(-?\d+(?:\.\d+)?)\s*$", l)
+        if m:
+            out["/" + m.group(1).strip().lower()] = float(m.group(2))
+    return out
+
+
+def acc_counts(flat):
+    """PFC sent/received on priority 3, ECN marks and drops on the RoCE queue, PFC watchdog events -- by key name."""
+    c = {"pfc_tx": 0.0, "pfc_rx": 0.0, "ecn": 0.0, "drops": 0.0, "wd": 0.0, "seen": set()}
+    for p, v in flat.items():
+        q3 = bool(ACC_Q3.search(p))
+        if re.search(r"watchdog|storm", p):
+            if not re.search(r"timer|interval|time|enable|state|config|action|polling|recovery", p):
+                c["wd"] += v
+                c["seen"].add("wd")
+            continue
+        if re.search(r"pfc|pause", p) and q3:
+            if re.search(r"tx|sent|xmit|transmit|/out", p):
+                c["pfc_tx"] += v
+                c["seen"].add("pfc")
+            elif re.search(r"rx|recv|receiv|/in", p):
+                c["pfc_rx"] += v
+                c["seen"].add("pfc")
+            continue
+        if re.search(r"ecn|marked|/ce(\b|/|$)", p) and q3:
+            c["ecn"] += v
+            c["seen"].add("ecn")
+            continue
+        if re.search(r"drop|discard", p) and q3:
+            c["drops"] += v
+            c["seen"].add("drops")
+    return c
+
+
+def acc_parse(text, test):
+    """The host script's lines for one test: ACCEPT <test> k=v ... and NIC <test> <counter> <delta>."""
+    kv, nic = {}, {}
+    for l in (text or "").splitlines():
+        m = re.match(r"^ACCEPT\s+%s\s+(.*)$" % re.escape(test), l.strip())
+        if m:
+            for k, v in re.findall(r"(\w+)=(\S+)", m.group(1)):
+                try:
+                    kv[k] = float(v)
+                except ValueError:
+                    kv[k] = v
+        m = re.match(r"^NIC\s+%s\s+(\S+)\s+(-?\d+(?:\.\d+)?)$" % re.escape(test), l.strip())
+        if m:
+            nic[m.group(1)] = nic.get(m.group(1), 0.0) + float(m.group(2))
+    return kv, nic
+
+
 VERSION_CMD = {"cumulus": "cat /etc/lsb-release", "junos": "show version", "eos": "show version", "nxos": "show version",
                "srl": "info from state system information version", "sros": "show version", "iosxr": "show version", "iosxe": "show version"}   # HS v1.25
 LLDP_CMD = {"cumulus": "nv show interface lldp -o json", "junos": "show lldp neighbors | display json", "eos": "show lldp neighbors | json",
@@ -33749,6 +33847,20 @@ class Phase2Mixin(object):
             else:
                 ok = "pfc" in t.lower()
             return ok, "PFC/ECN %s" % ("in effect" if ok else "not found"), t
+        if kind == "lossless":   # HS v1.42: every planned MTU, PFC, ECN, watchdog and RoCE line is in the running configuration
+            cmd = BACKUP_CMD.get(os_)
+            pl = self.planned_text(n)
+            if not cmd or pl is None:
+                raise ReaderUnavailable("no running-configuration reader or planned configuration for " + (os_ or "this device"))
+            run = self.read(n, [cmd])[0]
+            P = set(x for x in cfg_norm(pl, os_) if LOSSLESS_RE.search(x))
+            if not P:
+                return True, "no lossless lines planned on this device", ""
+            miss = sorted(P - cfg_norm(run, os_))
+            note = "%d of %d planned lossless lines in effect" % (len(P) - len(miss), len(P))
+            if miss:
+                note += "; missing: " + "; ".join(miss[:3]) + (" +%d more" % (len(miss) - 3) if len(miss) > 3 else "")
+            return not miss, note, "\n".join("- " + x for x in miss[:300])
         if kind == "software":   # HS v1.25: release against the device's profile
             tgt = ((self.devs[n].get("release") or {}).get("target") or "").strip()
             if not tgt:
@@ -33816,6 +33928,12 @@ class Phase2Mixin(object):
                 res = {"result": "pass" if ok else "blocked",
                        "note": "bus bandwidth %s GB/s against %s GB/s (%s)" % (r["busbw"], r["target"], r.get("by", "")),
                        "evidence": {"nccl": {"ok": ok, "note": "", "text": r.get("text", "")[-1500:]}}}
+            with self.lock:
+                self.auto_res[key] = dict(res, ts=now())
+                self.kv_set("auto_res", {"%s|%s" % k2: v for k2, v in self.auto_res.items()})
+            return
+        if c["kind"] == "accept":   # HS v1.42: scored from the acceptance run's results
+            res = self.accept_eval()
             with self.lock:
                 self.auto_res[key] = dict(res, ts=now())
                 self.kv_set("auto_res", {"%s|%s" % k2: v for k2, v in self.auto_res.items()})
@@ -33926,6 +34044,166 @@ class Phase2Mixin(object):
                     if c.get("kind") == kind:
                         self.auto_res.pop((b["key"], c["key"]), None)
             return True, "recorded"
+
+    # ------------------------------------------------------------------------------------- lossless acceptance (HS v1.42)
+    def _acc_counts_of(self, n):
+        os_ = self.devs[n].get("os", "")
+        cmds = CNT_CMDS.get(os_)
+        if not cmds:
+            raise ReaderUnavailable("no counter reader for " + os_)
+        exp = []
+        for c in cmds:
+            if c.startswith("@per-if:"):
+                ifs = sorted(set(re.findall(r"nv set interface (\S+) qos pfc-watchdog", self.planned_text(n) or "")))
+                exp += [c[8:].replace("{if}", i) for i in ifs]
+            else:
+                exp.append(c)
+        tot = {"pfc_tx": 0.0, "pfc_rx": 0.0, "ecn": 0.0, "drops": 0.0, "wd": 0.0, "seen": set()}
+        for t in self.read(n, exp):
+            c = acc_counts(acc_flat_text(t))
+            for k in ("pfc_tx", "pfc_rx", "ecn", "drops", "wd"):
+                tot[k] += c[k]
+            tot["seen"] |= c["seen"]
+        return tot
+
+    def _acc_snap(self, devs):
+        def one(n):
+            try:
+                return n, self._acc_counts_of(n), None
+            except Exception as e:
+                return n, None, str(e)
+        return {n: (c, e) for n, c, e in self.pool_map(one, devs)}
+
+    def _acc_role(self, n):
+        d = self.devs.get(n, {})
+        return "spine" if re.search(r"spine|super|ssp", d.get("role", ""), re.I) or re.search(r"-S(P|SP)\d", n) else "leaf"
+
+    def _acc_switch(self, s0, s1):
+        """Counter changes over one test, by tier; None for what no device reported."""
+        out = {"leaf": {}, "spine": {}}, []
+        sums, unread = out
+        for n, (c1, e1) in (s1 or {}).items():
+            c0, e0 = (s0 or {}).get(n, (None, None))
+            if c0 is None or c1 is None:
+                unread.append("%s: %s" % (self.devs.get(n, {}).get("short", n), e1 or e0 or "not read"))
+                continue
+            t = sums[self._acc_role(n)]
+            for k in ("pfc_tx", "pfc_rx", "ecn", "drops", "wd"):
+                d = c1[k] - c0[k]
+                t[k] = t.get(k, 0.0) + (d if d >= 0 else c1[k])
+            t.setdefault("seen", set()).update(c1["seen"] & c0["seen"])
+        return sums, unread
+
+    def _acc_score(self, test, text, s0, s1, crit, rc):
+        kv, nic = acc_parse(text, test)
+        sums, unread = self._acc_switch(s0, s1)
+        L = []
+        def line(label, ok, note):
+            L.append({"label": "%s %s" % (test, label), "ok": ok, "note": note})
+        seen = set().union(*[x.get("seen", set()) for x in sums.values()]) if sums else set()
+        tot = lambda k: sum(x.get(k, 0.0) for x in sums.values())
+        if rc not in (0, None) and not kv:
+            line("ran", False, "the test exited %s with no result line" % rc)
+        if s1 is not None:
+            line("no drops on the RoCE queue (switches)", (tot("drops") == 0) if "drops" in seen else None,
+                 ("%d dropped" % tot("drops")) if "drops" in seen else "drop counters not understood: confirm by hand")
+            line("no PFC watchdog events", (tot("wd") == 0) if "wd" in seen else None,
+                 ("%d events" % tot("wd")) if "wd" in seen else "watchdog counters not understood: confirm by hand")
+        if nic:
+            bad = sum(nic.get(k, 0) for k in ("rx_discards_phy", "out_of_sequence", "packet_seq_err"))
+            line("no loss at the hosts (NIC discards, sequence errors)", bad == 0, "%d" % bad)
+        pfc = tot("pfc_tx") + tot("pfc_rx")
+        if test == "T1":
+            r, mn = float(kv.get("port_gbps") or 0), float(kv.get("min_gbps") or 0)
+            pct = float(crit.get("line_rate_pct", 95))
+            line("line rate on every path", (mn >= pct / 100.0 * r) if r and "min_gbps" in kv else None,
+                 "slowest path %.1f of %.0f Gb/s (target %d%%)" % (mn, r, pct) if r else "no result line from the host script")
+            if "pfc" in seen:
+                line("no PFC or ECN activity at rest load", pfc == 0 and tot("ecn") == 0, "%d pause, %d marked" % (pfc, tot("ecn")))
+        if test == "T2":
+            if "pfc" in seen:
+                marks = tot("ecn") + nic.get("np_ecn_marked_roce_packets", 0)
+                line("ECN marks before PFC pauses", (marks > 0) if pfc > 0 else True,
+                     "%d pause frames, %d ECN marks" % (pfc, marks))
+            elif s1 is not None:
+                line("ECN marks before PFC pauses", None, "PFC counters not understood: confirm by hand")
+            mn, mx, mean = float(kv.get("min_gbps") or 0), float(kv.get("max_gbps") or 0), float(kv.get("mean_gbps") or 0)
+            fair = float(crit.get("fairness_pct", 10))
+            line("senders share the receiver fairly", (100.0 * (mx - mn) / mean <= fair) if mean else None,
+                 ("spread %.1f%% (target %d%%)" % (100.0 * (mx - mn) / mean, fair)) if mean else "no result line from the host script")
+        if test == "T3":
+            sp = sums.get("spine", {})
+            if s1 is not None: line("no PFC at the spines under all-to-all", (sp.get("pfc_tx", 0) + sp.get("pfc_rx", 0) == 0) if "pfc" in sp.get("seen", set()) else None,
+                 ("%d pause frames at the spines" % (sp.get("pfc_tx", 0) + sp.get("pfc_rx", 0))) if "pfc" in sp.get("seen", set()) else "spine PFC counters not understood: confirm by hand")
+            line("all-to-all completed", float(kv.get("busbw") or 0) > 0 or None, "bus bandwidth %s GB/s" % kv.get("busbw", "?"))
+        if test == "T4":
+            tgt = float(self.conf.get("TARGET_BUSBW") or self.secrets().get("TARGET_BUSBW") or 0)
+            b = float(kv.get("busbw") or 0)
+            line("bus bandwidth at target", (b >= tgt) if tgt and b else None,
+                 ("%.1f GB/s against %.1f" % (b, tgt)) if tgt else "TARGET_BUSBW not set: confirm by hand (%.1f GB/s)" % b)
+        if unread:
+            line("switch counters read", None, "; ".join(unread[:3]) + (" +%d more" % (len(unread) - 3) if len(unread) > 3 else ""))
+        res = "blocked" if any(x["ok"] is False for x in L) else ("unavailable" if any(x["ok"] is None for x in L) else "pass")
+        return {"result": res, "lines": L, "switch": {k: {kk: vv for kk, vv in v.items() if kk != "seen"} for k, v in sums.items()},
+                "nic": nic, "host": kv}
+
+    def _run_accept(self, r, sec, logf):
+        cmd = self.conf.get("accept_cmd", "")
+        devs = [n for n in r.get("devices", []) if n in self.devs and self.st[n]["flag"] != "quarantined"]
+        crit, tests, out = r.get("criteria", {}), r.get("tests", ["T1", "T2", "T3", "T4"]), {}
+        for t in tests:
+            s0 = self._acc_snap(devs) if devs else None
+            pos = os.path.getsize(logf) if os.path.exists(logf) else 0
+            rc = self._exec(r, ["bash", "-c", self._sub(cmd.replace("{TEST}", t), sec)], {"ACCEPT_TEST": t}, logf)
+            s1 = self._acc_snap(devs) if devs else None
+            with open(logf) as f:
+                f.seek(pos)
+                txt = f.read()
+            out[t] = self._acc_score(t, txt, s0, s1, crit, rc)
+            self.event("Lossless acceptance %s: %s" % (t, out[t]["result"]), "info" if out[t]["result"] == "pass" else "warn")
+        self.submit_accept_result(out, "runner")
+        bad = [t for t in tests if out[t]["result"] == "blocked"]
+        return not bad, ("all tests pass" if all(out[t]["result"] == "pass" for t in tests) else
+                         ("failed: " + ", ".join(bad)) if bad else "some criteria need confirming by hand")
+
+    def submit_accept_result(self, tests, user):
+        with self.lock:
+            self.results["accept"] = {"tests": tests, "by": user, "ts": now()}
+            self.kv_set("results", self.results)
+            self.audit(user, "result-accept", "", ", ".join("%s %s" % (t, v["result"]) for t, v in sorted(tests.items())))
+            for b in self.builds:
+                for c in b["gate"]:
+                    if c.get("kind") == "accept":
+                        self.auto_res.pop((b["key"], c["key"]), None)
+        return True, "recorded"
+
+    def submit_accept_text(self, text, user, crit=None):
+        """The host script's output pasted in the console (all tests): scored without the switch counters."""
+        tests = {}
+        for t in ("T1", "T2", "T3", "T4"):
+            if re.search(r"^ACCEPT\s+%s\b" % t, text or "", re.M):
+                tests[t] = self._acc_score(t, text, None, None, crit or {}, 0)
+                tests[t]["lines"].append({"label": t + " switch counters", "ok": None, "note": "uploaded by hand: confirm the switch criteria from the switches"})
+                if tests[t]["result"] == "pass":
+                    tests[t]["result"] = "unavailable"
+        if not tests:
+            return False, "no ACCEPT lines in the text (paste the output of acceptance/lossless.sh)"
+        return self.submit_accept_result(tests, user)
+
+    def accept_eval(self):
+        r = self.results.get("accept")
+        if not r:
+            return {"result": "waiting", "note": "waiting for the lossless acceptance run (runner or uploaded results)", "evidence": {}}
+        T = r.get("tests", {})
+        ev = {}
+        for t, v in sorted(T.items()):
+            for x in v.get("lines", []):
+                ev[x["label"]] = {"ok": bool(x["ok"]) if x["ok"] is not None else False, "note": x["note"] if x["ok"] is not None else "confirm: " + x["note"]}
+        res = [v.get("result") for v in T.values()]
+        missing = [t for t in ("T1", "T2", "T3", "T4") if t not in T]
+        overall = "blocked" if "blocked" in res else ("unavailable" if ("unavailable" in res or missing) else "pass")
+        note = ", ".join("%s %s" % (t, T[t]["result"]) for t in sorted(T)) + ((" (not run: %s)" % ", ".join(missing)) if missing else "") + " (%s)" % r.get("by", "")
+        return {"result": overall, "note": note, "evidence": ev}
 
     # ------------------------------------------------------------------------------------- backups
     def bdir(self, n):
@@ -34434,6 +34712,8 @@ class Phase2Mixin(object):
                 ok, note = self._run_dpus(r, sec, logf)
             elif kind == "rails":
                 ok, note = self._run_rails(r, sec, logf)
+            elif kind == "accept":   # HS v1.42
+                ok, note = self._run_accept(r, sec, logf)
             elif kind == "nccl":
                 rc = self._exec(r, ["bash", "-c", self._sub(self.conf.get("nccl_cmd", ""), sec)], {}, logf)
                 out = open(logf).read()
@@ -36022,7 +36302,7 @@ class Estate(Phase2Mixin):
                     "run": self.run, "builds": builds, "devices": devs, "unclaimed": unc, "kea": self.kea_status,
                     "push_cred": bool(self.push_cred), "access": self.coverage(), "pushing": list(self.pushing.keys()),
                     "handover": dict(self.handover(), customer_admins=len(self.customer_admins())),   # HS v1.24
-                    "runners": self.runner_state, "results": {k: {x: v[x] for x in ("busbw", "target", "by", "ts")} for k, v in self.results.items()},
+                    "runners": self.runner_state, "results": {k: ({x: v[x] for x in ("busbw", "target", "by", "ts")} if "busbw" in v else {"by": v.get("by"), "ts": v.get("ts"), "tests": {t: (tv or {}).get("result") for t, tv in (v.get("tests") or {}).items()}}) for k, v in self.results.items()},
                     "ha": {"role": self.role, "peer": self.conf.get("peer_url", ""), "last_sync": self.last_sync},
                     "registry": self.plan.get("registry", []), "foreign_sync": self.foreign_sync, "foreign_n": len(self.foreign)}
 
@@ -37065,6 +37345,8 @@ def make_console_handler(est, console_html):
                         est.audit(user, "mnha-restore", n, "sync confirmed by operator")
                         est.event("%s: session sync confirmed by %s; restoring preemption" % (est.devs[n].get("short", n), user), "warn", n, user=user)
                     msg = "ok" if ok else "not waiting for sync"
+            elif p == "/api/result" and data.get("kind") == "accept":   # HS v1.42: the host script's output, pasted
+                ok, msg = est.submit_accept_text(str(data.get("text", ""))[:2000000], user, ((est.plan.get("acceptance") or {}).get("criteria") or {}))
             elif p == "/api/result":
                 try:
                     ok, msg = est.submit_result(data.get("kind", "nccl"), float(data.get("busbw")), float(data.get("target")), user)
@@ -37738,9 +38020,9 @@ function ask(title, body, fields){
   return new Promise(function(res){
     $('dlgT').textContent=title; $('dlgB').innerHTML=body||''; var F=$('dlgF'); F.innerHTML='';
     (fields||[]).forEach(function(f){ var l=document.createElement('label'); l.innerHTML=esc(f.label)+'<br>';
-      var i=f.options?document.createElement('select'):document.createElement('input'); i.className='f'; i.style.width='100%';
+      var i=f.options?document.createElement('select'):document.createElement(f.area?'textarea':'input'); i.className='f'; i.style.width='100%'; if(f.area) i.rows=10;   // HS v1.42
       if(f.options) f.options.forEach(function(o){ var op=document.createElement('option'); op.value=o[0]; op.textContent=o[1]; if(o[2]) op.disabled=true; i.appendChild(op); });
-      else i.type=f.type||'text'; i.value=f.value||''; i.dataset.k=f.key; l.appendChild(i); F.appendChild(l); });
+      else if(!f.area) i.type=f.type||'text'; i.value=f.value||''; i.dataset.k=f.key; l.appendChild(i); F.appendChild(l); });
     // v513: a close event queued by an earlier dlg.close() arrives after this prompt reopened the dialog: ignore it
     var d=$('dlg'); d.returnValue=''; d.onclose=function(){ if(d.open) return; if(d.returnValue!=='ok') return res(null); var out={}; F.querySelectorAll('[data-k]').forEach(function(i){ out[i.dataset.k]=i.value; }); res(out); };
     d.showModal();
@@ -37904,6 +38186,7 @@ function render(){
   $('gChecks').innerHTML=gb.gate.map(function(c){ var r=RK[c.result]||RK.waiting;
     var btns=(c.type==='auto'&&c.evidence?'<button data-ge="'+esc(c.key)+'" style="min-height:32px">Evidence</button>':'')
       +(c.kind==='nccl'&&c.result!=='pass'&&gb.state!=='queued'?'<button class="act" data-nc="1" style="min-height:32px">Enter result…</button>':'')
+      +(c.kind==='accept'&&c.result!=='pass'&&gb.state!=='queued'?'<button class="act" data-ac="1" style="min-height:32px">Upload results…</button>':'')
       +((c.type==='confirm'||(c.type==='auto'&&/needs confirmation|blocked|warn/.test(c.result)))&&c.result!=='confirmed'&&gb.state!=='queued'?'<button class="act" data-gc="'+esc(c.key)+'" style="min-height:32px">Confirm…</button>':'');
     return '<li style="align-items:flex-start"><span class="chip k-'+r[1]+'" style="flex:0 0 86px;justify-content:center">'+r[0]+'</span><span style="display:flex;flex-direction:column;gap:4px;flex:1 1 auto;min-width:0"><span>'+esc(c.label)+'</span><span class="muted" style="font-size:12px;overflow-wrap:anywhere">'+esc(c.note)+'</span>'
       +(btns?'<span class="row" style="gap:6px;flex-wrap:wrap">'+btns+'</span>':'')+'</span></li>'; }).join('')   // HS v1.24: buttons under the text
@@ -37914,6 +38197,7 @@ function render(){
       return '<div style="margin-top:10px"><b style="color:'+(x.ok?'#14532d':'#9a3412')+'">'+(x.ok?'PASS':'FAIL')+'</b> <span class="mono">'+esc((S.plan.devices[n]||{}).short||n)+'</span>: '+esc(x.note)
         +(x.text?'<div class="mono" style="font-size:12px;white-space:pre;overflow-x:auto;margin-top:4px">'+esc(x.text)+'</div>':'')
         +(x.raw?'<details style="margin-top:4px"><summary style="cursor:pointer;font-size:12px">Show raw</summary><div class="mono" style="font-size:11px;white-space:pre-wrap">'+esc(x.raw)+'</div></details>':'')+'</div>'; }).join('')+'</div>', []); }); }; });
+  document.querySelectorAll('[data-ac]').forEach(function(e){ e.disabled=!canAct('be'); e.onclick=function(){ ask('Lossless acceptance results','Paste the output of acceptance/lossless.sh for T1 to T4. Uploaded by hand, the switch-side criteria are then confirmed from the switches.',[{key:'text',label:'Output',area:true}]).then(function(v){ if(v) act('api/result',{kind:'accept', text:v.text}); }); }; });   // HS v1.42
   document.querySelectorAll('[data-nc]').forEach(function(e){ e.disabled=!canAct('be'); e.onclick=function(){ ask('NCCL all-reduce result','From acceptance/nccl.sh (Avg bus bandwidth).',[{key:'busbw',label:'Bus bandwidth, GB/s'},{key:'target',label:'Target, GB/s'}]).then(function(v){ if(v) act('api/result',{kind:'nccl', busbw:v.busbw, target:v.target}); }); }; });
   $('gOverride').disabled=!canAct(gb.key)||gb.state==='complete'||gb.state==='queued';
   $('gRecheck').disabled=!canAct(gb.key)||gb.state==='queued'||!gb.gate.some(function(c){ return c.type==='auto'; });   // HS v1.23
