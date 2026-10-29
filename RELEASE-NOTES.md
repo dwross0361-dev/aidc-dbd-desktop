@@ -1,3 +1,27 @@
+# AIDC DBD Desktop 2.0.35 (builder HS-v1.43, site runner 1.7.0)
+
+- **Back-end tuning in the Deployment Console (stage 2 of 3).** When lossless acceptance fails on the test pod, you tune from the back-end gate instead of editing switches by hand.
+  - The gate's new **Back-end tuning** line lists every tunable value: the package value and each version proposed since.
+  - **Propose** a version. The Console checks each value's range and step, and the ordering the procedure requires (ECN minimum below maximum, PFC xon below xoff).
+  - **Apply** it to the test pod, one pod, the shared spines or every back-end switch. Then re-run T1 to T4.
+  - **Approve** the version that passes. Only an admin login can approve.
+  - **Roll out** applies the approved version pod by pod. After each pod, a T2/T3 smoke test runs on that pod, and a failure stops the rollout. The smoke test needs `{POD}` in `accept_cmd`.
+  - Rolling back is applying an earlier version. v0 restores the package values.
+- **Platforms.** What can be tuned depends on the back-end platform:
+
+  | Platform | Tunable values | How the change is applied |
+  |---|---|---|
+  | Junos | ECN Kmin, Kmax and mark probability; PFC xoff, xon and headroom cable length; PFC watchdog detection and recovery | `commit confirmed`: the switch rolls itself back unless the Console confirms the commit |
+  | EOS | ECN thresholds and probability; PFC watchdog timeout and recovery | Saved to the startup configuration |
+  | NX-OS | ECN thresholds and probability | Saved to the startup configuration |
+  | Cumulus | ECN thresholds and probability | `nv config apply`. The Spectrum-X defaults normally pass, and the overlay syntax is marked CONFIRM |
+
+- **Overlays are applied over SSH** with the push credential, or with the new optional `WRITE_USER` / `WRITE_PASSWORD` in `secrets.env`.
+- **The lossless precondition check reads each switch against the version that switch runs.** A tuned switch no longer shows as missing its package lines.
+- **The back end holds until every rail leaf and spine runs the approved version.** Approving v0 accepts the package values as they are.
+- **The hand-over export adds `tuning.json`.** It records each version with its values and configuration lines, who proposed and approved it, the rollout, and the version each switch runs.
+- **`accept_cmd` takes `{POD}`** (and `ACCEPT_POD` in the environment) alongside `{TEST}`.
+
 # AIDC DBD Desktop 2.0.34 (builder HS-v1.42, site runner 1.7.0)
 
 - **Back-end lossless acceptance in the Deployment Console** (stage 1 of 3, per the BEF Lossless Tuning and Acceptance Procedure). The back-end gate gains four lines ahead of NCCL:

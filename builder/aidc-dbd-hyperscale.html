@@ -942,7 +942,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.42';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.43';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   var RADIX=64, CAGE=800;
   // ---- FABRIC PROFILE (parameterized per accelerator platform) ----------------------------------------
   // rails == accelerators per host. Each accelerator instance gets its own rail leaf, which is what
@@ -18451,6 +18451,9 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     L.push('#','# ---- estate provisioning service (provision/README.md). Leave a key blank and that step stays with the operator. ----',
       '# Read-only device login for the automatic gate checks and configuration backups (OS overrides: READ_USER_JUNOS ...)',
       'READ_USER=estate-ro', 'READ_PASSWORD=',   // HS v1.24: the read-only account (SET-READ-HASH)
+      '# Back-end tuning overlays (Deployment Console): a login that may change configuration. Optional: the push credential',
+      '# entered in the Console is used when present. Leave blank to apply overlays only with the push credential.',
+      'WRITE_USER=', 'WRITE_PASSWORD=',   // HS v1.43
       '# Cisco management center for ftd_deploy.py', 'FMC_HOST=', 'FMC_USER=', 'FMC_PASSWORD=',
       '# PEM bundle that signed the management center certificate (TLS is verified; blank = the host\u2019s system store)', 'FMC_CA_BUNDLE=',
       '# kubeconfig of the BIG-IP Next cluster (path on this host)', 'BNK_KUBECONFIG=',
@@ -20447,7 +20450,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       '3. MTU: from every leaf loopback to every other: ping -M do -s 8972 (front end and back end), and 9000-byte',
       '     frames from each GPU host\'s storage interface to a storage node.',
       '4. CONTROL PLANE: every BGP session Established; every DPU VTEP reachable from every other (front end).',
-      '5. BACK END: lossless acceptance on the test pod (lossless.sh T1-T4, scored by the Deployment Console, then T5/T6),',
+      '5. BACK END: lossless acceptance on the test pod (lossless.sh T1-T4, scored by the Deployment Console, then T5/T6);',
+      '   where it fails, tune in the Console (Propose, Apply to the test pod, re-test, Approve, Roll out pod by pod),',
       '   then NCCL (nccl-tests), see nccl.sh -- per rail, then all rails; busbw at or above the target below.',
       '6. STORAGE: weka/03-checks.sh, then a fio read from one host per pod (record the result for the baseline).',
       '7. INGRESS: per tenant, curl https://<VIP> from outside; the BNK Gateway shows the request (metering).'];
@@ -27093,7 +27097,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
              {key:'reach', type:'reachable', label:'Management reachable'},
              {key:'ul', type:'auto', kind:'bgp', devices:W.be[0].concat(W.be[1]), label:'Underlay up, ECMP to every spine'},
              {key:'roce', type:'auto', kind:'roce', devices:W.be[1], label:'RoCE QoS verified (PFC and ECN in effect on every rail leaf)'},
-             {key:'lossless', type:'auto', kind:'lossless', devices:W.be[0].concat(W.be[1]), label:'Lossless preconditions: every planned MTU, PFC, ECN, watchdog and RoCE line in effect on every rail leaf and spine'}, {key:'accept', type:'auto', kind:'accept', devices:[], label:'Lossless acceptance T1-T4 on the test pod (procedure pass criteria)'}, {key:'t5', type:'confirm', label:'Lossless acceptance T5: a link, then a spine, lost under all-to-all -- no pause storm, no lossless drops'}, {key:'t6', type:'confirm', label:'Lossless acceptance T6: a stuck receiver caught by the PFC watchdog within its timer, the pause kept local'}, {key:'nccl', type:'auto', kind:'nccl', devices:[], label:'NCCL all-reduce acceptance at target bus bandwidth'}]}
+             {key:'lossless', type:'auto', kind:'lossless', devices:W.be[0].concat(W.be[1]), label:'Lossless preconditions: every planned MTU, PFC, ECN, watchdog and RoCE line in effect on every rail leaf and spine'}, {key:'accept', type:'auto', kind:'accept', devices:[], label:'Lossless acceptance T1-T4 on the test pod (procedure pass criteria)'}, {key:'t5', type:'confirm', label:'Lossless acceptance T5: a link, then a spine, lost under all-to-all -- no pause storm, no lossless drops'}, {key:'t6', type:'confirm', label:'Lossless acceptance T6: a stuck receiver caught by the PFC watchdog within its timer, the pause kept local'}, {key:'tuned', type:'auto', kind:'tuned', devices:[], label:'Back-end tuning: every rail leaf and spine at the approved profile (the package values or a tuned overlay)'}, {key:'nccl', type:'auto', kind:'nccl', devices:[], label:'NCCL all-reduce acceptance at target bus bandwidth'}]}
     ].map(function(b){ var _ad=[].concat.apply([], b.w).filter(function(n){ var e=devs.filter(function(x){ return x.name===n; })[0]; return e && !e.aggregate && e.ip; });   // HS v1.25
       if(_ad.length) b.gate=b.gate.slice(0,2).concat([{key:'software', type:'auto', kind:'software', devices:_ad, label:'Software: every device at its target release'},
                                                       {key:'cabling', type:'auto', kind:'cabling', devices:_ad, label:'Cabling: LLDP neighbors match the cable plan'}], b.gate.slice(2));
@@ -27129,11 +27133,12 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       var _tp=function(L){ var p=(L||[]).filter(function(n){ return /-Pod1-/.test(n); }); return p.length?p:(L||[]); };   // HS v1.42: the test pod
       runners.push({key:'accept', kind:'accept', label:'Lossless acceptance (T1-T4)', targets:[railAgg], conf:['accept_cmd'], after:'rails',
         devices:_tp(W.be[1]).concat(_tp(W.be[0])), tests:['T1','T2','T3','T4'], criteria:{line_rate_pct:95, fairness_pct:10}, timeout_s:7200}); }
+    var tuning=(function(){ try{ return hsTuning(); }catch(e){ return {}; } })();   // HS v1.43
     var images=[]; try{ osProfilesInUse().forEach(function(u){ Object.keys(u.images||{}).forEach(function(f){ images.push({file:f, sha256:null, profile:u.key}); }); }); }catch(e){}
     return {schema:1, builder:BUILDER_VER, generated:new Date().toISOString(), site:site,
             dhcp:{subnet_id:1, device_subnet:dv.net, services_subnet:sv.net, gateway:dv.gw, relays:[dv.irbA, dv.irbB],
                   hold_pool:dv.at(PROV_HOLD.from)+' - '+dv.at(PROV_HOLD.to)},
-            builds:B, devices:devs, images:images, runners:runners, acceptance:{criteria:{line_rate_pct:95, fairness_pct:10}},
+            builds:B, devices:devs, images:images, runners:runners, acceptance:{criteria:{line_rate_pct:95, fairness_pct:10}}, tuning:tuning,
             ha:{enabled:!!PROV_HA, primary:prov, standby:PROV_HA?provStandbyIp():''},
             registry:(function(){ try{ return registryAll().map(function(r){ return {code:r.client, name:r.name, region:r.region, site:r.site}; }); }catch(e){ return []; } })(),
             floor:order.map(function(r){ return {row:r, cabinets:rows[r]}; })};
@@ -27255,7 +27260,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       '| DPU image install (bfb-install on each host) | estate.conf host_ssh {host: address}; the BFB in images/ |',
       '| Host rail checks (provision/rail_check.sh) | estate.conf host_ssh |',
       '| NCCL acceptance | estate.conf nccl_cmd (e.g. ssh to the head node running acceptance/nccl.sh); TARGET_BUSBW |',
-      '| Lossless acceptance T1-T4 | estate.conf accept_cmd with {TEST} for the test (e.g. ssh to the head node running HOSTFILE=pod1.hosts acceptance/lossless.sh {TEST}); TARGET_BUSBW |','',
+      '| Lossless acceptance T1-T4 | estate.conf accept_cmd with {TEST} for the test and {POD} for the pod (e.g. ssh to the head node running HOSTFILE=pod{POD}.hosts acceptance/lossless.sh {TEST}); TARGET_BUSBW |',
+      '| Back-end tuning (overlays) | push credential, or WRITE_USER / WRITE_PASSWORD in secrets.env; Approve is an admin login |','',
       'Add the service key (/etc/fabric/estate_ssh_key.pub) to root\u2019s authorized_keys on WEKA nodes and GPU hosts. A runner that is not configured leaves its devices to the operator (Mark configured).','',
       '## Standby provisioning host','',
       'Deploy > Standby provisioning host adds a second host at '+(PROV_HA?provStandbyIp():'the next services address')+': Kea runs as a hot-standby pair, the cores relay to both, and the primary sends its state to the standby every minute (ESTATE_SYNC_TOKEN, same on both). Install it with sudo ./setup.sh --standby. If the primary is lost: estate_build.py promote on the standby, add the provisioning address (every bootstrap URL carries it) to its bond0, and restart estate-build. The primary pins the standby’s console certificate before it sends the token: set "peer_cert_sha256" in the primary’s estate.conf to the value setup.sh (or estate_build.py fingerprint) printed on the standby; left blank, the first certificate seen is pinned and logged for you to compare. A replaced certificate is refused until the new value is set.','',
@@ -27264,6 +27270,48 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       '## Alerts and records','',
       '/etc/fabric/estate.conf (JSON) takes alert_webhook, smtp_host, smtp_to, smtp_from. Exports in the console: as-built, SoT status, audit, events (CSV).']);
     return R.join('\n');
+  }
+  function hsTuning(){   // HS v1.43: the back end's tunable values and the configuration lines that set them
+    var m=String(beModel||''), E={minKB:150, maxKB:1500, prob:100};   // ECN_TUNE: the generators' starting band
+    var ecn=[{key:'ECN_MIN_KB', label:'ECN minimum threshold', unit:'KB', base:E.minKB, min:10, max:20000, step:1},
+             {key:'ECN_MAX_KB', label:'ECN maximum threshold', unit:'KB', base:E.maxKB, min:20, max:40000, step:1},
+             {key:'ECN_PROB', label:'ECN maximum mark probability', unit:'%', base:E.prob, min:1, max:100, step:1}];
+    var ecnRule=[['ECN_MIN_KB','<','ECN_MAX_KB']];
+    if(/QFX/.test(m)) return {os:'junos', note:'committed with commit confirmed (rolls itself back unless confirmed)',
+      params:[{key:'KMIN', label:'ECN Kmin', unit:'% fill', base:(typeof ECN_KMIN!=='undefined'?ECN_KMIN:20), min:1, max:99, step:1},
+              {key:'KMAX', label:'ECN Kmax', unit:'% fill', base:(typeof ECN_KMAX!=='undefined'?ECN_KMAX:80), min:2, max:100, step:1},
+              {key:'PROB', label:'ECN mark probability at Kmax', unit:'%', base:100, min:1, max:100, step:1},
+              {key:'XOFF', label:'PFC xoff', unit:'us', base:(typeof PFC_XOFF_US!=='undefined'?PFC_XOFF_US:40), min:1, max:1000, step:1},
+              {key:'XON', label:'PFC xon', unit:'us', base:(typeof PFC_XON_US!=='undefined'?PFC_XON_US:30), min:1, max:1000, step:1},
+              {key:'CABLE', label:'PFC headroom cable length', unit:'m', base:(typeof PFC_CABLE_M!=='undefined'?PFC_CABLE_M:100), min:1, max:10000, step:1},
+              {key:'WD_DETECT_MS', label:'PFC watchdog detection', unit:'ms', base:(typeof PFC_WD_DETECT!=='undefined'?PFC_WD_DETECT:200), min:100, max:1500, step:100},
+              {key:'WD_RECOVERY_MS', label:'PFC watchdog recovery', unit:'ms', base:(typeof PFC_WD_RESTORE!=='undefined'?PFC_WD_RESTORE:200), min:100, max:60000, step:100}],
+      rules:[['KMIN','<','KMAX'],['XON','<','XOFF']],
+      lines:['delete class-of-service drop-profiles ROCE-ECN interpolate',
+             'set class-of-service drop-profiles ROCE-ECN interpolate fill-level [ {KMIN} {KMAX} ] drop-probability [ 0 {PROB} ]',
+             'set class-of-service congestion-notification-profile ROCE-PFC input pfc-account ROCE-ACCT xoff {XOFF}',
+             'set class-of-service congestion-notification-profile ROCE-PFC input pfc-account ROCE-ACCT xon {XON}',
+             'set class-of-service congestion-notification-profile ROCE-PFC input cable-length {CABLE}',
+             'set class-of-service congestion-notification-profile ROCE-PFC pfc-watchdog detection {WD_DETECT_MS/100}',
+             'set class-of-service congestion-notification-profile ROCE-PFC pfc-watchdog recovery {WD_RECOVERY_MS}']};
+    if(/^AR-/.test(m)) return {os:'eos', note:'saved to the startup configuration once applied',
+      params:ecn.concat([{key:'WD_TIMEOUT_S', label:'PFC watchdog timeout', unit:'s', base:0.2, min:0.2, max:60, step:0.01},
+                         {key:'WD_RECOVERY_S', label:'PFC watchdog recovery time', unit:'s', base:0.2, min:0.2, max:60, step:0.01}]),
+      rules:ecnRule,
+      lines:['qos profile ROCE', (/7060X6/.test(m)?'   uc-tx-queue 3':'   tx-queue 3'),
+             '      random-detect ecn minimum-threshold {ECN_MIN_KB} kbytes maximum-threshold {ECN_MAX_KB} kbytes max-mark-probability {ECN_PROB}',
+             '   exit', 'exit',
+             'priority-flow-control pause watchdog default timeout {WD_TIMEOUT_S}',
+             'priority-flow-control pause watchdog default recovery-time {WD_RECOVERY_S}']};
+    if(/^CS-/.test(m)) return {os:'nxos', note:'saved to the startup configuration once applied', params:ecn, rules:ecnRule,
+      lines:['policy-map type queuing ROCE-OUT', '  class type queuing c-out-8q-q3',
+             '    random-detect minimum-threshold {ECN_MIN_KB} kbytes maximum-threshold {ECN_MAX_KB} kbytes drop-probability {ECN_PROB} weight 0 ecn']};
+    if(/^NV-/.test(m)) return {os:'cumulus', note:'Spectrum-X: the RoCE profile defaults normally pass T1-T4 and need no overlay; the overlay lines are CONFIRM syntax on the first unit (nv config apply)',
+      params:ecn, rules:ecnRule,
+      lines:['nv set qos congestion-control default-global traffic-class 3 min-threshold {ECN_MIN_KB*1024}',
+             'nv set qos congestion-control default-global traffic-class 3 max-threshold {ECN_MAX_KB*1024}',
+             'nv set qos congestion-control default-global traffic-class 3 probability {ECN_PROB}']};
+    return {};
   }
   function genRunBnk(){
     return ['#!/usr/bin/env bash',
@@ -33313,6 +33361,7 @@ Downloaded by %(by)s (customer admin), %(when)s. %(nb)d device backups; %(final)
 asbuilt.csv       every device: build, wave, identity as bound, state, completed, RMA ticket
 sot-status.csv    Active (Done) or Planned per device
 sot-asbuilt.csv   the as-built overlay for the source of truth: serial, MAC, status and RMA note per device
+tuning.json       the back-end tuning record: each version, its values and lines, who approved it, the version each switch runs
 apply_asbuilt.py  applies sot-asbuilt.csv to NetBox or Nautobot over the API, after the Final package's source of truth is
                   loaded (HS-DEP-003 step 6.2):  python3 apply_asbuilt.py netbox https://netbox.example TOKEN --dry-run
 backups/          the newest configuration of each device: the baseline for the customer's own backup system
@@ -33853,7 +33902,7 @@ class Phase2Mixin(object):
             if not cmd or pl is None:
                 raise ReaderUnavailable("no running-configuration reader or planned configuration for " + (os_ or "this device"))
             run = self.read(n, [cmd])[0]
-            P = set(x for x in cfg_norm(pl, os_) if LOSSLESS_RE.search(x))
+            P = self.tuning_swap(n, set(x for x in cfg_norm(pl, os_) if LOSSLESS_RE.search(x)), os_)   # HS v1.43: against the active overlay
             if not P:
                 return True, "no lossless lines planned on this device", ""
             miss = sorted(P - cfg_norm(run, os_))
@@ -33932,8 +33981,8 @@ class Phase2Mixin(object):
                 self.auto_res[key] = dict(res, ts=now())
                 self.kv_set("auto_res", {"%s|%s" % k2: v for k2, v in self.auto_res.items()})
             return
-        if c["kind"] == "accept":   # HS v1.42: scored from the acceptance run's results
-            res = self.accept_eval()
+        if c["kind"] in ("accept", "tuned"):   # HS v1.42 / v1.43: scored from the acceptance results / the tuning record
+            res = self.accept_eval() if c["kind"] == "accept" else self.tuned_eval()
             with self.lock:
                 self.auto_res[key] = dict(res, ts=now())
                 self.kv_set("auto_res", {"%s|%s" % k2: v for k2, v in self.auto_res.items()})
@@ -34154,7 +34203,7 @@ class Phase2Mixin(object):
         for t in tests:
             s0 = self._acc_snap(devs) if devs else None
             pos = os.path.getsize(logf) if os.path.exists(logf) else 0
-            rc = self._exec(r, ["bash", "-c", self._sub(cmd.replace("{TEST}", t), sec)], {"ACCEPT_TEST": t}, logf)
+            rc = self._exec(r, ["bash", "-c", self._sub(cmd.replace("{TEST}", t).replace("{POD}", str(r.get("pod") or 1)), sec)], {"ACCEPT_TEST": t, "ACCEPT_POD": str(r.get("pod") or 1)}, logf)   # HS v1.43: {POD}
             s1 = self._acc_snap(devs) if devs else None
             with open(logf) as f:
                 f.seek(pos)
@@ -34204,6 +34253,285 @@ class Phase2Mixin(object):
         overall = "blocked" if "blocked" in res else ("unavailable" if ("unavailable" in res or missing) else "pass")
         note = ", ".join("%s %s" % (t, T[t]["result"]) for t in sorted(T)) + ((" (not run: %s)" % ", ".join(missing)) if missing else "") + " (%s)" % r.get("by", "")
         return {"result": overall, "note": note, "evidence": ev}
+
+    # ------------------------------------------------------------------------------------- tuning overlays (HS v1.43)
+    # A tuning change is a numbered version of the plan's tunable values (version 0 = the package's own). The Console
+    # renders it into the platform's configuration lines, applies it to a set of back-end switches (the test pod, one pod,
+    # or all), records which version each switch runs, and rolls back by applying an earlier version. The package stays
+    # the record of what was designed; the overlay is the record of what was tuned (as-built record, hand-over export).
+    def tuning_plan(self):
+        return self.plan.get("tuning") or {}
+
+    def tuning_state(self):
+        t = self.kv_get("tuning", {}) or {}
+        t.setdefault("versions", [])
+        t.setdefault("dev", {})
+        return t
+
+    def tuning_values(self, v):
+        tp = self.tuning_plan()
+        base = {p["key"]: p["base"] for p in tp.get("params", [])}
+        if not v:
+            return base
+        for x in self.tuning_state()["versions"]:
+            if x["v"] == v:
+                return dict(base, **x["values"])
+        return None
+
+    @staticmethod
+    def _tfmt(x):
+        x = float(x)
+        return str(int(x)) if x == int(x) else ("%g" % x)
+
+    def tuning_lines(self, values):
+        def f(m):   # {KEY}, {KEY*1024} or {KEY/100}
+            x = float(values[m.group(1)])
+            if m.group(2):
+                x = x * float(m.group(3)) if m.group(2) == "*" else x / float(m.group(3))
+            return self._tfmt(round(x, 3))
+        return [re.sub(r"\{([A-Z0-9_]+)(?:([*/])(\d+(?:\.\d+)?))?\}", f, l) for l in self.tuning_plan().get("lines", [])]
+
+    def tuning_swap(self, n, planned_set, os_):
+        """The planned lossless lines with this switch's active overlay in place of the package's own values."""
+        v = self.tuning_state()["dev"].get(n, {}).get("v", 0)
+        if not v or not self.tuning_plan().get("lines"):
+            return planned_set
+        keep = lambda L: set(x for x in cfg_norm("\n".join(L), os_) if not re.match(r"^(delete |exit$|nv config )", x))
+        b, o = keep(self.tuning_lines(self.tuning_values(0))), keep(self.tuning_lines(self.tuning_values(v) or {}))
+        cut = lambda x: re.sub(r"\s+!\s.*$", "", x)
+        gone = set(cut(x) for x in b - o)
+        return set(x for x in planned_set if cut(x) not in gone) | o
+
+    def tuning_propose(self, values, note, user):
+        tp = self.tuning_plan()
+        if not tp.get("params"):
+            return False, "this design has no tunable back-end values"
+        P = {p["key"]: p for p in tp["params"]}
+        vals = {}
+        for k, v in (values or {}).items():
+            if k not in P or v in ("", None):
+                continue
+            try:
+                f = float(v)
+            except (TypeError, ValueError):
+                return False, "%s: a number" % P[k]["label"]
+            if not (float(P[k]["min"]) <= f <= float(P[k]["max"])):
+                return False, "%s: %s to %s %s" % (P[k]["label"], P[k]["min"], P[k]["max"], P[k]["unit"])
+            st_ = float(P[k].get("step") or 0)
+            if st_ and abs(f / st_ - round(f / st_)) > 1e-6:
+                return False, "%s: in steps of %s %s" % (P[k]["label"], P[k]["step"], P[k]["unit"])
+            vals[k] = f
+        full = dict({k: p["base"] for k, p in P.items()}, **vals)
+        for a, op, b in tp.get("rules", []):
+            if not float(full[a]) < float(full[b]):
+                return False, "%s must sit below %s (the ordering the procedure requires)" % (P[a]["label"], P[b]["label"])
+        if not vals:
+            return False, "no value changed"
+        with self.lock:
+            t = self.tuning_state()
+            v = 1 + max([x["v"] for x in t["versions"]] or [0])
+            t["versions"].append({"v": v, "values": vals, "note": note, "by": user, "ts": now()})
+            self.kv_set("tuning", t)
+            self.audit(user, "tuning-propose", "v%d" % v, json.dumps(vals) + (" -- " + note if note else ""))
+            self.event("Tuning v%d proposed by %s: %s" % (v, user, ", ".join("%s %s" % (P[k]["label"], self._tfmt(x)) for k, x in vals.items())), "info", user=user)
+        return True, "v%d" % v
+
+    def tuning_scope(self, scope):
+        acc = [r for r in self.plan.get("runners", []) if r.get("kind") == "accept"]
+        allb = [c for b in self.builds if b["key"] == "be" for c in b["gate"] if c.get("kind") == "lossless"]
+        every = list(allb[0]["devices"]) if allb else []
+        if scope == "test":
+            return list(acc[0].get("devices", [])) if acc else []
+        if scope == "rest":   # the switches no pod owns (spines shared by every pod)
+            return [n for n in every if not re.search(r"-Pod\d+-", n)]
+        m = re.match(r"^pod:(\d+)$", scope or "")
+        if m:
+            return [n for n in every if re.search(r"-Pod%s-" % m.group(1), n)]
+        return every
+
+    def tuning_pods(self):
+        allb = [c for b in self.builds if b["key"] == "be" for c in b["gate"] if c.get("kind") == "lossless"]
+        pods = sorted(set(int(m.group(1)) for n in (allb[0]["devices"] if allb else []) for m in [re.search(r"-Pod(\d+)-", n)] if m))
+        return pods
+
+    def _tune_write(self, n, lines, why):
+        """Apply configuration lines to one switch over SSH with the push credential (or WRITE_USER in secrets.env)."""
+        d = self.devs[n]
+        os_ = d.get("os", "")
+        sim = self.conf.get("reader_sim_dir")
+        if sim:
+            p = os.path.join(sim, n, "applied.txt")
+            os.makedirs(os.path.dirname(p), exist_ok=True)
+            open(p, "a").write("\n".join(lines) + "\n")
+            return True, "applied (simulated)"
+        v = self.secrets()
+        u, pw = self.push_cred if self.push_cred else (v.get("WRITE_USER"), v.get("WRITE_PASSWORD"))
+        if not u or not pw:
+            return False, "no write credential: enter the push credential (Run > Push credential), or WRITE_USER / WRITE_PASSWORD in secrets.env"
+        if os_ not in DT or not d.get("ip"):
+            return False, "no SSH writer for " + os_
+        try:
+            from netmiko import ConnectHandler
+        except ImportError:
+            sys.path.extend(glob.glob("/opt/estate-build/pyenv/lib/python3*/site-packages"))
+            from netmiko import ConnectHandler
+        c = ConnectHandler(device_type=DT[os_], host=d["ip"], username=u, password=pw, timeout=30, conn_timeout=15, auth_timeout=90, banner_timeout=60)
+        try:
+            if os_ == "cumulus":
+                out = "\n".join(c.send_command(l, read_timeout=120) for l in lines)
+                out += c.send_command("nv config apply -y", read_timeout=300)
+                ok = not re.search(r"(?i)\berror\b|invalid|failed", out)
+            elif os_ == "junos":
+                out = c.send_config_set(lines, exit_config_mode=False)
+                out += c.commit(confirm=True, confirm_delay=5, comment=why[:60])   # rolls itself back unless confirmed below
+                out += c.commit(and_quit=True)
+                ok = not re.search(r"(?i)error|syntax|unknown command|missing", out)
+            else:
+                out = c.send_config_set(lines)
+                out += c.save_config()
+                ok = not re.search(r"(?i)% ?invalid|% ?incomplete|error", out)
+            return ok, ("applied" if ok else "rejected: " + out.strip().splitlines()[-1][:160])
+        finally:
+            c.disconnect()
+
+    def tuning_apply(self, v, scope, user, wait=False):
+        vals = self.tuning_values(v)
+        if vals is None:
+            return False, "no version v%s" % v
+        devs = [n for n in self.tuning_scope(scope) if n in self.devs and self.st[n]["flag"] != "quarantined"]
+        if not devs:
+            return False, "no back-end switch in scope " + scope
+        lines = self.tuning_lines(vals)
+        if not lines:
+            return False, "this platform has no tuning lines"
+        why = "tuning v%d (%s) by %s" % (v, scope, user)
+        self.audit(user, "tuning-apply", "v%d" % v, "%s: %d switches" % (scope, len(devs)))
+        self.event("Tuning v%d: applying to %s (%d switches) -- %s" % (v, scope, len(devs), user), "warn", user=user)
+        def go():
+            def one(n):
+                try:
+                    return n, self._tune_write(n, lines, why)
+                except Exception as e:
+                    return n, (False, "write failed: %s" % e)
+            res = self.pool_map(one, devs)
+            with self.lock:
+                t = self.tuning_state()
+                for n, (ok, note) in res:
+                    prev = t["dev"].get(n, {}).get("v", 0)
+                    t["dev"][n] = {"v": v if ok else prev, "ts": now(), "ok": ok, "note": note, "tried": v}
+                self.kv_set("tuning", t)
+                bad = [n for n, (ok, _) in res if not ok]
+                self.event("Tuning v%d on %s: %d of %d applied%s" % (v, scope, len(devs) - len(bad), len(devs),
+                           ("; failed: " + ", ".join(self.devs[n].get("short", n) for n in bad[:4])) if bad else ""), "fail" if bad else "info")
+                for b in self.builds:
+                    for c in b["gate"]:
+                        if c.get("kind") in ("tuned", "lossless"):
+                            self.auto_res.pop((b["key"], c["key"]), None)
+            return not bad
+        if wait:
+            return go(), "done"
+        threading.Thread(target=go, daemon=True).start()
+        return True, "applying v%d to %d switches (%s)" % (v, len(devs), scope)
+
+    def tuning_approve(self, v, user):
+        if v and self.tuning_values(v) is None:
+            return False, "no version v%s" % v
+        with self.lock:
+            t = self.tuning_state()
+            t["approved"] = {"v": v, "by": user, "ts": now()}
+            self.kv_set("tuning", t)
+            self.audit(user, "tuning-approve", "v%d" % v, "")
+            self.event("Tuning v%d approved as the platform profile by %s" % (v, user), "info", user=user)
+            for b in self.builds:
+                for c in b["gate"]:
+                    if c.get("kind") == "tuned":
+                        self.auto_res.pop((b["key"], c["key"]), None)
+        return True, "approved v%d" % v
+
+    def tuning_rollout(self, user):
+        """The approved version, pod by pod: apply, then a T2/T3 smoke test on that pod before the next (stops at a failure)."""
+        t = self.tuning_state()
+        ap = (t.get("approved") or {}).get("v")
+        if ap is None:
+            return False, "approve a version first"
+        pods = self.tuning_pods() or [None]
+        if pods != [None] and self.tuning_scope("rest"):
+            pods = pods + ["rest"]   # then the shared spines, once every pod has passed
+        acc = [r for r in self.plan.get("runners", []) if r.get("kind") == "accept"]
+        def go():
+            st = {"v": ap, "state": "running", "pods": {}, "by": user, "ts": now()}
+            for p in pods:
+                scope = "all" if p is None else ("rest" if p == "rest" else "pod:%d" % p)
+                ok, _ = self.tuning_apply(ap, scope, user, wait=True)
+                st["pods"][str(p)] = {"applied": ok}
+                if ok and p == "rest":
+                    st["pods"][str(p)].update(smoke="not run", note="shared spines: covered by the next acceptance run")
+                elif ok and acc and self.conf.get("accept_cmd") and "{POD}" in self.conf.get("accept_cmd", ""):
+                    r = dict(acc[0], tests=["T2", "T3"], devices=self.tuning_scope(scope), pod=p, smoke=True)
+                    logf = os.path.join(self.conf["state_dir"], "runner-accept-smoke-pod%s.log" % p)
+                    open(logf, "w").close()
+                    sok, note = self._run_accept(r, self.secrets(), logf)
+                    st["pods"][str(p)].update(smoke=("pass" if sok else "fail"), note=note)
+                    ok = ok and sok
+                elif ok:
+                    st["pods"][str(p)].update(smoke="not run", note="accept_cmd has no {POD}: smoke-test this pod by hand")
+                with self.lock:
+                    t2 = self.tuning_state()
+                    t2["rollout"] = st
+                    self.kv_set("tuning", t2)
+                if not ok:
+                    st["state"] = "stopped at pod %s" % p
+                    self.event("Tuning rollout of v%d stopped at pod %s" % (ap, p), "fail")
+                    break
+            else:
+                st["state"] = "complete"
+                self.event("Tuning rollout of v%d complete (%d pods)" % (ap, len(pods)), "info")
+            with self.lock:
+                t2 = self.tuning_state()
+                t2["rollout"] = st
+                self.kv_set("tuning", t2)
+                for b in self.builds:
+                    for c in b["gate"]:
+                        if c.get("kind") == "tuned":
+                            self.auto_res.pop((b["key"], c["key"]), None)
+        self.audit(user, "tuning-rollout", "v%d" % ap, "%d pods" % len(pods))
+        threading.Thread(target=go, daemon=True).start()
+        return True, "rolling out v%d across %d pod(s)" % (ap, len(pods))
+
+    def tuned_eval(self):
+        tp, t = self.tuning_plan(), self.tuning_state()
+        every = self.tuning_scope("all")
+        if not tp.get("params"):
+            return {"result": "pass", "note": "no tunable values on this platform", "evidence": {}}
+        if not every:
+            return {"result": "pass", "note": "no lossless back-end switches in this build", "evidence": {}}
+        ap = t.get("approved")
+        if not t["versions"] and not ap:
+            return {"result": "needs confirmation", "note": "no tuning change: approve the package values (v0) once acceptance passes", "evidence": {}}
+        if not ap:
+            return {"result": "needs confirmation", "note": "%d tuning version(s), none approved: approve one (or v0, the package values)" % len(t["versions"]), "evidence": {}}
+        v = ap["v"]
+        at = [n for n in every if t["dev"].get(n, {}).get("v", 0) == v]
+        ev = {n: {"ok": t["dev"].get(n, {}).get("v", 0) == v, "note": "v%d" % t["dev"].get(n, {}).get("v", 0) + ("" if t["dev"].get(n, {}).get("ok", True) else " (" + t["dev"][n].get("note", "") + ")")}
+              for n in every if t["dev"].get(n, {}).get("v", 0) != v}
+        ro = t.get("rollout") or {}
+        if len(at) == len(every):
+            return {"result": "pass", "note": "every back-end switch at v%d (%s)%s" % (v, "package values" if v == 0 else "approved by " + ap["by"],
+                    ("; rollout " + ro.get("state", "")) if ro else ""), "evidence": ev}
+        return {"result": "blocked" if "stopped" in ro.get("state", "") else "running",
+                "note": "%d of %d back-end switches at approved v%d%s" % (len(at), len(every), v, ("; rollout " + ro.get("state", "")) if ro else ""), "evidence": ev}
+
+    def tuning_view(self):
+        tp, t = self.tuning_plan(), self.tuning_state()
+        if not tp.get("params"):
+            return None
+        every = self.tuning_scope("all")
+        cnt = {}
+        for n in every:
+            k = t["dev"].get(n, {}).get("v", 0)
+            cnt[k] = cnt.get(k, 0) + 1
+        return {"os": tp.get("os"), "note": tp.get("note", ""), "params": tp["params"], "versions": t["versions"], "approved": t.get("approved"),
+                "at": cnt, "switches": len(every), "test": len(self.tuning_scope("test")), "rest": len(self.tuning_scope("rest")), "pods": self.tuning_pods(), "rollout": t.get("rollout")}
 
     # ------------------------------------------------------------------------------------- backups
     def bdir(self, n):
@@ -36300,7 +36628,7 @@ class Estate(Phase2Mixin):
                                                                          u.get("serial") or u.get("mac"), sg["why"])
             return {"server_time": now(), "version": VERSION, "site": self.plan["site"], "digest": self.digest[:8] + "..." + self.digest[-4:],
                     "run": self.run, "builds": builds, "devices": devs, "unclaimed": unc, "kea": self.kea_status,
-                    "push_cred": bool(self.push_cred), "access": self.coverage(), "pushing": list(self.pushing.keys()),
+                    "push_cred": bool(self.push_cred), "access": self.coverage(), "pushing": list(self.pushing.keys()), "tuning": self.tuning_view(),   # HS v1.43
                     "handover": dict(self.handover(), customer_admins=len(self.customer_admins())),   # HS v1.24
                     "runners": self.runner_state, "results": {k: ({x: v[x] for x in ("busbw", "target", "by", "ts")} if "busbw" in v else {"by": v.get("by"), "ts": v.get("ts"), "tests": {t: (tv or {}).get("result") for t, tv in (v.get("tests") or {}).items()}}) for k, v in self.results.items()},
                     "ha": {"role": self.role, "peer": self.conf.get("peer_url", ""), "last_sync": self.last_sync},
@@ -36562,6 +36890,12 @@ class Estate(Phase2Mixin):
                 z.writestr(top + f, self.export(f) or "")
             z.writestr(top + "readiness.csv", self.readiness_csv())   # HS v1.25
             z.writestr(top + "readiness.json", json.dumps(self.readiness(), indent=1))
+            if self.tuning_plan().get("params"):   # HS v1.43: the back-end tuning record
+                tt = self.tuning_state()
+                z.writestr(top + "tuning.json", json.dumps({"os": self.tuning_plan().get("os"), "params": self.tuning_plan()["params"],
+                           "versions": [dict(x, lines=self.tuning_lines(self.tuning_values(x["v"]))) for x in tt["versions"]],
+                           "package_lines": self.tuning_lines(self.tuning_values(0)), "approved": tt.get("approved"),
+                           "rollout": tt.get("rollout"), "switches": tt["dev"]}, indent=1))
             z.writestr(top + "sot-asbuilt.csv", self.asbuilt_overlay())
             z.writestr(top + "apply_asbuilt.py", APPLY_ASBUILT)
             for n in self.devs:
@@ -37242,8 +37576,10 @@ def make_console_handler(est, console_html):
                 need = data.get("build", "")
             elif p == "/api/run":
                 need = data.get("plane", "all")
-            elif p == "/api/result":
+            elif p == "/api/result" or p in ("/api/tuning/propose", "/api/tuning/apply", "/api/tuning/rollout"):   # HS v1.43
                 need = "be"
+            elif p == "/api/tuning/approve":
+                need = None   # the platform profile: admins only
             else:
                 need = "any"   # pause/resume and runner retries: any operator
             if who["role"] != "admin":
@@ -37345,6 +37681,20 @@ def make_console_handler(est, console_html):
                         est.audit(user, "mnha-restore", n, "sync confirmed by operator")
                         est.event("%s: session sync confirmed by %s; restoring preemption" % (est.devs[n].get("short", n), user), "warn", n, user=user)
                     msg = "ok" if ok else "not waiting for sync"
+            elif p == "/api/tuning/propose":   # HS v1.43
+                ok, msg = est.tuning_propose(data.get("values") or {}, str(data.get("note", ""))[:300], user)
+            elif p == "/api/tuning/apply":
+                try:
+                    ok, msg = est.tuning_apply(int(data.get("v", 0)), str(data.get("scope", "test")), user)
+                except ValueError:
+                    ok, msg = False, "version: a number"
+            elif p == "/api/tuning/approve":
+                try:
+                    ok, msg = est.tuning_approve(int(data.get("v", 0)), user)
+                except ValueError:
+                    ok, msg = False, "version: a number"
+            elif p == "/api/tuning/rollout":
+                ok, msg = est.tuning_rollout(user)
             elif p == "/api/result" and data.get("kind") == "accept":   # HS v1.42: the host script's output, pasted
                 ok, msg = est.submit_accept_text(str(data.get("text", ""))[:2000000], user, ((est.plan.get("acceptance") or {}).get("criteria") or {}))
             elif p == "/api/result":
@@ -38016,6 +38366,16 @@ $('lPw').addEventListener('keydown',function(e){ if(e.key==='Enter') $('lGo').cl
 function wallOf(ts){ var d=new Date(ts*1000), n=new Date(), p=function(x){ return (x<10?'0':'')+x; }, t=p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds());
   return d.toDateString()===n.toDateString() ? t : d.toLocaleDateString(undefined,{month:'short', day:'numeric'})+' '+t; }
 function clockOf(sec){ sec=Math.max(0,Math.round(sec)); var p=function(n){ return (n<10?'0':'')+n; }; return p(Math.floor(sec/3600))+':'+p(Math.floor(sec/60)%60)+':'+p(sec%60); }
+function tuneTable(T){   // HS v1.43: the tuning record -- package values, each version, the approved one, where each runs
+  var V=T.versions.slice(-4), ap=T.approved?T.approved.v:null;
+  var th='<th style="text-align:left;padding:2px 8px 2px 0">Value</th><th style="padding:2px 6px">v0'+(ap===0?' ✓':'')+'</th>'+V.map(function(x){ return '<th style="padding:2px 6px">v'+x.v+(ap===x.v?' ✓':'')+'</th>'; }).join('');
+  var rows=T.params.map(function(p){ return '<tr><td style="padding:2px 8px 2px 0">'+esc(p.label)+' <span class="muted">'+esc(p.unit)+'</span></td><td class="mono" style="text-align:right;padding:2px 6px">'+p.base+'</td>'
+    +V.map(function(x){ var y=x.values[p.key]; return '<td class="mono" style="text-align:right;padding:2px 6px'+(y!==undefined?';font-weight:600':'')+'">'+(y!==undefined?y:'·')+'</td>'; }).join('')+'</tr>'; }).join('');
+  var at=Object.keys(T.at).sort().map(function(k){ return 'v'+k+' on '+T.at[k]; }).join(', ');
+  return '<div style="overflow-x:auto"><table style="font-size:12px;border-collapse:collapse;margin:4px 0">'+'<tr>'+th+'</tr>'+rows+'</table></div>'
+    +'<span class="muted" style="font-size:12px">'+esc((T.os||'')+': '+at+' of '+T.switches+' back-end switches'+(T.approved?'; approved v'+T.approved.v+' by '+T.approved.by:'; none approved')
+      +(T.rollout?'; rollout '+T.rollout.state:'')+(T.note?'. '+T.note:''))+'</span>';
+}
 function ask(title, body, fields){
   return new Promise(function(res){
     $('dlgT').textContent=title; $('dlgB').innerHTML=body||''; var F=$('dlgF'); F.innerHTML='';
@@ -38187,8 +38547,10 @@ function render(){
     var btns=(c.type==='auto'&&c.evidence?'<button data-ge="'+esc(c.key)+'" style="min-height:32px">Evidence</button>':'')
       +(c.kind==='nccl'&&c.result!=='pass'&&gb.state!=='queued'?'<button class="act" data-nc="1" style="min-height:32px">Enter result…</button>':'')
       +(c.kind==='accept'&&c.result!=='pass'&&gb.state!=='queued'?'<button class="act" data-ac="1" style="min-height:32px">Upload results…</button>':'')
+      +(c.kind==='tuned'&&st.tuning&&gb.state!=='queued'?'<button class="act" data-tu="propose" style="min-height:32px">Propose…</button><button class="act" data-tu="apply" style="min-height:32px">Apply / roll back…</button><button class="act" data-tu="approve" style="min-height:32px">Approve…</button><button class="act" data-tu="rollout" style="min-height:32px">Roll out</button>':'')
       +((c.type==='confirm'||(c.type==='auto'&&/needs confirmation|blocked|warn/.test(c.result)))&&c.result!=='confirmed'&&gb.state!=='queued'?'<button class="act" data-gc="'+esc(c.key)+'" style="min-height:32px">Confirm…</button>':'');
     return '<li style="align-items:flex-start"><span class="chip k-'+r[1]+'" style="flex:0 0 86px;justify-content:center">'+r[0]+'</span><span style="display:flex;flex-direction:column;gap:4px;flex:1 1 auto;min-width:0"><span>'+esc(c.label)+'</span><span class="muted" style="font-size:12px;overflow-wrap:anywhere">'+esc(c.note)+'</span>'
+      +(c.kind==='tuned'&&st.tuning?tuneTable(st.tuning):'')
       +(btns?'<span class="row" style="gap:6px;flex-wrap:wrap">'+btns+'</span>':'')+'</span></li>'; }).join('')   // HS v1.24: buttons under the text
     +(gb.override?'<li class="muted">Overridden by '+esc(gb.override.user)+': '+esc(gb.override.reason)+'</li>':'');
   document.querySelectorAll('[data-gc]').forEach(function(e){ e.disabled=!canAct(gb.key); e.onclick=function(){ ask('Confirm gate check', esc(e.closest('li').querySelector('span span').textContent), [{key:'note', label:'Evidence (command output, ticket, who checked)'}]).then(function(v){ if(v) act('api/gate/confirm',{build:gb.key, check:e.dataset.gc, note:v.note}); }); }; });
@@ -38197,6 +38559,25 @@ function render(){
       return '<div style="margin-top:10px"><b style="color:'+(x.ok?'#14532d':'#9a3412')+'">'+(x.ok?'PASS':'FAIL')+'</b> <span class="mono">'+esc((S.plan.devices[n]||{}).short||n)+'</span>: '+esc(x.note)
         +(x.text?'<div class="mono" style="font-size:12px;white-space:pre;overflow-x:auto;margin-top:4px">'+esc(x.text)+'</div>':'')
         +(x.raw?'<details style="margin-top:4px"><summary style="cursor:pointer;font-size:12px">Show raw</summary><div class="mono" style="font-size:11px;white-space:pre-wrap">'+esc(x.raw)+'</div></details>':'')+'</div>'; }).join('')+'</div>', []); }); }; });
+  document.querySelectorAll('[data-tu]').forEach(function(e){ var T=st.tuning, a=e.dataset.tu;   // HS v1.43
+    e.disabled=a==='approve'?!(S.who&&S.who.role==='admin'&&S.mode==='live'):!canAct('be');
+    var vers=[['0','v0 -- package values']].concat(T.versions.map(function(x){ return [String(x.v), 'v'+x.v+' -- '+x.by+(x.note?': '+x.note:'')]; }));
+    e.onclick=function(){
+      if(a==='propose'){ var last=T.versions.length?T.versions[T.versions.length-1].values:{};
+        ask('Propose a tuning change', 'Values are checked against their ranges and ordering. Nothing is applied until you apply the version.',
+          T.params.map(function(p){ return {key:p.key, label:p.label+' ('+p.unit+', '+p.min+' to '+p.max+'; package '+p.base+')', value:String(last[p.key]!==undefined?last[p.key]:p.base)}; }).concat([{key:'_note', label:'Why (incast result, test run, ticket)'}]))
+        .then(function(v){ if(!v) return; var vals={}; T.params.forEach(function(p){ if(v[p.key]!==String(p.base)) vals[p.key]=v[p.key]; }); act('api/tuning/propose',{values:vals, note:v._note}); }); }
+      else if(a==='apply'){
+        ask('Apply a tuning version', 'Applies the version to the switches in scope over SSH with the push credential (or WRITE_USER in secrets.env). Rolling back is applying an earlier version; v0 restores the package values.',
+          [{key:'v', label:'Version', options:vers, value:String(T.versions.length?T.versions[T.versions.length-1].v:0)},
+           {key:'scope', label:'Switches', value:'test', options:[['test','Test pod ('+T.test+' switches)']].concat(T.pods.map(function(p){ return ['pod:'+p, 'Pod '+p]; })).concat(T.rest?[['rest','Shared spines ('+T.rest+')']]:[]).concat([['all','Every back-end switch ('+T.switches+')']])}])
+        .then(function(v){ if(v) act('api/tuning/apply',{v:+v.v, scope:v.scope}); }); }
+      else if(a==='approve'){
+        ask('Approve the platform profile', 'The approved version is the one every back-end switch must run before the gate passes, and the one Roll out applies. Approve after T1 to T4 pass on the test pod with it.',
+          [{key:'v', label:'Version', options:vers, value:String(T.versions.length?T.versions[T.versions.length-1].v:0)}])
+        .then(function(v){ if(v) act('api/tuning/approve',{v:+v.v}); }); }
+      else ask('Roll out v'+((T.approved||{}).v||0), 'Applies the approved version pod by pod; after each pod a T2/T3 smoke test runs on it (accept_cmd with {POD}) and a failure stops the rollout there.', [])
+        .then(function(v){ if(v) act('api/tuning/rollout',{}); }); }; });
   document.querySelectorAll('[data-ac]').forEach(function(e){ e.disabled=!canAct('be'); e.onclick=function(){ ask('Lossless acceptance results','Paste the output of acceptance/lossless.sh for T1 to T4. Uploaded by hand, the switch-side criteria are then confirmed from the switches.',[{key:'text',label:'Output',area:true}]).then(function(v){ if(v) act('api/result',{kind:'accept', text:v.text}); }); }; });   // HS v1.42
   document.querySelectorAll('[data-nc]').forEach(function(e){ e.disabled=!canAct('be'); e.onclick=function(){ ask('NCCL all-reduce result','From acceptance/nccl.sh (Avg bus bandwidth).',[{key:'busbw',label:'Bus bandwidth, GB/s'},{key:'target',label:'Target, GB/s'}]).then(function(v){ if(v) act('api/result',{kind:'nccl', busbw:v.busbw, target:v.target}); }); }; });
   $('gOverride').disabled=!canAct(gb.key)||gb.state==='complete'||gb.state==='queued';
