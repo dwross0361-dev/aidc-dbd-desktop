@@ -942,7 +942,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.40';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.41';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   var RADIX=64, CAGE=800;
   // ---- FABRIC PROFILE (parameterized per accelerator platform) ----------------------------------------
   // rails == accelerators per host. Each accelerator instance gets its own rail leaf, which is what
@@ -31828,13 +31828,13 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       if(n>0) specs.push({P:P, plane:P.t, step:P.step, gate:P.gate, n:n}); });
     var tb=xlBook(APP_NAME), flush=async function(){ var L=tb.sheets; tb.sheets=[]; for(var i=0;i<L.length;i++){ await wr(L[i]); L[i]=null; } };
     xlSheet(tb,{name:'Build order', title:titlePfx+'Cable Matrix \u2014 build order', subtitle:meta.sub, header:['Step','Part','Cables','Deployment Console gate','Order inside the part'], numeric:[0,2],   // v558
-      rows:[{note:'Cable the site in this order. Each part has its own sheet, top to bottom, every cable listed once under the switch or PDU it plugs into.'}].concat(specs.map(function(s){ return [s.step, s.plane, s.n, s.gate, cmOrderTxt(s.plane)]; }))});
+      rows:[{note:'Read Cabling rules (the next sheet) first, then cable the site in this order. Each part has its own sheet, top to bottom, every cable listed once under the switch or PDU it plugs into.'}].concat(specs.map(function(s){ return [s.step, s.plane, s.n, s.gate, cmOrderTxt(s.plane)]; }))});
+    var rr=cmRulesRows(); if(rr.length) xlSheet(tb,{name:'Cabling rules', title:titlePfx+'Cabling rules \u2014 the pattern behind every cable', subtitle:'Read before pulling cable  \u00b7  '+xlDateStr(), header:['Rule','Pattern','Check'], rows:rr});   // HS v1.41: second
     await flush();
     for(var k=0;k<specs.length;k++){ var s=specs[k], full=cableMatrixSpecs(m, meas, s.P);
       xlSheetSplit(tb,{name:cmTab(s), title:titlePfx+'Cable Matrix \u2014 step '+s.step+' \u00b7 '+s.plane, subtitle:meta.sub, header:meta.head, rows:full.rows, numeric:[0,8,9]}); full.rows=null; full=null;
       await flush(); }
-    var rr=cmRulesRows(); if(rr.length) xlSheet(tb,{name:'Cabling rules', title:titlePfx+'Cabling rules \u2014 the pattern behind every cable', subtitle:'Read before pulling cable  \u00b7  '+xlDateStr(), header:['Rule','Pattern','Check'], rows:rr});
-    await flush(); }; }
+    }; }
   function cmMeta(meas){
     var gd=meas?meas.geoDefaults:0, note=!meas?'lengths unavailable (the layout engine did not answer)':(gd?'lengths from '+gd+' default geometry values: indicative until the site figures are entered in the DC Layout Builder (CB-706)':'lengths from the site geometry');
     return {head:['#','Device','Port','Far device','Far port','Far cabinet','Speed','Media','Run (m)','Order (m)'],
@@ -31849,9 +31849,9 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     'Edge PoP':'Edge routers, gateways, firewalls, border leaves', 'Front end':'Border leaves, FE spines, then FE leaf pairs: uplinks, hosts top of rack down, storage', 'Back end':'Spines (to super-spines), then each leaf: uplinks, then host downlinks in leaf port order'}[p]||''; }
   function cmSheets(book, specs, meta, titlePfx){   // the Cable Matrix sheets plus Cabling rules, into a lite workbook
     xlSheet(book,{name:'Build order', title:titlePfx+'Cable Matrix \u2014 build order', subtitle:meta.sub, header:['Step','Part','Cables','Deployment Console gate','Order inside the part'], numeric:[0,2],   // v558
-      rows:[{note:'Cable the site in this order. Each part has its own sheet, top to bottom, every cable listed once under the switch or PDU it plugs into.'}].concat(specs.map(function(s){ return [s.step, s.plane, s.n, s.gate, cmOrderTxt(s.plane)]; }))});
+      rows:[{note:'Read Cabling rules (the next sheet) first, then cable the site in this order. Each part has its own sheet, top to bottom, every cable listed once under the switch or PDU it plugs into.'}].concat(specs.map(function(s){ return [s.step, s.plane, s.n, s.gate, cmOrderTxt(s.plane)]; }))});
+    var rr=cmRulesRows(); if(rr.length) xlSheet(book,{name:'Cabling rules', title:titlePfx+'Cabling rules \u2014 the pattern behind every cable', subtitle:'Read before pulling cable  \u00b7  '+xlDateStr(), header:['Rule','Pattern','Check'], rows:rr});   // HS v1.41: second
     specs.forEach(function(s){ xlSheetSplit(book,{name:cmTab(s), title:titlePfx+'Cable Matrix \u2014 step '+s.step+' \u00b7 '+s.plane, subtitle:meta.sub, header:meta.head, rows:s.rows, numeric:[0,8,9]}); });
-    var rr=cmRulesRows(); if(rr.length) xlSheet(book,{name:'Cabling rules', title:titlePfx+'Cabling rules \u2014 the pattern behind every cable', subtitle:'Read before pulling cable  \u00b7  '+xlDateStr(), header:['Rule','Pattern','Check'], rows:rr});
   }
   async function cmPdf(specs, fname, sub, opt){   // HS v1.38: in volumes, each saved when finished
     opt=opt||{};

@@ -1,3 +1,7 @@
+# AIDC DBD Desktop 2.0.33 (builder HS-v1.41, site runner 1.7.0)
+
+- **Cable Matrix tab order:** Build order, Cabling rules, 0 Power, 1 OOB Cable Map, 2 Edge PoP, 3 FEF Cable Map, 4 BEF Cable Map. The rules are read before any cable is pulled, so they now sit beside the build order, and the Build order note says to read them first. The order is the same in the Cable Matrix workbook and the Final package's design workbook. Nothing else changes; the plan digest is the same as in 2.0.32.
+
 # AIDC DBD Desktop 2.0.32 (builder HS-v1.40, site runner 1.7.0)
 
 - **Every network-cabinet PDU and power shelf is on the OOB network.** The OOB plan took its network cabinets from the front page's plan, before the layout fills and splits them by kW, rack units and outlets. As a result most network-cabinet PDUs had no address or drop, the SN6800 cabinets' DC power shelves were never in the plan, and the plan held PDUs for EoR cabinets the layout had merged away. The plan is now built in passes: plan, layout, then the plan again from the cabinets the layout built, until the two agree (two passes in practice). Each unit gets an address in MGMT-INFRA and a drop on its pod's MGT switches, and the pods get the switches they need. On a 64-rack Vera Rubin build: 172 units covered (8 before), one more MGT switch in the pod, and no phantom PDUs. A fresh physical model takes longer: 31 s instead of 20 s at 512 racks.
