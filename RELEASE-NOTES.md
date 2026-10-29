@@ -1,3 +1,9 @@
+# AIDC DBD Desktop 2.0.31 (builder HS-v1.39, site runner 1.7.0)
+
+- **On a site with data halls, a large Cable Matrix PDF is written per hall.** Each build step now gets one PDF per hall, based on the hall of the switch or PDU each cable is listed under. Files are named hall first (`…-cable-matrix-hall07-step4-back-end.pdf`, with `core-…` for the core room), so all of a hall's files sort together. A tech opens the files for the hall they're working in. At 256 racks across 7 halls: 32 files, the largest back-end hall 2,882 pages. The 10,000-page volume limit still applies but is rarely reached.
+- **Bookmarks in every Cable Matrix PDF.** The sidebar lists each part, then each cabinet, then each switch or device in it, so a soft copy jumps straight to the switch being cabled.
+- **Cables between halls are marked.** When the far end is in another hall, the far-cabinet column reads, for example, `… U24 (HALL-5)`, in the PDF and in the Excel.
+
 # AIDC DBD Desktop 2.0.30 (builder HS-v1.38, site runner 1.7.0)
 
 - **Large Cable Matrix PDFs are written in volumes.** At 1,625 racks the PDF is about 130,000 pages. The PDF library holds a whole document as one string, which tops out at about 25,000 of these pages, so the export failed after an hour with nothing written. Past 140,000 cables the matrix is now written as one PDF per build step (`…-cable-matrix-step0-power.pdf` through `…-step4-back-end-vol4.pdf`), with any step over 10,000 pages split into numbered volumes. Each file is saved as soon as it's finished. At 512 racks: 8 files and 40,220 pages in about 4 minutes. Smaller matrices are still one PDF, page for page as before.

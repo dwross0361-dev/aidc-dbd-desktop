@@ -942,7 +942,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.38';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.39';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   var RADIX=64, CAGE=800;
   // ---- FABRIC PROFILE (parameterized per accelerator platform) ----------------------------------------
   // rails == accelerators per host. Each accelerator instance gets its own rail leaf, which is what
@@ -31710,6 +31710,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     if(/^(be-|fe-|edg-|sec-|oob-)/.test(fr||'')) return 'Switch, router and firewall management ports';
     return 'Other devices';
   }
+  var _CM_HALL=null;   // HS v1.39: cabinet -> hall for the current matrix (set by cableMatrixSpecs)
   function cmPowerSpec(P, m, role, pos, lens){   // v559: power cords in the build order of the equipment they feed, top to bottom
     var SEC=[['1','OUT-OF-BAND EQUIPMENT'],['2','EDGE POP EQUIPMENT'],['3','FRONT-END SWITCHES AND STORAGE'],['4','BACK-END SWITCHES'],['5','GPU COMPUTE AND OTHER EQUIPMENT']];
     var secOf=function(r){ r=String(r||''); if(/^oob-|^console$|^mgmt-service$/.test(r)) return 0; if(/^edg-|^sec-fw$/.test(r)) return 1; if(/^fe-|^storage/.test(r)) return 2; if(/^be-/.test(r)) return 3; return 4; };
@@ -31724,9 +31725,9 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       rows.push({sep:SEC[si][0]+' \u00b7 '+SEC[si][1], lvl:0});
       cabs.forEach(function(cb){ var C=sx[cb], devs=Object.keys(C).sort(function(x,y){ return (C[y].u-C[x].u) || _NATC.compare(x,y); });
         var cnt=devs.reduce(function(a,d){ return a+C[d].rows.length; },0);
-        rows.push({sep:'Cabinet '+cb+'  \u00b7  '+devs.length+' device'+(devs.length===1?'':'s')+'  \u00b7  '+cnt+' cord'+(cnt===1?'':'s'), lvl:1});
+        rows.push({sep:'Cabinet '+cb+'  \u00b7  '+devs.length+' device'+(devs.length===1?'':'s')+'  \u00b7  '+cnt+' cord'+(cnt===1?'':'s'), lvl:1, cab:cb, hall:_CM_HALL?(_CM_HALL[cb]||''):undefined, bm:'cab'});
         devs.forEach(function(d){ var D=C[d]; D.rows.sort(function(x,y){ return _NATC.compare(String(x[3]),String(y[3])); });
-          rows.push({sep:d+(D.u?'  \u00b7  U'+D.u:'')+'  \u2014  '+D.rows.length+' cord'+(D.rows.length===1?'':'s'), lvl:2});
+          rows.push({sep:d+(D.u?'  \u00b7  U'+D.u:'')+'  \u2014  '+D.rows.length+' cord'+(D.rows.length===1?'':'s'), lvl:2, bm:'dev'});
           D.rows.forEach(function(r,i){ rows.push([i+1].concat(r)); }); }); }); });
     return {plane:P.t, step:P.step, gate:P.gate, n:n, rows:rows};
   }
@@ -31735,6 +31736,9 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     var pos=(meas&&meas.pos)||{}, lens=(meas&&meas.lens)||[];
     var isSw=function(r){ return r in CM_ARANK; }, ar=function(r){ return CM_ARANK[r]||0; };
     var uOf=function(d){ var q=pos[d]; return q&&q.u0?q.u0:0; }, cabOf=function(d){ var q=pos[d]; return q?q.cab:'not placed'; };
+    var _hallOf=null; if(m.halls && m.halls.length>1 && m.rows){ _hallOf={}; m.rows.forEach(function(r){ (r.cabinets||[]).forEach(function(c){ _hallOf[c]=r.hall; }); }); }   // HS v1.39
+    _CM_HALL=_hallOf;
+    var hallTag=function(fcab, acab){ if(!_hallOf) return ''; var h=_hallOf[fcab], a=_hallOf[acab]; return (h && a && h!==a)?' ('+h+')':''; };
     var _one=function(P){
       if(P.t==='Power') return cmPowerSpec(P, m, role, pos, lens);   // v559
       var nm=function(r){ if(P.t==='Front end' && r==='host') return 'GPU host DPUs'; if(r==='edg-lb') return 'load balancer DPUs'; return CM_ROLE[r]||r; };
@@ -31755,7 +31759,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
         else { gk='u|'+fa.r; gl='To '+nm(fa.r); go=-ar(fa.r); }   // uplinks first: top to bottom
         var X=A[key]||(A[key]={d:key, r:kind, cab:(kind==='consoleblock'?key.split('|')[1]:cabOf(an.d)), g:{}}), G=X.g[gk]||(X.g[gk]={label:gl, o:go, by:sortBy, rows:[]});
         var pf=pos[fa.d], L=lens[ix];
-        G.rows.push({u:uOf(fa.d), fc:cabOf(fa.d), r:[an.d, an.p, fa.d, fa.p, pf?(pf.cab+(pf.u0?' U'+pf.u0:'')):(fa.r==='ext'?'external':'not placed'), l.speed||'', cmMedia(l, ra, rb), L?L.raw:'', L?L.ord:'']});   // v560: the cable, not the link label
+        G.rows.push({u:uOf(fa.d), fc:cabOf(fa.d), r:[an.d, an.p, fa.d, fa.p, pf?(pf.cab+(pf.u0?' U'+pf.u0:'')+hallTag(pf.cab, X.cab)):(fa.r==='ext'?'external':'not placed'), l.speed||'', cmMedia(l, ra, rb), L?L.raw:'', L?L.ord:'']});   // v560: the cable, not the link label
       });
       // anchor order: top to bottom. Out-of-band: the backbone (highest tier first), then cabinet by cabinet.
       var keys=Object.keys(A), rows=[{note:CM_NOTE[P.t]||''}], n=0, lastSec=null;
@@ -31773,7 +31777,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
         gs.sort(function(x,y){ return (x.o-y.o) || _NATC.compare(String(x.rows[0].r[1]),String(y.rows[0].r[1])) || _NATC.compare(x.label,y.label); });
         var cnt=gs.reduce(function(s,g){ return s+g.rows.length; },0), pa=pos[X.d];
         var head=(X.r==='consoleblock')?('Console cables to devices in '+X.cab):((CM_SW[X.r]?CM_SW[X.r]+' ':'')+X.d+'  \u00b7  '+(pa?pa.cab+(pa.u0?' U'+pa.u0:''):'not placed'));
-        rows.push({sep:head+'  \u00b7  '+cnt+(P.t==='Power'?' cord':' cable')+(cnt===1?'':'s'), lvl:1});
+        rows.push({sep:head+'  \u00b7  '+cnt+(P.t==='Power'?' cord':' cable')+(cnt===1?'':'s'), lvl:1, cab:X.cab, hall:_hallOf?(_hallOf[X.cab]||''):undefined, bm:'anchor'});
         var i=0;
         gs.forEach(function(g){ rows.push({sep:g.label+'  \u2014  '+g.rows.length, lvl:2});
           g.rows.forEach(function(o){ rows.push([++i].concat(o.r)); n++; }); }); });
@@ -31845,7 +31849,11 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       files.push(name); setStatus('Cable matrix: writing the PDF\u2026 saved '+name+' ('+files.length+' file'+(files.length>1?'s':'')+', '+total.toLocaleString('en-US')+' pages so far)');
       await new Promise(function(r){ setTimeout(r, 30); }); }
     var stem=fname.replace(/\.pdf$/i,''), base=stem, vol=1, head=[], title='';
+    var partNode=null, secNode=null, cabNode=null, lastCab=null;   // HS v1.39: bookmarks
+    function bm(parent, t){ try{ return pdf.outline.add(parent, String(t).slice(0,120), {pageNumber:page}); }catch(e){ return null; } }
     function slug(t){ return String(t||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,''); }
+    function hallSlug(h){ var m=/^HALL-(\d+)$/i.exec(h||''); return m?('hall'+(+m[1]<10?'0':'')+(+m[1])):(h?slug(h):'site'); }
+    function hallName(h){ var m=/^HALL-(\d+)$/i.exec(h||''); return m?('Hall '+(+m[1])):(h?h.charAt(0)+h.slice(1).toLowerCase():'Site'); }
     function header(){ if(page>0){ footer(); pdf.addPage(); } page++;
       pdf.setFont('helvetica','bold'); pdf.setFontSize(13); pdf.setTextColor(20); pdf.text(title, M, M+6);
       pdf.setFont('helvetica','normal'); pdf.setFontSize(8); pdf.setTextColor(90); pdf.text(pdf.splitTextToSize(sub, W)[0], M, M+20);
@@ -31853,18 +31861,42 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       var x=M; head.forEach(function(hc,i){ if(i>=8) pdf.text(hc, x+cw[i]-3, y+10.5, {align:'right'}); else pdf.text(hc, x+3, y+10.5); x+=cw[i]; });
       y+=15; pdf.setFont('helvetica','normal'); pdf.setTextColor(25); }
     async function brk(){   // a new page, or a new volume past VOL pages
-      if(page>=VOL){ await finish(base+'-vol'+vol+'.pdf'); vol++; newDoc(); }
+      var rolled=false;
+      if(page>=VOL){ await finish(base+'-vol'+vol+'.pdf'); vol++; newDoc(); rolled=true; }
       else if(page>0 && page%1000===0){ setStatus('Cable matrix: writing the PDF\u2026 '+(total+page).toLocaleString('en-US')+' pages'); await new Promise(function(r){ setTimeout(r, 0); }); }
-      header(); }
-    for(var si=0; si<specs.length; si++){
-      var s=specs[si];
-      if(split){ if(si>0){ await finish(base+(vol>1?'-vol'+vol:'')+'.pdf'); newDoc(); } base=stem+'-step'+s.step+'-'+slug(s.plane); vol=1; }
-      head=s.header.map(safe); title=safe(s.title);
-      await brk(); var shade=false;
-      for(var ri=0; ri<s.rows.length; ri++){ var r=s.rows[ri];
+      header();
+      if(rolled){ partNode=bm(null, title+' (continued)'); secNode=null; cabNode=null; lastCab=null; } }
+    function hallBuckets(rows){   // a step's rows by the hall of the switch or cabinet each block sits under; null if not a hall site
+      var pre=[], cur=null, l0=null, map={}, order=[];
+      for(var i=0;i<rows.length;i++){ var r=rows[i];
+        if(r && r.sep!==undefined && r.lvl===1 && r.hall!==undefined){ var h=r.hall||'';
+          if(!map[h]){ map[h]={hall:h, rows:pre.slice(), l0:null}; order.push(h); } cur=map[h];
+          if(l0 && cur.l0!==l0){ cur.rows.push(l0); cur.l0=l0; } cur.rows.push(r); continue; }
+        if(r && r.sep!==undefined && r.lvl===0){ l0=r; continue; }   // a section heading lands with its first block in each hall
+        if(!cur){ pre.push(r); continue; }
+        cur.rows.push(r); }
+      if(order.length<2) return null;
+      order.sort(function(x,y){ return _NATC.compare(x||'~',y||'~'); });
+      return order.map(function(h){ return map[h]; }); }
+    var parts=[];
+    specs.forEach(function(s, si){ var t=safe(s.title), h=s.header.map(safe);
+      if(!split){ parts.push({file:si===0?stem:null, title:t, head:h, rows:s.rows}); return; }
+      var sb=stem+'-step'+s.step+'-'+slug(s.plane), B=hallBuckets(s.rows);
+      if(!B){ parts.push({file:sb, title:t, head:h, rows:s.rows}); return; }
+      B.forEach(function(b){ parts.push({file:stem+'-'+hallSlug(b.hall)+'-step'+s.step+'-'+slug(s.plane), title:t+'  \u00b7  '+hallName(b.hall), head:h, rows:b.rows}); }); });
+    for(var pi=0; pi<parts.length; pi++){
+      var P=parts[pi];
+      if(P.file!==null){ if(pi>0){ await finish(base+(vol>1?'-vol'+vol:'')+'.pdf'); newDoc(); } base=P.file; vol=1; }
+      head=P.head; title=P.title;
+      await brk(); var shade=false; partNode=bm(null, title); secNode=null; cabNode=null; lastCab=null;
+      for(var ri=0; ri<P.rows.length; ri++){ var r=P.rows[ri];
         if(r && r.note!==undefined){ if(!r.note) continue; pdf.setFontSize(8); var nl=pdf.splitTextToSize(safe(r.note), W-14), nh=nl.length*10+10;
           if(y+nh>PH-M-12) await brk(); pdf.setFillColor(238,243,248); pdf.rect(M, y+4, W, nh, 'F'); pdf.setTextColor(30); pdf.text(nl, M+7, y+15); y+=nh+6; pdf.setTextColor(25); continue; }
         if(r && r.sep!==undefined){ var _L=r.lvl===0?0:(r.lvl===1?1:2), h1=[19,16,14][_L]; if(y+h1+40>PH-M-12) await brk();   // v557: section, switch, group
+          if(r.lvl===0){ secNode=bm(partNode, safe(r.sep)); cabNode=null; lastCab=null; }
+          else if(r.bm==='cab'){ cabNode=bm(secNode||partNode, safe(r.sep)); }
+          else if(r.bm==='anchor'){ if(r.cab!==lastCab){ cabNode=bm(secNode||partNode, 'Cabinet '+safe(r.cab)); lastCab=r.cab; } bm(cabNode||secNode||partNode, safe(r.sep)); }
+          else if(r.bm==='dev'){ bm(cabNode||secNode||partNode, safe(r.sep)); }
           y+=[8,6,2][_L]; var _fc=[[12,24,38],[31,59,92],[214,226,238]][_L]; pdf.setFillColor(_fc[0],_fc[1],_fc[2]); pdf.rect(M, y, W, h1, 'F');
           pdf.setFont('helvetica','bold'); pdf.setFontSize([9.5,8.5,7.5][_L]); pdf.setTextColor(_L<2?255:25); pdf.text(pdf.splitTextToSize(safe(r.sep), W-10)[0], M+5, y+[13,11,10][_L]);
           pdf.setFont('helvetica','normal'); pdf.setTextColor(25); y+=h1; shade=false; continue; }
@@ -31888,13 +31920,13 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       setStatus('Cable matrix: placing cabinets and measuring every run in the layout engine\u2026');
       var m=dctModel(), meas=await dctMeasure(m); _FLOOR_PM=m;   // HS v1.15: the reach check reads this model
       var specs=cableMatrixSpecs(m, meas), nRows=specs.reduce(function(a,s){ return a+s.n; },0);
-      if(kind==='pdf' && nRows>60000 && !window.confirm('The cable matrix has '+nRows.toLocaleString()+' cables, about '+Math.ceil(nRows/CM_ROWS_PER_PAGE).toLocaleString()+' PDF pages'+(nRows>CM_SPLIT_ROWS?', written as one PDF per build step (volumes of up to 10,000 pages)':'')+'. That takes a while and a lot of memory. Continue? (The Excel version is lighter.)')){ setStatus('Cable matrix PDF cancelled'); return; }
+      if(kind==='pdf' && nRows>60000 && !window.confirm('The cable matrix has '+nRows.toLocaleString()+' cables, about '+Math.ceil(nRows/CM_ROWS_PER_PAGE).toLocaleString()+' PDF pages'+(nRows>CM_SPLIT_ROWS?', written as one PDF per build step'+(m.halls&&m.halls.length>1?' and data hall':'')+' (volumes of up to 10,000 pages)':'')+'. That takes a while and a lot of memory. Continue? (The Excel version is lighter.)')){ setStatus('Cable matrix PDF cancelled'); return; }
       var cliRaw=(document.getElementById('clientname').value||'').trim(), cli=cliRaw?cliRaw.replace(/[^A-Za-z0-9]/g,''):'gpu-fabric';
       var titlePfx=(IDENT.legal||cliRaw)?(IDENT.legal||cliRaw)+' \u2014 ':'', meta=cmMeta(meas);
       specs.forEach(function(s){ s.header=meta.head; s.title=titlePfx+'Cable Matrix \u2014 step '+s.step+' \u00b7 '+s.plane; });   // v558
       if(kind==='pdf' && specs.length) specs[0].rows.unshift({note:'BUILD ORDER: '+specs.map(function(s){ return s.step+' '+s.plane+' ('+s.n.toLocaleString()+(s.plane==='Power'?' cords':' cables')+(s.step?', '+s.gate+' gate':', '+s.gate)+')'; }).join('  \u00b7  ')+'. Each part runs top to bottom, every cable listed once under the switch or PDU it plugs into.'});
       if(kind==='pdf'){ setStatus('Cable matrix: writing the PDF\u2026'); await new Promise(function(r){ setTimeout(r,20); });
-        if(nRows>CM_SPLIT_ROWS) setStatus('Cable matrix: writing the PDF\u2026 '+nRows.toLocaleString('en-US')+' cables, about '+Math.ceil(nRows/CM_ROWS_PER_PAGE).toLocaleString('en-US')+' pages, one PDF per build step, roughly '+Math.max(1, Math.round(nRows/CM_ROWS_PER_PAGE/9000))+' min');   // about 150 pages a second, measured
+        if(nRows>CM_SPLIT_ROWS) setStatus('Cable matrix: writing the PDF\u2026 '+nRows.toLocaleString('en-US')+' cables, about '+Math.ceil(nRows/CM_ROWS_PER_PAGE).toLocaleString('en-US')+' pages, one PDF per build step'+(m.halls&&m.halls.length>1?' and hall':'')+', roughly '+Math.max(1, Math.round(nRows/CM_ROWS_PER_PAGE/9000))+' min');   // about 150 pages a second, measured
         await new Promise(function(r){ setTimeout(r,20); });
         var res=await cmPdf(specs, cli+'-cable-matrix.pdf', 'Build '+identBuild()+'  \u00b7  '+meta.sub, {split:nRows>CM_SPLIT_ROWS});   // HS v1.38
         setStatus('Exported '+(res.files.length>1?res.files.length+' cable-matrix PDFs, '+res.files[0]+' to '+res.files[res.files.length-1]:res.files[0])+' ('+res.pages.toLocaleString('en-US')+' pages, '+nRows.toLocaleString()+' cables)'+(meas?'':' \u2014 without lengths')); }
