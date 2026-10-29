@@ -942,7 +942,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.39';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.40';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   var RADIX=64, CAGE=800;
   // ---- FABRIC PROFILE (parameterized per accelerator platform) ----------------------------------------
   // rails == accelerators per host. Each accelerator instance gets its own rail leaf, which is what
@@ -7307,7 +7307,30 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
   // Network footprint for the FE/Edge PoP devices: 'consolidated' (one cabinet pair, pairs
   // split A/B) or 'separate' (Edge PoP and FE classes in their own pairs, STD-FE-001 FE-188).
   var NET_FOOTPRINT='consolidated';
-  function physModel(){
+  var NETPU={key:null, sig:null, list:null}, _NPU_IN=false;   // HS v1.40: the network-cabinet PDUs and power shelves the layout built
+  function _npuReset(){   // what was derived from the OOB plan before it knew them
+    try{ if(__MEMO) Object.keys(__MEMO).forEach(function(q){ delete __MEMO[q]; }); }catch(e){}
+    try{ if(_STICKY && _STICKY.v){ delete _STICKY.v.mgmtPlan; delete _STICKY.v.deployPlanes; } }catch(e){}
+    try{ _oobHM={k:null, v:null}; }catch(e){} try{ window.__oobRemote=null; }catch(e){}
+    try{ planeIpHtml0._k=null; }catch(e){} try{ renderPlanes._k=null; }catch(e){} }
+  function _npuWrap(o, cab){ var L=[];
+    cab.forEach(function(c){ if(!/^(mor|eor|fe|edge|oob)$/.test(c.cls||'') || c.floorUnit) return;
+      c.items.forEach(function(it){ if(it.role==='pdu' || (it.role==='power-shelf' && it.net))
+        L.push({name:it.name, cab:c.id, cls:c.cls, pod:((c.cls==='mor'||c.cls==='eor') && c.pod!=null)?c.pod:null, side:(it.side||c.side||'A'), shelf:it.role==='power-shelf'}); }); });
+    try{ Object.defineProperty(o, '__netpu', {value:L, enumerable:false}); }catch(e){} return o; }
+  function physModel(){   // HS v1.40: plan -> layout -> plan again from the cabinets the layout built, until they agree
+    var was=_NPU_IN; _NPU_IN=true; var k=null; try{ k=_physKey(); }catch(e){}
+    try{ var v=null;
+      for(var pass=0; pass<4; pass++){
+        v=physModel1.apply(this, arguments);
+        var L=v.__netpu||[], sig=L.map(function(u){ return u.name+'|'+u.pod+'|'+u.side; }).join(';');
+        if(NETPU.list && NETPU.sig===sig){ NETPU.key=k; return v; }
+        NETPU={key:k, sig:sig, list:L}; _npuReset();
+      }
+      (v.warnings=v.warnings||[]).push('OOB: the network-cabinet PDUs and power shelves did not settle in four passes; check the OOB plan');
+      return v;
+    } finally{ _NPU_IN=was; } }
+  function physModel1(){
     var P=PROFILES[profileKey], mp=null; try{ mp=mgmtPlan(); }catch(e){}
     var cab=[], rows=[], warn=[], devs=DEVIATIONS.filter(function(d){ return d.profile && d.profile===profileKey && d.status==='accepted'; }), _shortWarned=0; var _nvlWarned=0, _peakWarned=0, _uWarned=0, _segWarned=0, _ampWarned=0, _ampPkWarned=0, _sideWarned=0;   // cab is reassigned by the consolidated footprint
     function C(o){ o.items=o.items||[]; cab.push(o); return o; }
@@ -7716,7 +7739,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
           if(bm){ nm=bm[1].replace('BEF-','')+'-H'+pad(+bm[2]+1); bp='BMC'; }
           else if(dbm){ nm=dbm[1].replace('BEF-','')+'-H'+pad(+dbm[2]+1); bp='DPU-OOB'; }   // B3240 1G OOB (Arm + DPU BMC)
           else if(sbm){ nm=sbm[1]; bp=sbm[2]; }   // storage node / storage hardware management port lands on the device
-          else if(e.dev.type==='pdu'){ bp='ETH1'; }   // Raritan PX3: two Ethernet ports, ETH1 used
+          else if(e.dev.type==='pdu'){ bp=e.shelf?'MGMT':'ETH1'; }   // Raritan PX3: two Ethernet ports, ETH1 used (HS v1.40: a power shelf's controller, MGMT)
           else if(e.bond){ bp='NIC1 (bond0)'; }
           else if(/^(console|infra|cooling|facility|pdu|sensor)/.test(e.dev.type||'')){ bp=(e.dev.type==='console'?'eth0':'mgmt'); }
           else if(e.dev.type==='mgmt-firewall'){ bp=(mgmtSecVendor()==='ftd')?'Management1/1':'fxp0'; }
@@ -8117,7 +8140,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       if(PAIRED[it.role]){ var mm=/(\d+)\s*$/.exec(it.name); if(mm) it.pair=it.role+'-'+Math.ceil(+mm[1]/2); }
       if(it.role==='host'){ it.ports={backend:ACC_PER_HOST, feNic:FE.nicsPerHost||2, feNicModel:FE.nicModel||'', bmc:1}; }
     }); });
-    return {
+    return _npuWrap({
       schema:'gpu-fabric-physical/1',
       meta:{client:(document.getElementById('clientname').value||'').trim(), site:siteCode(), profile:profileKey,
             preset:P.preset||P.label||profileKey, generated:new Date().toISOString(),
@@ -8130,7 +8153,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       rows:floorLayout(rows, cab, links), halls:_FLOOR_HALLS, cabinets:cab, links:links, warnings:warn,   // HS v1.15 / v1.17: column, or hall and position
       deviations:devs.concat(SITE_VARIANCES.filter(function(v){ return v.status==='accepted' && ((v.role==='edge'&&FE.edgeModel===v.model)||(v.role==='border'&&FE.borderModel===v.model)); })
         .map(function(v){ return {id:v.id, clause:'Program platform standard ('+v.role+': '+v.standard+')', finding:v.role+' role runs '+v.model+' at '+v.site+'.', mitigation:v.detail, owner:v.owner, date:v.date, status:v.status}; }))
-    };
+    }, cab);
   }
   function exportPhysModel(){
     var m=physModel(), cli=(clientCode||'site').toLowerCase();
@@ -8486,9 +8509,9 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     if(!_cmPk) xlSheet(wb,{name:'OOB Cable Map',title:titlePfx+'Out-of-Band Cable Map \u2014 by device',
       subtitle:'Switch, router and firewall cabling on the management plane  \u00b7  '+(_pk0?'device drops are on the OOB Mgmt sheet':'then every device management drop, by management switch')+'  \u00b7  '+xlDateStr(),
       header:['#','This port','\u2192','Goes to device','Destination port','Speed','Media','Purpose'],rows:oobCm,numeric:[0]});
-    if(_pk0) xlSheet(wb,{name:'OOB Mgmt',title:titlePfx+'Out-of-Band Management Plan',subtitle:'Site block '+_mp.site+' from '+OOB_SUPERNET+'  \u00b7  '+(_mp.segments||[]).length+' segments  \u00b7  '+xlDateStr(),
+    if(false && _pk0) xlSheet(wb,{name:'OOB Mgmt',title:titlePfx+'Out-of-Band Management Plan',subtitle:'Site block '+_mp.site+' from '+OOB_SUPERNET+'  \u00b7  '+(_mp.segments||[]).length+' segments  \u00b7  '+xlDateStr(),
       header:['Device','Type / role','Mgmt iface','OOB IP','MGT switch / port','Location'],rows:mgRows});
-    try{ var _fp=facilityPlan(); var _rw={}; _fp.rows.forEach(function(r){ _rw[r.id]=r; });   // v480: busway and CDU schedule
+    if(!_pk0) try{ var _fp=facilityPlan(); var _rw={}; _fp.rows.forEach(function(r){ _rw[r.id]=r; });   // v480: busway and CDU schedule
       xlSheet(wb,{name:'Facility',title:titlePfx+'Facility: halls, power blocks, busway and CDUs',
         subtitle:'Site IT '+(_fp.itKw/1000).toFixed(2)+' MW \u00b7 facility '+(_fp.facilityKw/1000).toFixed(2)+' MW at PUE '+_fp.pue+' \u00b7 '+(_fp.feed==='busway'?('busway '+_fp.volts+' V, A+B per half row'):'home-run circuits')+' \u00b7 '+xlDateStr(),
         header:['Busway / row','Hall','Power block','Side','Cabinets','Rating (A)','Normal (kW)','One side down (kW / A)','Whips','Tap-offs','Length (m)','In-row CDUs'],
@@ -10130,7 +10153,10 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     _ozPass=false; central.forEach(function(c){ oob[c[0]].ip=tmpl[c[1]].at(c[2]); }); _ozPass=true;
     return Z;
   }
-  function mgmtPlan(){ var _p=_segC; _segC=null; try{ _segC=oobSegments(); return mgmtPlan0.apply(this, arguments); } finally{ _segC=_p; } }   // v521
+  function mgmtPlan(){
+    if(!_NPU_IN && (window.__AIDC_HEADLESS || byType('rack').length<=512)){   // HS v1.40 (a large window leaves this to its design service)
+      _NPU_IN=true; try{ var _k=_physKey(); if(NETPU.key!==_k){ NETPU.key=_k; try{ physModel(); }catch(e){} } }catch(e){} finally{ _NPU_IN=false; } }
+    var _p=_segC; _segC=null; try{ _segC=oobSegments(); return mgmtPlan0.apply(this, arguments); } finally{ _segC=_p; } }   // v521
   function mgmtPlan0(){
     _OOB_DENSE={on:false, nAcc:0, nSp:0};   // v524: decided again below, in the spine section
     // Deterministic OOB assignment into the STD-IPP-001 segment template (see OOB_SEGMENTS):
@@ -10225,7 +10251,9 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     // same list the layout uses. MoR PDUs land on that pod's mgmt switch; the others have no
     // pod and land on the aggregation switch. FE/Edge PoP cabinet PDUs are added with the FE
     // devices below.
-    netCabinets().forEach(function(c){
+    if(NETPU.list) NETPU.list.forEach(function(u){ if(u.cls==='fe'||u.cls==='edge') return;   // HS v1.40: as the layout built them
+      var id='npu-'+u.name; oob[id]={ip:INF.at(1+facCur++), dev:synth(u.name,'pdu',u.pod), shelf:!!u.shelf, cab:u.cab}; order.push(id); });
+    else netCabinets().forEach(function(c){
       if(c.cls==='fe'||c.cls==='edge') return;
       for(var pd=0;pd<MGMT_EXTRAS.pduPerRack;pd++){
         var hb=facCur++;                                   // MGMT-INFRA
@@ -10297,7 +10325,10 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
         order.push(id); feOob.push(id);
       });
       // the FE / Edge PoP cabinets' own PDUs, named for the cabinets the layout draws
-      netCabinets().filter(function(c){ return c.cls==='fe'||c.cls==='edge'; }).forEach(function(c){
+      if(NETPU.list) NETPU.list.forEach(function(u){ if(u.cls!=='fe' && u.cls!=='edge') return;   // HS v1.40
+        var fid='fe-npu-'+u.name; oob[fid]={ip:INF.at(1+facCur++), dev:synth(u.name,'pdu',null), feCab:(u.side==='B'?1:0), shelf:!!u.shelf, cab:u.cab};
+        order.push(fid); feOob.push(fid); });
+      else netCabinets().filter(function(c){ return c.cls==='fe'||c.cls==='edge'; }).forEach(function(c){
         for(var fp=0; fp<MGMT_EXTRAS.pduPerRack; fp++){
           var fid='fe-cab-'+c.id+'-pdu'+fp;
           oob[fid]={ip:INF.at(1+facCur++), dev:synth(c.id+'-PDU-'+String.fromCharCode(65+fp),'pdu',null), feCab:c.feCab};
@@ -31711,6 +31742,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     return 'Other devices';
   }
   var _CM_HALL=null;   // HS v1.39: cabinet -> hall for the current matrix (set by cableMatrixSpecs)
+  function cmTab(s){ var t={'Out-of-band':'OOB Cable Map','Front end':'FEF Cable Map','Back end':'BEF Cable Map'}[s.plane]; return s.step+' '+(t||s.plane); }   // HS v1.40
   function cmPowerSpec(P, m, role, pos, lens){   // v559: power cords in the build order of the equipment they feed, top to bottom
     var SEC=[['1','OUT-OF-BAND EQUIPMENT'],['2','EDGE POP EQUIPMENT'],['3','FRONT-END SWITCHES AND STORAGE'],['4','BACK-END SWITCHES'],['5','GPU COMPUTE AND OTHER EQUIPMENT']];
     var secOf=function(r){ r=String(r||''); if(/^oob-|^console$|^mgmt-service$/.test(r)) return 0; if(/^edg-|^sec-fw$/.test(r)) return 1; if(/^fe-|^storage/.test(r)) return 2; if(/^be-/.test(r)) return 3; return 4; };
@@ -31799,7 +31831,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       rows:[{note:'Cable the site in this order. Each part has its own sheet, top to bottom, every cable listed once under the switch or PDU it plugs into.'}].concat(specs.map(function(s){ return [s.step, s.plane, s.n, s.gate, cmOrderTxt(s.plane)]; }))});
     await flush();
     for(var k=0;k<specs.length;k++){ var s=specs[k], full=cableMatrixSpecs(m, meas, s.P);
-      xlSheetSplit(tb,{name:s.step+' '+s.plane, title:titlePfx+'Cable Matrix \u2014 step '+s.step+' \u00b7 '+s.plane, subtitle:meta.sub, header:meta.head, rows:full.rows, numeric:[0,8,9]}); full.rows=null; full=null;
+      xlSheetSplit(tb,{name:cmTab(s), title:titlePfx+'Cable Matrix \u2014 step '+s.step+' \u00b7 '+s.plane, subtitle:meta.sub, header:meta.head, rows:full.rows, numeric:[0,8,9]}); full.rows=null; full=null;
       await flush(); }
     var rr=cmRulesRows(); if(rr.length) xlSheet(tb,{name:'Cabling rules', title:titlePfx+'Cabling rules \u2014 the pattern behind every cable', subtitle:'Read before pulling cable  \u00b7  '+xlDateStr(), header:['Rule','Pattern','Check'], rows:rr});
     await flush(); }; }
@@ -31818,7 +31850,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
   function cmSheets(book, specs, meta, titlePfx){   // the Cable Matrix sheets plus Cabling rules, into a lite workbook
     xlSheet(book,{name:'Build order', title:titlePfx+'Cable Matrix \u2014 build order', subtitle:meta.sub, header:['Step','Part','Cables','Deployment Console gate','Order inside the part'], numeric:[0,2],   // v558
       rows:[{note:'Cable the site in this order. Each part has its own sheet, top to bottom, every cable listed once under the switch or PDU it plugs into.'}].concat(specs.map(function(s){ return [s.step, s.plane, s.n, s.gate, cmOrderTxt(s.plane)]; }))});
-    specs.forEach(function(s){ xlSheetSplit(book,{name:s.step+' '+s.plane, title:titlePfx+'Cable Matrix \u2014 step '+s.step+' \u00b7 '+s.plane, subtitle:meta.sub, header:meta.head, rows:s.rows, numeric:[0,8,9]}); });
+    specs.forEach(function(s){ xlSheetSplit(book,{name:cmTab(s), title:titlePfx+'Cable Matrix \u2014 step '+s.step+' \u00b7 '+s.plane, subtitle:meta.sub, header:meta.head, rows:s.rows, numeric:[0,8,9]}); });
     var rr=cmRulesRows(); if(rr.length) xlSheet(book,{name:'Cabling rules', title:titlePfx+'Cabling rules \u2014 the pattern behind every cable', subtitle:'Read before pulling cable  \u00b7  '+xlDateStr(), header:['Rule','Pattern','Check'], rows:rr});
   }
   async function cmPdf(specs, fname, sub, opt){   // HS v1.38: in volumes, each saved when finished

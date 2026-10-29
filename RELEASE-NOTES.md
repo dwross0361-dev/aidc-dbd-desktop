@@ -1,3 +1,10 @@
+# AIDC DBD Desktop 2.0.32 (builder HS-v1.40, site runner 1.7.0)
+
+- **Every network-cabinet PDU and power shelf is on the OOB network.** The OOB plan took its network cabinets from the front page's plan, before the layout fills and splits them by kW, rack units and outlets. As a result most network-cabinet PDUs had no address or drop, the SN6800 cabinets' DC power shelves were never in the plan, and the plan held PDUs for EoR cabinets the layout had merged away. The plan is now built in passes: plan, layout, then the plan again from the cabinets the layout built, until the two agree (two passes in practice). Each unit gets an address in MGMT-INFRA and a drop on its pod's MGT switches, and the pods get the switches they need. On a 64-rack Vera Rubin build: 172 units covered (8 before), one more MGT switch in the pod, and no phantom PDUs. A fresh physical model takes longer: 31 s instead of 20 s at 512 racks.
+- **The Final package's design workbook drops OOB Mgmt and Facility.** The address plan is in the Day-2 SoT and the configs; the facility plan is in the design document and viewer.
+- **The Cable Matrix tabs are renamed** 1 OOB Cable Map, 3 FEF Cable Map and 4 BEF Cable Map, in the Cable Matrix workbook and in the package.
+- **The Cable Matrix PDF matches the Excel exactly.** At 128 racks the cable counts are identical step by step: 834, 9,143, 26, 7,727 and 147,456.
+
 # AIDC DBD Desktop 2.0.31 (builder HS-v1.39, site runner 1.7.0)
 
 - **On a site with data halls, a large Cable Matrix PDF is written per hall.** Each build step now gets one PDF per hall, based on the hall of the switch or PDU each cable is listed under. Files are named hall first (`…-cable-matrix-hall07-step4-back-end.pdf`, with `core-…` for the core room), so all of a hall's files sort together. A tech opens the files for the hall they're working in. At 256 racks across 7 halls: 32 files, the largest back-end hall 2,882 pages. The 10,000-page volume limit still applies but is rarely reached.
