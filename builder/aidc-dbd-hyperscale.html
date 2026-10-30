@@ -943,7 +943,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.45';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.46';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   var RADIX=64, CAGE=800;
   // ---- FABRIC PROFILE (parameterized per accelerator platform) ----------------------------------------
   // rails == accelerators per host. Each accelerator instance gets its own rail leaf, which is what
@@ -2699,19 +2699,25 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       var _ups3=Math.max(1, Math.floor(FE.uplinksPerLeaf/spines));
       var _bl3=Math.max(1,feBlCount());
       if((leaves+_bl3)*_ups3 > SSW.access.n){
-        var _R=SSW.access.n, _half=Math.floor(_R/2), _ppp=Math.max(1,Math.floor(_half/(2*_ups3)));
-        var _np=Math.ceil(pairs/_ppp), _U=_ppp*2*_ups3, _att=_bl3, _m=0, _L=0;
-        for(var _mm=1; _mm<=_U; _mm++){ if(_U%_mm) continue; var _LL=_U/_mm; if(_np*_LL+Math.ceil(_att/_mm)<=_R){ _m=_mm; _L=_LL; break; } }
+        var _R=SSW.access.n, _half=Math.floor(_R/2), _ppp0=Math.max(1,Math.floor(_half/(2*_ups3))), _ppp=_ppp0, _att=_bl3, _m=0, _L=0, _np=0, _U=0, _D=0;
+        var _tgt=Math.max(1, FE.targetOversub||4);   // HS v1.46: the pod spine may go past 1:1 only to close the tier, within the FE target
+        var _fit=function(q, U){ var np=Math.ceil(pairs/q); for(var mm=1; mm<=U; mm++){ if(U%mm) continue; var LL=U/mm; if(np*LL+Math.ceil(_att/mm)<=_R) return {np:np, m:mm, L:LL}; } return null; };
+        for(var _q=_ppp0; ; _q++){ var _d=2*_q*_ups3, _u=(_q===_ppp0)?_d:(_R-_d); if(_u<1 || _d/_u>_tgt) break;
+          var _f=_fit(_q, _u); if(_f){ _ppp=_q; _D=_d; _U=_u; _np=_f.np; _m=_f.m; _L=_f.L; break; } }
+        if(!_m){ _ppp=_ppp0; _D=2*_ppp0*_ups3; _U=_D; _np=Math.ceil(pairs/_ppp); }
+        var _broken=null;   // HS v1.46
         if(!_m){ _m=Math.ceil((_np*_U+_att)/_R); _L=Math.max(1,Math.floor(_U/_m));
-          warn.push({sev:'high', msg:'FE super-spine tier cannot hold '+_np+' pods at '+_U+' uplinks per pod spine on a '+_R+'-port '+SSW.label+'. Use a higher-radix super-spine or fewer racks.'}); }
-        t3={pods:_np, pairsPerPod:_ppp, spinesPerPod:spines, perSpine:_ups3, up:_U, groups:spines, sspPerGroup:_m, linksPerSsp:_L, ssps:spines*_m, attach:_att};
+          _broken={pods:_np, up:_U, ports:_R, attach:_att, need:_np+Math.ceil(_att/Math.max(1,_U)), model:SSW.label};
+          warn.push({sev:'high', msg:'FE super-spine tier does not close: '+_np+' pods at '+_U+' uplinks per pod spine need '+_broken.need+' ports on each super-spine (one per pod plus the border leaves), and the '+SSW.label+' has '+_R+'. No package is built until it closes: fewer racks (at most '+(_R-1)+' pods of '+_ppp+' leaf pairs) or fewer front-end leaves.'}); }
+        t3={pods:_np, pairsPerPod:_ppp, spinesPerPod:spines, perSpine:_ups3, up:_U, down:_D, oversub:_D/Math.max(1,_U), groups:spines, sspPerGroup:_m, linksPerSsp:_L, ssps:spines*_m, attach:_att, broken:_broken};
         warn.push({sev:'info', msg:'FE THREE TIERS \u2014 '+leaves+' leaves need more than one spine tier can hold, so the front end runs as '+_np+' pods of up to '+_ppp+' leaf pairs, '
-          +spines+' spines per pod ('+(spines*_np)+' in all), joined by '+(spines*_m)+' super-spines in '+spines+' groups of '+_m+'. Border leaves attach to the super-spines; DPUs peer EVPN with their own pod\u2019s spines.'});
+          +spines+' spines per pod ('+(spines*_np)+' in all), joined by '+(spines*_m)+' super-spines in '+spines+' groups of '+_m+'. Border leaves attach to the super-spines; DPUs peer EVPN with their own pod\u2019s spines.'
+          +(_D>_U && !_broken?' At 1:1 the super-spine tier does not close ('+Math.ceil(pairs/_ppp0)+' pods on '+_R+'-port super-spines), so each pod spine takes '+_ppp+' leaf pairs: '+_D+' ports down, '+_U+' up, '+(Math.round(100*_D/_U)/100)+':1 -- the smallest oversubscription that closes.':'')});
       }
     }
     var spinePorts=0, spineUtil=0, maxPods=null;
     if(spines>0 && t3){
-      spinePorts=2*t3.up; spineUtil=spinePorts/SSW.access.n; maxPods=null;
+      spinePorts=(t3.down||t3.up)+t3.up; spineUtil=spinePorts/SSW.access.n; maxPods=null;   // HS v1.46: down and up may differ
     } else if(spines>0){
       var upPerSpine=FE.uplinksPerLeaf/spines;
       if(upPerSpine!==Math.floor(upPerSpine)){
@@ -16438,7 +16444,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
   // A pod spine's super-spine sessions sit in its downNbrs too, because every spine emitter builds its sessions from
   // downNbrs -- and the super-spine is a spine to them: underlay transit, EVPN with the next hop unchanged.
   function feWire3(p, devs2, p2p, n, over, BL_UP){
-    var t3=p.tier3, LSW=feLeafSW(), SSW=feSpineSW(), R=SSW.access.n, half=Math.floor(R/2), per=t3.perSpine, S=t3.spinesPerPod;
+    var t3=p.tier3, LSW=feLeafSW(), SSW=feSpineSW(), R=SSW.access.n, half=(t3.down||Math.floor(R/2)), per=t3.perSpine, S=t3.spinesPerPod;   // HS v1.46: the pod spine's leaf/super-spine split
     var podSp={}, grp={};
     devs2.forEach(function(d){ if(d.role!=='spine') return; if(d.ssp) (grp[d.sspGroup]=grp[d.sspGroup]||[])[d.sspIdx]=d; else (podSp[d.fePod]=podSp[d.fePod]||[])[d.spIdx]=d; });
     function link(a, aIf, b, bIf, row){   // a is the lower tier
@@ -29837,8 +29843,14 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     if(_fail.length){ P.push({name:'06-device-configs/ERRORS.txt', text:'Configurations that could not be generated ('+_fail.length+'):\n'+_fail.join('\n')+'\n'});
       try{ __PKG.err.push(_fail.length+' device config(s) failed, first: '+_fail[0]); }catch(e){} }
     await _flush(); return P; }
+  function designHardStops(){   // HS v1.46: designs no package is built from
+    var out=[];
+    try{ if(FE && FE.on){ var t=(fePlan()||{}).tier3; if(t && t.broken) out.push('the front-end super-spine tier does not close ('+t.broken.pods+' pods need '+t.broken.need+' ports on each '+t.broken.model+', which has '+t.broken.ports+')'); } }catch(e){}
+    return out;
+  }
   async function blueprintPackage(mode){
     if(!byType('rack').length){ setStatus('Build a fabric first'); return; }
+    var _hs=designHardStops(); if(_hs.length){ setStatus('\u26a0 Blueprint package not built: '+_hs.join('; ')+'. See the Release check.'); return; }   // HS v1.46
     if(!custCodeVal()){ setStatus('Blueprint package: set the customer code first (the build number and file names are {CUST}-{SITE}-...)'); return; }
     if(mode==='final' && links.length>700000){   // v539
       var _hl=(window.performance&&performance.memory)?performance.memory.jsHeapSizeLimit/1073741824:0;
@@ -31315,6 +31327,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     return (__MEMO[k]=fn.apply(this, arguments)); }; })(genDeployConfig);
   bootstrapTokenScan=(function(fn){ return function(){ var outer=__MEMO; __MEMO={}; try{ return fn.apply(this, arguments); } finally{ __MEMO=outer; } }; })(bootstrapTokenScan);
   document.getElementById('deploybundle').onclick=function(){
+    var _hs=designHardStops(); if(_hs.length){ setStatus('\u26a0 Deployment package not built: '+_hs.join('; ')+'. See the Release check.'); return; }   // HS v1.46
     var self=this, args=arguments, big=devs.length>400, rm=__RUN_MODE;   // the one-file installer sets __RUN_MODE only for the click
     function run(){ var keep=__RUN_MODE, r; __RUN_MODE=rm; __MEMO={}; try{ r=__bundleBuild.apply(self, args); return r; } finally{ __MEMO=null; __RUN_MODE=keep;
       if(big){ var fin=function(){ var ov=document.getElementById('busyov'); if(ov) ov.remove(); }; if(r && r.then) r.then(fin, fin); else fin(); } } }   // v539: the build may yield
@@ -31630,6 +31643,10 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     if(!stoIsWeka() && !/WEKA/.test(STORAGE_PLATFORM.note) && /CONFIRM/.test(STORAGE_PLATFORM.note)) add('Storage','Platform figures to confirm', STORAGE_PLATFORM.label, 'placeholder', 'see the storage note: port count, minimum cluster or power not published', false);
     add('Site','Hall geometry (aisles, row pitch, tray height)', '2.0 m cold / 1.2 m hot aisle', 'placeholder', 'site survey', false);
     try{ var _tq=beTunedInfo(); add('Network','Back-end lossless thresholds (PFC / ECN)', _tq.value, _tq.status, _tq.src, false); }catch(e){}   // HS v1.44
+    try{ if(FE && FE.on){ var _t3=(fePlan()||{}).tier3; if(_t3 && _t3.broken) add('Network','Front-end super-spine tier', 'does not close: '+_t3.broken.pods+' pods need '+_t3.broken.need+' ports per super-spine, '+_t3.broken.ports+' available', 'missing',
+      'fewer racks (at most '+(_t3.broken.ports-1)+' pods) or fewer front-end leaves; no package is built until it closes', true);
+      if(_t3 && !_t3.broken && _t3.down>_t3.up) add('Network','Front-end pod-spine oversubscription', (Math.round(100*_t3.down/_t3.up)/100)+':1 ('+_t3.down+' down, '+_t3.up+' up per pod spine; '+_t3.pods+' pods, '+_t3.ssps+' super-spines)', 'derived',
+      '1:1 does not close the super-spine tier at this size, so each pod spine takes '+_t3.pairsPerPod+' leaf pairs: the smallest oversubscription that closes (decision 29 Oct 2026)', false); } }catch(e){}   // HS v1.46
     try{ if(bnkOn()){   // HS v1.45: the ingress tier's unpublished figures
       var _ig=+FE.ingressGbps||0;
       add('Network','F5 BNK throughput per ingress node (sizes the LB nodes)', EDGE_CAP.lbNodeGbps+' Gbps per node (planning)', 'inferred',

@@ -1,3 +1,11 @@
+# AIDC DBD Desktop 2.0.38 (builder HS-v1.46, site runner 1.7.0)
+
+- **Fixed: the front-end super-spine tier at 4,096 racks.** Each super-spine needs one port per pod plus one for the border leaves. At 64 pods on a 64-port super-spine (the SN6600 at 1.6T), that's 65. The builder warned, then built 33 super-spines per group anyway, while each pod spine has only 32 uplinks. One super-spine in every group had no interfaces at all: 16 unconnected switches in the BoM, rack plan and configs.
+- **When 1:1 doesn't close, the pod spine takes more leaf pairs** (decision of 29 Oct 2026). The builder picks the smallest pod-spine oversubscription that closes the tier, never past the front end's own target.
+  - At 4,096 racks: 17 leaf pairs per pod, 34 ports down and 30 up (1.13:1), 61 pods and **480 super-spines**. Every super-spine has 61 or 62 links.
+  - The ratio shows in the health panel and as a Release check row. Wherever 1:1 fits (up to 63 pods), nothing changes.
+- **A tier that can't close stops the build.** It's a load-bearing Release check row, and neither the Blueprint package nor the deployment package or .run is built. The site runner reports the job as failed instead of producing a package.
+
 # AIDC DBD Desktop 2.0.37 (builder HS-v1.45, site runner 1.7.0)
 
 - **Ingress isolation (F5 BNK) is stated and tested.** Decision of 29 Oct 2026: BNK stays on the shared-VLAN tenancy model, with one INGRESS VRF and external VLAN for all tenants and a VIP, SNAT pool and policy for each. BNK's VRF-per-tenant mode waits until F5 publishes its limits. Ingress traffic doesn't cross the firewalls, so BNK's per-tenant policy is the only isolation control on that path, and it's now proven at acceptance:
