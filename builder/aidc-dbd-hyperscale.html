@@ -943,7 +943,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.44';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.45';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   var RADIX=64, CAGE=800;
   // ---- FABRIC PROFILE (parameterized per accelerator platform) ----------------------------------------
   // rails == accelerators per host. Each accelerator instance gets its own rail leaf, which is what
@@ -1300,6 +1300,13 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   function edgeBlockCount(){ var t=Math.max(1,FE.tenants||1), c=Math.max(1,tenantCeiling()), ns=+FE.nsGbps||0;
     return Math.min(EDGE_BLOCK_MAX, Math.max(1, Math.ceil(t/c), Math.ceil(ns/edgeFwGbps()))); }
   function edgeTenantMax(){ return Math.min(EDGE_BLOCK_MAX*tenantCeiling(), EDGE_TENANT_TOP); }
+  // HS v1.45: BNK is shared by every edge block, so its limits bind per SITE. BNK_TENANT_MAX: F5's per-tenant object limit for
+  // the release (VIPs / listeners, SNAT pools, policies) -- null until F5 publishes or confirms it. The VIP block also binds.
+  var BNK_TENANT_MAX=null, BNK_NODE_GBPS_PUBLIC='75-77 Gbps L7 HTTP (SoftBank PoC on H100, two namespaces, DPU count not disclosed)';
+  function siteTenantMax(){ var m=edgeTenantMax(), why='edge blocks';
+    try{ if(bnkOn() && BNK_TENANT_MAX && BNK_TENANT_MAX<m){ m=BNK_TENANT_MAX; why='F5 BNK'; } }catch(e){}
+    try{ if(bnkOn() && bnkVipBlock()){ var vc=bnkVipCapacity(); if(vc<m){ m=vc; why='the VIP block'; } } }catch(e){}
+    return {max:m, why:why}; }
   function edgeBlockOfT(t){ return Math.floor((t-1)/Math.max(1,tenantCeiling())); }
   function edgeBlockT(T, b){ var B=(b==null)?_FWB:b; if(edgeBlockCount()<2) return T; return (T||[]).filter(function(v){ return edgeBlockOfT(v.t)===B; }); }
   function edgeBls(){ return feCfgDevices().filter(function(x){return x.role==='border';}).map(function(x){return x.name;}).sort(); }
@@ -2596,8 +2603,12 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     }
     // EP-907/EP-908: BNK holds no per-tenant state, so the firewall and the transit addressing set the ceiling.
     if(bnkOn()){
-      warn.push({sev:'low', msg:'F5 BNK holds no per-tenant context or sub-interface (tenants share the external VLAN, one VIP and SNAT pair each), '
-        +'so the tenant ceiling of '+ceilingFromFw()+' is set by the firewall ('+ceilingFromFwPlatform()+' on this platform) and the transit addressing ('+TENANT_ADDR_CEILING+'). Confirm F5\u2019s published scale limits for BNK '+BNK_RELEASE+' and the licensing basis (EP-908).'});
+      warn.push({sev:'med', msg:'F5 BNK runs the shared-VLAN tenancy model (decision 29 Oct 2026): one INGRESS VRF and external VLAN for every tenant, '
+        +'with a VIP, a SNAT pool and a policy each, and the backend leg in per-rack tunnels. Ingress does not cross the firewalls (EP-170/175), so on that path '
+        +'BNK\u2019s per-tenant policy is the one separation control: the front-end gate proves it with acceptance/ingress_isolation.sh. '
+        +'The per-edge-block ceiling of '+ceilingFromFw()+' is the firewall\u2019s ('+ceilingFromFwPlatform()+' on this platform) and the transit addressing\u2019s ('+TENANT_ADDR_CEILING+'); '
+        +'BNK\u2019s own per-tenant limit for '+BNK_RELEASE+' is not published'+(BNK_TENANT_MAX?' (entered: '+BNK_TENANT_MAX+')':'')+' and applies to the whole site. '
+        +'BNK VRF-per-tenant mode would give the ingress path routing-level separation; deferred until F5 publishes its limits. Confirm the licensing basis (EP-908).'});
     }
     if(FE.tenants>1 && !FE.natPoolPerVrf){
       warn.push({sev:'high', msg:'Source NAT pools are not keyed per routing instance. Tenant address '
@@ -2818,8 +2829,13 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
                   +'service. TN-107 prohibits Class B until STD-TEN-001 is proved; a shared firewall context with '
                   +'no host enforcement separates nothing. Set hostEnforcement only once TN-107 evidence exists.'});
               }
-              var _cap=edgeTenantMax(), _t=Math.max(1,FE.tenants);   // HS v1.04: per edge block
+              var _sm=siteTenantMax(), _cap=edgeTenantMax(), _t=Math.max(1,FE.tenants);   // HS v1.04: per edge block; HS v1.45: and per site
               try{ edgeSizing({sp:(t3?t3.groups:spines)}).forEach(function(r){ warn.push({sev:r.ok?'info':'high', msg:'Edge PoP sizing -- '+r.tier+': need '+r.need+'; have '+r.have+(r.note?(' -- '+r.note):'')+(r.ok?'':' -- DOES NOT FIT')}); }); }catch(e){}
+              if(_t<=_cap && _t>_sm.max){   // HS v1.45: BNK or the VIP block binds first
+                warn.push({sev:'high', msg:'Tenant count '+_t+' exceeds the site tenant ceiling of '+_sm.max+', set by '+_sm.why+'. '
+                  +(_sm.why==='the VIP block'?'Each tenant takes one public /32 from the primary front-end block: enlarge it (Public IPs panel).'
+                    :'F5 BNK is shared by every edge block, so its per-tenant limit applies to the whole site.')});
+              }
               if(_t>_cap){
                 warn.push({sev:'high', msg:'Tenant count '+_t+' exceeds the tenant ceiling of '+_cap+'. Each tenant takes one sub-interface per side on the firewall ('
                   +(secVendor==='ftd'?'Secure Firewall 4245: '+FTD_PLATFORM.virtualRouters+' virtual routers, '+FTD_PLATFORM.subIfs+' sub-interfaces':'SRX4700: '+FW_PLATFORM.rethSubIfs+' reth sub-interfaces')
@@ -17517,15 +17533,15 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
         spec:{parentRefs:[{name:(v.vrf+'-ingress').toLowerCase()}], rules:[{backendRefs:[{name:'<'+v.vrf+'-INFERENCE-SERVICE>', port:443}]}]}})); });
     F.push(['bnk/04-snatpools.yaml', S.join('\n')]);
     F.push(['bnk/05-gateways.yaml', G.join('\n')]);
-    var O=['tenant,namespace,vip,snat_node1,snat_node2,hostname,tls_secret,inference_service,inference_port'];
-    T.forEach(function(v){ O.push([v.vrf, bnkNs(v), bnkVip(v.t)||'<NO VIP: block full>', bnkSnat(v.t,0), bnkSnat(v.t,1), '<HOSTNAME>', (v.vrf+'-tls').toLowerCase(), '<SERVICE>', '443'].join(',')); });
+    var O=['tenant,namespace,vip,'+N.map(function(n){ return 'snat_node'+(n.i+1); }).join(',')+',hostname,tls_secret,inference_service,inference_port'];   // HS v1.45: one per node
+    T.forEach(function(v){ O.push([v.vrf, bnkNs(v), bnkVip(v.t)||'<NO VIP: block full>'].concat(N.map(function(n){ return bnkSnat(v.t,n.i); })).concat(['<HOSTNAME>', (v.vrf+'-tls').toLowerCase(), '<SERVICE>', '443']).join(',')); });
     F.push(['bnk/tenant-onboarding.csv', O.join('\n')]);
     var _cap=bnkVipCapacity(), _over=T.length>_cap;
     var R=['# bnk/README.md -- F5 BIG-IP Next for Kubernetes on '+N.map(function(n){return n.name;}).join(' and '),
       '', 'Model: the two ingress nodes JOIN the inference Kubernetes cluster; one shared BNK instance; a namespace per tenant.',
       'VIPs: one public /32 per tenant from the primary carrier block '+((bnkVipBlock()||{}).block||'<unset>')+' (offsets '+bnkVipSliceBase()+' and up; '+_cap+' available).',   // v515: this site's slice (A8-14)
       (_over?'!! '+T.length+' tenants exceed the '+_cap+' VIPs this block holds: enlarge the primary block (Public IPs panel) before onboarding the rest.':'   '+T.length+' tenant'+(T.length>1?'s':'')+' fit.'),
-      'SNAT: two addresses per tenant (one per node) from '+('10.'+feSecondOctet()+'.'+feSite3(1)+'.0/24')+'. Per-tenant onboarding values: tenant-onboarding.csv.',
+      'SNAT: '+N.length+' addresses per tenant (one per node) from '+('10.'+feSecondOctet()+'.'+feSite3(1)+'.0/24')+'. Per-tenant onboarding values: tenant-onboarding.csv.',
       '', 'Each ingress node is a DPU-equipped server: TMM on its BlueField-3, control plane on the host CPU.',
       'BF3 p0 is cabled to '+(gws[0]||{}).name+', p1 to '+(gws[1]||{}).name+'; the two ports form one LACP bond, which the gateways see as an all-active EVPN multihomed LAG.',
       'Edge-PoP standard 0.47, load-balanced flow: client -> edge router -> INGRESS (public service VRF) -> VIP -> tenant policy + SNAT ->',
@@ -20464,6 +20480,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       '3. MTU: from every leaf loopback to every other: ping -M do -s 8972 (front end and back end), and 9000-byte',
       '     frames from each GPU host\'s storage interface to a storage node.',
       '4. CONTROL PLANE: every BGP session Established; every DPU VTEP reachable from every other (front end).',
+      '4b. FRONT END (BNK): ingress isolation, see ingress_isolation.sh -- every tenant\u2019s VIP bound to its namespace, its own SNAT, no cross-tenant reach.',
       '5. BACK END: lossless acceptance on the test pod (lossless.sh T1-T4, scored by the Deployment Console, then T5/T6);',
       '   where it fails, tune in the Console (Propose, Apply to the test pod, re-test, Approve, Roll out pod by pod),',
       '   then NCCL (nccl-tests), see nccl.sh -- per rail, then all rails; busbw at or above the target below.',
@@ -20478,6 +20495,23 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       'echo \"$out\"',
       'busbw=$(echo \"$out\" | awk \'/Avg bus bandwidth/ {print $NF}\')',
       'awk -v b=\"$busbw\" -v t=\"$TARGET\" \'BEGIN{ if (b+0 >= t+0) { print \"PASS busbw \" b \" GB/s\"; exit 0 } else { print \"FAIL busbw \" b \" < \" t; exit 1 } }\''].join('\n')]);
+    if(bnkOn()) (function(){ try{   // HS v1.45: ingress isolation acceptance (script, tenant list, probe)
+      var N=bnkNodes(), T=(fePlan().vnis||[]);
+      F.push(['acceptance/ingress_isolation.sh', "#!/usr/bin/env bash\n# acceptance/ingress_isolation.sh -- front-end ingress isolation acceptance (F5 BNK, shared-VLAN tenancy model).\n# Ingress traffic does not cross the firewalls (Edge-PoP standard EP-170/175): on that path each tenant is held apart by\n# BNK's per-tenant VIP, SNAT pool and policy and by the per-rack tunnels, so the separation is tested, not assumed.\n# For every tenant in isolation-tenants.csv:\n#   bind   requests to the tenant's VIP land only in the tenant's own namespace (the probe answers with its hostname)\n#   snat   the backend sees one of the tenant's own SNAT addresses as the client, never another tenant's\n#   cross  a pod in the tenant's namespace cannot open a connection to the next tenant's probe (cluster policy)\n# Output: one line per check, \"ISOLATION <tenant> <bind|snat|cross> PASS|FAIL <note>\"; the Deployment Console scores them.\n# Needs: kubectl (cluster-admin context) and curl. CLIENT_SSH=user@host sends the VIP requests from that host instead\n# (an outside client: the VIPs are public). REQUESTS (default 20) per tenant; KEEP=1 leaves the probes in place.\n# The probe is agnhost netexec (registry.k8s.io/e2e-test-images/agnhost) -- CONFIRM the tag your registry mirrors; the\n# HTTPRoute uses a URLRewrite filter -- CONFIRM BNK's Gateway API support for it on the release in service.\nset -u\nDIR=\"$(cd \"$(dirname \"$0\")\" && pwd)\"\nCSV=\"${CSV:-$DIR/isolation-tenants.csv}\"; PROBE=\"${PROBE:-$DIR/isolation-probe.yaml}\"\nREQUESTS=\"${REQUESTS:-20}\"; KEEP=\"${KEEP:-0}\"\ncommand -v kubectl >/dev/null || { echo \"ISOLATION - setup FAIL kubectl not found\"; exit 2; }\ncommand -v curl >/dev/null || { echo \"ISOLATION - setup FAIL curl not found\"; exit 2; }\nclient(){ if [ -n \"${CLIENT_SSH:-}\" ]; then ssh -o BatchMode=yes \"$CLIENT_SSH\" \"$(printf '%q ' \"$@\")\"; else \"$@\"; fi; }\nmapfile -t ROWS < <(grep -v '^tenant,' \"$CSV\" | grep -v '^\\s*$')\n[ \"${#ROWS[@]}\" -gt 0 ] || { echo \"ISOLATION - setup FAIL no tenants in $CSV\"; exit 2; }\nkubectl apply -f \"$PROBE\" >/dev/null || { echo \"ISOLATION - setup FAIL kubectl apply $PROBE\"; exit 2; }\nfor r in \"${ROWS[@]}\"; do ns=$(echo \"$r\" | cut -d, -f2); kubectl -n \"$ns\" rollout status deploy/iso-probe --timeout=180s >/dev/null 2>&1 || echo \"ISOLATION $(echo \"$r\" | cut -d, -f1) setup FAIL probe not ready in $ns\"; done\nfail=0; n=${#ROWS[@]}\nfor i in \"${!ROWS[@]}\"; do\n  IFS=, read -r t ns vip snat <<<\"${ROWS[$i]}\"\n  if [ -z \"$vip\" ] || [ \"${vip#<}\" != \"$vip\" ]; then echo \"ISOLATION $t bind FAIL no VIP\"; echo \"ISOLATION $t snat FAIL no VIP\"; fail=1\n  else\n    bad=0; other=\"\"\n    for k in $(seq 1 \"$REQUESTS\"); do\n      h=$(client curl -sk --max-time 5 \"https://$vip/iso-probe/hostname\" 2>/dev/null)\n      [ \"$h\" = \"iso-$ns\" ] || { bad=$((bad+1)); other=\"$h\"; }\n    done\n    if [ \"$bad\" -eq 0 ]; then echo \"ISOLATION $t bind PASS $REQUESTS of $REQUESTS requests answered by $ns\"\n    else echo \"ISOLATION $t bind FAIL $bad of $REQUESTS requests not answered by $ns (last: ${other:-no answer})\"; fail=1; fi\n    seen=$(client curl -sk --max-time 5 \"https://$vip/iso-probe/clientip\" 2>/dev/null | sed 's/:[0-9]*$//')\n    if [ -n \"$seen\" ] && echo \";$snat;\" | grep -q \";$seen;\"; then echo \"ISOLATION $t snat PASS backend saw $seen, one of the tenant's SNAT addresses\"\n    else echo \"ISOLATION $t snat FAIL backend saw '${seen:-nothing}', not one of $snat\"; fail=1; fi\n  fi\n  if [ \"$n\" -gt 1 ]; then\n    IFS=, read -r t2 ns2 _ _ <<<\"${ROWS[$(( (i+1) % n ))]}\"\n    if kubectl -n \"$ns\" exec deploy/iso-probe -- /agnhost connect --timeout=3s \"iso-probe.$ns2.svc.cluster.local:8080\" >/dev/null 2>&1; then\n      echo \"ISOLATION $t cross FAIL a pod in $ns reached $t2's probe in $ns2\"; fail=1\n    else echo \"ISOLATION $t cross PASS a pod in $ns could not reach $t2's probe in $ns2\"; fi\n  fi\ndone\n[ \"$KEEP\" = \"1\" ] || kubectl delete -f \"$PROBE\" --ignore-not-found >/dev/null 2>&1\nexit $fail\n"]);
+      F.push(['acceptance/isolation-tenants.csv', ['tenant,namespace,vip,snat'].concat(T.map(function(v){ return [v.vrf, bnkNs(v), bnkVip(v.t)||'<NO VIP>', N.map(function(n){ return bnkSnat(v.t,n.i); }).join(';')].join(','); })).join('\n')+'\n']);
+      var Y=['# acceptance/isolation-probe.yaml -- one probe per tenant namespace for acceptance/ingress_isolation.sh (deleted afterwards unless KEEP=1).',
+             '# agnhost netexec answers /hostname (iso-<namespace>) and /clientip (the source the backend sees). CONFIRM the image tag your registry',
+             '# mirrors, and BNK\u2019s support for the URLRewrite filter on the release in service.'];
+      T.forEach(function(v){ var ns=bnkNs(v);
+        Y.push('---','apiVersion: apps/v1','kind: Deployment','metadata: {name: iso-probe, namespace: '+ns+', labels: {app: iso-probe}}',
+          'spec:','  replicas: 1','  selector: {matchLabels: {app: iso-probe}}','  template:','    metadata: {labels: {app: iso-probe}}','    spec:',
+          '      hostname: iso-'+ns,'      containers:','      - name: probe','        image: registry.k8s.io/e2e-test-images/agnhost:2.53','        args: ["netexec", "--http-port=8080"]','        ports: [{containerPort: 8080}]',
+          '---','apiVersion: v1','kind: Service','metadata: {name: iso-probe, namespace: '+ns+'}','spec: {selector: {app: iso-probe}, ports: [{port: 8080, targetPort: 8080}]}');
+        if(bnkVip(v.t)) Y.push('---','apiVersion: gateway.networking.k8s.io/v1','kind: HTTPRoute','metadata: {name: iso-probe, namespace: '+ns+'}','spec:',
+          '  parentRefs: [{name: '+(v.vrf+'-ingress').toLowerCase()+'}]','  rules:','  - matches: [{path: {type: PathPrefix, value: /iso-probe}}]',
+          '    filters: [{type: URLRewrite, urlRewrite: {path: {type: ReplacePrefixMatch, replacePrefixMatch: /}}}]','    backendRefs: [{name: iso-probe, port: 8080}]'); });
+      F.push(['acceptance/isolation-probe.yaml', Y.join('\n')+'\n']);
+    }catch(e){} })();
     F.push(['acceptance/lossless.sh', "#!/usr/bin/env bash\n# acceptance/lossless.sh -- back-end lossless acceptance, one test per run (BEF Lossless Tuning and Acceptance Procedure).\n#   lossless.sh T1   every path of the test pod at line rate: a ring of host-to-host ib_write_bw runs, in parallel\n#   lossless.sh T2   incast: ACCEPT_INCAST senders (default 8) into one receiver port, at once\n#   lossless.sh T3   NCCL all-to-all across the test pod\n#   lossless.sh T4   NCCL all-reduce across the test pod\n# The Deployment Console runs it on the head node (estate.conf accept_cmd, with {TEST} for the test) and reads the\n# switch counters before and after each run. By hand: run all four and paste the output into the console\n# (Back end gate > Upload results); the switch-side criteria are then confirmed by hand.\n# Needs perftest and nccl-tests on every host in HOSTFILE (the test pod, one host per line), passwordless SSH from\n# here, RoCEv2 GID index ACCEPT_GID (default 3). NIC counters: NVIDIA mlx5 names, summed over every host's HCA.\nset -uo pipefail\nT=${1:-${ACCEPT_TEST:-}}; [ -n \"$T\" ] || { echo \"usage: lossless.sh T1|T2|T3|T4\"; exit 2; }\nHOSTFILE=${HOSTFILE:?hostfile}; HCA=${ACCEPT_HCA:-mlx5_0}; GID=${ACCEPT_GID:-3}\nDUR=${ACCEPT_SECONDS:-600}; T1S=${ACCEPT_T1_SECONDS:-30}; GPH=${ACCEPT_GPUS_PER_HOST:-8}\nmapfile -t H < <(grep -v '^[[:space:]]*#' \"$HOSTFILE\" | awk 'NF{print $1}')\n[ \"${#H[@]}\" -ge 2 ] || { echo \"ACCEPT $T error=need_two_hosts\"; exit 2; }\nSSH=\"ssh -o BatchMode=yes -o ConnectTimeout=10\"\nKEYS=\"rx_prio3_pause tx_prio3_pause rx_discards_phy out_of_sequence packet_seq_err np_ecn_marked_roce_packets np_cnp_sent rp_cnp_handled\"\nnic() {\n  for h in \"${H[@]}\"; do\n    $SSH \"$h\" \"d=\\$(ls /sys/class/infiniband/$HCA/device/net 2>/dev/null | head -1); [ -n \\\"\\$d\\\" ] && ethtool -S \\$d 2>/dev/null;\n      for f in out_of_sequence packet_seq_err np_ecn_marked_roce_packets np_cnp_sent rp_cnp_handled; do\n        echo \\\"\\$f: \\$(cat /sys/class/infiniband/$HCA/ports/1/hw_counters/\\$f 2>/dev/null || echo 0)\\\"; done\" 2>/dev/null\n  done | awk -v keys=\"$KEYS\" 'BEGIN{n=split(keys,k,\" \"); for(i=1;i<=n;i++) w[k[i]]=1}\n    {gsub(\":\",\"\",$1); if(($1 in w) && $2 ~ /^[0-9]+$/) s[$1]+=$2} END{for(x in w) print x, s[x]+0}'\n}\nbw() { awk 'NF==5 && $1 ~ /^[0-9]+$/ {v=$4} END{print v+0}'; }\nstats() { awk '{x[NR]=$1; s+=$1; if(NR==1||$1<mn) mn=$1; if($1>mx) mx=$1} END{if(NR) printf \"min_gbps=%.2f max_gbps=%.2f mean_gbps=%.2f sum_gbps=%.2f n=%d\", mn, mx, s/NR, s, NR}'; }\nRATE=$($SSH \"${H[0]}\" \"cat /sys/class/infiniband/$HCA/ports/1/rate 2>/dev/null\" | awk '{print $1+0}')\nB=$(nic); TMP=$(mktemp -d); rc=0\ncase \"$T\" in\n  T1)\n    n=${#H[@]}\n    for i in $(seq 0 $((n-1))); do s=${H[$i]}; p=$((18515+i))\n      $SSH \"$s\" \"timeout $((T1S+90)) ib_write_bw -d $HCA -x $GID -p $p -D $T1S --report_gbits -F -q 4\" >/dev/null 2>&1 & done\n    sleep 3\n    for i in $(seq 0 $((n-1))); do s=${H[$i]}; c=${H[$(((i+1)%n))]}; p=$((18515+i))\n      ( $SSH \"$c\" \"ib_write_bw -d $HCA -x $GID -p $p -D $T1S --report_gbits -F -q 4 $s\" 2>/dev/null | bw > \"$TMP/$i\" ) & done\n    wait; out=$(cat \"$TMP\"/* | stats); echo \"ACCEPT T1 port_gbps=${RATE:-0} $out\" ;;\n  T2)\n    R=${H[0]}; N=${ACCEPT_INCAST:-8}; [ \"$N\" -gt $((${#H[@]}-1)) ] && N=$((${#H[@]}-1))\n    for i in $(seq 1 \"$N\"); do p=$((19515+i)); $SSH \"$R\" \"timeout $((DUR+90)) ib_write_bw -d $HCA -x $GID -p $p -D $DUR --report_gbits -F -q 4\" >/dev/null 2>&1 & done\n    sleep 3\n    for i in $(seq 1 \"$N\"); do p=$((19515+i)); c=${H[$i]}\n      ( $SSH \"$c\" \"ib_write_bw -d $HCA -x $GID -p $p -D $DUR --report_gbits -F -q 4 $R\" 2>/dev/null | bw > \"$TMP/$i\" ) & done\n    wait; out=$(cat \"$TMP\"/* | stats); echo \"ACCEPT T2 port_gbps=${RATE:-0} senders=$N $out\" ;;\n  T3|T4)\n    NP=$(( ${#H[@]} * GPH )); prog=alltoall_perf; args=\"-b 1K -e 1G -f 2 -g 1\"\n    [ \"$T\" = T4 ] && { prog=all_reduce_perf; args=\"-b 8G -e 8G -f 2 -g 1\"; }\n    o=$(mpirun -np \"$NP\" --hostfile \"$HOSTFILE\" -x NCCL_IB_HCA -x NCCL_DEBUG=WARN $prog $args 2>&1); rc=$?\n    echo \"$o\" | tail -20\n    echo \"ACCEPT $T busbw=$(echo \"$o\" | awk '/Avg bus bandwidth/ {v=$NF} END{print v+0}') exit=$rc\" ;;\n  *) echo \"usage: lossless.sh T1|T2|T3|T4\"; exit 2 ;;\nesac\nA=$(nic)\njoin <(echo \"$B\" | sort) <(echo \"$A\" | sort) | awk -v t=\"$T\" '{d=$3-$2; if(d<0) d=$3; print \"NIC\", t, $1, d}'\nrm -rf \"$TMP\"; exit $rc\n"]);   // HS v1.42
     return F;
   }
@@ -25859,7 +25893,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     B.push("[[ -f /etc/fabric/estate.conf ]] || python3 - \"$PWD\" \"$ROLE\" \"$PEER\" \"$BIND_IP\" > /etc/fabric/estate.conf <<'PYEOF'");
     B.push("import json, sys");
     B.push("c = {\"bundle_dir\": sys.argv[1], \"role\": sys.argv[2], \"tftp_root\": \"/srv/tftp\", \"alert_webhook\": \"\", \"smtp_host\": \"\", \"smtp_to\": \"\", \"smtp_from\": \"\",");
-    B.push("     \"weka_nodes\": {}, \"host_ssh\": {}, \"nccl_cmd\": \"\", \"accept_cmd\": \"\", \"sites\": [], \"backup_every_h\": 6}");
+    B.push("     \"weka_nodes\": {}, \"host_ssh\": {}, \"nccl_cmd\": \"\", \"accept_cmd\": \"\", \"isolation_cmd\": \"\", \"sites\": [], \"backup_every_h\": 6}");
     B.push("if sys.argv[3]: c[\"peer_url\"] = sys.argv[3]");
     B.push("if sys.argv[4]: c.update(http_bind=sys.argv[4], console_bind=sys.argv[4], tftp_bind=sys.argv[4])");
     B.push("print(json.dumps(c, indent=1))");
@@ -27108,7 +27142,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
        gate:[{key:'done', type:'devices_done', label:'Every device done, DPUs counted'},
              {key:'reach', type:'reachable', label:'Management reachable'},
              {key:'blspine', type:'auto', kind:'evpn', devices:W.fe[0].concat(W.edge[2]), label:'Border-leaf spine ports (pending FE) up; underlay and EVPN established'},
-             {key:'tenant', type:'confirm', label:'Tenant north-south probe through the firewalls'}]},
+             {key:'tenant', type:'confirm', label:'Tenant north-south probe through the firewalls'}].concat(bnkOn()?[   // HS v1.45
+             {key:'isolation', type:'auto', kind:'isolation', devices:[], label:'Ingress isolation (BNK): each tenant\u2019s VIP reaches only its own namespace with its own SNAT; tenants cannot reach each other'}]:[])},
       {key:'be', num:4, name:'Back end', waves:[['Spines'],['Rail leaves'],['Host rail checks']], w:W.be,
        gate:[{key:'done', type:'devices_done', label:'Every rail leaf at target release and done; rails counted'},
              {key:'reach', type:'reachable', label:'Management reachable'},
@@ -27150,12 +27185,15 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       var _tp=function(L){ var p=(L||[]).filter(function(n){ return /-Pod1-/.test(n); }); return p.length?p:(L||[]); };   // HS v1.42: the test pod
       runners.push({key:'accept', kind:'accept', label:'Lossless acceptance (T1-T4)', targets:[railAgg], conf:['accept_cmd'], after:'rails',
         devices:_tp(W.be[1]).concat(_tp(W.be[0])), tests:['T1','T2','T3','T4'], criteria:{line_rate_pct:95, fairness_pct:10}, timeout_s:7200}); }
+    if(bnkOn() && (W.edge[2]||[]).length) runners.push({key:'isolation', kind:'isolation', label:'Ingress isolation (BNK)', targets:[W.edge[2][0]], needs_stage:6, conf:['isolation_cmd'], timeout_s:3600});   // HS v1.45
+    var isolation=(function(){ try{ if(!bnkOn()) return null; var N=bnkNodes();   // HS v1.45: what the isolation run checks
+      return {model:'shared-vlan', tenants:(fePlan().vnis||[]).map(function(v){ return {tenant:v.vrf, namespace:bnkNs(v), vip:bnkVip(v.t)||'', snat:N.map(function(n){ return bnkSnat(v.t,n.i); })}; })}; }catch(e){ return null; } })();
     var tuning=(function(){ try{ var t=hsTuning(), a=beTunedActive(); if(t.params && a) t.profile=a.p.id; return t; }catch(e){ return {}; } })();   // HS v1.43 / v1.44
     var images=[]; try{ osProfilesInUse().forEach(function(u){ Object.keys(u.images||{}).forEach(function(f){ images.push({file:f, sha256:null, profile:u.key}); }); }); }catch(e){}
     return {schema:1, builder:BUILDER_VER, generated:new Date().toISOString(), site:site,
             dhcp:{subnet_id:1, device_subnet:dv.net, services_subnet:sv.net, gateway:dv.gw, relays:[dv.irbA, dv.irbB],
                   hold_pool:dv.at(PROV_HOLD.from)+' - '+dv.at(PROV_HOLD.to)},
-            builds:B, devices:devs, images:images, runners:runners, acceptance:{criteria:{line_rate_pct:95, fairness_pct:10}}, tuning:tuning,
+            builds:B, devices:devs, images:images, runners:runners, acceptance:{criteria:{line_rate_pct:95, fairness_pct:10}}, tuning:tuning, isolation:isolation,
             ha:{enabled:!!PROV_HA, primary:prov, standby:PROV_HA?provStandbyIp():''},
             registry:(function(){ try{ return registryAll().map(function(r){ return {code:r.client, name:r.name, region:r.region, site:r.site}; }); }catch(e){ return []; } })(),
             floor:order.map(function(r){ return {row:r, cabinets:rows[r]}; })};
@@ -27278,6 +27316,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       '| Host rail checks (provision/rail_check.sh) | estate.conf host_ssh |',
       '| NCCL acceptance | estate.conf nccl_cmd (e.g. ssh to the head node running acceptance/nccl.sh); TARGET_BUSBW |',
       '| Lossless acceptance T1-T4 | estate.conf accept_cmd with {TEST} for the test and {POD} for the pod (e.g. ssh to the head node running HOSTFILE=pod{POD}.hosts acceptance/lossless.sh {TEST}); TARGET_BUSBW |',
+      '| Ingress isolation (BNK) | estate.conf isolation_cmd (e.g. ssh to a host with kubectl running acceptance/ingress_isolation.sh; CLIENT_SSH for an outside client) |',
       '| Back-end tuning (overlays) | push credential, or WRITE_USER / WRITE_PASSWORD in secrets.env; Approve is an admin login |',
       '| Tuned profile export | an approved version and T1-T4 passed; the file goes to DWR for the builder (Tuned profiles) |','',
       'Add the service key (/etc/fabric/estate_ssh_key.pub) to root\u2019s authorized_keys on WEKA nodes and GPU hosts. A runner that is not configured leaves its devices to the operator (Mark configured).','',
@@ -31591,6 +31630,13 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     if(!stoIsWeka() && !/WEKA/.test(STORAGE_PLATFORM.note) && /CONFIRM/.test(STORAGE_PLATFORM.note)) add('Storage','Platform figures to confirm', STORAGE_PLATFORM.label, 'placeholder', 'see the storage note: port count, minimum cluster or power not published', false);
     add('Site','Hall geometry (aisles, row pitch, tray height)', '2.0 m cold / 1.2 m hot aisle', 'placeholder', 'site survey', false);
     try{ var _tq=beTunedInfo(); add('Network','Back-end lossless thresholds (PFC / ECN)', _tq.value, _tq.status, _tq.src, false); }catch(e){}   // HS v1.44
+    try{ if(bnkOn()){   // HS v1.45: the ingress tier's unpublished figures
+      var _ig=+FE.ingressGbps||0;
+      add('Network','F5 BNK throughput per ingress node (sizes the LB nodes)', EDGE_CAP.lbNodeGbps+' Gbps per node (planning)', 'inferred',
+          'not published by F5; the public figure is '+BNK_NODE_GBPS_PUBLIC+'. Confirm L4 and L7 Gbps per BlueField-3 for BNK '+BNK_RELEASE+' with F5'+(_ig?'':' (not load-bearing: ingress Gbps is not set)'), !!_ig);
+      if(Math.max(1,+FE.tenants||1)>1) add('Network','F5 BNK per-tenant limit (VIPs, SNAT pools, policies)', BNK_TENANT_MAX?BNK_TENANT_MAX+' tenants per site':'not published', BNK_TENANT_MAX?'confirmed':'placeholder',
+          'F5: per-tenant object limits for BNK '+BNK_RELEASE+' per DPU and per cluster; the site ceiling uses it once entered', false);
+    } }catch(e){}
     var blockers=L.filter(function(x){ return x.lb && /inferred|placeholder|missing|analog/.test(x.status); });
     return {rows:L, blockers:blockers, ready:blockers.length===0};
   }
@@ -34102,8 +34148,8 @@ class Phase2Mixin(object):
                 self.auto_res[key] = dict(res, ts=now())
                 self.kv_set("auto_res", {"%s|%s" % k2: v for k2, v in self.auto_res.items()})
             return
-        if c["kind"] in ("accept", "tuned"):   # HS v1.42 / v1.43: scored from the acceptance results / the tuning record
-            res = self.accept_eval() if c["kind"] == "accept" else self.tuned_eval()
+        if c["kind"] in ("accept", "tuned", "isolation"):   # HS v1.42 / v1.43 / v1.45: acceptance results, tuning record, isolation run
+            res = self.accept_eval() if c["kind"] == "accept" else (self.tuned_eval() if c["kind"] == "tuned" else self.isolation_eval())
             with self.lock:
                 self.auto_res[key] = dict(res, ts=now())
                 self.kv_set("auto_res", {"%s|%s" % k2: v for k2, v in self.auto_res.items()})
@@ -34374,6 +34420,61 @@ class Phase2Mixin(object):
         overall = "blocked" if "blocked" in res else ("unavailable" if ("unavailable" in res or missing) else "pass")
         note = ", ".join("%s %s" % (t, T[t]["result"]) for t in sorted(T)) + ((" (not run: %s)" % ", ".join(missing)) if missing else "") + " (%s)" % r.get("by", "")
         return {"result": overall, "note": note, "evidence": ev}
+
+    # ------------------------------------------------------------------------------------- ingress isolation (HS v1.45)
+    # The load-balanced flow does not cross the firewalls; on that path BNK's per-tenant VIP, SNAT pool and policy are the
+    # separation, so the front-end gate holds until acceptance/ingress_isolation.sh proves it for every tenant.
+    ISO_RE = re.compile(r"^ISOLATION\s+(\S+)\s+(bind|snat|cross|setup)\s+(PASS|FAIL)\s*(.*)$", re.M)
+
+    def submit_isolation_text(self, text, user):
+        T = {}
+        for t, test, res, note in self.ISO_RE.findall(text or ""):
+            T.setdefault(t, {})[test] = {"ok": res == "PASS", "note": note.strip()[:300]}
+        if not T:
+            return False, "no ISOLATION lines in the text (paste the output of acceptance/ingress_isolation.sh)"
+        tests = {t: {"result": "pass" if all(x["ok"] for x in v.values()) else "blocked", "checks": v} for t, v in T.items()}
+        with self.lock:
+            self.results["isolation"] = {"tests": tests, "by": user, "ts": now()}
+            self.kv_set("results", self.results)
+            self.audit(user, "result-isolation", "", "%d tenant(s), %d failing" % (len(tests), sum(1 for v in tests.values() if v["result"] != "pass")))
+            for b in self.builds:
+                for c in b["gate"]:
+                    if c.get("kind") == "isolation":
+                        self.auto_res.pop((b["key"], c["key"]), None)
+        return True, "recorded"
+
+    def isolation_eval(self):
+        P = self.plan.get("isolation") or {}
+        want = [x["tenant"] for x in P.get("tenants", [])]
+        checks = ["bind", "snat"] + (["cross"] if len(want) > 1 else [])
+        r = self.results.get("isolation")
+        if not r:
+            return {"result": "waiting", "note": "waiting for the ingress isolation run (runner or uploaded results)", "evidence": {}}
+        T, ev, bad, missing = r.get("tests", {}), {}, [], []
+        for t in (want or sorted(T)):
+            got = (T.get(t) or {}).get("checks", {})
+            for k in checks + (["setup"] if "setup" in got else []):
+                if k not in got:
+                    missing.append("%s %s" % (t, k))
+                    continue
+                ev["%s %s" % (t, k)] = {"ok": got[k]["ok"], "note": got[k]["note"]}
+                if not got[k]["ok"]:
+                    bad.append("%s %s" % (t, k))
+        if bad:
+            return {"result": "blocked", "note": "%d failing: %s (%s)" % (len(bad), ", ".join(bad[:4]) + (" +%d more" % (len(bad) - 4) if len(bad) > 4 else ""), r.get("by", "")), "evidence": ev}
+        if missing:
+            return {"result": "needs confirmation", "note": "%d check(s) not reported: %s (%s)" % (len(missing), ", ".join(missing[:4]), r.get("by", "")), "evidence": ev}
+        return {"result": "pass", "note": "%d tenant(s): VIP bound to its namespace, own SNAT%s (%s)" % (len(want or T), ", no cross-tenant reach" if "cross" in checks else "", r.get("by", "")), "evidence": ev}
+
+    def _run_isolation(self, r, sec, logf):
+        rc = self._exec(r, ["bash", "-c", self._sub(self.conf.get("isolation_cmd", ""), sec)], {}, logf)
+        txt = open(logf).read()
+        ok, msg = self.submit_isolation_text(txt, "runner")
+        if not ok:
+            return False, "exit %d; %s" % (rc, msg)
+        res = self.isolation_eval()
+        self.event("Ingress isolation: %s" % res["note"], "info" if res["result"] == "pass" else "warn")
+        return res["result"] == "pass", res["note"]
 
     # ------------------------------------------------------------------------------------- tuned profile export (HS v1.44)
     def tuning_profile(self, user, nic="", port=""):
@@ -35206,6 +35307,8 @@ class Phase2Mixin(object):
                 ok, note = self._run_rails(r, sec, logf)
             elif kind == "accept":   # HS v1.42
                 ok, note = self._run_accept(r, sec, logf)
+            elif kind == "isolation":   # HS v1.45
+                ok, note = self._run_isolation(r, sec, logf)
             elif kind == "nccl":
                 rc = self._exec(r, ["bash", "-c", self._sub(self.conf.get("nccl_cmd", ""), sec)], {}, logf)
                 out = open(logf).read()
@@ -37740,6 +37843,8 @@ def make_console_handler(est, console_html):
                 need = data.get("build", "")
             elif p == "/api/run":
                 need = data.get("plane", "all")
+            elif p == "/api/result" and data.get("kind") == "isolation":   # HS v1.45: a front-end result
+                need = "fe"
             elif p == "/api/result" or p in ("/api/tuning/propose", "/api/tuning/apply", "/api/tuning/rollout", "/api/tuning/profile"):   # HS v1.43
                 need = "be"
             elif p == "/api/tuning/approve":
@@ -37862,6 +37967,8 @@ def make_console_handler(est, console_html):
                     ok, msg = False, "version: a number"
             elif p == "/api/tuning/rollout":
                 ok, msg = est.tuning_rollout(user)
+            elif p == "/api/result" and data.get("kind") == "isolation":   # HS v1.45
+                ok, msg = est.submit_isolation_text(str(data.get("text", ""))[:2000000], user)
             elif p == "/api/result" and data.get("kind") == "accept":   # HS v1.42: the host script's output, pasted
                 ok, msg = est.submit_accept_text(str(data.get("text", ""))[:2000000], user, ((est.plan.get("acceptance") or {}).get("criteria") or {}))
             elif p == "/api/result":
@@ -38714,6 +38821,7 @@ function render(){
     var btns=(c.type==='auto'&&c.evidence?'<button data-ge="'+esc(c.key)+'" style="min-height:32px">Evidence</button>':'')
       +(c.kind==='nccl'&&c.result!=='pass'&&gb.state!=='queued'?'<button class="act" data-nc="1" style="min-height:32px">Enter result…</button>':'')
       +(c.kind==='accept'&&c.result!=='pass'&&gb.state!=='queued'?'<button class="act" data-ac="1" style="min-height:32px">Upload results…</button>':'')
+      +(c.kind==='isolation'&&c.result!=='pass'&&gb.state!=='queued'?'<button class="act" data-is="1" style="min-height:32px">Upload results…</button>':'')
       +(c.kind==='tuned'&&st.tuning&&gb.state!=='queued'?'<button class="act" data-tu="propose" style="min-height:32px">Propose…</button><button class="act" data-tu="apply" style="min-height:32px">Apply / roll back…</button><button class="act" data-tu="approve" style="min-height:32px">Approve…</button><button class="act" data-tu="rollout" style="min-height:32px">Roll out</button>'+(st.tuning.approved?'<button class="act" data-tu="profile" style="min-height:32px">Export profile\u2026</button>':''):'')
       +((c.type==='confirm'||(c.type==='auto'&&/needs confirmation|blocked|warn/.test(c.result)))&&c.result!=='confirmed'&&gb.state!=='queued'?'<button class="act" data-gc="'+esc(c.key)+'" style="min-height:32px">Confirm…</button>':'');
     return '<li style="align-items:flex-start"><span class="chip k-'+r[1]+'" style="flex:0 0 86px;justify-content:center">'+r[0]+'</span><span style="display:flex;flex-direction:column;gap:4px;flex:1 1 auto;min-width:0"><span>'+esc(c.label)+'</span><span class="muted" style="font-size:12px;overflow-wrap:anywhere">'+esc(c.note)+'</span>'
@@ -38752,6 +38860,7 @@ function render(){
           actMsg('Exported '+j.profile.id, 'ok'); }).catch(function(e){ if(e.message!=='login') actMsg(e.message, 'err'); }); }); }
       else ask('Roll out v'+((T.approved||{}).v||0), 'Applies the approved version pod by pod; after each pod a T2/T3 smoke test runs on it (accept_cmd with {POD}) and a failure stops the rollout there.', [])
         .then(function(v){ if(v) act('api/tuning/rollout',{}); }); }; });
+  document.querySelectorAll('[data-is]').forEach(function(e){ e.disabled=!canAct('fe'); e.onclick=function(){ ask('Ingress isolation results','Paste the output of acceptance/ingress_isolation.sh (the ISOLATION lines).',[{key:'text',label:'Output',area:true}]).then(function(v){ if(v) act('api/result',{kind:'isolation', text:v.text}); }); }; });   // HS v1.45
   document.querySelectorAll('[data-ac]').forEach(function(e){ e.disabled=!canAct('be'); e.onclick=function(){ ask('Lossless acceptance results','Paste the output of acceptance/lossless.sh for T1 to T4. Uploaded by hand, the switch-side criteria are then confirmed from the switches.',[{key:'text',label:'Output',area:true}]).then(function(v){ if(v) act('api/result',{kind:'accept', text:v.text}); }); }; });   // HS v1.42
   document.querySelectorAll('[data-nc]').forEach(function(e){ e.disabled=!canAct('be'); e.onclick=function(){ ask('NCCL all-reduce result','From acceptance/nccl.sh (Avg bus bandwidth).',[{key:'busbw',label:'Bus bandwidth, GB/s'},{key:'target',label:'Target, GB/s'}]).then(function(v){ if(v) act('api/result',{kind:'nccl', busbw:v.busbw, target:v.target}); }); }; });
   $('gOverride').disabled=!canAct(gb.key)||gb.state==='complete'||gb.state==='queued';

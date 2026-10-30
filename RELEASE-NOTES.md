@@ -1,3 +1,18 @@
+# AIDC DBD Desktop 2.0.37 (builder HS-v1.45, site runner 1.7.0)
+
+- **Ingress isolation (F5 BNK) is stated and tested.** Decision of 29 Oct 2026: BNK stays on the shared-VLAN tenancy model, with one INGRESS VRF and external VLAN for all tenants and a VIP, SNAT pool and policy for each. BNK's VRF-per-tenant mode waits until F5 publishes its limits. Ingress traffic doesn't cross the firewalls, so BNK's per-tenant policy is the only isolation control on that path, and it's now proven at acceptance:
+  - **New front-end gate line, Ingress isolation (BNK).** The Console runs `acceptance/ingress_isolation.sh` (estate.conf `isolation_cmd`). It checks three things for every tenant: requests to its VIP reach only its own namespace, the backend sees only the tenant's own SNAT address, and a pod in its namespace can't reach the next tenant's probe. Without the runner, use **Upload results** on the gate line.
+  - **The package carries the script, `isolation-tenants.csv` and `isolation-probe.yaml`** (a probe in each tenant namespace, removed after the run). Confirm the probe image tag and BNK's support for the URLRewrite filter on the release in service.
+- **Site-wide tenant ceiling.** BNK is shared by every edge block, so its limits apply to the whole site.
+  - The builder now warns when the tenant count exceeds the VIP block. Each tenant needs a public /32 from the primary front-end block; before, tenants past the block got no VIP, noted only in the BNK README.
+  - The builder also warns when the count exceeds BNK's per-tenant limit, once that limit is entered (`BNK_TENANT_MAX`, blank until F5 confirms it).
+- **Release check.** New rows:
+  - **F5 BNK throughput per ingress node:** inferred, and load-bearing when ingress Gbps is set. The 200 Gbps planning figure isn't published; the only public figure is 75–77 Gbps L7.
+  - **F5 BNK per-tenant limit:** not published.
+- **The BNK warning** now states the tenancy model, that BNK's per-tenant policy is the only control on the ingress path, and the deferred VRF option.
+- **Fixed: the onboarding sheet lists one SNAT address per BNK node.** It always listed two, so with 3 or 4 nodes (ingress over 200 Gbps) it didn't match the SNAT pools.
+- **Regression set: 25 designs** (was 20). Added Junos, EOS and NX-OS back ends, a 150-tenant design (two edge blocks) and an FTD front end.
+
 # AIDC DBD Desktop 2.0.36 (builder HS-v1.44, site runner 1.7.0)
 
 - **Tuned back-end profiles (stage 3 of 3).** A platform tuned at one site now ships tuned to the next.
