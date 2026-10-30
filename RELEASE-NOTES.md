@@ -1,3 +1,10 @@
+# AIDC DBD Desktop 2.0.39 (builder HS-v1.47, site runner 1.7.0)
+
+- **The Final package no longer stalls on "design document" at XL sizes.** A 4,096-rack build sat at this step for hours with the heap near 12 GB. Two parts of the work grew with the square of the design size; both now grow in proportion to it, and the output is identical byte for byte:
+  - **Cabinet balancing in the physical model.** Every trial move of an overfull MoR/EoR or network cabinet used to re-size every cabinet's patch field. Now only the two cabinets involved are re-sized. At 512 racks the physical model drops from 25.8 s to 12.5 s, with the same cabinet layout.
+  - **The deployment plan's device lookups.** Each device name was found by scanning the whole device list. A name index replaces the scan, and the plan digest drops from 4.7 s to 1.5 s at 512 racks.
+- **What's still slow at XL:** the physical model repeats 3 or 4 times until the network-cabinet PDUs settle, re-deriving the cable matrix each time. Expect several minutes on this step at 4,096 racks, not hours.
+
 # AIDC DBD Desktop 2.0.38 (builder HS-v1.46, site runner 1.7.0)
 
 - **Fixed: the front-end super-spine tier at 4,096 racks.** Each super-spine needs one port per pod plus one for the border leaves. At 64 pods on a 64-port super-spine (the SN6600 at 1.6T), that's 65. The builder warned, then built 33 super-spines per group anyway, while each pod spine has only 32 uplinks. One super-spine in every group had no interfaces at all: 16 unconnected switches in the BoM, rack plan and configs.

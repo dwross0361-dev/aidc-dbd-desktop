@@ -943,7 +943,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.46';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.47';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   var RADIX=64, CAGE=800;
   // ---- FABRIC PROFILE (parameterized per accelerator platform) ----------------------------------------
   // rails == accelerators per host. Each accelerator instance gets its own rail leaf, which is what
@@ -8024,6 +8024,9 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
         cab.forEach(function(c){ if(c.cls==='compute' || c.floorUnit) return; var p=P[c.id]||{fi:0,cu:0};
           c.patchPorts={fiber:p.fi, copper:p.cu}; c.patchU=Math.ceil(p.fi/FE_RACK.mpoPerU)+Math.ceil(p.cu/FE_RACK.rj45PerU); });
       };
+      var patchOne=function(c){ if(!c || c.cls==='compute' || c.floorUnit) return; if(!_pdev) sizePatch();   // HS v1.47: one cabinet, as sizePatch sizes it
+        var p={fi:0,cu:0}; c.items.forEach(function(it){ var q=_pdev[it.name]; if(q){ p.fi+=q.fi; p.cu+=q.cu; } });
+        c.patchPorts={fiber:p.fi, copper:p.cu}; c.patchU=Math.ceil(p.fi/FE_RACK.mpoPerU)+Math.ceil(p.cu/FE_RACK.rj45PerU); };
       sizePatch();
       // MoR / EoR: the patch field is now sized, so a full pair cabinet hands a console server to its partner
       var shU=function(c){ var dk=devsOf(c).filter(function(it){ return it.role!=='power-shelf' && swDc(it.model||MODEL[it.role]||''); }).reduce(function(a,it){ return a+(it.kw||0); },0);   // v546
@@ -8037,12 +8040,12 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
         _pri.some(function(r){ var c=_dv.filter(function(it){ return it.role===r; }); if(c.length){ mv2=c[c.length-1]; return true; } return false; });
         if(!mv2) break;
         var _mate=(function(n){ var m=/^(.*?)(\d+)$/.exec(String(n)); if(!m || !/^(fe-leaf|border|sec-fw|oob-access)$/.test(mv2.role)) return null; var k=+m[2], o=(k%2)?k+1:k-1; return m[1]+(String(o).length<m[2].length?('000'+o).slice(-m[2].length):o); })(mv2.name);
-        var dst2=sibs.filter(function(x){ x.items.push(mv2); sizePatch(); var _ok=room(x)>=1 && (x.kwBudget==null || dK(x)<=x.kwBudget+1e-9) && cordsOk(x); x.items.pop(); sizePatch(); return _ok && !(_mate && x.items.some(function(i){ return i.name===_mate; })); })[0];   // never beside its pair member (FE-190)
+        var dst2=sibs.filter(function(x){ x.items.push(mv2); patchOne(x); var _ok=room(x)>=1 && (x.kwBudget==null || dK(x)<=x.kwBudget+1e-9) && cordsOk(x); x.items.pop(); patchOne(x); return _ok && !(_mate && x.items.some(function(i){ return i.name===_mate; })); })[0];   // never beside its pair member (FE-190)
         if(!dst2){ var _ltr=String.fromCharCode(65+sibs.length+1), _row=rows.filter(function(r){ return r.id===bad2.row; })[0];
           dst2=C({id:fam2+_ltr, cls:bad2.cls, row:bad2.row, side:((sibs.length+1)%2)?'B':'A', pod:bad2.pod, eorPair:bad2.eorPair, morPair:bad2.morPair, uHeight:bad2.uHeight, reserveTopU:bad2.reserveTopU, kwBudget:bad2.kwBudget});
           addPdus(dst2);
           if(_row){ var _last=-1; _row.cabinets.forEach(function(id,ix){ if(String(id).replace(/[A-Z]$/,'')===fam2) _last=ix; }); _row.cabinets.splice(_last+1,0,dst2.id); } }
-        bad2.items.splice(bad2.items.indexOf(mv2),1); dst2.items.push(mv2); sizePatch();
+        bad2.items.splice(bad2.items.indexOf(mv2),1); dst2.items.push(mv2); patchOne(bad2); patchOne(dst2);
       }
       var fitsX=function(c){ return room(c)>=0 && devsOf(c).length*2<=cordCap && (c.kwBudget==null || dK(c)<=c.kwBudget+1e-9) && cordsOk(c); };   // v521; HS v1.28: outlets
       for(var g3=0; g3<20000; g3++){   // HS v1.08: was 200
@@ -8050,11 +8053,11 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
         var mv3=devsOf(bad3).slice(-1)[0], dst3=null;
         bad3.items.splice(bad3.items.indexOf(mv3),1);
         cab.filter(function(c){ return isNet(c) && c!==bad3 && fam(c)===fam(bad3); }).sort(function(a,b){ return num(a)-num(b); })
-          .some(function(c){ c.items.push(mv3); sizePatch(); if(fitsX(c)){ dst3=c; return true; } c.items.pop(); return false; });
+          .some(function(c){ c.items.push(mv3); patchOne(c); if(fitsX(c)){ dst3=c; return true; } c.items.pop(); patchOne(c); return false; });
         if(!dst3){ var last3=cab.filter(function(c){ return isNet(c) && fam(c)===fam(bad3); }).reduce(function(m,c){ return Math.max(m,num(c)); },0);
           dst3=C({id:String(bad3.id).replace(/NR\d+([A-Z])$/, 'NR'+pad(last3+1)+'$1'), cls:bad3.cls, row:'NET', side:bad3.side, uHeight:bad3.uHeight, reserveTopU:TOP, growthU:0, kwBudget:bad3.kwBudget, footprint:bad3.footprint});
           addPdus(dst3); net.push(dst3.id); dst3.items.push(mv3); }
-        sizePatch();
+        patchOne(bad3); patchOne(dst3);
       }
     })();
     cab.forEach(function(c){ if(c.cls==='compute' || c.floorUnit) return;   // v545: the DC busbar
@@ -27156,7 +27159,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
              {key:'ul', type:'auto', kind:'bgp', devices:W.be[0].concat(W.be[1]), label:'Underlay up, ECMP to every spine'},
              {key:'roce', type:'auto', kind:'roce', devices:W.be[1], label:'RoCE QoS verified (PFC and ECN in effect on every rail leaf)'},
              {key:'lossless', type:'auto', kind:'lossless', devices:W.be[0].concat(W.be[1]), label:'Lossless preconditions: every planned MTU, PFC, ECN, watchdog and RoCE line in effect on every rail leaf and spine'}, {key:'accept', type:'auto', kind:'accept', devices:[], label:'Lossless acceptance T1-T4 on the test pod (procedure pass criteria)'}, {key:'t5', type:'confirm', label:'Lossless acceptance T5: a link, then a spine, lost under all-to-all -- no pause storm, no lossless drops'}, {key:'t6', type:'confirm', label:'Lossless acceptance T6: a stuck receiver caught by the PFC watchdog within its timer, the pause kept local'}, {key:'tuned', type:'auto', kind:'tuned', devices:[], label:'Back-end tuning: every rail leaf and spine at the approved profile (the package values or a tuned overlay)'}, {key:'nccl', type:'auto', kind:'nccl', devices:[], label:'NCCL all-reduce acceptance at target bus bandwidth'}]}
-    ].map(function(b){ var _ad=[].concat.apply([], b.w).filter(function(n){ var e=devs.filter(function(x){ return x.name===n; })[0]; return e && !e.aggregate && e.ip; });   // HS v1.25
+    ].map(function(b){ var _byN=devs.__byName||(function(){ var m={}; devs.forEach(function(x){ if(!Object.prototype.hasOwnProperty.call(m, x.name)) m[x.name]=x; }); try{ Object.defineProperty(devs, '__byName', {value:m, enumerable:false}); }catch(e){} return m; })();   // HS v1.47
+      var _ad=[].concat.apply([], b.w).filter(function(n){ var e=Object.prototype.hasOwnProperty.call(_byN, n)?_byN[n]:null; return e && !e.aggregate && e.ip; });   // HS v1.25
       if(_ad.length) b.gate=b.gate.slice(0,2).concat([{key:'software', type:'auto', kind:'software', devices:_ad, label:'Software: every device at its target release'},
                                                       {key:'cabling', type:'auto', kind:'cabling', devices:_ad, label:'Cabling: LLDP neighbors match the cable plan'}], b.gate.slice(2));
       return {key:b.key, num:b.num, name:b.name, gate:b.gate,

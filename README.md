@@ -2,7 +2,7 @@
 
 DWR Networking internal. The AIDC DBD Hyperscale builder as a Windows app, with the site runner built in.
 
-- **The builder** runs unchanged in the main window (builder `HS-v1.46`).
+- **The builder** runs unchanged in the main window (builder `HS-v1.47`).
 - **Saves:** every download lands in your project folder. Nothing is overwritten: a second copy is saved as `name (2)`.
 - **Past 512 racks**, the Final package, the Review package and the .run are built by the built-in site runner.
   - The runner is a separate process with the workstation's memory, so a window's 4 GB limit does not apply to it.
