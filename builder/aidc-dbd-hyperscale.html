@@ -943,7 +943,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.48';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.49';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   var RADIX=64, CAGE=800;
   // ---- FABRIC PROFILE (parameterized per accelerator platform) ----------------------------------------
   // rails == accelerators per host. Each accelerator instance gets its own rail leaf, which is what
@@ -2603,8 +2603,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     }
     // EP-907/EP-908: BNK holds no per-tenant state, so the firewall and the transit addressing set the ceiling.
     if(bnkOn()){
-      warn.push({sev:'med', msg:'F5 BNK runs the shared-VLAN tenancy model (decision 29 Oct 2026): one INGRESS VRF and external VLAN for every tenant, '
-        +'with a VIP, a SNAT pool and a policy each, and the backend leg in per-rack tunnels. Ingress does not cross the firewalls (EP-170/175), so on that path '
+      warn.push({sev:'med', msg:'F5 BNK runs the shared-VLAN tenancy model (decision 29 Oct 2026): one INGRESS VRF and one external VLAN shared by all tenants; '
+        +'each tenant has its own VIP, SNAT pool and policy, and the backend leg runs in per-rack tunnels. Ingress does not cross the firewalls (EP-170/175), so on that path '
         +'BNK\u2019s per-tenant policy is the one separation control: the front-end gate proves it with acceptance/ingress_isolation.sh. '
         +'The per-edge-block ceiling of '+ceilingFromFw()+' is the firewall\u2019s ('+ceilingFromFwPlatform()+' on this platform) and the transit addressing\u2019s ('+TENANT_ADDR_CEILING+'); '
         +'BNK\u2019s own per-tenant limit for '+BNK_RELEASE+' is not published'+(BNK_TENANT_MAX?' (entered: '+BNK_TENANT_MAX+')':'')+' and applies to the whole site. '

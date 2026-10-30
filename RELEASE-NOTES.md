@@ -1,3 +1,10 @@
+# AIDC DBD Desktop 2.0.41 (builder HS-v1.49, site runner 1.8.0)
+
+- **Site runner watchdog.** A builder step runs as one long stretch, and the status line can't change until it finishes, so a slow step and a stuck step looked the same. When one step has run for 3 minutes, the runner now logs where the builder is (its call stack) and the memory in use, then again every 3 minutes until the step ends:
+  `1500s  watchdog: busy 21 min in one step: viewerHtml:29455 < stepRun:29003 < ...  (21450 MB RSS)`
+  This costs nothing measurable: a 1,024-rack design document took 92 s with it, against 95 s without. The lines also go to `site-runner.log`. `--no-watchdog` turns it off.
+- **F5 BNK warning, clearer.** The tenancy line now says one INGRESS VRF and one external VLAN **shared by all tenants**, each tenant with its own VIP, SNAT pool and policy. The old wording read as if each tenant had its own VRF.
+
 # AIDC DBD Desktop 2.0.40 (builder HS-v1.48, site runner 1.7.0)
 
 - **Console server configuration.** The Opengear OM2200-L console servers were already sized, placed, cabled, powered and in the BoM; now the package also configures them. They're managed by **Lighthouse**: each unit dials out over its own LTE modem, so nothing reaches it from the internet. Both packages carry a new `console/` folder:

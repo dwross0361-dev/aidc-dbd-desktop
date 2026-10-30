@@ -50,6 +50,35 @@ const NC = require('@napi-rs/canvas');
 const T0 = Date.now(), t = () => ((Date.now() - T0) / 1000).toFixed(0).padStart(5) + 's';
 const mem = () => { const m = process.memoryUsage(); return Math.round(m.heapUsed / 1048576) + ' MB heap, ' + Math.round(m.rss / 1048576) + ' MB RSS'; };
 const logLines = [];
+// 1.8.0 (app 2.0.41): the watchdog. A builder step runs as one stretch of JavaScript; while it runs, the status line cannot
+// change, so a step that takes hours looks the same as one that has stopped. When the main thread has been busy for 3 minutes,
+// a worker thread asks the debugger where it is and logs the call stack, then again every 3 minutes until the step ends.
+// Off with --no-watchdog.
+function startWatchdog() {
+  if (argv.includes('--no-watchdog')) return;
+  let W; try {
+    const { Worker } = require('worker_threads'), hb = new Int32Array(new SharedArrayBuffer(4));
+    const beat = () => Atomics.store(hb, 0, Math.floor((Date.now() - T0) / 1000)); beat(); setInterval(beat, 1000).unref();
+    W = new Worker(`
+const { parentPort, workerData } = require('worker_threads'), inspector = require('inspector'), fs = require('fs');
+const { hb, T0, STALL } = workerData; let s = null, lastAt = 0, busy = false;
+const el = () => Math.floor((Date.now() - T0) / 1000);
+function report(blocked) {
+  if (busy) return; busy = true;
+  try { if (!s) { s = new inspector.Session(); s.connectToMainThread(); } } catch (e) { busy = false; return; }
+  const done = (txt) => { try { s.post('Debugger.disable'); s.disconnect(); } catch (e) {} s = null; busy = false;
+    const l = String(el()).padStart(5) + 's  watchdog: busy ' + (blocked >= 120 ? Math.round(blocked / 60) + ' min' : blocked + ' s') + ' in one step: ' + txt + '  (' + Math.round(process.memoryUsage().rss / 1048576) + ' MB RSS)';
+    try { fs.writeSync(1, l + '\\n'); } catch (e) {} parentPort.postMessage(l); };
+  s.once('Debugger.paused', (m) => { let f = [];
+    try { f = m.params.callFrames.slice(0, 14).map((c) => (c.functionName || '(anonymous)') + ':' + (c.location.lineNumber + 1)); } catch (e) {}
+    try { s.post('Debugger.resume'); } catch (e) {} done(f.join(' < ') || 'no stack'); });
+  s.post('Debugger.enable', (err) => { if (err) return done('debugger unavailable'); s.post('Debugger.pause', (e2) => { if (e2) done('pause refused'); }); });
+}
+setInterval(() => { const b = el() - Atomics.load(hb, 0); if (b >= STALL && el() - lastAt >= STALL) { lastAt = el(); report(b); } }, 5000);
+`, { eval: true, workerData: { hb, T0, STALL: +process.env.AIDC_WATCHDOG_S || 180 } });   // AIDC_WATCHDOG_S: testing only
+    W.on('message', (l) => logLines.push(l)); W.on('error', () => {}); W.unref();
+  } catch (e) { /* no worker threads: run without the watchdog */ }
+}
 const log = (...a) => { const l = t() + '  ' + a.join(' '); logLines.push(l); console.log(l); };
 const die = (m) => { log('STOPPED: ' + m); try { fs.mkdirSync(OUT, { recursive: true }); fs.writeFileSync(path.join(OUT, 'site-runner.log'), logLines.join('\n') + '\n'); } catch (e) {} process.exit(1); };
 
@@ -116,6 +145,7 @@ vc.on('error', (e) => pageErr.push(String(e).slice(0, 300)));
   const file = JSON.parse(fs.readFileSync(DESIGN, 'utf8'));
   if (file.format !== 'aidc-dbd-site-runner/1') die(DESIGN + ' is not a site-runner file (export it with the Site runner button in the builder)');
   log('design ' + path.basename(DESIGN) + ': build ' + file.build + ', design fingerprint ' + file.fingerprint + ', ' + file.racks + ' racks, ' + Number(file.links).toLocaleString('en-US') + ' links, exported from ' + file.builder);
+  startWatchdog();
   const dom = new JSDOM(fs.readFileSync(HTML, 'utf8'), { runScripts: 'dangerously', pretendToBeVisual: true, url: 'file:///aidc-runner/builder.html', virtualConsole: vc, beforeParse: shim });
   const w = dom.window;
   await new Promise((r) => setTimeout(r, 1500));
