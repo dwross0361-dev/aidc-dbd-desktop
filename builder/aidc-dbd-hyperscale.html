@@ -943,7 +943,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.47';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.48';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   var RADIX=64, CAGE=800;
   // ---- FABRIC PROFILE (parameterized per accelerator platform) ----------------------------------------
   // rails == accelerators per host. Each accelerator instance gets its own rail leaf, which is what
@@ -17162,6 +17162,80 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     P.push('    print("FTD: " + ("dry run complete -- nothing sent" if a.dry_run else ("all pairs deployed" if ok else "a deployment FAILED -- see above"))); sys.exit(0 if ok else 1)');
     return P.join('\n');
   }
+  // ---- HS v1.48: CONSOLE SERVERS (Opengear OM2200-L, managed by Lighthouse) -- per-unit configuration and the site guide.
+  // The units dial OUT to Lighthouse over cellular and are configured from it: each unit's script (console/<name>.sh) is a
+  // Lighthouse Script template applied to that one node. Ports, hostname, NTP, TACACS+ and the break-glass user are set by
+  // ogcli on the unit; Lighthouse enrollment, SNMP, syslog and the cellular APN are set in Lighthouse (console/README.md).
+  function consoleBaud(model){ var k=null, f='';
+    try{ k=osProfileKeyForModel(model); f=(OS_PROFILES[k]||{}).family||k||''; }catch(e){}
+    if(/cumulus|srl|sros|hbn/.test(f) || /^NV-|^SN2201|^NK-/.test(String(model||''))) return 115200;
+    return 9600; }
+  function consolePlan(){
+    var mp=mgmtPlan(), M=physModel(), byName={}, srv={};
+    (M.cabinets||[]).forEach(function(c){ (c.items||[]).forEach(function(it){ byName[it.name]={model:it.model||'', role:it.role||'', cab:c.id, u:it.u}; }); });
+    (mp.consoleSrv||[]).forEach(function(c){ srv[c.name]={con:c, ports:[]}; });
+    (M.links||[]).forEach(function(l){ if(l.plane!=='eoob') return; var s=srv[l.a]; if(!s) return; var n=+(/(\d+)$/.exec(String(l.ap))||[])[1];
+      var d=byName[l.b]||{}; s.ports.push({n:n, dev:l.b, model:d.model||'', cab:d.cab||'', baud:consoleBaud(d.model)}); });
+    var seg=null; try{ seg=oobSeg('console'); }catch(e){}
+    return Object.keys(srv).map(function(k){ var s=srv[k]; s.ports.sort(function(a,b){ return a.n-b.n; });
+      return {name:k, model:s.con.model, size:s.con.size, zone:s.con.zone, scope:s.con.scope, ip:s.con.ip||'', mask:seg?seg.len:24, gw:seg?seg.gw:'', ports:s.ports, cab:(byName[k]||{}).cab||''}; }); }
+  function consoleScript(c){
+    var q=function(s){ return String(s).replace(/["\\$`]/g,''); };
+    var L=['#!/bin/bash',
+      '# console/'+c.name+'.sh -- Opengear '+c.model+' ('+c.scope+'; '+c.ports.length+' of '+c.size+' serial ports in use), cabinet '+(c.cab||'-'),
+      '# Runs ON the console server as root: a Lighthouse Script template applied to this one node (console/README.md, step 4),',
+      '# or over SSH. Safe to run again: it sets the same values. Opengear OS ogcli (Opengear CLI guide).',
+      '# CONFIRM on the first unit: the serial port id form ("ports-N"), pinout X2 (Cisco-style RJ45 console, straight Cat6),',
+      '# each device\'s console baud rate, the admin group id, and the TACACS+ mode that keeps local login when TACACS+ is down.',
+      'set -euo pipefail',
+      'TACACS_KEY=<TACACS-KEY>',
+      'BREAKGLASS_PW=<CONSOLE-BREAKGLASS-PASSWORD>',
+      'ogcli update hostname hostname=\\"'+q(c.name)+'\\"',
+      'port(){ ogcli update port "ports-$1" <<END',
+      'mode="consoleServer"', 'label="$2"', 'pinout="X2"', 'baudrate="$3"', 'END', '}',
+      'spare(){ ogcli update port "ports-$1" <<END', 'mode="disabled"', 'label="spare"', 'END', '}',
+      '# ---- serial ports: port, device (as cabled in the OOB cable map), baud (8N1) ----'];
+    var used={}; c.ports.forEach(function(p){ used[p.n]=1; L.push('port '+p.n+' "'+q(p.dev)+'" '+p.baud+'   # '+(p.model||'-')+(p.cab?', '+p.cab:'')); });
+    var sp=[]; for(var i=1;i<=c.size;i++) if(!used[i]) sp.push(i);
+    if(sp.length) L.push('for p in '+sp.join(' ')+'; do spare "$p"; done   # '+sp.length+' spare port(s): disabled until cabled');
+    L.push('# ---- time and authentication (the same servers as the network devices) ----',
+      'ogcli update services/ntp <<END', 'enabled=true', 'servers[0].value="'+ops('ntp1','NTP1_IP')+'"', 'servers[1].value="'+ops('ntp2','NTP2_IP')+'"', 'END',
+      'ogcli update auth <<END', 'mode="tacacs"', 'tacacsAuthenticationServers[0].hostname="'+ops('tacacs1','TACACS1_IP')+'"', 'tacacsAuthenticationServers[1].hostname="'+ops('tacacs2','TACACS2_IP')+'"',
+      'tacacsMethod="pap"', 'tacacsPassword="${TACACS_KEY}"', 'END',
+      '# ---- the customer\'s break-glass account (local; works without TACACS+, Lighthouse or the network) ----',
+      'if ! ogcli get user breakglass >/dev/null 2>&1; then ogcli create user <<END', 'username="breakglass"', 'description="Customer break-glass (local)"', 'enabled=true', 'no_password=false', 'groups[0]="groups-1"', 'password="${BREAKGLASS_PW}"', 'END', 'fi',
+      'echo "'+q(c.name)+': '+c.ports.length+' serial ports labeled, '+sp.length+' spare; hostname, NTP, TACACS+ and break-glass set"');
+    return L.join('\n')+'\n'; }
+  function consolePackageFiles(){
+    var C=consolePlan(); if(!C.length) return [];
+    var F=[], site=(function(){ try{ return identBuild(); }catch(e){ return ''; } })();
+    var csv=['console_server,model,mgmt_ip,port,device,device_model,device_cabinet,baud,pinout'];
+    C.forEach(function(c){ c.ports.forEach(function(p){ csv.push([c.name, c.model, c.ip, p.n, p.dev, p.model, p.cab, p.baud, 'X2'].join(',')); }); });
+    F.push(['console/console-ports.csv', csv.join('\n')+'\n']);
+    var R=['# Console servers: Opengear OM2200-L with Lighthouse'+(site?' -- '+site:''), '',
+      'Every network device\'s serial console is cabled to a console server (OOB cable map, plane "eoob"). The console servers are the',
+      'emergency path: each has its own LTE modem and dials **out** to Lighthouse, so nothing on the internet can reach it and it shares',
+      'nothing with production or the out-of-band network. Lighthouse is Opengear\'s central manager: it holds the enrolled units, opens',
+      'serial sessions to any port from one web page, and pushes configuration (templates) to the units.', '',
+      '## The units', '', '| Console server | Model | Covers | Ports used | Cabinet | Management address (MGMT-CONSOLE) |', '|---|---|---|---|---|---|'];
+    C.forEach(function(c){ R.push('| '+c.name+' | '+c.model+' | '+c.scope+' | '+c.ports.length+' of '+c.size+' | '+(c.cab||'-')+' | '+c.ip+'/'+c.mask+', gateway '+c.gw+' |'); });
+    R.push('', '## Before the build', '',
+      '1. **Lighthouse**: an instance the customer owns (virtual appliance or Opengear\'s hosted service), reachable from the internet on its enrollment port, with an **enrollment token** set in Lighthouse (CONFIGURE > NODE ENROLLMENT > Enrollment Settings). Licenses: one node per console server (in the BoM).',
+      '2. **Cellular**: one data SIM per unit from a carrier other than both production internet carriers (in the BoM), and the carrier\'s APN.',
+      '3. **Secrets** (secrets.env): TACACS_KEY (as for the network devices) and CONSOLE_BREAKGLASS_PASSWORD (the customer\'s local break-glass password for the console servers). The .run renders them into the scripts on the provisioning host; this package holds neither.',
+      '', '## Steps', '',
+      '1. **Rack and cable** each unit as the OOB cable map shows: serial ports to the device consoles (straight Cat6), NET1 to its OOB access switch, both power cords, the LTE antennas (the magnetic-base extender above the cabinet if the signal is weak).',
+      '2. **First power-on**: insert the SIM, then set on the unit (web UI at its default address, or the serial console): the management address above on NET1, the gateway, DNS, and the cellular APN. Change the factory root password to a strong temporary one; step 4 adds the accounts the site uses.',
+      '3. **Enroll in Lighthouse**: the units can enroll automatically through Opengear\'s Lighthouse Service Portal, or by hand: on the unit, CONFIGURE > Lighthouse Enrollment > Add, with the Lighthouse address and the enrollment token (and the port and enrollment bundle if your Lighthouse uses them). The unit appears in Lighthouse within a few minutes; rename it to its console server name above.',
+      '4. **Apply the configuration**: in Lighthouse create one **Script template** per unit from console/'+'<name>.sh (rendered on the provisioning host, so it carries the secrets) and apply it to that unit only. It labels every serial port with its device, sets pinout and baud, the hostname, NTP, TACACS+ and the break-glass account. Optionally use Lighthouse\'s Authentication and Users & Groups templates instead for the TACACS+ and break-glass part, with the same values.',
+      '5. **Set in Lighthouse** for every unit: SNMPv3 (user '+ops('snmpUser','SNMP_USER')+', the SNMP keys from secrets.env), syslog to '+ops('syslog1','SYSLOG1_IP')+' and '+ops('syslog2','SYSLOG2_IP')+', and check the cellular link is up.',
+      '6. **Prove it** (the OOB gate line "Console servers"): from Lighthouse open a serial session to every port in console-ports.csv and see the device\'s prompt; log in once with TACACS+ and once with the break-glass account; pull NET1 on one unit and confirm Lighthouse still reaches it over cellular. Record the result in the Console.',
+      '', '## Notes', '',
+      '- Syntax and defaults to confirm on the first unit (marked CONFIRM in the scripts): the serial port id form, pinout X2, per-device baud rates (9600 for Junos, EOS, NX-OS and FTD; 115200 for Cumulus and Nokia), the admin group id, and the TACACS+ mode that falls back to local login.',
+      '- After handover the console servers, Lighthouse and the SIMs are the customer\'s. DWR keeps no Lighthouse access.');
+    F.push(['console/README.md', R.join('\n')+'\n']);
+    C.forEach(function(c){ F.push(['console/'+c.name.replace(/[^A-Za-z0-9_-]/g,'-')+'.sh', consoleScript(c)]); });
+    return F; }
   function ftdPackageFiles(){
     var U=ftdUnits(); if(!U.length) return [];
     var F=[['ftd/ztp-claim.csv', genFtdClaimCsv()]];
@@ -18381,6 +18455,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     'SET-DPU-UBUNTU-HASH':{what:'DPU (BlueField) ubuntu user password hash, SHA-512 crypt: openssl passwd -6', fmt:'raw'},
     'SNMP-AUTH-KEY':      {what:'SNMPv3 authentication key, cleartext, 8+ characters, letters and digits only', fmt:'raw'},
     'SNMP-PRIV-KEY':      {what:'SNMPv3 privacy key, cleartext, 8+ characters, letters and digits only', fmt:'raw'},
+    'CONSOLE-BREAKGLASS-PASSWORD': {what:'console servers (Opengear): the customer\u2019s local break-glass password, cleartext (rendered into console/<name>.sh on the provisioning host only)', fmt:'raw'},   // HS v1.48
     'TACACS-KEY':         {what:'TACACS+ shared key, cleartext (the configs use the cleartext form; each device encrypts it)', fmt:'raw'},
     'SET-RADIUS-SECRET':  {what:'RADIUS shared secret, cleartext', fmt:'raw'},   // v515: was <RADIUS-SECRET>
     'DCI-CAK':            {what:'DCI MACsec CAK, 64 hex characters (AES-256): openssl rand -hex 32', fmt:'raw'},
@@ -18447,6 +18522,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     if(d==='tftp') return (e==='.cfg' || /^poap-/.test(b)) ? 'nxos' : 'iosxe';
     if(d==='ztp') return e==='.sh' ? 'cumulus' : 'iosxe';
     if(d==='dns' || d==='monitoring') return 'host';   // v514
+    if(d==='console') return 'opengear';   // HS v1.48
     var h=/^[!#] Software: (.*)$/m.exec(text.slice(0,3000));
     if(h){ var M=[['NX-OS','nxos'],['IOS XE','iosxe'],['IOS XR','iosxr'],['Arista EOS','eos'],['SR Linux','srl'],['SR OS','sros'],['Cumulus','cumulus'],['HBN','cumulus'],['Junos','junos']];
       for(var i=0;i<M.length;i++) if(h[1].indexOf(M[i][0])>=0) return M[i][1]; }
@@ -18544,7 +18620,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       '    if d == "xr": return "IOSXR"',
       '    if d == "tftp": return "NXOS" if (e == ".cfg" or os.path.basename(p).startswith("poap-")) else "IOSXE"',
       '    if d == "ztp": return "CUMULUS" if e == ".sh" else "IOSXE"',
-      '    if d in ("dns", "monitoring"): return "HOST"',   // v514: provisioning-host files
+      '    if d in ("dns", "monitoring"): return "HOST"',
+      '    if d == "console": return "OPENGEAR"',   // HS v1.48   // v514: provisioning-host files
       '    h = re.search(r"^[!#] Software: (.*)$", text[:3000], re.M)',   // v513: configs/ holds every OS: read the header
       '    if h:',
       '        for k, v in (("NX-OS", "NXOS"), ("IOS XE", "IOSXE"), ("IOS XR", "IOSXR"), ("Arista EOS", "EOS"), ("SR Linux", "SRL"), ("SR OS", "SROS"), ("Cumulus", "CUMULUS"), ("HBN", "CUMULUS"), ("Junos", "JUNOS")):',
@@ -18562,7 +18639,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       '    dirs[:] = [x for x in dirs if x != TPL and not x.startswith(".")]',
       '    for f in fs:',
       '        p = os.path.relpath(os.path.join(root, f), ".")',
-      '        if p.split("/")[0] not in ("bootstrap", "configs", "ztp", "tftp", "eos", "srl", "sros", "hbn", "xr", "dns", "monitoring"): continue',
+      '        if p.split("/")[0] not in ("bootstrap", "configs", "ztp", "tftp", "eos", "srl", "sros", "hbn", "xr", "dns", "monitoring", "console"): continue',
       '        if SKIPF.search(p): continue',
       '        files.append(p)',
       'bad, done, problems = [], 0, []',
@@ -27138,7 +27215,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
                                                : [['Cores'],['Access switches and SN2201s'],['OOB edge routers and firewalls']]), w:W.oob,
        gate:[{key:'done', type:'devices_done', label:'Every device checked in, matched to '+SC+' and done'},
              {key:'reach', type:'reachable', label:'Management reachable on SSH and NETCONF / gNMI', note:'probe of '+oobSiteBlock()+(oobDpuBlock()?' and '+oobDpuBlock():'')},
-             {key:'ra', type:'confirm', label:'Remote access (RA-VPN) and the LTE break-glass path tested'}]},
+             {key:'ra', type:'confirm', label:'Remote access (RA-VPN) and the LTE break-glass path tested'}].concat(((mgmtPlan().consoleSrv||[]).length)?[   // HS v1.48
+             {key:'console', type:'confirm', label:'Console servers: enrolled in Lighthouse, every serial port reaches its device, TACACS+ and break-glass logins work, cellular path proven (console/README.md step 6)'}]:[])},
       {key:'edge', num:2, name:'Edge-PoP', waves:[['Edge routers (carriers)'],['Border gateways (with DCI)'],['Border leaves'],['Firewalls'],['Load balancers',1]], w:W.edge,
        gate:[{key:'done', type:'devices_done', label:'Every device done (load balancers warn only)'},
              {key:'reach', type:'reachable', label:'Management reachable'},
@@ -29830,7 +29908,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     })();
     if(__MEMO) __MEMO={};   // v539
     var extra=[], _nx=0; [genHbnPackage,
-      ftdPackageFiles, function(){ return bnkOn()?bnkPackageFiles():[]; }, wekaPackageFiles, k8sPackageFiles].forEach(function(fn){ try{ (fn()||[]).forEach(function(f){ extra.push(f); }); }catch(e){} });
+      ftdPackageFiles, consolePackageFiles, function(){ return bnkOn()?bnkPackageFiles():[]; }, wekaPackageFiles, k8sPackageFiles].forEach(function(fn){ try{ (fn()||[]).forEach(function(f){ extra.push(f); }); }catch(e){} });
     extra.forEach(function(f, i){ _fin({name:'services/'+f[0], text:String(f[1]).trimEnd()+'\n'}); extra[i]=null; _nx++; });
     idx.forEach(function(r){ r[5]=map(r[5]); });
     var R=['# Device configurations -- '+identLegal()+' -- build '+identBuild(),'',
@@ -29840,7 +29918,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       '- back-end/: GPU fabric switches ('+idx.filter(function(r){ return r[0]==='back end'; }).length+')',
       '- front-end/: front-end fabric, edge routers, firewalls ('+idx.filter(function(r){ return r[0]==='front end'; }).length+')',
       '- out-of-band/: management switches, cores, firewall ('+idx.filter(function(r){ return r[0]==='out of band'; }).length+')',
-      '- services/: DPU (HBN), load balancer, storage and pod-networking files ('+_nx+')','',
+      '- services/: DPU (HBN), load balancer, storage, pod-networking and console server files ('+_nx+')','',
       '| Plane | Device | Role | OS | OOB address | File |','|---|---|---|---|---|---|']
       .concat(idx.map(function(r){ return '| '+r.join(' | ')+' |'; }));
     P.unshift({name:'06-device-configs/README.md', text:R.join('\n')+'\n'});
@@ -31393,6 +31471,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     if(__MEMO) __MEMO={};   // v539: the bootstrap configurations are made; release them
     parts.push('##### push_configs.py #####\n'+genPyezPush(cfgStyle,cfgTier));
     try{ ftdPackageFiles().forEach(function(f){ parts.push('##### '+f[0]+' #####\n'+f[1]); }); }catch(e){ parts.push('##### ftd/ERROR #####\n'+e.message); }
+    try{ consolePackageFiles().forEach(function(f){ parts.push('##### '+f[0]+' #####\n'+f[1]); }); }catch(e){ parts.push('##### console/ERROR #####\n'+e.message); }   // HS v1.48
     try{ bnkPackageFiles().forEach(function(f){ parts.push('##### '+f[0]+' #####\n'+f[1]); }); }catch(e){ parts.push('##### bnk/ERROR #####\n'+e.message); }
     try{ wekaPackageFiles().forEach(function(f){ parts.push('##### '+f[0]+' #####\n'+f[1]); }); }catch(e){ parts.push('##### weka/ERROR #####\n'+e.message); }
     try{ k8sPackageFiles().forEach(function(f){ parts.push('##### '+f[0]+' #####\n'+f[1]); }); }catch(e){ parts.push('##### k8s/ERROR #####\n'+e.message); }

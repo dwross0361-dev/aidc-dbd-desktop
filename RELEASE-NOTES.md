@@ -1,3 +1,21 @@
+# AIDC DBD Desktop 2.0.40 (builder HS-v1.48, site runner 1.7.0)
+
+- **Console server configuration.** The Opengear OM2200-L console servers were already sized, placed, cabled, powered and in the BoM; now the package also configures them. They're managed by **Lighthouse**: each unit dials out over its own LTE modem, so nothing reaches it from the internet. Both packages carry a new `console/` folder:
+  - **`console/<name>.sh`, one per console server.** Applied as a Lighthouse Script template to that unit, it does four things:
+    - labels every serial port with the device cabled to it (from the OOB cable map);
+    - sets pinout X2 and the baud rate for each device: 9600 for Junos, EOS, NX-OS and FTD; 115200 for Cumulus and Nokia;
+    - leaves spare ports disabled;
+    - sets the hostname, NTP, TACACS+ (the same servers and key as the network devices) and the customer's local break-glass account.
+  - **`console/console-ports.csv`:** every console server port, the device on it, the device's cabinet and the serial settings.
+  - **`console/README.md`:** the site procedure, written for a first Opengear/Lighthouse site. It covers what Lighthouse is, what to have ready (Lighthouse instance, enrollment token, SIMs and APN, secrets), first power-on, enrollment, applying the scripts, SNMP and syslog in Lighthouse, and the proof tests.
+- **Secrets.** `secrets.env` adds `CONSOLE_BREAKGLASS_PASSWORD`. The .run renders it and `TACACS_KEY` into the scripts on the provisioning host only. The template lists them as used by "opengear".
+- **New OOB gate confirmation, "Console servers".** It covers:
+  - every unit enrolled in Lighthouse;
+  - every serial port reaching its device;
+  - TACACS+ and break-glass logins working;
+  - the cellular path proven with the Ethernet uplink pulled.
+- **To confirm on the first unit** (marked CONFIRM in the scripts): the serial port id form, pinout X2, baud rates per platform, the admin group id, and the TACACS+ mode that keeps local login when TACACS+ is down.
+
 # AIDC DBD Desktop 2.0.39 (builder HS-v1.47, site runner 1.7.0)
 
 - **The Final package no longer stalls on "design document" at XL sizes.** A 4,096-rack build sat at this step for hours with the heap near 12 GB. Two parts of the work grew with the square of the design size; both now grow in proportion to it, and the output is identical byte for byte:
