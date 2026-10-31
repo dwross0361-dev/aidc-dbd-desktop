@@ -1,3 +1,15 @@
+# AIDC DBD Desktop 2.0.43 (builder HS-v1.51, site runner 1.8.0)
+
+- **XL source of truth in parts.** The 4,096-rack Final package finished every step, then stopped on one file: `sot.json` was over 4 GB.
+  - Above 1,000,000 records, a section (interfaces, cables, IP addresses or BGP sessions) is written to `sot-parts/<section>-0001.json` and onward, 1,000,000 records per file.
+  - `sot.json` keeps every other section and lists the parts under `"parts"`. The source-of-truth README says which sections were split and how.
+  - Below that size, `sot.json` is the same file as before. The 25-design regression shows it unchanged.
+- **Loaders read the parts one file at a time.** This covers `nautobot/load_nautobot.py` and `netbox/load_netbox_extras.py`.
+  - If a part is missing from beside `sot.json`, the loader stops and names it.
+  - The Nautobot Job takes a single upload, so for a split SoT it says to use `load_nautobot.py`.
+  - The primary-IP step now makes one pass over the IP addresses instead of one pass per device.
+- **ZIP64 for single files over 4 GB.** Every package, source-of-truth and workbook zip now writes such a file instead of refusing it. Below 4 GB the zip bytes are unchanged. Tested with the limit forced low: `unzip -t` and Python's `zipfile` read every member.
+
 # AIDC DBD Desktop 2.0.42 (builder HS-v1.50, site runner 1.8.0)
 
 - **XL Final package: the design viewer no longer stalls past 8.4 million interfaces.** The 2.0.41 watchdog traced the 4,096-rack stall to the interface table in the source of truth. That table was one JavaScript object keyed by device and port. Past 8,388,607 entries the engine renumbers such an object on every insert, so each new interface cost a pass over all the others. FIRE-BAN-295K has about 9.5 million interfaces.
