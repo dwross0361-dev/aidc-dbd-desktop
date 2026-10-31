@@ -1,3 +1,10 @@
+# AIDC DBD Desktop 2.0.42 (builder HS-v1.50, site runner 1.8.0)
+
+- **XL Final package: the design viewer no longer stalls past 8.4 million interfaces.** The 2.0.41 watchdog traced the 4,096-rack stall to the interface table in the source of truth. That table was one JavaScript object keyed by device and port. Past 8,388,607 entries the engine renumbers such an object on every insert, so each new interface cost a pass over all the others. FIRE-BAN-295K has about 9.5 million interfaces.
+  - The table is now 16 sharded Maps. It stays linear past 10 million entries (about 5 s per 2 million) and keeps the insertion order.
+  - The interface list is built in one pass instead of a sort, and the design viewer skips it, since it doesn't use it.
+  - Every package file is unchanged: the 25-design regression shows identical source of truth, interfaces and configurations.
+
 # AIDC DBD Desktop 2.0.41 (builder HS-v1.49, site runner 1.8.0)
 
 - **Site runner watchdog.** A builder step runs as one long stretch, and the status line can't change until it finishes, so a slow step and a stuck step looked the same. When one step has run for 3 minutes, the runner now logs where the builder is (its call stack) and the memory in use, then again every 3 minutes until the step ends:
