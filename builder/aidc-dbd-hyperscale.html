@@ -915,6 +915,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       <button class="btn" id="deploydownload">&#8681; Download shown</button>
       <button class="btn pri" id="deploybundle">&#128230; Download full package (.zip)</button>
       <button class="btn" id="deployrun" title="One file to copy to the provisioning host: sudo bash SITE-deploy-VERSION.run (checks itself, keeps the old package folder, unpacks, runs setup.sh)">&#9654; Download installer (.run)</button>
+      <button class="btn" id="deployrunq" style="display:none" title="Builds the .run here in this window, without the fingerprint and parity checks: for labs and test builds, not for delivery">Quick .run (this window, no checks)</button>
       <button class="btn" id="closedeploy">Close</button>
     </span></h3>
   <div class="cfg-warn" id="deploy-warn"></div>
@@ -943,7 +944,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.51';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.52';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   var RADIX=64, CAGE=800;
   // ---- FABRIC PROFILE (parameterized per accelerator platform) ----------------------------------------
   // rails == accelerators per host. Each accelerator instance gets its own rail leaf, which is what
@@ -15239,7 +15240,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
                       {node:hn, interface:'net_rail'+g+(single?'':'_plane'+pl), attributes:{role:'host', rail:g, pod:0, su:su}}]);
         });
       });
-      F.push(['spectrum-x/topology.json', JSON.stringify({nodes:nodes, links:links}, null, 1)]);
+      F.push(['spectrum-x/topology.json', links.length>1500000 ? {bytes:jsonBytes1({nodes:nodes, links:links})} : JSON.stringify({nodes:nodes, links:links}, null, 1)]);   // HS v1.52: past 1.5 M links (about 300 M characters), bytes
     })();
     var csv=['host,rail,plane0_leaf_gateway,host_address,prefix'];
     Object.keys(SX.idx).forEach(function(k){ var r=SX.idx[k]; rails.forEach(function(g){ csv.push(spxHostName(r)+','+g+','+SX.gw(g,r.n)+','+SX.host(g,r.n)+',31'); }); });
@@ -20516,6 +20517,12 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     return L.join('\n')+'\n';
   }
   // ---- ACCEPTANCE TESTS (Captain, 8 Oct 2026): cabling against the plan, MTU, optics, then NCCL on the back end ----
+  // HS v1.52: lines joined as text, or as UTF-8 bytes past 300 M characters (V8's longest string is 536,870,888): the same
+  // bytes either way, ending in one newline as the text path's trimEnd()+'\n' gives.
+  function bigLines(X){ var n=X.length; for(var i=0;i<X.length;i++) n+=X[i].length; if(n<300000000) return X.join('\n');
+    var enc=new TextEncoder(), out=[], tot=0;
+    for(var j=0;j<X.length;j+=100000){ var b=enc.encode(X.slice(j, j+100000).join('\n')+'\n'); out.push(b); tot+=b.length; }
+    var r=new Uint8Array(tot), off=0; out.forEach(function(b){ r.set(b, off); off+=b.length; }); return {bytes:r}; }
   function acceptanceFiles(){
     var M=physModel(), F=[];
     var X=['plane,device_a,port_a,device_b,port_b,speed,media,lldp'];
@@ -20525,7 +20532,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     (M.links||[]).forEach(function(l){ if(!l.a||!l.b||/unassigned/.test(String(l.ap)+String(l.bp))) return;
       var ob=(l.plane!=='power' && l.plane!=='eoob' && _net[l.a] && _net[l.b])?'yes':'no';
       X.push([l.plane,l.a,l.ap,l.b,l.bp,l.speed||'',l.media||'',ob].map(function(v){ return String(v).replace(/,/g,';'); }).join(',')); });   // v514: no field carries a comma (the DCI hub names did)
-    F.push(['acceptance/cabling-expected.csv', X.join('\n')]);
+    F.push(['acceptance/cabling-expected.csv', bigLines(X)]);   // HS v1.52: past 300 M characters, bytes
     F.push(['acceptance/check_cabling.py', ['#!/usr/bin/env python3',
       '"""check_cabling.py -- compare LLDP as seen on the devices with the cable plan (cabling-expected.csv).',
       '',
@@ -31411,7 +31418,10 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
   // HS v1.20: kept across the cache clears of ONE package or .run build (begin/end around the build, end in a finally)
   var __PKGTOK=null, _STICKY={tok:null, devs:null, links:null, rm:false, v:{}};
   function __stickyBegin(){ var t={}; __PKGTOK=t; _STICKY={tok:t, devs:devs, links:links, rm:__RUN_MODE, v:{}}; return t; }
-  function __stickyEnd(t){ if(__PKGTOK===t){ __PKGTOK=null; _STICKY={tok:null, devs:null, links:null, rm:false, v:{}}; } }
+  var _PHYCARRY=null;   // HS v1.52: in the site runner, the physical model one build derived, for the next build of the same design
+  function __stickyEnd(t){ if(__PKGTOK===t){
+      try{ if(window.__AIDC_HEADLESS && _STICKY.v && _STICKY.v.physModel && _STICKY.devs===devs && _STICKY.links===links) _PHYCARRY={key:_physKey(), devs:devs, links:links, v:_STICKY.v.physModel}; }catch(e){ _PHYCARRY=null; }
+      __PKGTOK=null; _STICKY={tok:null, devs:null, links:null, rm:false, v:{}}; } }
   function __stickyOk(){ var S=_STICKY; return !!(__MEMO && !window.__UISCOPE && __PKGTOK && S.tok===__PKGTOK && S.devs===devs && S.links===links); }
   function __sticky(name, fn){ return function(){ if(arguments.length || !__stickyOk()) return fn.apply(this, arguments);
     var V=_STICKY.v; if(Object.prototype.hasOwnProperty.call(V, name)) return V[name]; return (V[name]=fn.apply(this, arguments)); }; }
@@ -31427,7 +31437,9 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
   physModel=(function(f){ return function(){
     if(window.__PHYS_NOCACHE) return f.apply(this, arguments);
     if(__MEMO && !window.__UISCOPE){ if(!__stickyOk()) return f.apply(this, arguments);   // a package derives its own (once per build: HS v1.20); a page reuses
-      var V=_STICKY.v; if(V.physModel) return V.physModel; return (V.physModel=f.apply(this, arguments)); }
+      var V=_STICKY.v; if(V.physModel) return V.physModel;
+      var C=_PHYCARRY; if(C && C.devs===devs && C.links===links){ var ck=null; try{ ck=_physKey(); }catch(e){} if(ck && ck===C.key){ _PHYCARRY=null; return (V.physModel=C.v); } }   // HS v1.52: the same design: not derived twice
+      return (V.physModel=f.apply(this, arguments)); }
     var k; try{ k=_physKey(); }catch(e){ return f.apply(this, arguments); }
     if(_PHY.v && _PHY.key===k && _PHY.devs===devs && _PHY.links===links) return _PHY.v;
     var v=f.apply(this, arguments); _PHY={key:k, devs:devs, links:links, v:v}; return v; }; })(physModel);
@@ -31448,7 +31460,9 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
   document.getElementById('deploybundle').onclick=function(){
     var _hs=designHardStops(); if(_hs.length){ setStatus('\u26a0 Deployment package not built: '+_hs.join('; ')+'. See the Release check.'); return; }   // HS v1.46
     var self=this, args=arguments, big=devs.length>400, rm=__RUN_MODE;   // the one-file installer sets __RUN_MODE only for the click
-    function run(){ var keep=__RUN_MODE, r; __RUN_MODE=rm; __MEMO={}; try{ r=__bundleBuild.apply(self, args); return r; } finally{ __MEMO=null; __RUN_MODE=keep;
+    var _fail=function(e){ var at=String(e&&e.stack||'').split('\n').slice(1,4).map(function(x){ return (/([A-Za-z_$][\w$]*) \(/.exec(x)||[])[1]||''; }).filter(Boolean).join(' < ');
+      var msg=(rm?'Installer':'Deployment package')+' not built: '+(e&&e.message||e)+(at?' (in '+at+')':''); window.__aidcBuildFailed=msg; setStatus('\u26a0 '+msg); };   // HS v1.52: was swallowed; the site runner reads __aidcBuildFailed
+    function run(){ var keep=__RUN_MODE, r; __RUN_MODE=rm; __MEMO={}; try{ r=__bundleBuild.apply(self, args); if(r && r.then) r.then(null, _fail); return r; } finally{ __MEMO=null; __RUN_MODE=keep;
       if(big){ var fin=function(){ var ov=document.getElementById('busyov'); if(ov) ov.remove(); }; if(r && r.then) r.then(fin, fin); else fin(); } } }   // v539: the build may yield
     if(!big) return run();
     // v483: large estates take tens of seconds; show that the package is being built, then build it
@@ -31485,6 +31499,9 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       var name=m[1].replace(/ \(.*\)$/,'').trim(); if(name==='README') name='README.txt';
       var f={name:root+name, text:p.slice(m[0].length).trimEnd()+'\n', mode:/\.(sh|command|py)$/.test(name)?493:420};   // 0755 / 0644
       files.push(f); _lean(f); return files.length; };
+    var _pf=function(name, c){ if(!(c && c.bytes)) return parts.push('##### '+name+' #####\n'+c);   // HS v1.52: a file given as bytes
+      var f={name:root+name, bytes:c.bytes, mode:/\.(sh|command|py)$/.test(name)?493:420}; files.push(f); _raw+=f.bytes.length;
+      _q.push(f); _qb+=f.bytes.length; if(_qb>67108864) _need=true; return files.length; };
     parts.push('##### README #####\n'+genDeployReadme());
     parts.push('##### setup.sh (Linux) #####\n'+genInstaller('linux'));
     parts.push('##### setup.command (macOS) #####\n'+genInstaller('mac'));
@@ -31517,7 +31534,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       try{ x[1]().forEach(function(f){ parts.push('##### '+f[0]+' #####\n'+f[1]); }); }catch(e){ parts.push('##### '+x[0]+'/ERROR #####\n'+e.message); } });
     if(deployPlanes().all.some(function(d){ return deployOs(d)==='srl'; })) parts.push('##### push_srlinux.py #####\n'+genSrlPush());
     for(var _si=0; _si<sw.length; _si++){ if(_need) await _drain(); (function(d){parts.push('##### configs/'+d.name+'.conf #####\n'+cfgVlansFirst(genConfig(d.id,cfgStyle,cfgTier)));})(sw[_si]); }   // v515: same order as the installed file
-    if(spxMode()) genSpxHostPackage().forEach(function(f){ parts.push('##### '+f[0]+' #####\n'+f[1]); });   // Spectrum-X host side
+    if(spxMode()) genSpxHostPackage().forEach(function(f){ _pf(f[0], f[1]); });   // HS v1.52: topology.json may be bytes   // Spectrum-X host side
     if(__MEMO) __MEMO={};   // v533: the per-device cache is done with; recomputed if anything below asks again
     try{ genHbnPackage().forEach(function(f){ parts.push('##### '+f[0]+' #####\n'+f[1]); }); }catch(e){}   // DPU (HBN) side of the front end
     if(_need) await _drain();
@@ -31573,28 +31590,30 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     if(__MEMO) __MEMO={};   // v533
     // v513: secrets.env.template from the files setup.sh renders, so every token it refuses on has a key (v539: scanned as each file was made)
     files.forEach(function(f){ if(f.name===root+'secrets.env.template'){ try{ f.text=genSecretsTemplate(files, root, _tsc||{site:{},secret:{},other:{}}); }catch(e){ console.warn('secrets template: '+e.message); f.text=genSecretsTemplate(); } } });
-    try{ acceptanceFiles().forEach(function(f){ files.push({name:root+f[0], text:f[1].trimEnd()+'\n', mode:/\.(sh|py)$/.test(f[0])?493:420}); }); }catch(e){ files.push({name:root+'acceptance/ERROR.txt', text:e.message+'\n', mode:420}); }
+    try{ acceptanceFiles().forEach(function(f){ files.push(f[1] && f[1].bytes ? {name:root+f[0], bytes:f[1].bytes, mode:420} : {name:root+f[0], text:f[1].trimEnd()+'\n', mode:/\.(sh|py)$/.test(f[0])?493:420}); }); }catch(e){ files.push({name:root+'acceptance/ERROR.txt', text:e.message+'\n', mode:420}); }
     files.push({name:root+'secrets/manifest.csv', text:genSecretsManifest(files, _shits), mode:420});   // last: it scans everything above
     parts.length=0;   // v483: the texts now live only in files
     if(_drained){ __MEMO=_outM; __RUN_MODE=_outRM; }   // v539: back to the state outside the build
     if(_RM){   // the one-file installer: the same package, wrapped in a self-extracting script
-      var _rnf=files.length, _rsite=siteCode(); setStatus('Compressing the installer ('+_rnf.toLocaleString()+' files)…');
+      var _rnf=files.length, _rsite=siteCode(), _errF=files.filter(function(f){ return /\/ERROR(\.txt)?$/.test(f.name); }).map(function(f){ return f.name.slice(root.length); });   // HS v1.52 setStatus('Compressing the installer ('+_rnf.toLocaleString()+' files)…');
       var _stk=_STICKY;   // HS v1.20
       makeZipDeflate(files).then(function(zb){ return zb.arrayBuffer(); }).then(function(ab){   // v533: DEFLATE payload, assembled from parts
         var runParts=__memoScope(function(){ var t=_stk.tok; if(t && _stk.devs===devs && _stk.links===links){ __PKGTOK=t; _STICKY=_stk; } try{ return genRunInstaller(cli, new Uint8Array(ab), _rnf, _rsite); } finally{ if(t) __stickyEnd(t); _stk=null; } })(), runName=cli+'-deploy-'+runParts[0].split('\n')[1].replace(/^.*-deploy-((?:HS-)?v[\d.]+)\.run.*$/,'$1')+'.run';   // HS v1.05: the HS-v1.xx release form
         var rb=new Blob(runParts,{type:'text/x-shellscript'}), ru=URL.createObjectURL(rb), ra=document.createElement('a'); runParts=null;
         ra.href=ru; ra.download=runName; document.body.appendChild(ra); ra.click();
         setTimeout(function(){ document.body.removeChild(ra); URL.revokeObjectURL(ru); },0);
-        setStatus('Downloaded installer '+runName+' ('+_rnf+' files): copy it to the provisioning host and run  sudo bash '+runName);
+        if(_errF.length){ window.__aidcBuildWarn='Installer '+runName+' was written with '+_errF.length+' failed section(s): '+_errF.join(', ')+'. It must not be delivered; the reason is in each of those files.'; setStatus('\u26a0 '+window.__aidcBuildWarn); }   // HS v1.52
+        else setStatus('Downloaded installer '+runName+' ('+_rnf+' files): copy it to the provisioning host and run  sudo bash '+runName);
       }).catch(function(e){ setStatus('Installer failed: '+e.message); });
       files=null; return;
     }
-    var _nf=files.length; setStatus('Compressing the deploy package ('+_nf.toLocaleString()+' files)…');
+    var _nf=files.length, _errD=files.filter(function(f){ return /\/ERROR(\.txt)?$/.test(f.name); }).map(function(f){ return f.name.slice(root.length); }); setStatus('Compressing the deploy package ('+_nf.toLocaleString()+' files)…');
     makeZipDeflate(files).then(function(blob){   // v533
       var url=URL.createObjectURL(blob), a=document.createElement('a');
       a.href=url; a.download=cli+'-deploy.zip'; document.body.appendChild(a); a.click();
       setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); },0);
-      setStatus('Downloaded deploy package: '+_nf+' files in '+cli+'-deploy.zip');
+      if(_errD.length) setStatus('\u26a0 Deploy package '+cli+'-deploy.zip was written with '+_errD.length+' failed section(s): '+_errD.join(', ')+'. It must not be delivered; the reason is in each of those files.');   // HS v1.52
+      else setStatus('Downloaded deploy package: '+_nf+' files in '+cli+'-deploy.zip');
     }).catch(function(e){ setStatus('Deploy package failed: '+e.message); });
     files=null;
   };
@@ -32367,8 +32386,13 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
         D().job({kind:kind, mode:mode||'final', file:f}); }, 30); }
     window.__aidcDeskJob=deskJob;
     blueprintPackage=(function(fn){ return function(mode){ if(D() && byType('rack').length>BIG) return deskJob('package', mode); return fn.apply(this, arguments); }; })(blueprintPackage);
-    var _dr=document.getElementById('deployrun');
-    if(_dr){ var _o=_dr.onclick; _dr.onclick=function(){ if(D() && byType('rack').length>BIG) return deskJob('run'); return _o.apply(this, arguments); }; }
+    var _dr=document.getElementById('deployrun'), _dq=document.getElementById('deployrunq');
+    if(_dr){ var _o=_dr.onclick;   // HS v1.52: in the app, the installer comes from the site runner, with the package, the fingerprint and parity
+      if(D()){ _dr.innerHTML='&#9654; Build installer (.run) &mdash; site runner';
+        _dr.title='Builds the Final package and the .run in the site runner: the design fingerprint is checked, a failed export stops it, and every device configuration in the .run is checked against the package. Both are saved to the project folder.';
+        _dr.onclick=function(){ return deskJob('both'); };
+        if(_dq){ _dq.style.display=''; _dq.onclick=function(){ if(byType('rack').length>BIG){ setStatus('Quick .run is for designs up to '+BIG.toLocaleString('en-US')+' racks; build this one with the site runner'); return; } return _o.apply(this, arguments); }; } }
+      else _dr.onclick=function(){ return _o.apply(this, arguments); }; }
     openDct=(function(f){ return function(){
       if(!D() || byType('rack').length<=BIG) return f.apply(this, arguments);
       var html=dctHtml(null); if(html==null){ alert('The DC Layout Builder is not bundled with this build.'); return; }
@@ -32467,7 +32491,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       renderMgmtModal=quiet(renderMgmtModal); renderBoM=quiet(renderBoM); renderFacility=quiet(renderFacility); renderRelease=quiet(renderRelease);
       // the memory guard: views still built in the window check its free memory first on a large design
       var guard=function(id, what){ var b=document.getElementById(id); if(!b) return; var o=b.onclick; b.onclick=function(){
-        if(bigD()){ try{ var pm=performance.memory; if(pm && pm.usedJSHeapSize>0.5*pm.jsHeapSizeLimit){ setStatus('⚠ '+what+' was not opened: this '+byType('rack').length.toLocaleString('en-US')+'-rack design already uses '+Math.round(pm.usedJSHeapSize/1048576).toLocaleString('en-US')+' MB of the window’s '+Math.round(pm.jsHeapSizeLimit/1048576).toLocaleString('en-US')+' MB, and building it here could crash the window. The Blueprint package carries it.'); return; } }catch(e){} }
+        if(bigD()){ try{ var pm=performance.memory; if(pm && pm.usedJSHeapSize>0.5*pm.jsHeapSizeLimit){ if(id==='deploybtn' && window.__aidcDeskJob && confirm('This '+byType('rack').length.toLocaleString('en-US')+'-rack design is too large to open Deploy in this window.\n\nBuild the Final package and the .run with the site runner instead?')){ window.__aidcDeskJob('both'); return; }   // HS v1.52
+          setStatus('⚠ '+what+' was not opened: this '+byType('rack').length.toLocaleString('en-US')+'-rack design already uses '+Math.round(pm.usedJSHeapSize/1048576).toLocaleString('en-US')+' MB of the window’s '+Math.round(pm.jsHeapSizeLimit/1048576).toLocaleString('en-US')+' MB, and building it here could crash the window. The Blueprint package carries it.'); return; } }catch(e){} }
         return o && o.apply(this, arguments); }; };
       guard('renderbtn', 'Render'); guard('febtn', 'FE Render'); guard('cfgbtn', 'Config'); guard('deploybtn', 'Deploy');
     }

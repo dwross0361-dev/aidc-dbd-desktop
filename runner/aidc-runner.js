@@ -50,7 +50,7 @@ const NC = require('@napi-rs/canvas');
 const T0 = Date.now(), t = () => ((Date.now() - T0) / 1000).toFixed(0).padStart(5) + 's';
 const mem = () => { const m = process.memoryUsage(); return Math.round(m.heapUsed / 1048576) + ' MB heap, ' + Math.round(m.rss / 1048576) + ' MB RSS'; };
 const logLines = [];
-// 1.8.0 (app 2.0.41): the watchdog. A builder step runs as one stretch of JavaScript; while it runs, the status line cannot
+// 1.8.0 (app 2.0.41), 1.9.0 (app 2.0.44): the watchdog. A builder step runs as one stretch of JavaScript; while it runs, the status line cannot
 // change, so a step that takes hours looks the same as one that has stopped. When the main thread has been busy for 3 minutes,
 // a worker thread asks the debugger where it is and logs the call stack, then again every 3 minutes until the step ends.
 // Off with --no-watchdog.
@@ -63,12 +63,17 @@ function startWatchdog() {
 const { parentPort, workerData } = require('worker_threads'), inspector = require('inspector'), fs = require('fs');
 const { hb, T0, STALL } = workerData; let s = null, lastAt = 0, busy = false;
 const el = () => Math.floor((Date.now() - T0) / 1000);
+function line(blocked, txt) {
+  const l = String(el()).padStart(5) + 's  watchdog: busy ' + (blocked >= 120 ? Math.round(blocked / 60) + ' min' : blocked + ' s') + ' in one step: ' + txt + '  (' + Math.round(process.memoryUsage().rss / 1048576) + ' MB RSS)';
+  try { fs.writeSync(1, l + '\\n'); } catch (e) {} parentPort.postMessage(l); }
+// 1.9.0: a pause lands only when the builder is running JavaScript. Inside one long native call (a large JSON or text
+// encode, a sort's internals, garbage collection) it waits until that returns; until then each period says so, and the
+// stack is logged when the pause lands. The session stays connected while a pause is pending, so the pause is always resumed.
 function report(blocked) {
-  if (busy) return; busy = true;
+  if (busy) { line(blocked, 'inside one long native call or garbage collection (no JavaScript stack until it returns)'); return; }
+  busy = true;
   try { if (!s) { s = new inspector.Session(); s.connectToMainThread(); } } catch (e) { busy = false; return; }
-  const done = (txt) => { try { s.post('Debugger.disable'); s.disconnect(); } catch (e) {} s = null; busy = false;
-    const l = String(el()).padStart(5) + 's  watchdog: busy ' + (blocked >= 120 ? Math.round(blocked / 60) + ' min' : blocked + ' s') + ' in one step: ' + txt + '  (' + Math.round(process.memoryUsage().rss / 1048576) + ' MB RSS)';
-    try { fs.writeSync(1, l + '\\n'); } catch (e) {} parentPort.postMessage(l); };
+  const done = (txt) => { try { s.post('Debugger.disable'); s.disconnect(); } catch (e) {} s = null; busy = false; line(el() - Atomics.load(hb, 0), txt); };
   s.once('Debugger.paused', (m) => { let f = [];
     try { f = m.params.callFrames.slice(0, 14).map((c) => (c.functionName || '(anonymous)') + ':' + (c.location.lineNumber + 1)); } catch (e) {}
     try { s.post('Debugger.resume'); } catch (e) {} done(f.join(' < ') || 'no stack'); });
@@ -76,7 +81,7 @@ function report(blocked) {
 }
 setInterval(() => { const b = el() - Atomics.load(hb, 0); if (b >= STALL && el() - lastAt >= STALL) { lastAt = el(); report(b); } }, 5000);
 `, { eval: true, workerData: { hb, T0, STALL: +process.env.AIDC_WATCHDOG_S || 180 } });   // AIDC_WATCHDOG_S: testing only
-    W.on('message', (l) => logLines.push(l)); W.on('error', () => {}); W.unref();
+    W.on('message', (l) => logLines.push(l)); W.on('error', (e) => { logLines.push('watchdog stopped: ' + (e && e.message || e)); }); W.unref();
   } catch (e) { /* no worker threads: run without the watchdog */ }
 }
 const log = (...a) => { const l = t() + '  ' + a.join(' '); logLines.push(l); console.log(l); };
@@ -166,8 +171,15 @@ vc.on('error', (e) => pageErr.push(String(e).slice(0, 300)));
   fs.mkdirSync(OUT, { recursive: true });
 
   // ---- a status line every 15 s (the page reports its steps on its status line)
-  let last = ''; const tick = setInterval(() => { const s = R.status(); if (s !== last) { last = s; log('  ' + s.slice(0, 160) + '  (' + mem() + ')'); } }, 15000);
-  const waitFile = async (re, ms) => { const end = Date.now() + ms; while (Date.now() < end) { const f = captured.find((c) => re.test(c.name)); if (f) return f; await new Promise((r) => setTimeout(r, 1000)); } return null; };
+  // 1.9.0: an error the page raises outside a step (a rejected promise nobody handled) is logged at once
+  process.on('unhandledRejection', (r) => { pageErr.push('unhandled: ' + String(r && r.message || r).slice(0, 300)); });
+  let pageSeen = pageErr.length;
+  // 1.9.0: a status unchanged for 10 minutes is logged again ("still:"), so a step that yields while it works is not silent
+  let last = '', lastAt = Date.now(); const tick = setInterval(() => { const s = R.status();
+    if (s !== last) { last = s; lastAt = Date.now(); log('  ' + s.slice(0, 160) + '  (' + mem() + ')'); }
+    else if (Date.now() - lastAt >= 600000) { lastAt = Date.now(); log('  still: ' + s.slice(0, 140) + '  (' + mem() + ')'); }
+    while (pageSeen < pageErr.length) log('  page error: ' + pageErr[pageSeen++]); }, 15000);
+  const waitFile = async (re, ms, failed) => { const end = Date.now() + ms; while (Date.now() < end) { const f = captured.find((c) => re.test(c.name)); if (f) return f; if (failed && failed()) return null; await new Promise((r) => setTimeout(r, 1000)); } return null; };
   const pageMsgs = () => (pageErr.length ? ' (page: ' + pageErr.slice(0, 3).join(' | ') + ')' : '');
   const save = async (f) => {   // 1.7.0 (app 2.0.30): a file the page handed over empty stops the run, saying so
     if (!f.blob || typeof f.blob.arrayBuffer !== 'function') die('the builder handed over ' + f.name + ' with no content' + (R.status() ? ': ' + R.status().slice(0, 200) : '') + pageMsgs());
@@ -210,9 +222,10 @@ vc.on('error', (e) => pageErr.push(String(e).slice(0, 300)));
   if (ONLY !== 'package') {
     log('deployment bundle (.run)...');
     R.run();
-    const f = await waitFile(/\.run$/, 6 * 3600 * 1000);
-    if (!f) die('the .run did not complete');
+    const f = await waitFile(/\.run$/, 6 * 3600 * 1000, () => !!w.__aidcBuildFailed);   // 1.9.0: a failed build ends the wait (builder HS-v1.52 sets it)
+    if (!f) die('the .run did not complete' + (w.__aidcBuildFailed ? ': ' + String(w.__aidcBuildFailed).slice(0, 400) : R.status() ? ': ' + R.status().slice(0, 300) : '') + pageMsgs());
     run = await save(f); log('.run: ' + path.basename(run) + ' (' + mem() + ')');
+    if (w.__aidcBuildWarn) die(String(w.__aidcBuildWarn).slice(0, 400));   // 1.9.0: written with a failed section (builder HS-v1.52)
   }
   clearInterval(tick);
 

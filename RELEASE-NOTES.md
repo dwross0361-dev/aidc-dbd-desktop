@@ -1,3 +1,20 @@
+# AIDC DBD Desktop 2.0.44 (builder HS-v1.52, site runner 1.9.0)
+
+- **XL .run: no more silent stop.** At 4,096 racks, two deploy-package files grew past JavaScript's longest string (536,870,888 characters): `spectrum-x/topology.json` (about 950 M characters) and `acceptance/cabling-expected.csv` (about 840 M). Building them failed, the failure was swallowed, and the site runner waited with nothing to report.
+  - Both files are now written as bytes past their size. A test with the size limit forced low gives byte-identical files, and the .run payload matches 2.0.43.
+  - A failed .run build now stops the site runner within seconds, with the cause and where it happened.
+  - A .run or deploy package written with a failed section (an `ERROR` file) now stops the site runner with "must not be delivered", as a package with a failed export already does.
+- **Site runner watchdog, sharper.**
+  - It says when the builder is inside one long native call (no stack yet) instead of going quiet.
+  - It logs `still: …` every 10 minutes when the status line hasn't changed.
+  - It logs page errors as they happen.
+- **The physical model is derived once per site-runner job.** The .run reuses the package's model of the same design, keyed on it. The configurations are still derived separately in each build, so parity still compares two independent derivations.
+- **Deploy → installer in the app runs the site runner** (Final package and .run, with the fingerprint, the failed-export gate and parity), relabeled "Build installer (.run) — site runner".
+  - "Quick .run (this window, no checks)" stays for labs and test builds, up to 512 racks.
+  - On a design too large to open Deploy in the window, the memory guard offers the site runner instead of refusing.
+  - The builder opened in a browser is unchanged, and so is the Site runner menu.
+- 25-design regression: identical source of truth, configurations and .run payloads; parity holds on all 25.
+
 # AIDC DBD Desktop 2.0.43 (builder HS-v1.51, site runner 1.8.0)
 
 - **XL source of truth in parts.** The 4,096-rack Final package finished every step, then stopped on one file: `sot.json` was over 4 GB.
