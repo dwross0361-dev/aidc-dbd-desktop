@@ -908,6 +908,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   <div id="mgmt-target" style="max-height:calc(92vh - 100px);overflow:auto;position:relative"></div>
 </div></div>
 
+<style>#deploy-light{display:none}#deploy-modal.xl #deploy-light{display:block}#deploy-modal.xl #deploycopy,#deploy-modal.xl #deploydownload,#deploy-modal.xl #deploybundle,#deploy-modal.xl #deployrunq,#deploy-modal.xl .deploy-tab,#deploy-modal.xl #deploy-osrow,#deploy-modal.xl #deploy-out,#deploy-modal.xl #deploy-warn{display:none!important}</style>
 <div id="deploy-modal" class="rmodal"><div class="modal-box">
   <h3><span>Deploy <span style="font-family:var(--mono);font-size:11px;color:var(--muted)">&middot; ZTP bootstrap + PyEZ push</span></span>
     <span>
@@ -937,6 +938,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     <label style="font-family:var(--mono);font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px" title="A second provisioning host at the next services address: Kea hot-standby pair, the cores relay to both, the estate service syncs its state to it"><input type="checkbox" id="provha" autocomplete="off"> Standby provisioning host</label>
     <code id="deployrunhint" style="font-family:var(--mono);font-size:10.5px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:2px 7px"></code>
   </div>
+  <div id="deploy-light" style="font-family:var(--body);font-size:13px;line-height:1.55"></div>
   <pre id="deploy-out" style="margin:0;max-height:56vh;overflow:auto;background:#1A1F24;color:#E4E6E2;border-radius:8px;padding:14px;font-family:var(--mono);font-size:12px;line-height:1.5;white-space:pre"></pre>
 </div></div>
 
@@ -944,7 +946,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.53';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.54';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   var RADIX=64, CAGE=800;
   // ---- FABRIC PROFILE (parameterized per accelerator platform) ----------------------------------------
   // rails == accelerators per host. Each accelerator instance gets its own rail leaf, which is what
@@ -28155,6 +28157,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
   }
   function openDeploy(){
     if(!cfgSwitches().length){ setStatus('Build a fabric first'); return; }
+    document.getElementById('deploy-modal').classList.remove('xl');   // HS v1.54: the full form
     renderDeployModal();
     document.getElementById('deploy-modal').classList.add('on');
   }
@@ -31407,7 +31410,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(cmd).then(function(){setStatus('Copied run command: '+cmd);},function(){setStatus('Copy failed');});}
     else setStatus('Copy not supported');
   };
-  document.getElementById('closedeploy').onclick=function(){document.getElementById('deploy-modal').classList.remove('on');};
+  document.getElementById('closedeploy').onclick=function(){var m=document.getElementById('deploy-modal'); m.classList.remove('on'); m.classList.remove('xl');};   // HS v1.54: and the light form
   function deployShownText(){
     if(deployView==='installer')return genInstaller(deployOS);
     if(deployView==='bootstrap'){   // every device's own bootstrap, in its OS's form (was Junos for all)
@@ -32548,10 +32551,24 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       renderMgmtModal=quiet(renderMgmtModal); renderBoM=quiet(renderBoM); renderFacility=quiet(renderFacility); renderRelease=quiet(renderRelease);
       // the memory guard: views still built in the window check its free memory first on a large design
       var guard=function(id, what){ var b=document.getElementById(id); if(!b) return; var o=b.onclick; b.onclick=function(){
-        if(bigD()){ try{ var pm=performance.memory; if(pm && pm.usedJSHeapSize>0.5*pm.jsHeapSizeLimit){ if(id==='deploybtn' && window.__aidcDeskJob && confirm('This '+byType('rack').length.toLocaleString('en-US')+'-rack design is too large to open Deploy in this window.\n\nBuild the Final package and the .run with the site runner instead?')){ window.__aidcDeskJob('both'); return; }   // HS v1.52
-          setStatus('⚠ '+what+' was not opened: this '+byType('rack').length.toLocaleString('en-US')+'-rack design already uses '+Math.round(pm.usedJSHeapSize/1048576).toLocaleString('en-US')+' MB of the window’s '+Math.round(pm.jsHeapSizeLimit/1048576).toLocaleString('en-US')+' MB, and building it here could crash the window. The Blueprint package carries it.'); return; } }catch(e){} }
+        if(bigD()){ try{ var pm=performance.memory; if(pm && pm.usedJSHeapSize>0.5*pm.jsHeapSizeLimit){ setStatus('⚠ '+what+' was not opened: this '+byType('rack').length.toLocaleString('en-US')+'-rack design already uses '+Math.round(pm.usedJSHeapSize/1048576).toLocaleString('en-US')+' MB of the window’s '+Math.round(pm.jsHeapSizeLimit/1048576).toLocaleString('en-US')+' MB, and building it here could crash the window. The Blueprint package carries it.'); return; } }catch(e){} }
         return o && o.apply(this, arguments); }; };
-      guard('renderbtn', 'Render'); guard('febtn', 'FE Render'); guard('cfgbtn', 'Config'); guard('deploybtn', 'Deploy');
+      guard('renderbtn', 'Render'); guard('febtn', 'FE Render'); guard('cfgbtn', 'Config');
+      (function(){ var b=document.getElementById('deploybtn'); if(!b) return; var o=b.onclick;   // HS v1.54: the light Deploy panel
+        b.onclick=function(){ if(!bigD()) return o && o.apply(this, arguments);
+          if(!byType('rack').length){ setStatus('Build a fabric first'); return; }
+          var m=document.getElementById('deploy-modal'), L=document.getElementById('deploy-light'), w=document.getElementById('deploy-warn');
+          var cli=((document.getElementById('clientname')||{}).value||'').trim().replace(/[^A-Za-z0-9]/g,'')||'gpu-fabric', bn=custCodeVal()?identBuild():'(set the customer code first)';
+          if(w) w.innerHTML='';
+          L.innerHTML='<div style="font-size:14px;margin-bottom:8px"><b>'+escHtml(bn)+'</b> &middot; '+byType('rack').length.toLocaleString('en-US')+' racks</div>'
+            +'<p style="margin:0 0 8px">At this size Deploy runs in the <b>site runner</b>. <b>&#9654; Build installer (.run) &mdash; site runner</b> builds the Final package and the .run in its own process: '
+            +'it checks the design fingerprint, stops on any failed export, and checks every device configuration in the .run against the package (parity). Progress shows in the site runner panel.</p>'
+            +'<p style="margin:0 0 8px">This window does not hold the configurations, so the previews (installer, ZTP bootstrap, DHCP, push script) are not shown here; '
+            +'every file is in the Final package (<code>06-device-configs/</code>) and in the .run.</p>'
+            +'<p style="margin:0 0 8px">The files land in a new job folder in the project folder: <code>'+escHtml(custCodeVal()?identBuild():'BUILD')+'-Blueprint-Final.zip</code>, <code>'+escHtml(cli)+'-deploy-'+escHtml(BUILDER_VER)+'.run</code> and <code>site-runner.log</code>. '
+            +'Check the log for the parity line and <b>done:</b>, then copy the .run to the provisioning host: <code>sudo bash '+escHtml(cli)+'-deploy-'+escHtml(BUILDER_VER)+'.run</code>.</p>'
+            +'<p style="margin:0;color:var(--muted);font-size:12px">The same job is under Site runner &rarr; Final package and .run. At this size a run takes hours; nothing starts until you click the button.</p>';
+          m.classList.add('xl'); m.classList.add('on'); }; })();
     }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', hook); else setTimeout(hook, 0);
   })();

@@ -1,3 +1,12 @@
+# AIDC DBD Desktop 2.0.46 (builder HS-v1.54, site runner 1.9.0)
+
+- **Deploy on a large design opens a light Deploy panel** instead of a yes/no box. Above 512 racks in the app, Deploy shows the same panel without the configuration previews the window can't hold. The panel gives:
+  - the build number;
+  - what the site runner does (fingerprint, failed-export gate, parity);
+  - where the files land, with the command to run the .run on the provisioning host;
+  - the **▶ Build installer (.run) — site runner** button. Nothing starts until you click it.
+  - Smaller designs and the builder opened in a browser keep the full panel.
+
 # AIDC DBD Desktop 2.0.45 (builder HS-v1.53, site runner 1.9.0)
 
 Redundancy pass. Efficiency: nothing derived or shipped twice without need. Effectiveness: nothing necessary dropped.
