@@ -908,7 +908,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   <div id="mgmt-target" style="max-height:calc(92vh - 100px);overflow:auto;position:relative"></div>
 </div></div>
 
-<style>#deploy-light{display:none}#deploy-modal.xl #deploy-light{display:block}#deploy-modal.xl #deploycopy,#deploy-modal.xl #deploydownload,#deploy-modal.xl #deploybundle,#deploy-modal.xl #deployrunq,#deploy-modal.xl .deploy-tab,#deploy-modal.xl #deploy-osrow,#deploy-modal.xl #deploy-out,#deploy-modal.xl #deploy-warn{display:none!important}</style>
+<style>#deploy-light{display:none}#deploy-modal.xl #deploy-light{display:block}#deploy-modal.xl #deploycopy,#deploy-modal.xl #deploydownload,#deploy-modal.xl #deploybundle,#deploy-modal.xl #deployrunq,#deploy-modal.xl .deploy-tab,#deploy-modal.xl #deploy-osrow,#deploy-modal.xl #deploy-out,#deploy-modal.xl #deploy-warn{display:none!important}#deploy-modal.xl .modal-box{width:560px;max-width:94vw;padding:16px 18px}#deploy-modal.xl h3{flex-wrap:wrap;gap:8px}#deploy-modal.xl h3>span:first-child>span{display:none}#deploy-light p{margin:0 0 6px}#deploy-light code{font-size:11px;white-space:nowrap}</style>
 <div id="deploy-modal" class="rmodal"><div class="modal-box">
   <h3><span>Deploy <span style="font-family:var(--mono);font-size:11px;color:var(--muted)">&middot; ZTP bootstrap + PyEZ push</span></span>
     <span>
@@ -946,7 +946,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.54';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.55';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   var RADIX=64, CAGE=800;
   // ---- FABRIC PROFILE (parameterized per accelerator platform) ----------------------------------------
   // rails == accelerators per host. Each accelerator instance gets its own rail leaf, which is what
@@ -32560,14 +32560,13 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
           var m=document.getElementById('deploy-modal'), L=document.getElementById('deploy-light'), w=document.getElementById('deploy-warn');
           var cli=((document.getElementById('clientname')||{}).value||'').trim().replace(/[^A-Za-z0-9]/g,'')||'gpu-fabric', bn=custCodeVal()?identBuild():'(set the customer code first)';
           if(w) w.innerHTML='';
-          L.innerHTML='<div style="font-size:14px;margin-bottom:8px"><b>'+escHtml(bn)+'</b> &middot; '+byType('rack').length.toLocaleString('en-US')+' racks</div>'
-            +'<p style="margin:0 0 8px">At this size Deploy runs in the <b>site runner</b>. <b>&#9654; Build installer (.run) &mdash; site runner</b> builds the Final package and the .run in its own process: '
-            +'it checks the design fingerprint, stops on any failed export, and checks every device configuration in the .run against the package (parity). Progress shows in the site runner panel.</p>'
-            +'<p style="margin:0 0 8px">This window does not hold the configurations, so the previews (installer, ZTP bootstrap, DHCP, push script) are not shown here; '
-            +'every file is in the Final package (<code>06-device-configs/</code>) and in the .run.</p>'
-            +'<p style="margin:0 0 8px">The files land in a new job folder in the project folder: <code>'+escHtml(custCodeVal()?identBuild():'BUILD')+'-Blueprint-Final.zip</code>, <code>'+escHtml(cli)+'-deploy-'+escHtml(BUILDER_VER)+'.run</code> and <code>site-runner.log</code>. '
-            +'Check the log for the parity line and <b>done:</b>, then copy the .run to the provisioning host: <code>sudo bash '+escHtml(cli)+'-deploy-'+escHtml(BUILDER_VER)+'.run</code>.</p>'
-            +'<p style="margin:0;color:var(--muted);font-size:12px">The same job is under Site runner &rarr; Final package and .run. At this size a run takes hours; nothing starts until you click the button.</p>';
+          var rn=escHtml(cli)+'-deploy-'+escHtml(BUILDER_VER)+'.run';   // HS v1.55: compact
+          L.innerHTML='<div style="font-size:14px;margin-bottom:6px"><b>'+escHtml(bn)+'</b> &middot; '+byType('rack').length.toLocaleString('en-US')+' racks</div>'
+            +'<p>Builds the Final package and the .run in the <b>site runner</b>: fingerprint check, stop on any failed export, parity between them. Progress shows in the site runner panel.</p>'
+            +'<p style="color:var(--muted);font-size:12px">No previews at this size; every file is in the package (<code>06-device-configs/</code>).</p>'
+            +'<p style="font-size:12px">Job folder: <code>'+escHtml(custCodeVal()?identBuild():'BUILD')+'-Blueprint-Final.zip</code>, <code>'+rn+'</code>, <code>site-runner.log</code>. '
+            +'<br>Then on the provisioning host: <code>sudo bash '+rn+'</code></p>'
+            +'<p style="color:var(--muted);font-size:11.5px;margin:0">Takes hours at this size; nothing starts until you click the button.</p>';
           m.classList.add('xl'); m.classList.add('on'); }; })();
     }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', hook); else setTimeout(hook, 0);

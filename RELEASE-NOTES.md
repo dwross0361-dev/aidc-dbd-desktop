@@ -1,3 +1,7 @@
+# AIDC DBD Desktop 2.0.47 (builder HS-v1.55, site runner 1.9.0)
+
+- **The light Deploy panel is compact.** It's now a 560-pixel box instead of a full-width panel, with the same button, the same facts in fewer words, and file names that don't break across lines.
+
 # AIDC DBD Desktop 2.0.46 (builder HS-v1.54, site runner 1.9.0)
 
 - **Deploy on a large design opens a light Deploy panel** instead of a yes/no box. Above 512 racks in the app, Deploy shows the same panel without the configuration previews the window can't hold. The panel gives:
