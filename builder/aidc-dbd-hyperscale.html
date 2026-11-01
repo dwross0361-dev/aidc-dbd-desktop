@@ -944,7 +944,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.52';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.53';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   var RADIX=64, CAGE=800;
   // ---- FABRIC PROFILE (parameterized per accelerator platform) ----------------------------------------
   // rails == accelerators per host. Each accelerator instance gets its own rail leaf, which is what
@@ -6761,11 +6761,12 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     el.style.color = have===tot ? 'var(--teal)' : 'var(--muted)';
   }
 
+  function designSaveName(cli, n){ try{ if(custCodeVal()) return identBuild()+'.json'; }catch(e){} return (cli||'gpu-fabric')+(n?'-'+n+'rack':'')+'.json'; }   // HS v1.53: {CUST}-{SITE}-{size}-{seq}
   function save(){
     try{
       var cli=(document.getElementById('clientname').value||'').trim().replace(/[^A-Za-z0-9]/g,'');
       var nRack=byType('rack').length;
-      var suggested=(cli||'gpu-fabric')+(nRack?'-'+nRack+'rack':'')+'.json';
+      var suggested=designSaveName(cli, nRack);   // HS v1.53: the build number
       var fname=window.prompt('Save topology as:', suggested);
       if(fname===null){ setStatus('Save canceled'); return; }   // user hit Cancel
       fname=(fname||suggested).trim();
@@ -9721,7 +9722,61 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
            '\u2026':'...','\u00d7':'x','\u2265':'>=','\u2264':'<=','\u00b7':'-','\u2022':'-','\u00a0':' ','\u00b0':' deg','\u00b5':'u','\u2248':'~','\u2260':'!=','\u00a7':'sec '};
     return t.replace(/[^\x00-\x7f]/g, function(c){ return M[c]!==undefined ? M[c] : '?'; });
   }
+  // HS v1.53: the script fetches the switch's configuration from the provisioning service (the configs/ file the package
+  // and the .run carry, the one parity checks) instead of carrying a second copy of it.
   function genCumulusZtp(d){
+    var cp=String(d.cfg||''); if(!cp) return genCumulusZtpEmbedded(d);
+    var mp=mgmtPlan(), host=String(d.name).replace(/[^A-Za-z0-9_-]/g,'-');
+    var L=['#!/bin/bash','# CUMULUS-AUTOPROVISIONING',
+      '# ztp/'+host+'.sh -- Cumulus Linux zero-touch provisioning for '+host+' ('+(d.role||'')+')',
+      '# Served at http://'+mp.prov+'/ztp/'+host+'.sh and handed out as DHCP option 239.',
+      '# Fetches the switch\'s NVUE configuration ('+cp+') from the provisioning service, applies it, checks the cabling,',
+      '# and exits 0 so ZTP marks the switch provisioned.',
+      'set -e',
+      'exec >/var/log/ztp-'+host+'.log 2>&1',
+      'echo "ZTP start: $(date)"',
+      '# any failure checks in with the estate service (the card shows Failed and why; it used to sit at Bootstrap)',
+      'CI="http://'+mp.prov+'/ci/'+host+'"',
+      'ciq(){ printf "%s" "$1" | tr -c "A-Za-z0-9._~:/=,()-" " " | tr -s " " | head -c 300 | sed "s/ /%20/g"; }',
+      'ccurl(){ curl "$@" 2>/dev/null || ip vrf exec mgmt curl "$@"; }   # HS v1.22: eth0 is in the management VRF',
+      'ci_fail(){ trap - ERR; echo "FAIL: $1"; ccurl -fs -m 5 "$CI/fail?msg=$(ciq "$1")" >/dev/null 2>&1 || true; exit 1; }',
+      "trap 'ci_fail \"line $LINENO ($(echo \"$BASH_COMMAND\" | cut -d\" \" -f1-4)): $(tail -n 1 /var/log/ztp-"+host+".log)\"' ERR"];
+    osZtpCumulus(d, host, mp).forEach(function(l){ L.push(l); });
+    L.push('# ---- configuration: fetched from the provisioning service ('+cp+'; the service serves it to this switch only)');
+    L.push('CFG_URL="http://'+mp.prov+'/'+cp+'"; CFG=/tmp/ztp-'+host+'.conf');
+    L.push('ok=0; for i in 1 2 3 4 5; do if ccurl -fsS -m 120 -o "$CFG" "$CFG_URL"; then ok=1; break; fi; echo "fetch $CFG_URL: try $i failed"; sleep 15; done');
+    L.push('[ "$ok" = 1 ] || ci_fail "could not fetch '+cp+' from the provisioning service"');
+    L.push('grep -qE "^nv set system hostname '+host+'[[:space:]]*$" "$CFG" || ci_fail "'+cp+' does not set hostname '+host+'"');
+    L.push('grep -v "^[[:space:]]*nv config apply" "$CFG" > "$CFG.sh"');
+    L.push('. "$CFG.sh"');
+    L.push('nv config apply -y');
+    L.push('# HS v1.21: the factory account (cumulus, default password) is locked and expired; the switch is managed as '+ADMIN_USER+' (secrets.env)');
+    L.push('passwd -l cumulus >/dev/null && chage -E 0 cumulus');
+    L.push('# ---- HS v1.25: cabling check (LLDP against the cable plan), right after the apply: Cumulus switch ports stay down until configured.');
+    L.push('# A neighbor that is not where the plan puts it stops ZTP here, before the switch checks in as configured. A neighbor still in its');
+    L.push('# factory state (hostname cumulus) or not up yet is not checked. The planned neighbors are read from the fetched configuration.');
+    L.push('EXP=$(sed -nE "s/.*interface ([^ ]+) link mtu [0-9]+[[:space:]]+#[[:space:]]*->[[:space:]]*([^ ]+)[[:space:]]+([^ ]+).*/\\1 \\2 \\3/p" "$CFG")');
+    L.push('if [ -n "$EXP" ] && command -v lldpctl >/dev/null 2>&1; then');
+    L.push('  W=-1; for i in $(seq 1 12); do N=$(lldpctl -f keyvalue 2>/dev/null | grep -c "\\.chassis\\.name=" || true); if [ "$N" -gt 0 ] && [ "$N" -eq "$W" ]; then break; fi; W=$N; sleep 10; done');
+    L.push('  KV=$(lldpctl -f keyvalue 2>/dev/null || true)');
+    L.push('  BAD=$(printf "%s\\n" "$EXP" | while read -r lp peer pp; do');
+    L.push('    [ -n "$lp" ] || continue');
+    L.push('    nb=$(printf "%s\\n" "$KV" | sed -n "s/^lldp\\.$lp\\.chassis\\.name=//p" | head -n 1)');
+    L.push('    np=$(printf "%s\\n" "$KV" | sed -n "s/^lldp\\.$lp\\.port\\.ifname=//p" | head -n 1)');
+    L.push('    [ -n "$np" ] || np=$(printf "%s\\n" "$KV" | sed -n "s/^lldp\\.$lp\\.port\\.descr=//p" | head -n 1)');
+    L.push('    if [ -z "$nb" ] || [ "$nb" = "cumulus" ]; then continue; fi');
+    L.push('    if [ "${nb%%.*}" != "$peer" ] || [ "$np" != "$pp" ]; then echo "$lp expected $peer $pp, saw ${nb%%.*} $np"; fi');
+    L.push('  done)');
+    L.push('  if [ -n "$BAD" ]; then echo "$BAD"; ci_fail "cabling check: $(printf "%s" "$BAD" | head -n 3 | tr "\\n" ";") -- fix the cable, then Retry and on the switch: sudo ztp -R"; fi');
+    L.push('  echo "cabling check: no miswire seen ($(printf "%s\\n" "$EXP" | grep -c . || true) planned links)"');
+    L.push('fi');
+    L.push('rm -f "$CFG.sh"');
+    L.push('ccurl -fsS -m 5 "http://'+mp.prov+'/ci/'+host+'/config" >/dev/null 2>&1 || true   # check-in: estate service (provision/)');
+    L.push('echo "ZTP complete: $(date)"');
+    L.push('exit 0');
+    return L.join('\n');
+  }
+  function genCumulusZtpEmbedded(d){   // HS v1.53: kept for an entry with no served configuration path
     var mp=mgmtPlan(), host=String(d.name).replace(/[^A-Za-z0-9_-]/g,'-'), cfg=genDeployConfig(d,'set','')||'';
     var L=['#!/bin/bash','# CUMULUS-AUTOPROVISIONING',
       '# ztp/'+host+'.sh -- Cumulus Linux zero-touch provisioning for '+host+' ('+(d.role||'')+')',
@@ -18484,7 +18539,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
         try{
           if(os==='iosxe'){ add(os,genIosxeZtp(d)); add(os,genDeployConfig(d,'set','')); }
           else if(os==='nxos'){ add(os,genNxosPoap(d)); add(os,genDeployConfig(d,'set','')); }
-          else if(os==='cumulus') add(os,genCumulusZtp(d));
+          else if(os==='cumulus'){ add(os,genCumulusZtp(d)); add(os,genDeployConfig(d,'set','')); }   // HS v1.53: the configuration is fetched, not inside the script
           else if(os==='eos') add(os,genEosZtpConfig(d));
           else if(os==='srl'){ add(os,genSrlZtp(d)); add(os,genDeployConfig(d,'set','')); }
           else if(os==='sros'){ add(os,genSrosZtp(d)); add(os,genSrosDay0(d)); add(os,genSrosBuild(d)); }
@@ -20088,7 +20143,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
   function tenantByT(t){ return feTenantList().filter(function(v){ return v.t===t; })[0]; }
   function tenantRtsRaw(t){ var v=tenantByT(t); if(!v) return []; var o=[rtTarget(v.l3vni), rtTarget(vniStretchedL2(t,0))]; if(nodeOn()) o.push(nodeRt()); return o; }   // + NODE (every DPU carries its node0 /31)
   function notTenantRtsRaw(t){ var o=[]; feTenantList().forEach(function(v){ if(v.t!==t){ o.push(rtTarget(v.l3vni)); o.push(rtTarget(vniStretchedL2(v.t,0))); } o.push(rtTarget(feOutVni(v))); }); return o; }
-  function tenantsInUse(){ var u={}; allDpus().forEach(function(x){ u[hostTenant(x.host)]=1; }); return Object.keys(u).map(Number).sort(function(a,b){return a-b;}); }
+  function tenantsInUse(){ if(__MEMO && __MEMO['tenantsInUse|']) return __MEMO['tenantsInUse|'];   // HS v1.53: once per build, not per front-end configuration
+    var u={}; allDpus().forEach(function(x){ u[hostTenant(x.host)]=1; }); var r=Object.keys(u).map(Number).sort(function(a,b){return a-b;}); if(__MEMO) __MEMO['tenantsInUse|']=r; return r; }
   function tnTag(t){ return 'T'+pad(t); }
   // Policy text per platform: the per-tenant allow-lists, once per tenant in use.
   function dpuTenantPolicy(os){
@@ -24772,6 +24828,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       m[1].split(',').forEach(function(p){ if(/^swp\d+(s\d+)?$/.test(p) && !seen[p]){ seen[p]=1; o.push(p); } }); });
     return o.filter(function(p){ return !(/^swp\d+$/.test(p) && seen[p+'s0']); });   // a broken-out cage exists only as its lanes
   }
+  function airDev(id){ return dev(id); }   // HS v1.53: airSlice's own dev() hides the index
   function airSlice(){
     var cu=deployPlanes().all.filter(function(d){ return deployOs(d)==='cumulus' && d.gen; }), by={}, T={};
     var nm=function(a,b){ return _NATC.compare(String(a.name),String(b.name)); };
@@ -24781,13 +24838,13 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     var role=function(re){ return cu.filter(function(d){ return re.test(d.role||''); }).sort(nm); };
     var out=[], add=function(d, why){ if(d && out.every(function(x){ return x.d.name!==d.name; })) out.push({d:d, why:why}); };
     var SX=null; try{ SX=spxMode()?spxPlan():null; }catch(e){}
-    var dev=function(d){ return d.devId!=null?devs.filter(function(x){ return x.id===d.devId; })[0]:null; };
+    var dev=function(d){ return d.devId!=null?airDev(d.devId):null; };   // HS v1.53: the device index, not a scan of every device
     var plane=function(d){ var x=dev(d); return (SX&&x)?SX.planeOf(x.rail||0):0; }, rail=function(d){ var x=dev(d); return x?(x.rail||0):0; };
     var bl=role(/^backend leaf/);
     if(bl.length){ var a=bl[0], sp=peersOf(a, /-SP\d+$/).slice(0,2);
       add(a, 'back-end rail leaf, rail '+rail(a)+', plane '+plane(a));
       sp.forEach(function(x){ add(x, 'back-end spine'); });
-      var b=bl.filter(function(x){ return rail(x)!==rail(a) && plane(x)===plane(a) && sp.length && peersOf(x, /-SP\d+$/).some(function(y){ return y.name===sp[0].name; }); })[0];
+      var b=null; for(var _bi=0; _bi<bl.length && !b; _bi++){ var x=bl[_bi]; if(rail(x)!==rail(a) && plane(x)===plane(a) && sp.length && peersOf(x, /-SP\d+$/).some(function(y){ return y.name===sp[0].name; })) b=x; }   // HS v1.53: the first match; was every leaf's configuration
       add(b, 'back-end rail leaf, rail '+(b?rail(b):'')+', plane '+(b?plane(b):''));
       var p1=bl.filter(function(x){ return plane(x)!==plane(a); })[0]; add(p1, 'back-end rail leaf, plane '+(p1?plane(p1):'')+' (its spines are outside the slice)');
       if(sp.length){ var ss=peersOf(sp[0], /-SSP\d+$/)[0]; add(ss, 'back-end super-spine'); } }
@@ -27163,7 +27220,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       // switch above from its own end of the link (OB-259). Kea serves them as subnets of their own; no identity needed.
       try{ if(typeof oobEvpn==='function' && oobEvpn() && d.gen!=='mcs'){ var _fl=oobFab().links.filter(function(x){ return x.dn===d.name; });
         if(_fl.length) e.ztp_links=_fl.map(function(x){ return {subnet:x.net, ip:x.dnIp, router:x.upIp, via:x.up+' '+x.upPort}; }); } }catch(x){}
-      e.planned_config={junos:d.cfg||'', cumulus:'ztp/'+h+'.sh', eos:'eos/'+h+'.cfg', srl:'srl/'+h+'.cfg', sros:'sros/'+h+'-build.cfg',
+      e.planned_config={junos:d.cfg||'', cumulus:d.cfg||('ztp/'+h+'.sh'), eos:'eos/'+h+'.cfg', srl:'srl/'+h+'.cfg', sros:'sros/'+h+'-build.cfg',
                         nxos:'tftp/'+h+'.cfg', iosxe:'tftp/'+h+'.conf', iosxr:'xr/'+h+'.cfg'}[os]||'';
       if(os==='nxos') e.tftp_files=['poap-'+h+'.py', h+'.cfg'];
       if(os==='iosxe') e.tftp_files=[h+'.conf'];
@@ -27179,7 +27236,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
         else e.config_signal='reachable';   // chassis-cluster secondary: the primary's push configures it
         e.verify_ports=[22,830];
       } else if(os==='cumulus'){
-        e.files=['ztp/'+h+'.sh']; e.dhcp={sn_forms:[], options:[opt('cumulus-provision-url',url('ztp/'+h+'.sh'),{'always-send':true})]};
+        e.files=['ztp/'+h+'.sh'].concat(d.cfg?[d.cfg]:[]); e.dhcp={sn_forms:[], options:[opt('cumulus-provision-url',url('ztp/'+h+'.sh'),{'always-send':true})]};   // HS v1.53: + the configuration the script fetches
       } else if(os==='eos'){
         e.files=['eos/'+h+'.sh','eos/'+h+'.cfg']; e.dhcp={sn_forms:[], options:[opt('boot-file-name',url('eos/'+h+'.sh'),{'always-send':true})]};
       } else if(os==='srl'){
@@ -27918,7 +27975,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
   }
   var OS_INFO={
     junos:  {name:'Juniper Junos',              boot:'ZTP: DHCP (Juniper options, HTTP transfer) -> bootstrap/<device>.conf (OOB IP + NETCONF) -> push_configs.py loads the full config', files:'bootstrap/<device>.conf, configs/', hash:'<SET-ROOT-HASH> and <SET-ADMIN-HASH> (openssl passwd -6, or "request system generate-password")'},
-    cumulus:{name:'NVIDIA Cumulus Linux',       boot:'ZTP: DHCP option 239 -> ztp/<device>.sh runs the full NVUE configuration and applies it', files:'ztp/<device>.sh', hash:'<SET-ADMIN-HASH> (openssl passwd -6)'},
+    cumulus:{name:'NVIDIA Cumulus Linux',       boot:'ZTP: DHCP option 239 -> ztp/<device>.sh fetches its NVUE configuration (configs/...) from the provisioning service, applies it and checks the cabling', files:'ztp/<device>.sh + configs/.../<device>.conf', hash:'<SET-ADMIN-HASH> (openssl passwd -6)'},
     eos:    {name:'Arista EOS',                 boot:'ZTP: DHCP option 67 -> eos/<device>.sh stages the target release, installs eos/<device>.cfg as startup-config; the switch reboots into both', files:'eos/<device>.sh, eos/<device>.cfg', hash:'<SET-ADMIN-HASH> (openssl passwd -6, EOS sha512)'},
     nxos:   {name:'Cisco NX-OS',                boot:'POAP: DHCP option 66 + 67 (lease >= 3600 s) -> TFTP tftp/poap-<device>.py -> the script schedules tftp/<device>.cfg -> one reload applies it', files:'tftp/poap-<device>.py, tftp/<device>.cfg', hash:'<SET-ADMIN-HASH> (openssl passwd -6) -- substitute BEFORE setup.sh, which stamps each POAP script\u2019s md5'},
     iosxe:  {name:'Cisco IOS XE',               boot:'Autoinstall: DHCP (filename + next-server) -> TFTP tftp/<device>.conf -> apply -> save', files:'tftp/<device>.conf, ztp/<device>.py (optional, needs guestshell)', hash:'<SET-ADMIN-TYPE9-HASH> (a $9$ scrypt hash)'},
@@ -32407,8 +32464,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       if(d.onLayoutFileRequest) d.onLayoutFileRequest(function(){ return siteRunnerFile(); });   // HS v1.26: Refresh from Fabric Designer
       var deskSave=function(){ if(!byType('rack').length) return null;   // HS v1.08
         var cli=(document.getElementById('clientname').value||''), c2=cli.trim().replace(/[^A-Za-z0-9]/g,''), n=byType('rack').length;
-        if(n>512 && d.onSaveStream) return {name:(c2||'gpu-fabric')+(n?'-'+n+'rack':'')+'.json', stream:true, racks:n};   // HS v1.37: written in parts when saved
-        return {name:(c2||'gpu-fabric')+(n?'-'+n+'rack':'')+'.json', text:JSON.stringify(designSaveObject(cli),null,2), racks:n}; };
+        if(n>512 && d.onSaveStream) return {name:designSaveName(c2, n), stream:true, racks:n};   // HS v1.37: written in parts when saved; HS v1.53: the build number
+        return {name:designSaveName(c2, n), text:JSON.stringify(designSaveObject(cli),null,2), racks:n}; };
       if(d.onSaveStream) d.onSaveStream(async function(id){   // HS v1.37: the design in parts, straight to the file
         var cli=(document.getElementById('clientname').value||''), blob=jsonBytes1(designSaveObject(cli), true), STEP=8388608;
         for(var i=0;i<blob.size;i+=STEP){ var b=new Uint8Array(await blob.slice(i, i+STEP).arrayBuffer()); await d.saveChunk(id, b, false); }
@@ -35158,7 +35215,7 @@ class Phase2Mixin(object):
             return None
         head = []
         for l in orig:
-            if l.startswith("nv "):
+            if l.startswith("nv ") or l.startswith("# ---- configuration: fetched"):   # HS v1.53: the script fetches the plan
                 break
             head.append(l)
         body = head + [l for l in bk if l.startswith("nv set") or l.startswith("nv unset")] + [

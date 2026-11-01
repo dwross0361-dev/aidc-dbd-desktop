@@ -1,3 +1,22 @@
+# AIDC DBD Desktop 2.0.45 (builder HS-v1.53, site runner 1.9.0)
+
+Redundancy pass. Efficiency: nothing derived or shipped twice without need. Effectiveness: nothing necessary dropped.
+
+- **Cumulus ZTP fetches the switch's configuration instead of carrying a copy of it.** `ztp/<switch>.sh` now:
+  1. fetches `configs/.../<switch>.conf` from the provisioning service, which serves it to that switch only and refuses it while a secret is unfilled;
+  2. checks the file sets this switch's hostname;
+  3. applies it and runs the same LLDP cabling check, reading the planned neighbors from the fetched file.
+  - **One copy in the .run.** The .run payload is about 35% smaller (a 1,152-GPU test design goes from 46 to 30 MB), and secrets no longer sit in a second copy under `ztp/`.
+  - **The configuration a switch applies is now the one the parity check verifies.** Before, nothing checked the copy inside the script.
+  - **Tested on a mock switch** (back-end leaf, OOB switch, border leaf): the identical NVUE command sequence as the old script, and the same check-in. A wrong file or a failed fetch stops ZTP with the reason.
+  - **Cabling-check expectations** are identical on all 3,864 Cumulus switches across the 25 designs.
+  - The provisioning plan ties the configuration file to its switch, and the service's RMA restore from backup cuts the script at the fetch.
+  - **CONFIRM:** prove one Cumulus ZTP on real hardware or in DSX Air before delivery.
+- **Each switch configuration is generated once per build.** Choosing the DSX Air test slice used to generate every back-end leaf's configuration just to pick two leaves. It now stops at the first match and finds devices through the index. Generations per .run dropped from two per switch to one, plus about a dozen for the Air slice itself.
+- **The DPU tenant scan runs once per build** instead of once for every front-end configuration.
+- **Save suggests the build number,** for example `VORT-ORD-295K-001.json`. Without a customer code it falls back to the old name.
+- **25-design regression:** parity holds on all 25. The configurations, source of truth and every other file are unchanged, except the new ZTP scripts, the provisioning plan and its design digest, the secrets manifest (no `ztp/` copies) and the OS table text.
+
 # AIDC DBD Desktop 2.0.44 (builder HS-v1.52, site runner 1.9.0)
 
 - **XL .run: no more silent stop.** At 4,096 racks, two deploy-package files grew past JavaScript's longest string (536,870,888 characters): `spectrum-x/topology.json` (about 950 M characters) and `acceptance/cabling-expected.csv` (about 840 M). Building them failed, the failure was swallowed, and the site runner waited with nothing to report.
