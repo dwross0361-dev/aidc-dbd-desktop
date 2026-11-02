@@ -1,0 +1,16 @@
+Cisco Nexus Operating System (NX-OS) Software
+TAC support: http://www.cisco.com/tac
+Copyright (C) 2002-2025, Cisco and/or its affiliates.
+
+Software
+  BIOS: version 01.12
+  NXOS: version 10.4(5)
+  BIOS compile time:  06/14/2024
+  NXOS image file is: bootflash:///nxos64-cs.10.4(5).bin
+  NXOS compile time:  3/20/2025 12:00:00 [03/20/2025 20:21:22]
+
+Hardware
+  cisco Nexus9000 C9332D-GX2B Chassis
+  Intel(R) Xeon(R) CPU D-1633N @ 2.50GHz with 32737096 kB of memory.
+  Processor Board ID FDO24070001
+  Device name: T-NXOS

@@ -1,0 +1,8 @@
+
+Hostname: T-JUNOS-B
+Model: qfx5240-64od
+Junos: 24.4R1.9
+JUNOS OS Kernel 64-bit  [20240910.4f3a1c2_builder_stable_13]
+JUNOS OS libs [20240910.4f3a1c2_builder_stable_13]
+JUNOS OS runtime [20240910.4f3a1c2_builder_stable_13]
+JUNOS Packet Forwarding Engine Support (qfx-ms-fpc) [24.4R1.9]

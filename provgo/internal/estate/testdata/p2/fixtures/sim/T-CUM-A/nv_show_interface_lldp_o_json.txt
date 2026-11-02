@@ -1,0 +1,62 @@
+{
+    "swp51": {
+        "lldp": {
+            "neighbor": {
+                "T-CUM-SP1": {
+                    "chassis": {
+                        "chassis-id": "48:b0:2d:00:00:01",
+                        "system-name": "T-CUM-SP1",
+                        "system-description": "Cumulus Linux version 5.18.3",
+                        "management-address-ipv4": "192.168.0.11"
+                    },
+                    "port": {
+                        "name": "swp1",
+                        "description": "swp1",
+                        "ttl": 120,
+                        "type": "ifname"
+                    }
+                }
+            }
+        }
+    },
+    "swp52": {
+        "lldp": {
+            "neighbor": {
+                "T-CUM-SP2": {
+                    "chassis": {
+                        "chassis-id": "48:b0:2d:00:00:01",
+                        "system-name": "T-CUM-SP2",
+                        "system-description": "Cumulus Linux version 5.18.3",
+                        "management-address-ipv4": "192.168.0.11"
+                    },
+                    "port": {
+                        "name": "swp1",
+                        "description": "swp1",
+                        "ttl": 120,
+                        "type": "ifname"
+                    }
+                }
+            }
+        }
+    },
+    "eth0": {
+        "lldp": {
+            "neighbor": {
+                "oob-mgmt": {
+                    "chassis": {
+                        "chassis-id": "48:b0:2d:00:00:01",
+                        "system-name": "oob-mgmt",
+                        "system-description": "Cumulus Linux version 5.18.3",
+                        "management-address-ipv4": "192.168.0.11"
+                    },
+                    "port": {
+                        "name": "swp7",
+                        "description": "swp7",
+                        "ttl": 120,
+                        "type": "ifname"
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,7 @@
+{
+    "10.240.0.1": {
+        "remote-as": "65010",
+        "state": "active",
+        "type": "numbered"
+    }
+}

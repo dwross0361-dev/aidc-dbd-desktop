@@ -1,0 +1,2 @@
+Fri Oct 31 22:01:03.001 UTC
+% BGP instance 'default' not active

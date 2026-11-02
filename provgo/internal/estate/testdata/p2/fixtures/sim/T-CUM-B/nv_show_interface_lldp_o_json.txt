@@ -1,0 +1,42 @@
+{
+    "swp51": {
+        "lldp": {
+            "neighbor": {
+                "T-CUM-SP2": {
+                    "chassis": {
+                        "chassis-id": "48:b0:2d:00:00:01",
+                        "system-name": "T-CUM-SP2",
+                        "system-description": "Cumulus Linux version 5.18.3",
+                        "management-address-ipv4": "192.168.0.11"
+                    },
+                    "port": {
+                        "name": "swp2",
+                        "description": "swp2",
+                        "ttl": 120,
+                        "type": "ifname"
+                    }
+                }
+            }
+        }
+    },
+    "swp53": {
+        "lldp": {
+            "neighbor": {
+                "cumulus": {
+                    "chassis": {
+                        "chassis-id": "48:b0:2d:00:00:01",
+                        "system-name": "cumulus",
+                        "system-description": "Cumulus Linux version 5.18.3",
+                        "management-address-ipv4": "192.168.0.11"
+                    },
+                    "port": {
+                        "name": "swp9",
+                        "description": "swp9",
+                        "ttl": 120,
+                        "type": "ifname"
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,19 @@
+{
+    "TABLE_pfc": {
+        "ROW_pfc": [
+            {
+                "if_name_out": "Ethernet1/1",
+                "pfc_mode": "on",
+                "TABLE_pfc_cos": {
+                    "ROW_pfc_cos": [
+                        {
+                            "cos": 3,
+                            "rx_pause_pfc3": 1022,
+                            "tx_pause_pfc3": 331
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+}

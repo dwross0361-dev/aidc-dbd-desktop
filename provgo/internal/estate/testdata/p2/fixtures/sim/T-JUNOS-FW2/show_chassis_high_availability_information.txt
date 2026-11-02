@@ -1,0 +1,10 @@
+Node Status: ONLINE
+Local-id: 2
+
+Services Redundancy Group: 0
+        Current State: ONLINE
+
+Services Redundancy Group: 1
+        Deployment Type: ROUTING
+        Current State: ACTIVE
+        Activeness Priority: 100

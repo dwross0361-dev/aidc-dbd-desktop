@@ -1,0 +1,3 @@
+/configure system name "T-SROS-A"
+/configure port 1/1/c1/1 ethernet mtu 9212
+/configure router "Base" bgp neighbor "192.0.2.1" authentication-key "abc" hash2

@@ -1,0 +1,216 @@
+{
+    "bgp-information": [
+        {
+            "attributes": {
+                "xmlns": "http://xml.juniper.net/junos/23.4R2/junos-routing"
+            },
+            "group-count": [
+                {
+                    "data": "2"
+                }
+            ],
+            "peer-count": [
+                {
+                    "data": "3"
+                }
+            ],
+            "down-peer-count": [
+                {
+                    "data": "0"
+                }
+            ],
+            "bgp-rib": [
+                {
+                    "name": [
+                        {
+                            "data": "inet.0"
+                        }
+                    ],
+                    "total-prefix-count": [
+                        {
+                            "data": "24"
+                        }
+                    ],
+                    "active-prefix-count": [
+                        {
+                            "data": "24"
+                        }
+                    ]
+                }
+            ],
+            "bgp-peer": [
+                {
+                    "attributes": {
+                        "junos:style": "terse",
+                        "heading": "Peer                     AS      InPkt     OutPkt    OutQ   Flaps Last Up/Dwn State|#Active/Received/Accepted/Damped..."
+                    },
+                    "peer-address": [
+                        {
+                            "data": "10.200.0.0"
+                        }
+                    ],
+                    "peer-as": [
+                        {
+                            "data": "4200002000"
+                        }
+                    ],
+                    "input-messages": [
+                        {
+                            "data": "18231"
+                        }
+                    ],
+                    "output-messages": [
+                        {
+                            "data": "18010"
+                        }
+                    ],
+                    "route-queue-count": [
+                        {
+                            "data": "0"
+                        }
+                    ],
+                    "flap-count": [
+                        {
+                            "data": "1"
+                        }
+                    ],
+                    "elapsed-time": [
+                        {
+                            "data": "5d 3:12:09",
+                            "attributes": {
+                                "junos:seconds": "443529"
+                            }
+                        }
+                    ],
+                    "peer-state": [
+                        {
+                            "data": "Established",
+                            "attributes": {
+                                "junos:format": "Established"
+                            }
+                        }
+                    ],
+                    "description": [
+                        {
+                            "data": "to SP01"
+                        }
+                    ]
+                },
+                {
+                    "attributes": {
+                        "junos:style": "terse",
+                        "heading": "Peer                     AS      InPkt     OutPkt    OutQ   Flaps Last Up/Dwn State|#Active/Received/Accepted/Damped..."
+                    },
+                    "peer-address": [
+                        {
+                            "data": "10.200.0.2"
+                        }
+                    ],
+                    "peer-as": [
+                        {
+                            "data": "4200002000"
+                        }
+                    ],
+                    "input-messages": [
+                        {
+                            "data": "18231"
+                        }
+                    ],
+                    "output-messages": [
+                        {
+                            "data": "18010"
+                        }
+                    ],
+                    "route-queue-count": [
+                        {
+                            "data": "0"
+                        }
+                    ],
+                    "flap-count": [
+                        {
+                            "data": "1"
+                        }
+                    ],
+                    "elapsed-time": [
+                        {
+                            "data": "5d 3:12:09",
+                            "attributes": {
+                                "junos:seconds": "443529"
+                            }
+                        }
+                    ],
+                    "peer-state": [
+                        {
+                            "data": "Established",
+                            "attributes": {
+                                "junos:format": "Established"
+                            }
+                        }
+                    ],
+                    "description": [
+                        {
+                            "data": "to SP02"
+                        }
+                    ]
+                },
+                {
+                    "attributes": {
+                        "junos:style": "terse",
+                        "heading": "Peer                     AS      InPkt     OutPkt    OutQ   Flaps Last Up/Dwn State|#Active/Received/Accepted/Damped..."
+                    },
+                    "peer-address": [
+                        {
+                            "data": "fd00:200::1"
+                        }
+                    ],
+                    "peer-as": [
+                        {
+                            "data": "4200002000"
+                        }
+                    ],
+                    "input-messages": [
+                        {
+                            "data": "18231"
+                        }
+                    ],
+                    "output-messages": [
+                        {
+                            "data": "18010"
+                        }
+                    ],
+                    "route-queue-count": [
+                        {
+                            "data": "0"
+                        }
+                    ],
+                    "flap-count": [
+                        {
+                            "data": "1"
+                        }
+                    ],
+                    "elapsed-time": [
+                        {
+                            "data": "5d 3:12:09",
+                            "attributes": {
+                                "junos:seconds": "443529"
+                            }
+                        }
+                    ],
+                    "peer-state": [
+                        {
+                            "data": "Established",
+                            "attributes": {
+                                "junos:format": "Established"
+                            }
+                        }
+                    ],
+                    "description": [
+                        {
+                            "data": "to SP03"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

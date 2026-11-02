@@ -1,0 +1,12 @@
+Fri Oct 31 22:01:05.000 UTC
+Building configuration...
+!! IOS XR Configuration 24.4.2
+hostname T-XR-A
+username netadmin
+ group root-lr
+ secret 10 $6$abc
+!
+interface FourHundredGigE0/0/0/0
+ mtu 9216
+!
+end

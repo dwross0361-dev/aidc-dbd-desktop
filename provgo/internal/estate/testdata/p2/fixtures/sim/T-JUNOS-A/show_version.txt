@@ -1,0 +1,8 @@
+
+Hostname: T-JUNOS-A
+Model: qfx5240-64od
+Junos: 25.2X100-D30.5
+JUNOS OS Kernel 64-bit  [20240910.4f3a1c2_builder_stable_13]
+JUNOS OS libs [20240910.4f3a1c2_builder_stable_13]
+JUNOS OS runtime [20240910.4f3a1c2_builder_stable_13]
+JUNOS Packet Forwarding Engine Support (qfx-ms-fpc) [25.2X100-D30.5]

@@ -1,0 +1,48 @@
+{
+    "lldp-neighbors-information": [
+        {
+            "attributes": {
+                "junos:style": "brief"
+            },
+            "lldp-neighbor-information": [
+                {
+                    "lldp-local-port-id": [
+                        {
+                            "data": "et-0/0/0"
+                        }
+                    ],
+                    "lldp-local-parent-interface-name": [
+                        {
+                            "data": "-"
+                        }
+                    ],
+                    "lldp-remote-chassis-id-subtype": [
+                        {
+                            "data": "Mac address"
+                        }
+                    ],
+                    "lldp-remote-chassis-id": [
+                        {
+                            "data": "9c:5a:80:11:22:33"
+                        }
+                    ],
+                    "lldp-remote-port-id-subtype": [
+                        {
+                            "data": "Interface name"
+                        }
+                    ],
+                    "lldp-remote-port-id": [
+                        {
+                            "data": "et-0/0/48"
+                        }
+                    ],
+                    "lldp-remote-system-name": [
+                        {
+                            "data": "T-JUNOS-SP1.lab"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

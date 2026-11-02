@@ -1,0 +1,1 @@
+set / qos classifiers dscp-policy dscp-default dscp 26 forwarding-class fc3

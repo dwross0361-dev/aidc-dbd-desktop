@@ -1,0 +1,24 @@
+Fri Oct 31 22:01:02.345 UTC
+
+VRF: default
+------------
+BGP VRF default, state: Active
+BGP Route Distinguisher: 10.0.250.41:0
+VRF ID: 0x60000000
+BGP router identifier 10.0.250.41, local AS number 4200009100
+Non-stop routing is enabled
+BGP table state: Active
+Table ID: 0xe0000000   RD version: 1203
+BGP main routing table version 1203
+BGP NSR Initial initsync version 11 (Reached)
+BGP NSR/ISSU Sync-Group versions 0/0
+
+BGP is operating in STANDALONE mode.
+
+
+Process       RcvTblVer   bRIB/RIB   LabelVer  ImportVer  SendTblVer  StandbyVer
+Speaker            1203       1203       1203       1203        1203           0
+
+Neighbor        Spk    AS MsgRcvd MsgSent   TblVer  InQ OutQ  Up/Down  St/PfxRcd
+10.204.0.0        0 4200002000   43812   43790     1203    0    0     3w0d         24
+10.204.0.2        0 4200002000   43811   43790     1203    0    0     3w0d         24

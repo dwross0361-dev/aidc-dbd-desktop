@@ -1,0 +1,14 @@
+{
+    "enable": "on",
+    "mode": "lossless",
+    "pfc": {
+        "pfc-priority": "3",
+        "switch-priority": 3
+    },
+    "congestion-control": {
+        "congestion-mode": "ecn",
+        "min-threshold": "150.00 KB",
+        "max-threshold": "1500.00 KB",
+        "probability": 100
+    }
+}

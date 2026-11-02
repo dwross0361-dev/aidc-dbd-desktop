@@ -1,0 +1,22 @@
+! Command: show running-config
+! device: T-EOS-B (DCS-7280DR3A-36, EOS-4.33.2F)
+!
+! boot system flash:/EOS-4.33.2F.swi
+!
+no aaa root
+username netadmin privilege 15 role network-admin secret sha512 $6$saltsalt$hash
+!
+hostname T-EOS-B
+!
+interface Ethernet1/1
+   mtu 9214
+   priority-flow-control on
+   qos trust dscp
+!
+qos map dscp 26 to traffic-class 3
+!
+router bgp 4200001001
+   neighbor 10.201.0.0 remote-as 4200002000
+   neighbor 10.201.0.0 password 7 abcdefgh
+!
+end

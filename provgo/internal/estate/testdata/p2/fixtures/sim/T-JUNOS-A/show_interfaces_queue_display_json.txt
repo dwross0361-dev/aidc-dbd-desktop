@@ -1,0 +1,84 @@
+{
+    "interface-information": [
+        {
+            "physical-interface": [
+                {
+                    "name": [
+                        {
+                            "data": "et-0/0/0"
+                        }
+                    ],
+                    "queue-counters": [
+                        {
+                            "interface-cos-summary": [
+                                {
+                                    "intf-cos-forwarding-classes-supported": [
+                                        {
+                                            "data": "16"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "queue": [
+                                {
+                                    "queue-number": [
+                                        {
+                                            "data": "3"
+                                        }
+                                    ],
+                                    "forwarding-class-name": [
+                                        {
+                                            "data": "ROCE"
+                                        }
+                                    ],
+                                    "queue-counters-queued-packets": [
+                                        {
+                                            "data": "9182733"
+                                        }
+                                    ],
+                                    "queue-counters-tail-drop-packets": [
+                                        {
+                                            "data": "0"
+                                        }
+                                    ],
+                                    "queue-counters-red-packets": [
+                                        {
+                                            "data": "0"
+                                        }
+                                    ],
+                                    "queue-counters-ecn-ce-packets": [
+                                        {
+                                            "data": "1203"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "queue-number": [
+                                        {
+                                            "data": "0"
+                                        }
+                                    ],
+                                    "forwarding-class-name": [
+                                        {
+                                            "data": "best-effort"
+                                        }
+                                    ],
+                                    "queue-counters-queued-packets": [
+                                        {
+                                            "data": "12"
+                                        }
+                                    ],
+                                    "queue-counters-tail-drop-packets": [
+                                        {
+                                            "data": "7"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,13 @@
+{
+    "TABLE_pfc_queue": {
+        "ROW_pfc_queue": [
+            {
+                "if_name": "Ethernet1/1",
+                "qos_grp": 3,
+                "pfc_watchdog_shutdown_count": 0,
+                "pfc_watchdog_restore_count": 0,
+                "pfc_watchdog_enable": "yes"
+            }
+        ]
+    }
+}

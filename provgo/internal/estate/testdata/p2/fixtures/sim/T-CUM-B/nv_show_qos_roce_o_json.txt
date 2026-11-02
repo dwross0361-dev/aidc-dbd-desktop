@@ -1,0 +1,4 @@
+{
+    "enable": "on",
+    "mode": "lossy"
+}

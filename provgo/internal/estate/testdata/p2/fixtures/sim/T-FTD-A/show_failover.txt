@@ -1,0 +1,16 @@
+Failover On
+Failover unit Primary
+Failover LAN Interface: FOVER Ethernet1/8 (up)
+Reconnect timeout 0:00:00
+Unit Poll frequency 1 seconds, holdtime 15 seconds
+Interface Poll frequency 5 seconds, holdtime 25 seconds
+Interface Policy 1
+Monitored Interfaces 4 of 1291 maximum
+failover replication http
+Version: Ours 7.6.0-1, Mate 7.6.0-1
+Last Failover at: 21:05:12 UTC Oct 30 2026
+        This host: Primary - Active
+                Active time: 90122 (sec)
+                slot 0: FPR-3120 hw/sw rev (1.0/7.6.0-1) status (Up Sys)
+        Other host: Secondary - Standby Ready
+                Active time: 0 (sec)

@@ -1,0 +1,693 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deployment Console</title>
+<style>
+:root{--ink:#14212b;--muted:#4d5c66;--line:#d5dde1;--bg:#eef2f4;--teal:#0e6e7e;--sig:#3CC7D4;
+  --q-bg:#e8edf0;--q-fg:#3d4a52;--q-bd:#9aa8b0;--a-bg:#dbe8fb;--a-fg:#1a44b8;--a-bd:#3b6fd8;--d-bg:#dff1e6;--d-fg:#14532d;--d-bd:#2f8f54;
+  --f-bg:#fde7dc;--f-fg:#8a2c0c;--f-bd:#c2410c;--w-bg:#fdf1d6;--w-fg:#6b3d0a;--w-bd:#b7791f;--r-bg:#ece6fb;--r-fg:#3b2780;--r-bd:#6d4fc2}
+*{box-sizing:border-box}
+/* v515: no web fonts (the console runs on the OOB network): the named fonts when installed, else the system stack */
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:14px}
+.mono{font-family:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+button,select,input{font-family:inherit;font-size:14px}
+button{min-height:40px;padding:0 14px;border-radius:6px;border:1px solid var(--q-bd);background:#fff;color:var(--ink);cursor:pointer}
+button:disabled{cursor:not-allowed;opacity:.45}
+button.pri{background:var(--teal);border-color:#5fb3c0;color:#fff;font-weight:600}
+button.warn{border-color:#8a5a12;color:var(--w-fg);font-weight:600}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--sig);outline-offset:2px}
+input[type=text],input[type=password],select.f{min-height:40px;border:1px solid var(--q-bd);border-radius:6px;padding:0 10px;background:#fff}
+header{background:#14212b;color:#fff;padding:12px 24px 14px}
+.wrap{max-width:1440px;margin:0 auto}
+.hrow{display:flex;flex-wrap:wrap;align-items:center;gap:14px 28px}
+.brand{display:flex;align-items:center;gap:12px;flex:1 1 300px}
+.word{font-family:Archivo,'Arial Narrow',Arial,sans-serif;font-size:21px;line-height:1.1;white-space:nowrap}
+.word b{font-weight:800;font-stretch:112%;color:#fff}.word span{font-weight:500;color:#9FD3DC}
+.lbl{font-size:12px;color:#b9c7cf;text-transform:uppercase;letter-spacing:.08em}
+.clock{font-family:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:20px;font-weight:600}
+.bar{height:8px;background:#2c3b46;border-radius:4px;overflow:hidden}.bar>div{height:100%;background:#5fd08a}
+.chip{display:inline-flex;align-items:center;padding:3px 9px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;border:1px solid}
+.k-queued{background:var(--q-bg);color:var(--q-fg);border-color:var(--q-bd)}.k-active{background:var(--a-bg);color:var(--a-fg);border-color:var(--a-bd)}
+.k-done{background:var(--d-bg);color:var(--d-fg);border-color:var(--d-bd)}.k-failed{background:var(--f-bg);color:var(--f-fg);border-color:var(--f-bd)}
+.k-warn{background:var(--w-bg);color:var(--w-fg);border-color:var(--w-bd)}.k-replay{background:var(--r-bg);color:var(--r-fg);border-color:var(--r-bd)}
+main{max-width:1440px;margin:0 auto;padding:20px 24px 40px;display:flex;flex-direction:column;gap:20px}
+.card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+h2{margin:0;font-size:17px}
+.sub{font-weight:400;color:var(--muted);font-size:14px}
+.muted{color:var(--muted)}
+.replay{background:var(--r-bg);border-bottom:1px solid var(--r-bd);padding:10px 24px;display:none}
+.replay .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;color:var(--r-fg)}
+.alert{display:none;flex-wrap:wrap;align-items:center;gap:12px 20px;background:var(--w-bg);border:1px solid var(--w-bd);border-radius:8px;padding:12px 16px}
+.ident{border-left:5px solid #1FA7B5;flex-direction:row;flex-wrap:wrap;gap:14px 28px;align-items:flex-start}
+.facts{flex:3 1 520px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px 18px;font-size:13px}
+.builds{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.bcard{display:flex;flex-direction:column;align-items:stretch;gap:10px;text-align:left;padding:14px 16px;background:#fff;border-radius:10px;border:1px solid var(--line);min-height:0}
+.bcard.sel{border:2px solid var(--teal);box-shadow:0 0 0 3px #cde7ea}
+.pbar{height:6px;background:#e3e9ec;border-radius:3px;overflow:hidden}.pbar>div{height:100%}
+.wave{display:flex;align-items:center;gap:8px;font-size:13px}.dot{width:10px;height:10px;border-radius:50%;flex:0 0 10px}
+.cols{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:6px}
+.tile{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-height:48px;padding:6px 8px;border-radius:6px;text-align:left}
+.tile .n{font-family:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;font-weight:600}.tile .s{font-size:11px}
+.t0{background:var(--q-bg);color:var(--q-fg);border:1px solid var(--q-bd)}.t1{background:var(--a-bg);color:var(--a-fg);border:1px solid var(--a-bd)}
+.t6{background:#2f8f54;color:#fff;border:1px solid #1f6b3d}.tf{background:#c2410c;color:#fff;border:1px solid #9a3412}
+.tw{background:var(--w-bg);color:var(--w-fg);border:2px dashed var(--w-bd)}
+button.b-run{border-color:#b45309!important;box-shadow:0 0 0 2px #fcd34d inset;opacity:1!important;cursor:progress}button.b-ok{border-color:#15803d!important;box-shadow:0 0 0 2px #86efac inset}button.b-err{border-color:#b91c1c!important;box-shadow:0 0 0 2px #fca5a5 inset}
+.spin{display:inline-block;width:12px;height:12px;margin-right:6px;vertical-align:-2px;border:2px solid #f59e0b;border-right-color:transparent;border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation:none;border-right-color:#f59e0b}}
+#actMsg{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);max-width:min(720px,calc(100vw - 32px));display:none;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:8px;font-size:13px;z-index:60;box-shadow:0 6px 24px rgba(0,0,0,.18)}
+#actMsg.am-ok{background:#ecfdf3;color:#14532d;border:1px solid #86efac}#actMsg.am-err{background:#fef2f2;color:#7f1d1d;border:1px solid #fca5a5}#actMsg button{background:none;border:0;font-size:16px;line-height:1;cursor:pointer;color:inherit;padding:0 2px}.tr{background:var(--r-bg);color:var(--r-fg);border:2px dashed var(--r-bd)}
+.tsel{outline:3px solid var(--teal);outline-offset:2px}
+.glabel{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.filters{display:flex;flex-wrap:wrap;gap:6px}.filters button{min-height:36px;border-radius:999px;font-size:13px}
+.filters button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.steps{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+.steps li{display:flex;gap:10px;align-items:flex-start;font-size:13px}
+.mark{flex:0 0 28px;height:22px;display:inline-flex;align-items:center;justify-content:center;border-radius:5px;font-size:11px;font-weight:700;font-family:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.log{color:var(--muted);font-family:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;overflow-wrap:anywhere}
+.ev{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;max-height:360px;overflow:auto}
+.ev li{display:flex;gap:10px;font-size:13px}
+.floor{display:flex;flex-direction:column;gap:10px;min-width:760px}
+.frow{display:flex;align-items:center;gap:10px}.frow .rl{width:120px;flex:0 0 120px;font-size:13px;font-weight:600}
+.rk{flex:1 1 0;min-width:58px;height:54px;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11px}
+.login{max-width:380px;margin:12vh auto;background:#fff;border:1px solid var(--line);border-radius:10px;padding:24px;display:flex;flex-direction:column;gap:12px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+dialog{border:1px solid var(--line);border-radius:10px;padding:20px;max-width:480px;width:calc(100% - 32px)}
+dialog::backdrop{background:rgba(20,33,43,.45)}
+@media (max-width:640px){header,main,.replay{padding-left:16px;padding-right:16px}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="dwr" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="none" stroke="#9FD3DC" stroke-width="3"/>
+<g stroke="#3CC7D4" stroke-width="2"><line x1="22" y1="20" x2="16" y2="32"/><line x1="22" y1="20" x2="32" y2="32"/><line x1="22" y1="20" x2="48" y2="32"/>
+<line x1="42" y1="20" x2="16" y2="32"/><line x1="42" y1="20" x2="32" y2="32"/><line x1="42" y1="20" x2="48" y2="32"/>
+<line x1="16" y1="32" x2="16" y2="44"/><line x1="32" y1="32" x2="32" y2="44"/><line x1="48" y1="32" x2="48" y2="44"/></g>
+<g fill="#9FD3DC"><rect x="18" y="16" width="8" height="7" rx="1.5"/><rect x="38" y="16" width="8" height="7" rx="1.5"/>
+<rect x="12" y="29" width="8" height="7" rx="1.5"/><rect x="28" y="29" width="8" height="7" rx="1.5"/><rect x="44" y="29" width="8" height="7" rx="1.5"/>
+<rect x="12" y="42" width="8" height="6" rx="1.5"/><rect x="28" y="42" width="8" height="6" rx="1.5"/><rect x="44" y="42" width="8" height="6" rx="1.5"/></g></symbol></defs></svg>
+
+<header><div class="wrap">
+<div class="hrow">
+<div class="brand"><svg width="40" height="40" aria-hidden="true"><use href="#dwr"/></svg>
+<div><div class="word" aria-label="DWR Networking"><b>DWR</b> <span>Networking</span></div>
+<div style="font-size:13px;color:#b9c7cf">AIDC DBD · <span style="color:#fff;font-weight:600">Deployment Console</span></div></div></div>
+<div><div class="lbl">Site</div><div class="mono" style="font-size:20px;font-weight:600;color:#9FD3DC" id="hSite">—</div></div>
+<div style="min-width:140px"><div class="lbl" id="hClockL">Build clock</div><div class="clock" id="hClock">00:00:00</div></div>
+<div style="min-width:210px;display:flex;flex-direction:column;gap:6px"><div class="lbl" style="display:flex;justify-content:space-between"><span>Estate</span><span class="mono" style="color:#fff" id="hPct">—</span></div><div class="bar"><div id="hBar" style="width:0"></div></div></div>
+<div class="row"><span class="chip k-queued" id="hMode">Idle</span><button class="pri" id="bReplay">Replay</button><span id="hUser" style="font-size:12px;color:#b9c7cf"></span></div>
+</div>
+<div style="margin-top:8px;font-size:13px;color:#b9c7cf" id="hLine"></div>
+</div></header>
+
+<div class="replay" id="replayBar" role="region" aria-label="Replay controls"><div class="wrap">
+<b>Replay</b><span style="flex:1 1 260px" id="rTxt"></span>
+<button id="rPlay" style="background:var(--r-bd);color:#fff;border-color:var(--r-bd);font-weight:600;min-width:78px">Play</button>
+<span class="row" role="group" aria-label="Replay speed" id="rSpeeds"></span>
+<input type="range" id="rPos" min="0" max="1" step="1" value="0" aria-label="Replay position" style="flex:2 1 240px;accent-color:#6d4fc2">
+<span class="mono" id="rPosTxt"></span>
+<button id="rBack" style="border-color:var(--r-bd);color:var(--r-fg);font-weight:600">Back to live</button>
+</div></div>
+
+<div id="loginView" class="login" style="display:none">
+<svg width="44" height="44" aria-hidden="true" style="background:#14212b;border-radius:8px;padding:4px"><use href="#dwr"/></svg>
+<h2>Deployment Console</h2><div class="muted" style="font-size:13px">Sign in with the login setup.sh printed, or one an admin added.</div>
+<label>User<br><input type="text" id="lUser" autocomplete="username" style="width:100%"></label>
+<label>Password<br><input type="password" id="lPw" autocomplete="current-password" style="width:100%"></label>
+<button class="pri" id="lGo">Sign in</button><div id="lErr" style="color:var(--f-fg);font-size:13px"></div>
+</div>
+
+<div id="pwView" class="login" style="display:none">
+<svg width="44" height="44" aria-hidden="true" style="background:#14212b;border-radius:8px;padding:4px"><use href="#dwr"/></svg>
+<h2>Set your password</h2><div class="muted" style="font-size:13px" id="pwWho">This login has a temporary password. Choose your own to continue: at least 12 characters, not your user name.</div>
+<label>Current (temporary) password<br><input type="password" id="pwOld" autocomplete="current-password" style="width:100%"></label>
+<label>New password<br><input type="password" id="pwNew" autocomplete="new-password" style="width:100%"></label>
+<label>Repeat new password<br><input type="password" id="pwNew2" autocomplete="new-password" style="width:100%"></label>
+<div class="row"><button class="pri" id="pwGo">Set password</button><button id="pwCancel" style="display:none">Cancel</button></div><div id="pwErr" style="color:var(--f-fg);font-size:13px"></div>
+</div>
+
+<main id="app" style="display:none">
+<div class="alert" id="standby" style="background:var(--r-bg);border-color:var(--r-bd)"><b style="color:var(--r-fg)">Standby provisioning host</b><span style="flex:1 1 360px;color:var(--r-fg)" id="standbyTxt"></span><button class="act" id="bPromote" style="border-color:var(--r-bd);color:var(--r-fg)">Promote to primary…</button></div>
+<div class="alert" id="accessWarn" style="display:none"><b style="color:var(--w-fg)">Logins</b><span style="flex:1 1 360px;color:#4a2c07" id="accessTxt"></span></div>
+<div class="alert" id="alert"><b style="color:var(--w-fg)">Action needed</b><span style="flex:1 1 360px;color:#4a2c07" id="alertTxt"></span><span class="row" id="alertBtns"></span></div>
+
+<section class="card" aria-label="Run" id="runCard">
+<div class="row" style="justify-content:space-between"><h2>Run <span class="sub" id="runSub"></span></h2>
+<div class="row"><select class="f" id="runPlane" aria-label="Plane"><option value="all">All planes</option><option value="oob">OOB</option><option value="edge">Edge-PoP</option><option value="fe">Front end</option><option value="be">Back end</option></select>
+<button class="pri act" id="bStart">Start build</button><button class="act" id="bPause">Pause</button><button class="act" id="bCred">Push credential…</button><button class="act" id="bReady" title="What must hold before Start build (HS-DEP-003 step 3.8)">Readiness…</button><button class="act" id="bUsers" title="Personal logins and the planes each operator acts on">Logins…</button><button class="act" id="bHand" title="Final backup, the customer's hand-over export, Release DWR access (HS-DEP-003 phase 6)">Hand-over…</button><button id="bMyPw" title="Change your password">My password…</button><button id="bLogout">Sign out</button>
+<a id="exAsbuilt" href="api/export/asbuilt.csv">As-built</a> · <a href="api/export/readiness.csv">Readiness</a> · <a href="api/export/sot-status.csv">SoT status</a> · <a href="api/export/audit.csv">Audit</a> · <a href="api/export/events.csv">Events</a></div></div>
+<div class="muted" style="font-size:13px" id="runNote"></div>
+<div id="runners" style="display:flex;flex-direction:column;gap:6px;font-size:13px"></div>
+</section>
+
+<section class="card ident" aria-label="Site identity">
+<div style="min-width:170px"><div class="lbl" style="color:var(--muted)">Site identity</div>
+<div class="row"><span class="mono" style="font-size:26px;font-weight:600;color:#1F4E5B" id="iCode">—</span><span class="chip k-done" id="iReg">—</span></div>
+<div class="muted" style="font-size:13px" id="iCity"></div></div>
+<div class="facts" id="iFacts"></div>
+<div style="flex:2 1 300px;display:flex;flex-direction:column;gap:6px;font-size:13px">
+<div class="row" style="align-items:flex-start;flex-wrap:nowrap"><span class="chip" id="iChkC">—</span><span id="iChk"></span></div>
+<div class="muted" id="iReg2"></div>
+<div class="muted">Every bootstrap is served only to the device it belongs to. A device presenting another site's serial, or a serial retired by an RMA, is refused and listed under Unclaimed.</div></div>
+</section>
+
+<section class="builds" aria-label="Builds" id="builds"></section>
+
+<div class="cols">
+<section class="card" aria-label="Devices" style="flex:999 1 640px;min-width:0">
+<div class="row" style="justify-content:space-between"><h2>Devices <span class="sub" id="gCount"></span></h2><div class="filters" id="filters"></div></div>
+<div class="row muted" style="font-size:12px;gap:14px">
+<span class="row" style="gap:6px"><span class="tile t0" style="min-height:12px;width:12px;padding:0"></span>Expected</span>
+<span class="row" style="gap:6px"><span class="tile t1" style="min-height:12px;width:12px;padding:0"></span>Building</span>
+<span class="row" style="gap:6px"><span class="tile t6" style="min-height:12px;width:12px;padding:0"></span>Done</span>
+<span class="row" style="gap:6px"><span class="tile tf" style="min-height:12px;width:12px;padding:0"></span>Failed / missing</span>
+<span class="row" style="gap:6px"><span class="tile tw" style="min-height:12px;width:12px;padding:0"></span>Unclaimed / waiting / operator</span>
+<span class="row" style="gap:6px"><span class="tile tr" style="min-height:12px;width:12px;padding:0"></span>RMA</span></div>
+<div id="groups" style="display:flex;flex-direction:column;gap:14px"></div>
+</section>
+
+<aside style="flex:1 1 380px;min-width:0;display:flex;flex-direction:column;gap:20px">
+<section class="card" aria-label="Device detail" id="det">
+<div class="row" style="justify-content:space-between;align-items:flex-start;flex-wrap:nowrap"><div style="min-width:0"><div class="lbl" style="color:var(--muted)">Device</div>
+<div class="mono" style="font-size:16px;font-weight:600;overflow-wrap:anywhere" id="dName">Select a device</div><div class="muted" style="font-size:13px" id="dRole"></div></div><span class="chip k-queued" id="dChip">—</span></div>
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 14px;font-size:13px">
+<div><span class="muted">Build · wave</span><br><span id="dWhere"></span></div><div><span class="muted">Site · rack</span><br><span id="dRack"></span></div>
+<div><span class="muted">Management</span><br><span class="mono" id="dIp"></span></div><div><span class="muted">Identity</span><br><span class="mono" id="dId" style="overflow-wrap:anywhere"></span></div></div>
+<ol class="steps" id="dSteps"></ol>
+<div class="log" id="dDetail"></div>
+<div class="row" id="dActs">
+<button class="act" data-a="retry">Retry</button><button class="act" data-a="reserve">Re-serve bootstrap</button><button class="act" data-a="quarantine">Quarantine</button>
+<button class="act" data-a="mark">Mark configured</button><button class="act" data-a="rma">Start RMA…</button><button class="act" data-a="unbind">Unbind…</button></div>
+<div id="dBk" style="display:none;flex-direction:column;gap:6px;font-size:13px"></div>
+<div id="dRma" style="display:none;border:2px dashed var(--r-bd);background:#faf8ff;border-radius:8px;padding:12px;flex-direction:column;gap:8px;font-size:13px"></div>
+</section>
+
+<section class="card" aria-label="Gate"><div class="row" style="justify-content:space-between"><h2 id="gName">Gate</h2><span class="chip k-queued" id="gChip">—</span></div>
+<ul class="steps" id="gChecks"></ul><div class="row"><button class="act" id="gOverride">Override with reason…</button><button class="act" id="gRecheck" title="Run the automatic checks once now">Re-check</button></div></section>
+
+<section class="card" aria-label="Unclaimed devices"><h2>Unclaimed devices</h2><div id="unc" style="display:flex;flex-direction:column;gap:10px"></div></section>
+
+<section class="card" aria-label="Events"><h2 id="evTitle">Live events</h2><ul class="ev" id="events"></ul></section>
+</aside>
+</div>
+
+<section class="card" aria-label="Floor view"><div class="row" style="justify-content:space-between"><h2>Floor view <span class="sub" id="fSite"></span></h2><span class="muted" style="font-size:12px">Cabinets colored by build state, from the DC Layout Builder</span></div>
+<div style="overflow-x:auto"><div class="floor" id="floor"></div></div></section>
+</main>
+
+<dialog id="dlg"><form method="dialog" style="display:flex;flex-direction:column;gap:12px">
+<h2 id="dlgT"></h2><div id="dlgB" style="font-size:13px"></div><div id="dlgF" style="display:flex;flex-direction:column;gap:8px"></div>
+<div class="row" style="justify-content:flex-end"><button value="cancel">Cancel</button><button class="pri" value="ok" id="dlgOk">OK</button></div></form></dialog>
+
+<script>
+(function(){
+'use strict';
+var STG=['Expected','DHCP','Bootstrap','Image','Config','Verified','Done'];
+var S={plan:null, st:null, who:null, events:[], lastId:0, sel:null, bsel:(function(){ try{ return localStorage.getItem('estate.bsel'); }catch(e){ return null; } })(), filter:'all', mode:'live', rt:0, rplay:false, speed:240, rtimer:null};
+var $=function(id){ return document.getElementById(id); };
+var esc=function(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); };
+function api(path, body){
+  var o={credentials:'same-origin', headers:{'X-Requested-With':'estate-console'}};
+  if(body!==undefined){ o.method='POST'; o.headers['Content-Type']='application/json'; o.body=JSON.stringify(body); }
+  return fetch(path, o).then(function(r){
+    if(r.status===401){ showLogin(); throw new Error('login'); }
+    if(r.status===403 && path!=='api/password'){ return r.json().then(function(j){ if(j.error==='password change required'){ showPw(); throw new Error('login'); } throw new Error(j.msg||j.error||'HTTP 403'); }); }
+    return r.json().then(function(j){ if(!r.ok) throw new Error(j.msg||j.error||('HTTP '+r.status)); return j; });
+  });
+}
+// HS v1.24: every console action shows its state on the button pressed: amber with a spinner and an in-progress label
+// while it runs (disabled), green with a check mark for 1.5 s when done, red with the message in the status line when it
+// fails. The console redraws every few seconds, so the button is found again by its id or data attribute.
+var LASTBTN=null, BUSY={};
+document.addEventListener('click', function(e){ var b=e.target&&e.target.closest?e.target.closest('button'):null; if(!b || (b.closest('#dlg') && b.value)) return;   // HS v1.25: a dialog's own buttons too, not OK/Cancel
+  var sel=b.id?('#'+b.id):''; if(!sel){ for(var i=0;i<b.attributes.length;i++){ var a=b.attributes[i]; if(/^data-/.test(a.name)){ sel='['+a.name+'="'+a.value.replace(/"/g,'\\"')+'"]'; break; } } }
+  LASTBTN={sel:sel, text:b.textContent, t:Date.now()}; }, true);
+var ACTLBL={'api/backup':'Backing up…','api/rma/start':'Starting RMA…','api/rma/identity':'Registering…','api/rma/apply':'Setting…','api/rma/check':'Confirming…',
+  'api/gate/recheck':'Re-checking…','api/gate/confirm':'Confirming…','api/gate/override':'Overriding…','api/bind':'Binding…','api/unbind':'Unbinding…','api/dismiss':'Dismissing…',
+  'api/retry':'Retrying…','api/quarantine':'Quarantining…','api/mark':'Marking…','api/start':'Starting…','api/result':'Saving…','api/runner-retry':'Retrying…','api/release-vendor':'Releasing…','api/handover/final-backup':'Backing up…','api/rma/upload':'Loading…','api/handover/received':'Confirming…'};
+function busyPaint(){ Object.keys(BUSY).forEach(function(sel){ var x=BUSY[sel]; if(!sel) return; var el=null; try{ el=document.querySelector(sel); }catch(e){} if(!el) return;
+  if(el.dataset.bst===x.st) return; el.dataset.bst=x.st; el.classList.remove('b-run','b-ok','b-err'); el.classList.add('b-'+x.st);
+  if(x.st==='run'){ el.disabled=true; if(el.dataset.lbl===undefined) el.dataset.lbl=el.textContent; el.innerHTML='<span class="spin"></span>'+esc(x.label); }
+  else if(x.st==='ok'){ el.innerHTML='✓ '+esc(x.text); } }); }
+try{ new MutationObserver(function(){ if(Object.keys(BUSY).length) busyPaint(); }).observe(document.body,{childList:true, subtree:true}); }catch(e){}
+function actMsg(m, kind){ var el=$('actMsg'); if(!el){ el=document.createElement('div'); el.id='actMsg'; document.body.appendChild(el); }
+  el.className='am-'+(kind||'ok'); el.innerHTML='<span>'+esc(m)+'</span><button onclick="this.parentNode.style.display=\'none\'" aria-label="Close">×</button>'; el.style.display='flex';
+  clearTimeout(el._t); el._t=setTimeout(function(){ el.style.display='none'; }, kind==='err'?20000:6000); }
+function act(path, body){
+  var lb=LASTBTN&&Date.now()-LASTBTN.t<120000?LASTBTN:null, sel=lb?lb.sel:'', t0=Date.now(); LASTBTN=null;
+  if(sel){ BUSY[sel]={st:'run', label:ACTLBL[path]||'Working…', text:lb.text}; busyPaint(); }
+  var done=function(st, m){ if(!sel) return; BUSY[sel]={st:st, label:'', text:lb.text}; busyPaint();
+    setTimeout(function(){ delete BUSY[sel]; var el=null; try{ el=document.querySelector(sel); }catch(e){} if(el){ el.classList.remove('b-run','b-ok','b-err'); delete el.dataset.bst; el.disabled=false; if(el.dataset.lbl!==undefined){ el.textContent=el.dataset.lbl; delete el.dataset.lbl; } } refresh(); }, st==='ok'?1500:4000); };
+  return api(path, body).then(function(j){ done('ok'); if(j && j.msg && j.msg!=='ok') actMsg(j.msg, 'ok'); refresh(); return j; })
+    .catch(function(e){ if(e.message==='login') return; done('err'); actMsg((ACTLBL[path]||'Action').replace('…','')+' failed: '+e.message, 'err'); });
+}
+function cidMac(c){ c=String(c||'').toLowerCase().replace(/[^0-9a-f]/g,''); if(c.length===14 && c.slice(0,2)==='01') c=c.slice(2); return c.length===12?c.match(/../g).join(':'):''; }   // HS v1.21: the MAC in a type-1 client-ID
+function showLogin(){ $('app').style.display='none'; $('pwView').style.display='none'; $('loginView').style.display='flex'; }   // v515: never both cards
+$('lGo').onclick=function(){
+  fetch('api/login',{method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json'}, body:JSON.stringify({user:$('lUser').value, password:$('lPw').value})})
+   .then(function(r){ return r.json().then(function(j){ if(!r.ok) throw new Error(j.error); }); })
+   .then(boot).catch(function(e){ $('lErr').textContent=e.message; });
+};
+$('lPw').addEventListener('keydown',function(e){ if(e.key==='Enter') $('lGo').click(); });
+// v479: live events show the viewer's local wall-clock time (UTC in the tooltip); replay keeps time since the first event.
+// The list used to show time since the first event in the database, which read as a clock several hours off.
+function wallOf(ts){ var d=new Date(ts*1000), n=new Date(), p=function(x){ return (x<10?'0':'')+x; }, t=p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds());
+  return d.toDateString()===n.toDateString() ? t : d.toLocaleDateString(undefined,{month:'short', day:'numeric'})+' '+t; }
+function clockOf(sec){ sec=Math.max(0,Math.round(sec)); var p=function(n){ return (n<10?'0':'')+n; }; return p(Math.floor(sec/3600))+':'+p(Math.floor(sec/60)%60)+':'+p(sec%60); }
+function tuneTable(T){   // HS v1.43: the tuning record -- package values, each version, the approved one, where each runs
+  var V=T.versions.slice(-4), ap=T.approved?T.approved.v:null;
+  var th='<th style="text-align:left;padding:2px 8px 2px 0">Value</th><th style="padding:2px 6px">v0'+(ap===0?' ✓':'')+'</th>'+V.map(function(x){ return '<th style="padding:2px 6px">v'+x.v+(ap===x.v?' ✓':'')+'</th>'; }).join('');
+  var rows=T.params.map(function(p){ return '<tr><td style="padding:2px 8px 2px 0">'+esc(p.label)+' <span class="muted">'+esc(p.unit)+'</span></td><td class="mono" style="text-align:right;padding:2px 6px">'+p.base+'</td>'
+    +V.map(function(x){ var y=x.values[p.key]; return '<td class="mono" style="text-align:right;padding:2px 6px'+(y!==undefined?';font-weight:600':'')+'">'+(y!==undefined?y:'·')+'</td>'; }).join('')+'</tr>'; }).join('');
+  var at=Object.keys(T.at).sort().map(function(k){ return 'v'+k+' on '+T.at[k]; }).join(', ');
+  return '<div style="overflow-x:auto"><table style="font-size:12px;border-collapse:collapse;margin:4px 0">'+'<tr>'+th+'</tr>'+rows+'</table></div>'
+    +'<span class="muted" style="font-size:12px">'+esc((T.os||'')+': '+at+' of '+T.switches+' back-end switches'+(T.approved?'; approved v'+T.approved.v+' by '+T.approved.by:'; none approved')
+      +(T.rollout?'; rollout '+T.rollout.state:'')+(T.note?'. '+T.note:''))+'</span>';
+}
+function ask(title, body, fields){
+  return new Promise(function(res){
+    $('dlgT').textContent=title; $('dlgB').innerHTML=body||''; var F=$('dlgF'); F.innerHTML='';
+    (fields||[]).forEach(function(f){ var l=document.createElement('label'); l.innerHTML=esc(f.label)+'<br>';
+      var i=f.options?document.createElement('select'):document.createElement(f.area?'textarea':'input'); i.className='f'; i.style.width='100%'; if(f.area) i.rows=10;   // HS v1.42
+      if(f.options) f.options.forEach(function(o){ var op=document.createElement('option'); op.value=o[0]; op.textContent=o[1]; if(o[2]) op.disabled=true; i.appendChild(op); });
+      else if(!f.area) i.type=f.type||'text'; i.value=f.value||''; i.dataset.k=f.key; l.appendChild(i); F.appendChild(l); });
+    // v513: a close event queued by an earlier dlg.close() arrives after this prompt reopened the dialog: ignore it
+    var d=$('dlg'); d.returnValue=''; d.onclose=function(){ if(d.open) return; if(d.returnValue!=='ok') return res(null); var out={}; F.querySelectorAll('[data-k]').forEach(function(i){ out[i.dataset.k]=i.value; }); res(out); };
+    d.showModal();
+  });
+}
+// ------------------------------------------------------------------ data
+// v480: personal logins. A temporary password opens only the password change; an operator acts on its planes only.
+function planeOf(n){ var b=(S.plan&&S.plan.builds)||[]; for(var i=0;i<b.length;i++){ var w=b[i].waves||[]; for(var j=0;j<w.length;j++){ if((w[j].devices||[]).indexOf(n)>=0) return b[i].key; } } return ''; }
+function canAct(plane){ if(!S.who||S.mode!=='live') return false; if(S.who.role==='admin') return true;
+  return S.who.role==='operator' && !!plane && (S.who.planes||[]).indexOf(plane)>=0; }
+function showPw(forced){ var shown=$('pwView').style.display==='flex'; S.pwForced=forced!==false;   // HS v1.21: typed fields survive a re-show
+  if(S.pwForced) $('pwWho').textContent='This login has a temporary password. Choose your own to continue: at least 12 characters, not your user name.';
+  $('pwCancel').style.display=''; $('app').style.display='none'; $('loginView').style.display='none'; $('pwView').style.display='flex';
+  if(!shown){ $('pwErr').textContent=''; $('pwOld').value=''; $('pwNew').value=''; $('pwNew2').value=''; } }
+function signedOut(){ S.who=null; S.plan=null; S.st=null; S.events=[]; S.lastId=0; showLogin(); }
+$('pwGo').onclick=function(){
+  if($('pwNew').value!==$('pwNew2').value){ $('pwErr').textContent='The two new passwords differ.'; return; }
+  api('api/password',{current:$('pwOld').value, 'new':$('pwNew').value}).then(function(){ $('pwView').style.display='none'; boot(); })
+    .catch(function(e){ $('pwErr').textContent=e.message; });
+};
+$('pwNew2').addEventListener('keydown',function(e){ if(e.key==='Enter') $('pwGo').click(); });
+$('pwCancel').onclick=function(){ $('pwView').style.display='none';   // HS v1.21: a forced change cancels to the sign-in screen
+  if(S.pwForced){ api('api/logout',{}).then(signedOut).catch(signedOut); return; } boot(); };
+function boot(){
+  $('loginView').style.display='none'; $('pwView').style.display='none';
+  return api('api/whoami').then(function(w){
+    S.who=w; if(w.must_change){ showPw(); return; }
+    return api('api/plan').then(function(pl){
+      S.plan=pl; $('app').style.display='flex';
+      $('hUser').textContent=S.who.user+(S.who.role==='admin'?' (admin)':S.who.role==='operator'?(' (operator: '+((S.who.planes||[]).join(', ')||'no plane')+')'):' (read only)');
+      S.events=[]; S.lastId=0; return refresh();
+    });
+  }).catch(function(){});
+}
+function refresh(){
+  return Promise.all([api('api/state'), api('api/events?since='+S.lastId+'&limit=50000')]).then(function(r){
+    S.st=r[0]; r[1].forEach(function(e){ S.events.push(e); S.lastId=Math.max(S.lastId,e.id); });
+    if(S.events.length>EV_KEEP) S.events=S.events.slice(-EV_KEEP);   // v515: the live log keeps the latest events only (Replay fetches them all)
+    render();
+  }).catch(function(){});
+}
+setInterval(function(){ if(S.plan && S.mode==='live' && $('app').style.display!=='none') refresh(); }, 3000);   // HS v1.21: paused while sign-in or a password change shows
+// replay: device stage and flag at time T, rebuilt from the recorded events
+// v515: the events are sorted by time once (bReplay); a cursor applies only those since the last tick, and a scrub
+// back starts again from the beginning. An aggregate's count comes from its "N of M" event text.
+var EV_KEEP=20000, RP=null;
+function replayView(T){
+  if(!RP || RP.src!==S.events || T<RP.T){
+    RP={src:S.events, T:-Infinity, i:0, devs:{}, gates:{}, started:{}};
+    Object.keys(S.plan.devices).forEach(function(n){ RP.devs[n]={stage:0, flag:'', detail:'', count:0}; }); }
+  var devs=RP.devs, gates=RP.gates, started=RP.started, E=S.events;
+  for(; RP.i<E.length && E[RP.i].ts<=T; RP.i++){ var e=E[RP.i];
+    if(e.device && devs[e.device]){ devs[e.device].stage=e.stage||0; devs[e.device].flag=e.flag||''; devs[e.device].detail=e.text;
+      var c=S.plan.devices[e.device].aggregate && /\b(\d+) of (\d+)\b/.exec(e.text||''); if(c) devs[e.device].count=+c[1]; }
+    var m=/^Gate passed: (.+?)( \(|$)/.exec(e.text||''); if(m) gates[m[1]]=1;
+    m=/^Build started: (.+?);/.exec(e.text||''); if(m) started[m[1]]=1; }
+  RP.T=T;
+  return {devices:devs, gates:gates, started:started};
+}
+function t0(){ return S.events.length?S.events[0].ts:(S.st?S.st.server_time:0); }
+function view(){
+  if(S.mode==='replay'){ var T=t0()+S.rt, r=replayView(T); return {T:T, devices:r.devices, replay:r}; }
+  return {T:S.st.server_time, devices:S.st.devices, replay:null};
+}
+// ------------------------------------------------------------------ render
+function tileClass(x){ if(x.flag==='failed'||x.flag==='missing'||x.flag==='down') return 'tf';   // HS v1.24: down is a failure if(x.flag==='rma') return 'tr';
+  if(x.flag==='unclaimed'||x.flag==='waiting'||x.flag==='slow'||x.flag==='quarantined'||/^waiting for operator/.test(x.detail||'')) return 'tw';
+  if(x.stage===6) return 't6'; if(x.stage>0) return 't1'; return 't0'; }
+function stageTxt(n,x){ var d=S.plan.devices[n];
+  if(x.flag==='failed') return 'Failed: '+STG[Math.min(6,x.stage+1)]; if(x.flag==='down') return 'Done · not answering'; if(x.flag==='missing') return 'Not called in'; if(x.flag==='unclaimed') return 'Unclaimed?';
+  if(x.flag==='waiting') return 'Waiting for wave'; if(x.flag==='slow') return 'Waiting (slow)'; if(x.flag==='quarantined') return 'Quarantined'; if(x.flag==='rma') return 'RMA';
+  if(d.aggregate && x.stage>0 && x.stage<6) return (x.count||0)+'/'+d.aggregate; return STG[x.stage]; }
+function render(){
+  if(!S.st||!S.plan) return;
+  var V=view(), P=S.plan, st=S.st, site=st.site, live=S.mode==='live', ro=!live||S.who.role==='viewer'||(S.who.role==='operator'&&!(S.who.planes||[]).length);
+  // header
+  $('hSite').textContent=site.code||'—';
+  var runT=st.run.started?(V.T-st.run.started):0; $('hClock').textContent=clockOf(S.mode==='replay'?S.rt:runT); $('hClockL').textContent=live?'Build clock':'Replay clock';
+  var tot=0, dn=0; Object.keys(V.devices).forEach(function(n){ var d=P.devices[n], x=V.devices[n], w=d.aggregate||1; tot+=w; if(x.stage===6) dn+=w; else if(d.aggregate) dn+=Math.min(w,x.count||0); });
+  var pct=tot?Math.round(100*dn/tot):0; $('hPct').textContent=pct+'% · '+dn+' / '+tot; $('hBar').style.width=pct+'%'; $('hBar').style.background=live?'#5fd08a':'#a48ef0';
+  var m=live?({running:['● Live','active'], paused:['Paused','warn'], complete:['Complete','done'], idle:['Idle','queued']}[st.run.state]||['Idle','queued']):['Replay','replay'];
+  $('hMode').textContent=m[0]; $('hMode').className='chip k-'+m[1]; $('bReplay').style.display=live?'':'none'; $('bReplay').disabled=!S.events.length;
+  var ha=st.ha||{}; $('hLine').textContent=site.code+' · '+(site.customer||site.client||'')+(site.build?' · build '+site.build:'')+' · '+site.region+' '+site.rr+'/'+site.dd+' · bundle '+st.version+' · plan '+st.digest+' · provisioning host '+site.prov_ip+' · '+st.kea
+    +(ha.peer?(' · standby '+ha.peer.replace(/^https?:\/\//,'').replace(/:\d+$/,'')+(ha.last_sync?(', synced '+clockOf(st.server_time-ha.last_sync)+' ago'):', not synced yet')):'');
+  $('standby').style.display=(live&&ha.role==='standby')?'flex':'none';
+  $('standbyTxt').textContent='This host mirrors the primary. Last state received '+(ha.last_sync?(clockOf(st.server_time-ha.last_sync)+' ago'):'never')+'. Act on the primary; promote this host only if the primary is lost.';
+  $('bPromote').disabled=S.who.role!=='admin';
+  $('bPromote').onclick=function(){ ask('Promote this host','It takes over as primary from the last state the primary sent. Make sure the primary is down.',[{key:'confirm',label:'Type PROMOTE'}]).then(function(v){ if(v&&v.confirm==='PROMOTE') act('api/promote',{}); }); };
+  var RS=st.runners||{}, RL=(S.plan.runners||[]);
+  $('runners').innerHTML=RL.length?RL.map(function(r){ var x=RS[r.key]||{state:'waiting', note:'waits for its wave'}, k={done:'done', failed:'failed', running:'active', 'not configured':'warn'}[x.state]||'queued';
+    return '<div class="row" style="flex-wrap:nowrap;gap:8px"><span class="chip k-'+k+'" style="flex:0 0 112px;justify-content:center">'+esc(x.state)+'</span><span style="flex:1 1 auto">'+esc(r.label)+' <span class="muted">'+esc(x.note||'')+'</span></span>'
+      +(x.state==='failed'||x.state==='not configured'?'<button class="act" data-rr="'+esc(r.key)+'" style="min-height:32px">Retry</button>':'')+(x.state&&x.state!=='waiting'&&x.state!=='not configured'?' <a href="api/runner-log/'+esc(r.key)+'" target="_blank">log</a>':'')+'</div>'; }).join(''):'';
+  document.querySelectorAll('[data-rr]').forEach(function(b){ b.disabled=ro; b.onclick=function(){ act('api/runner/retry',{key:b.dataset.rr}); }; });
+  $('replayBar').style.display=live?'none':'block';
+  // run card
+  $('runCard').style.display=live?'flex':'none';
+  $('runSub').textContent='· '+st.run.state+(st.run.plane?(' ('+st.run.plane+')'):'');
+  $('bPause').textContent=st.run.state==='paused'?'Resume':'Pause';
+  $('runNote').textContent=(st.push_cred?'Push credential held in memory. ':'No push credential yet: Junos and SR Linux devices wait at Bootstrap until one is entered. ')+(st.pushing.length?('Pushing: '+st.pushing.join(', ')):'');
+  document.querySelectorAll('.act').forEach(function(b){ if(!b.closest('#dlg')) b.disabled=ro; });   // HS v1.25: a dialog's buttons keep their state
+  $('bCred').disabled=!live||S.who.role!=='admin'; $('bUsers').style.display=S.who.role==='admin'?'':'none';
+  var ax=st.access||{}, sh=(ax.short||[]);
+  $('accessWarn').style.display=(sh.length||ax.admins<2)?'flex':'none';
+  $('accessTxt').textContent=(sh.length?('Fewer than two people can act on '+sh.map(function(k){ return k+' ('+((ax.per_plane||{})[k]||0)+')'; }).join(', ')+': one lost password or one absence stalls that plane. '):'')
+    +(ax.admins<2?'Only one admin login: add a second admin. ':'')+(S.who.role==='admin'?'Add people under Logins.':'An admin can add people.');
+  // site identity
+  $('iCode').textContent=site.code; $('iReg').textContent=site.registry==='registered'?'Registered':site.registry==='conflict'?'Registry conflict':'Unregistered';
+  $('iReg').className='chip k-'+(site.registry==='registered'?'done':site.registry==='conflict'?'failed':'warn');
+  $('iCity').textContent=(site.client||'')+(site.region_name?(' · '+site.region_name):'');
+  var F=[['Region · RR/DD',site.region+' · '+site.rr+'/'+site.dd],['Global index',site.gidx],['Hostname prefix',site.code+'-'],['Build · design digest',(site.build||'-')+' · '+(site.plan_digest||'-')],['Bundle · plan digest',st.version+' · '+st.digest],
+         ['OOB block',site.oob_block],['Front-end block',site.fe_block],['Back-end block',site.be_block],['ASN block',site.asn_block],['Provisioning host',site.prov_ip]];
+  $('iFacts').innerHTML=F.map(function(f){ return '<div><span class="muted">'+esc(f[0])+'</span><br><span class="mono" style="overflow-wrap:anywhere">'+esc(f[1])+'</span></div>'; }).join('');
+  var fs=st.foreign_sync||{}, fk=Object.keys(fs);
+  $('iReg2').textContent='Registry: '+(st.registry||[]).length+' site(s)'+(fk.length?(' · peer inventories '+fk.filter(function(k){ return fs[k].ok; }).length+' of '+fk.length+' synced ('+(st.foreign_n||0)+' identities)'):' · no peer sites configured (estate.conf "sites")');
+  var called=0; Object.keys(V.devices).forEach(function(n){ if(!P.devices[n].aggregate && V.devices[n].stage>=1) called++; });
+  var unc=live?st.unclaimed:[];
+  var refused=unc.filter(function(u){ return /retired|belongs/.test(u.why||'')||u.foreign; }).length;
+  $('iChkC').textContent=called===0?'Waiting':unc.length?'Hold':'Pass'; $('iChkC').className='chip k-'+(called===0?'queued':unc.length?'warn':'done');
+  $('iChk').textContent=called===0?('No devices have called in yet. Expecting '+Object.keys(P.devices).filter(function(n){ return !P.devices[n].aggregate; }).length+' tracked devices on '+site.oob_block+'.')
+    :(called+' devices called in and matched to '+site.code+' by serial, MAC or reserved address · '+refused+' refused · '+(unc.length-refused)+' unclaimed.');
+  // builds
+  var curKey=null; st.builds.forEach(function(b){ if(!curKey && b.state!=='complete' && b.state!=='queued') curKey=b.key; });
+  if(!curKey) curKey=st.builds.every(function(b){ return b.state==='complete'; })?st.builds[st.builds.length-1].key:st.builds[0].key;   // HS v1.25
+  if(S.bsel && !st.builds.some(function(b){ return b.key===S.bsel; })) S.bsel=null;
+  var BL={queued:['Queued','queued'], building:['Building','active'], blocked:['Blocked','failed'], gate:['Gate checks','active'], complete:['Complete','done']};
+  $('builds').innerHTML=st.builds.map(function(b){
+    var all=[]; b.waves.forEach(function(w){ all=all.concat(w.devices); });
+    var done=all.filter(function(n){ return V.devices[n].stage===6; }).length, bad=all.some(function(n){ return /failed|missing/.test(V.devices[n].flag); });
+    var state=b.state; if(!live){ state=V.replay.gates[b.name]?'complete':V.replay.started[b.name]?(bad?'blocked':'building'):'queued'; }
+    var bl=BL[state]||BL.queued, sel=(S.bsel||curKey)===b.key;
+    return '<button class="bcard'+(sel?' sel':'')+'" data-b="'+b.key+'"><div class="row" style="justify-content:space-between"><div style="text-align:left"><div class="mono muted" style="font-size:12px">BUILD '+b.num+'</div><div style="font-size:18px;font-weight:700">'+esc(b.name)+'</div></div><span class="chip k-'+bl[1]+'">'+bl[0]+'</span></div>'
+      +'<div class="pbar"><div style="width:'+(all.length?Math.round(100*done/all.length):0)+'%;background:'+(state==='blocked'?'#c2410c':state==='complete'?'#2f8f54':'#3b6fd8')+'"></div></div>'
+      +'<div class="row muted" style="justify-content:space-between;font-size:12px"><span>'+done+' of '+all.length+' done'+(live&&b.ready&&b.state!=='complete'&&b.ready[1]?(' · <b style="color:'+(b.ready[0]===b.ready[1]?'#14532d':'#6b3d0a')+'">Ready '+b.ready[0]+' of '+b.ready[1]+'</b>'):'')+'</span><span>gate: '+b.gate.length+' checks</span></div>'   // HS v1.25
+      +(live&&b.held?'<div style="font-size:12px;color:#c2410c;text-align:left;margin-top:4px">Wave held: '+esc(b.held)+' (Retry, or Quarantine to go on)</div>':'')
+      +b.waves.map(function(w){ var n=w.devices.length, d=w.devices.filter(function(x){ return V.devices[x].stage===6; }).length,
+          wb=w.devices.some(function(x){ return /failed|missing|unclaimed/.test(V.devices[x].flag); }),
+          agg=n===1&&P.devices[w.devices[0]].aggregate, cnt=agg?((V.devices[w.devices[0]].stage===6?agg:(V.devices[w.devices[0]].count||0))+'/'+agg):(d+'/'+n),
+          col=(d===0&&!w.devices.some(function(x){ return V.devices[x].stage>0||V.devices[x].flag; }))?'#c3ccd1':wb?'#c2410c':d===n?'#2f8f54':'#3b6fd8';
+          return '<div class="wave"><span class="dot" style="background:'+col+'"></span><span style="flex:1 1 auto;text-align:left">'+esc(w.name)+(w.warn_only?' <span class="muted">(warn only)</span>':'')+'</span><span class="mono muted" style="font-size:12px">'+cnt+'</span></div>'; }).join('')+'</button>';
+  }).join('');
+  document.querySelectorAll('[data-b]').forEach(function(e){ e.onclick=function(){ S.bsel=e.dataset.b; try{ localStorage.setItem('estate.bsel', S.bsel); }catch(x){} render(); }; });   // HS v1.25
+  // grid
+  var FL=[['all','All'],['oob','OOB'],['edge','Edge-PoP'],['fe','Front end'],['be','Back end'],['problems','Problems']];
+  $('filters').innerHTML=FL.map(function(f){ return '<button data-f="'+f[0]+'" class="'+(S.filter===f[0]?'on':'')+'">'+f[1]+'</button>'; }).join('');
+  document.querySelectorAll('[data-f]').forEach(function(e){ e.onclick=function(){ S.filter=e.dataset.f; render(); }; });
+  var cnt=0, html='';
+  st.builds.forEach(function(b){ if(!(S.filter==='all'||S.filter==='problems'||S.filter===b.key)) return;
+    var tiles=''; b.waves.forEach(function(w){ w.devices.forEach(function(n){ var x=V.devices[n];
+      if(S.filter==='problems' && !x.flag) return; cnt++;
+      tiles+='<button class="tile '+tileClass(x)+(S.sel===n?' tsel':'')+'" data-d="'+esc(n)+'" title="'+esc(n+' — '+P.devices[n].role)+'"><span class="n">'+esc(P.devices[n].short)+'</span><span class="s">'+esc(stageTxt(n,x))+'</span></button>'; }); });
+    if(tiles) html+='<div style="display:flex;flex-direction:column;gap:6px"><div class="glabel">'+esc(b.name)+'</div><div class="grid">'+tiles+'</div></div>'; });
+  $('groups').innerHTML=html||'<div class="muted">Nothing to show.</div>'; $('gCount').textContent='· '+cnt+' shown';
+  document.querySelectorAll('[data-d]').forEach(function(e){ e.onclick=function(){ S.sel=e.dataset.d; render(); loadDetail(); }; });
+  renderDetail(V, ro || (S.sel ? !canAct(planeOf(S.sel)) : true));
+  // gate
+  var gb=st.builds.filter(function(b){ return b.key===(S.bsel||curKey); })[0];
+  $('gName').textContent='Gate · '+gb.name;
+  var GL={queued:['Not started','queued'], building:['Waiting for devices','queued'], blocked:['Blocked','failed'], gate:['Checking','active'], complete:['Passed','done']}[gb.state]||['—','queued'];
+  if(gb.override) GL=['Overridden','warn']; $('gChip').textContent=GL[0]; $('gChip').className='chip k-'+GL[1];
+  var RK={pass:['Pass','done'], warn:['Warn','warn'], confirmed:['Confirmed','done'], blocked:['Blocked','failed'], running:['Running','active'], waiting:['Waiting','queued'], 'needs confirmation':['Confirm','warn']};
+  $('gChecks').innerHTML=gb.gate.map(function(c){ var r=RK[c.result]||RK.waiting;
+    var btns=(c.type==='auto'&&c.evidence?'<button data-ge="'+esc(c.key)+'" style="min-height:32px">Evidence</button>':'')
+      +(c.kind==='nccl'&&c.result!=='pass'&&gb.state!=='queued'?'<button class="act" data-nc="1" style="min-height:32px">Enter result…</button>':'')
+      +(c.kind==='accept'&&c.result!=='pass'&&gb.state!=='queued'?'<button class="act" data-ac="1" style="min-height:32px">Upload results…</button>':'')
+      +(c.kind==='isolation'&&c.result!=='pass'&&gb.state!=='queued'?'<button class="act" data-is="1" style="min-height:32px">Upload results…</button>':'')
+      +(c.kind==='tuned'&&st.tuning&&gb.state!=='queued'?'<button class="act" data-tu="propose" style="min-height:32px">Propose…</button><button class="act" data-tu="apply" style="min-height:32px">Apply / roll back…</button><button class="act" data-tu="approve" style="min-height:32px">Approve…</button><button class="act" data-tu="rollout" style="min-height:32px">Roll out</button>'+(st.tuning.approved?'<button class="act" data-tu="profile" style="min-height:32px">Export profile\u2026</button>':''):'')
+      +((c.type==='confirm'||(c.type==='auto'&&/needs confirmation|blocked|warn/.test(c.result)))&&c.result!=='confirmed'&&gb.state!=='queued'?'<button class="act" data-gc="'+esc(c.key)+'" style="min-height:32px">Confirm…</button>':'');
+    return '<li style="align-items:flex-start"><span class="chip k-'+r[1]+'" style="flex:0 0 86px;justify-content:center">'+r[0]+'</span><span style="display:flex;flex-direction:column;gap:4px;flex:1 1 auto;min-width:0"><span>'+esc(c.label)+'</span><span class="muted" style="font-size:12px;overflow-wrap:anywhere">'+esc(c.note)+'</span>'
+      +(c.kind==='tuned'&&st.tuning?tuneTable(st.tuning):'')
+      +(btns?'<span class="row" style="gap:6px;flex-wrap:wrap">'+btns+'</span>':'')+'</span></li>'; }).join('')   // HS v1.24: buttons under the text
+    +(gb.override?'<li class="muted">Overridden by '+esc(gb.override.user)+': '+esc(gb.override.reason)+'</li>':'');
+  document.querySelectorAll('[data-gc]').forEach(function(e){ e.disabled=!canAct(gb.key); e.onclick=function(){ ask('Confirm gate check', esc(e.closest('li').querySelector('span span').textContent), [{key:'note', label:'Evidence (command output, ticket, who checked)'}]).then(function(v){ if(v) act('api/gate/confirm',{build:gb.key, check:e.dataset.gc, note:v.note}); }); }; });
+  document.querySelectorAll('[data-ge]').forEach(function(e){ e.onclick=function(){ api('api/gate-evidence?build='+gb.key+'&check='+e.dataset.ge).then(function(j){
+    ask('Evidence', '<div style="max-height:55vh;overflow:auto"><div class="mono" style="font-size:12px;white-space:pre-wrap">'+esc(j.note||'')+'</div>'+Object.keys(j.evidence||{}).map(function(n){ var x=j.evidence[n];   // HS v1.25
+      return '<div style="margin-top:10px"><b style="color:'+(x.ok?'#14532d':'#9a3412')+'">'+(x.ok?'PASS':'FAIL')+'</b> <span class="mono">'+esc((S.plan.devices[n]||{}).short||n)+'</span>: '+esc(x.note)
+        +(x.text?'<div class="mono" style="font-size:12px;white-space:pre;overflow-x:auto;margin-top:4px">'+esc(x.text)+'</div>':'')
+        +(x.raw?'<details style="margin-top:4px"><summary style="cursor:pointer;font-size:12px">Show raw</summary><div class="mono" style="font-size:11px;white-space:pre-wrap">'+esc(x.raw)+'</div></details>':'')+'</div>'; }).join('')+'</div>', []); }); }; });
+  document.querySelectorAll('[data-tu]').forEach(function(e){ var T=st.tuning, a=e.dataset.tu;   // HS v1.43
+    e.disabled=a==='approve'?!(S.who&&S.who.role==='admin'&&S.mode==='live'):!canAct('be');
+    var vers=[['0','v0 -- package values']].concat(T.versions.map(function(x){ return [String(x.v), 'v'+x.v+' -- '+x.by+(x.note?': '+x.note:'')]; }));
+    e.onclick=function(){
+      if(a==='propose'){ var last=T.versions.length?T.versions[T.versions.length-1].values:{};
+        ask('Propose a tuning change', 'Values are checked against their ranges and ordering. Nothing is applied until you apply the version.',
+          T.params.map(function(p){ return {key:p.key, label:p.label+' ('+p.unit+', '+p.min+' to '+p.max+'; package '+p.base+')', value:String(last[p.key]!==undefined?last[p.key]:p.base)}; }).concat([{key:'_note', label:'Why (incast result, test run, ticket)'}]))
+        .then(function(v){ if(!v) return; var vals={}; T.params.forEach(function(p){ if(v[p.key]!==String(p.base)) vals[p.key]=v[p.key]; }); act('api/tuning/propose',{values:vals, note:v._note}); }); }
+      else if(a==='apply'){
+        ask('Apply a tuning version', 'Applies the version to the switches in scope over SSH with the push credential (or WRITE_USER in secrets.env). Rolling back is applying an earlier version; v0 restores the package values.',
+          [{key:'v', label:'Version', options:vers, value:String(T.versions.length?T.versions[T.versions.length-1].v:0)},
+           {key:'scope', label:'Switches', value:'test', options:[['test','Test pod ('+T.test+' switches)']].concat(T.pods.map(function(p){ return ['pod:'+p, 'Pod '+p]; })).concat(T.rest?[['rest','Shared spines ('+T.rest+')']]:[]).concat([['all','Every back-end switch ('+T.switches+')']])}])
+        .then(function(v){ if(v) act('api/tuning/apply',{v:+v.v, scope:v.scope}); }); }
+      else if(a==='approve'){
+        ask('Approve the platform profile', 'The approved version is the one every back-end switch must run before the gate passes, and the one Roll out applies. Approve after T1 to T4 pass on the test pod with it.',
+          [{key:'v', label:'Version', options:vers, value:String(T.versions.length?T.versions[T.versions.length-1].v:0)}])
+        .then(function(v){ if(v) act('api/tuning/approve',{v:+v.v}); }); }
+      else if(a==='profile'){   // HS v1.44
+        ask('Export the tuned profile', 'The approved version as a platform profile for the AIDC DBD builder: model, release, values and the test summary. No names, addresses or counters leave the site.',
+          [{key:'nic', label:'NIC model and firmware (for the record)'}, {key:'port', label:'Port speed and planes (for the record)'}])
+        .then(function(v){ if(!v) return; api('api/tuning/profile',{nic:v.nic, port:v.port}).then(function(j){
+          var b=new Blob([JSON.stringify(j.profile, null, 1)+'\n'], {type:'application/json'}), u=URL.createObjectURL(b), x=document.createElement('a');
+          x.href=u; x.download='tuning-profile-'+j.profile.id+'.json'; document.body.appendChild(x); x.click(); setTimeout(function(){ URL.revokeObjectURL(u); x.remove(); }, 2000);
+          actMsg('Exported '+j.profile.id, 'ok'); }).catch(function(e){ if(e.message!=='login') actMsg(e.message, 'err'); }); }); }
+      else ask('Roll out v'+((T.approved||{}).v||0), 'Applies the approved version pod by pod; after each pod a T2/T3 smoke test runs on it (accept_cmd with {POD}) and a failure stops the rollout there.', [])
+        .then(function(v){ if(v) act('api/tuning/rollout',{}); }); }; });
+  document.querySelectorAll('[data-is]').forEach(function(e){ e.disabled=!canAct('fe'); e.onclick=function(){ ask('Ingress isolation results','Paste the output of acceptance/ingress_isolation.sh (the ISOLATION lines).',[{key:'text',label:'Output',area:true}]).then(function(v){ if(v) act('api/result',{kind:'isolation', text:v.text}); }); }; });   // HS v1.45
+  document.querySelectorAll('[data-ac]').forEach(function(e){ e.disabled=!canAct('be'); e.onclick=function(){ ask('Lossless acceptance results','Paste the output of acceptance/lossless.sh for T1 to T4. Uploaded by hand, the switch-side criteria are then confirmed from the switches.',[{key:'text',label:'Output',area:true}]).then(function(v){ if(v) act('api/result',{kind:'accept', text:v.text}); }); }; });   // HS v1.42
+  document.querySelectorAll('[data-nc]').forEach(function(e){ e.disabled=!canAct('be'); e.onclick=function(){ ask('NCCL all-reduce result','From acceptance/nccl.sh (Avg bus bandwidth).',[{key:'busbw',label:'Bus bandwidth, GB/s'},{key:'target',label:'Target, GB/s'}]).then(function(v){ if(v) act('api/result',{kind:'nccl', busbw:v.busbw, target:v.target}); }); }; });
+  $('gOverride').disabled=!canAct(gb.key)||gb.state==='complete'||gb.state==='queued';
+  $('gRecheck').disabled=!canAct(gb.key)||gb.state==='queued'||!gb.gate.some(function(c){ return c.type==='auto'; });   // HS v1.23
+  $('gRecheck').onclick=function(){ act('api/gate/recheck',{build:gb.key}); };
+  $('gOverride').onclick=function(){ ask('Override the '+gb.name+' gate','The override and its reason go into the audit log and the as-built record.',[{key:'reason', label:'Reason'}]).then(function(v){ if(v) act('api/gate/override',{build:gb.key, reason:v.reason}); }); };
+  // unclaimed
+  var _bd=function(n){ return live && S.st.devices[n] && S.st.devices[n].id; };   // v498: a bound node is shown, grayed out, never offered
+  var ud=Object.keys(P.devices).filter(function(n){ return !P.devices[n].aggregate; }).map(function(n){ return [n, P.devices[n].short+(_bd(n)?(' \u00b7 bound to '+S.st.devices[n].id):''), !!_bd(n)]; })
+         .sort(function(a,b){ return (a[2]?1:0)-(b[2]?1:0); });
+  $('unc').innerHTML=unc.length?unc.map(function(u){ var sg=(u.suggest||[])[0];
+    return '<div style="border:2px dashed var(--w-bd);background:#fffaf0;border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:6px;font-size:13px">'
+      +'<div class="mono" style="font-weight:600">'+(u.serial?('Serial '+esc(u.serial)+' · '):'')+'MAC '+esc(u.mac||'—')+(function(){ var c=cidMac(u.client_id); return (c && c!==String(u.mac||'').toLowerCase())?(' · client-ID MAC '+esc(c)):''; })()+'</div>'
+      +'<div>'+esc(u.vendor_class||'')+(/^Cisco N\dK/i.test(u.vendor_class||'')?' · NX-OS POAP':'')+(u.circuit?(' · called in on '+esc(u.circuit)):'')+(u.ip?(' · holding lease '+esc(u.ip)):'')+'</div>'
+      +'<div class="muted">'+esc(u.foreign?('Belongs to site '+u.foreign+': refused.'):/retired/.test(u.why||'')?(u.why+': refused.'):('Not in the '+site.code+' inventory'+(sg?('; likely '+sg.device+' ('+sg.why+').'):'.')))+'</div>'
+      +(u.foreign||/retired/.test(u.why||'')?'':'<div class="row" style="gap:6px"><button class="act warn" data-u="'+esc(u.key)+'" data-s="'+esc(sg?sg.device:'')+'">Bind…</button><button class="act" data-x="'+esc(u.key)+'" title="Not one of this site\u2019s devices: off the list and the gate (audited)">Dismiss…</button></div>')+'</div>'; }).join('')
+    :'<div class="muted" style="font-size:13px">'+(live?'None. Unknown serials that call in appear here for binding.':'Not shown in replay.')+'</div>';
+  document.querySelectorAll('[data-x]').forEach(function(e){ e.disabled=ro; e.onclick=function(){   // HS v1.21
+    ask('Dismiss unclaimed entry','Not one of this site\u2019s devices (another network\u2019s DHCP, a laptop). It leaves the list and no longer holds the gate; logged with your reason.',[{key:'reason', label:'Reason'}]).then(function(v){ if(v) act('api/dismiss',{key:e.dataset.x, reason:v.reason}); }); }; });
+  document.querySelectorAll('[data-u]').forEach(function(e){ e.disabled=ro; e.onclick=function(){
+    var _sv=e.dataset.s; if(_sv && _bd(_sv)) _sv='';   // never preselect a bound node
+    ask('Bind unclaimed device','The device takes this serial or MAC from now on; logged. Nodes already bound are grayed out: unbind one first from its device panel.',[{key:'device', label:'Device', options:ud, value:_sv}]).then(function(v){ if(v) act('api/bind',{key:e.dataset.u, device:v.device}); }); }; });
+  // events
+  $('evTitle').textContent=live?'Live events':'Events (replay)';
+  var evs=S.events.filter(function(e){ return e.ts<=V.T; }).slice(-60).reverse();
+  var EC={info:'#1a44b8', warn:'#6b3d0a', fail:'#9a3412'};
+  $('events').innerHTML=evs.length?evs.map(function(e){ return '<li><span class="mono muted" style="flex:0 0 auto" title="'+new Date(e.ts*1000).toISOString().replace('T',' ').slice(0,19)+' UTC">'+(live?wallOf(e.ts):clockOf(e.ts-t0()))+'</span><span style="color:'+(/: Done|Gate passed|complete/.test(e.text)?'#14532d':EC[e.level]||'#1a44b8')+(e.level!=='info'?';font-weight:600':'')+'">'+esc((function(){ var sh=e.device&&P.devices[e.device]?P.devices[e.device].short:''; var t=e.text; if(sh && t.indexOf(sh+': ')===0) t=t.slice(sh.length+2); return (sh?sh+' · ':'')+t; })())+'</span></li>'; }).join('')
+    :'<li class="muted">No events yet. Bundle staged on '+esc(site.prov_ip)+'; waiting for the run to start and the first device to call in.</li>';
+  // floor
+  $('fSite').textContent='· '+site.code;
+  var byCab={}; Object.keys(P.devices).forEach(function(n){ var r=P.devices[n].rack; if(r) (byCab[r]=byCab[r]||[]).push(n); });
+  $('floor').innerHTML=(P.floor||[]).map(function(r){ return '<div class="frow"><div class="rl">'+esc(r.row)+'</div><div class="row" style="flex:1 1 auto;flex-wrap:nowrap;gap:6px">'+r.cabinets.map(function(c){
+    var L=byCab[c.id]||[], n=L.length, d=L.filter(function(x){ return V.devices[x].stage===6; }).length, bad=L.some(function(x){ return /failed|missing/.test(V.devices[x].flag); }),
+        w=L.some(function(x){ return /unclaimed|waiting|rma/.test(V.devices[x].flag); }), a=L.some(function(x){ return V.devices[x].stage>0; });
+    var k=bad?'tf':w?'tw':(n&&d===n)?'t6':a?'t1':'t0';
+    return '<div class="rk tile '+k+'" title="'+esc(c.id+': '+L.map(function(x){ return P.devices[x].short; }).join(', '))+'"><span class="mono" style="font-weight:600">'+esc(c.label)+'</span><span>'+(n?(d+'/'+n):'—')+'</span></div>'; }).join('')+'</div></div>'; }).join('');
+  // alert banner
+  var fails=Object.keys(V.devices).filter(function(n){ return /failed|missing/.test(V.devices[n].flag); });
+  var al=$('alert');
+  var uopen=unc.filter(function(u){ return !(/retired|belongs/.test(u.why||'')||u.foreign); });
+  if(live && (uopen.length || fails.length)){
+    al.style.display='flex';
+    $('alertTxt').textContent=uopen.length?((uopen[0].serial?'Serial '+uopen[0].serial:'MAC '+uopen[0].mac)+' called in and is not in the '+site.code+' inventory'+((uopen[0].suggest||[])[0]?(' (likely '+uopen[0].suggest[0].device+')'):'')+'. The gate holds until it is bound or replaced.'+(fails.length?(' Also '+fails.length+' device(s) failed or missing.'):''))
+      :(fails.length+' device(s) need attention: '+fails.slice(0,3).map(function(n){ return P.devices[n].short+' ('+V.devices[n].detail+')'; }).join('; '));
+    $('alertBtns').innerHTML=fails.slice(0,1).map(function(n){ return '<button class="warn act" data-al="'+esc(n)+'">Retry '+esc(P.devices[n].short)+'</button>'; }).join('');
+    document.querySelectorAll('[data-al]').forEach(function(e){ e.disabled=!canAct(planeOf(e.dataset.al)); e.onclick=function(){ act('api/retry',{device:e.dataset.al}); }; });
+  } else al.style.display='none';
+  // replay bar
+  if(!live){ var mx=Math.max(1,Math.ceil(S.events[S.events.length-1].ts-t0()));   /* v515: ceil, so the slider's end includes the last event */ $('rPos').max=mx; $('rPos').value=Math.round(S.rt);
+    $('rPosTxt').textContent=clockOf(S.rt)+' / '+clockOf(mx); $('rPlay').textContent=S.rplay?'Pause':(S.rt>=mx?'Replay again':'Play');
+    $('rTxt').textContent='Viewing '+site.code+"'s recorded events at "+S.speed+'×. Actions are disabled. The live build keeps running.';
+    $('rSpeeds').innerHTML=[60,240,960].map(function(v){ return '<button data-sp="'+v+'" style="min-width:48px;'+(S.speed===v?'background:#3b2780;color:#fff;border-color:#3b2780':'color:#3b2780;border-color:#6d4fc2')+'">'+v+'×</button>'; }).join('');
+    document.querySelectorAll('[data-sp]').forEach(function(e){ e.onclick=function(){ S.speed=+e.dataset.sp; render(); }; }); }
+}
+var detCache=null;
+function loadDetail(){ if(!S.sel) return; api('api/device/'+encodeURIComponent(S.sel)).then(function(j){ detCache=j; render(); }).catch(function(){}); }
+function renderDetail(V, ro){
+  var n=S.sel; if(!n||!S.plan.devices[n]){ $('dActs').style.display='none'; return; }
+  var d=S.plan.devices[n], x=V.devices[n], live=S.mode==='live', dc=(detCache&&detCache.plan.name===n)?detCache:null;
+  $('dActs').style.display='flex';
+  $('dName').textContent=n; $('dRole').textContent=d.role+' · '+(d.os_label||d.os);
+  var where=''; S.st.builds.forEach(function(b){ b.waves.forEach(function(w){ if(w.devices.indexOf(n)>=0) where=b.name+' · '+w.name; }); });
+  $('dWhere').textContent=where; $('dRack').textContent=S.st.site.code+' · '+(d.rack||'—'); $('dIp').textContent=d.ip||(d.aggregate?d.aggregate+' items':'—');
+  $('dId').textContent=live?((S.st.devices[n].id||'none loaded')+(S.st.devices[n].id_source&&S.st.devices[n].id_source!=='inventory'?(' ('+S.st.devices[n].id_source+')'):'')):'—';
+  var k=x.flag==='failed'||x.flag==='missing'?['Failed','failed']:x.flag==='slow'?['Waiting (slow)','warn']:x.flag==='rma'?['RMA','replay']:x.flag?[x.flag[0].toUpperCase()+x.flag.slice(1),'warn']:x.stage===6?['Done','done']:x.stage===0?['Expected','queued']:[STG[x.stage],'active'];
+  $('dChip').textContent=k[0]; $('dChip').className='chip k-'+k[1];
+  var ts=dc?dc.state.ts:{};
+  $('dSteps').innerHTML=STG.slice(1).map(function(lab,i){ var s=i+1, reached=x.stage>=s, mk='·', bg='#eef2f4', fg='#4d5c66', lg='';
+    if(reached){ mk=(s<x.stage||x.stage===6)?'OK':'…'; bg=mk==='OK'?'#2f8f54':'#dbe8fb'; fg=mk==='OK'?'#fff':'#1a44b8'; lg=ts[String(s)]?new Date(ts[String(s)]*1000).toISOString().replace('T',' ').slice(0,19)+'Z':''; }
+    if(x.flag==='failed' && s===x.stage+1){ mk='X'; bg='#c2410c'; fg='#fff'; lg=x.detail; }
+    return '<li><span class="mark" style="background:'+bg+';color:'+fg+'">'+mk+'</span><span style="display:flex;flex-direction:column"><span style="font-weight:600">'+lab+'</span><span class="log">'+esc(lg)+'</span></span></li>'; }).join('');
+  $('dDetail').textContent=(x.detail||'')+(dc&&dc.push_log?('\n\npush log:\n'+dc.push_log.slice(-600)):'');
+  document.querySelectorAll('#dActs button').forEach(function(b){ var a=b.dataset.a; b.disabled=ro
+      ||(a==='retry'&&!/failed|missing|quarantined|slow/.test(x.flag))||(a==='mark'&&(x.stage>=4||!/manual|reachable/.test(d.config_signal||'')))
+      ||(a==='rma'&&(x.flag==='rma'||d.aggregate))||(a==='reserve'&&(d.aggregate||!(d.files||[]).length))
+      ||(a==='unbind'&&(!live||!S.st.devices[n].id||S.st.devices[n].id_source!=='bound'||x.stage>=4));
+    b.onclick=function(){
+      if(a==='retry') act('api/retry',{device:n});
+      else if(a==='reserve') act('api/reserve',{device:n});
+      else if(a==='quarantine') ask('Quarantine '+n,'Its reservation is withdrawn; logged.',[{key:'reason',label:'Reason'}]).then(function(v){ if(v) act('api/quarantine',{device:n, reason:v.reason}); });
+      else if(a==='mark') ask('Mark '+n+' configured','Use once its configuration is applied outside the service.',[{key:'note',label:'Note'}]).then(function(v){ if(v) act('api/mark-configured',{device:n, note:v.note}); });
+      else if(a==='unbind') ask('Unbind '+n,'Its identity ('+S.st.devices[n].id+') is released and the device returns to Unclaimed, ready to bind again; logged. Only before Config: after that, use Start RMA.',[]).then(function(v){ if(v) act('api/unbind',{device:n}); });
+      else if(a==='rma') ask('Start RMA for '+n,'Its current serial/MAC is retired and blocked. You register the replacement’s serial or MAC in the next step, in the RMA panel.',[{key:'ticket',label:'Vendor RMA ticket number (optional)'}]).then(function(v){ if(!v) return;
+        var tk=String(v.ticket||'').trim(); if(/^([0-9a-f]{2}[:.-]?){5}[0-9a-f]{2}$/i.test(tk)||/^[0-9a-f]{4}\.[0-9a-f]{4}\.[0-9a-f]{4}$/i.test(tk)) return actMsg('That looks like a MAC address: enter the vendor’s RMA ticket here, and the replacement’s MAC or serial in the RMA panel after.', 'err');   // HS v1.24
+        act('api/rma/start',{device:n, ticket:tk}).then(loadDetail); });
+    }; });
+  var BK=$('dBk'), bks=dc?(dc.backups||[]):[];
+  var items=dc&&dc.state.items?dc.state.items:null;
+  if(live && (bks.length || items || (dc && x.stage===6 && !d.aggregate))){ BK.style.display='flex';
+    var ih=''; if(items){ var cnt={}; Object.keys(items).forEach(function(h){ var z=items[h].state||'?'; cnt[z]=(cnt[z]||0)+1; });
+      ih='<div><b>Per host</b> · '+Object.keys(cnt).map(function(z){ return cnt[z]+' '+z; }).join(' · ')+'</div><div class="log" style="max-height:120px;overflow:auto">'+Object.keys(items).slice(0,200).map(function(h){ return esc(h+': '+items[h].state+(items[h].note?(' -- '+items[h].note):'')); }).join('<br>')+'</div>'; }
+    BK.innerHTML=ih+(d.aggregate?'':('<div class="row"><b>Backups</b><span class="muted">'+(bks.length?bks.length+' kept':'none yet')+'</span><button class="act" id="bkNow" style="min-height:32px">Back up now</button>'+(bks.length?'<button id="bkDiff" style="min-height:32px">Diff vs planned</button>':'')+(bks.length>1?'<button id="bkPrev" style="min-height:32px">Diff vs previous</button>':'')+'</div>'
+      +bks.slice(0,3).map(function(b){ var t=(dc.backup_seen||{})[b]; return '<div style="white-space:nowrap"><a href="api/device/'+encodeURIComponent(n)+'/backup/'+b+'">'+b+'</a>'+(t?('<span class="muted"> · last confirmed '+new Date(t*1000).toISOString().slice(11,16)+'Z</span>'):'')+'</div>'; }).join('')));   // HS v1.24, v1.25
+    var bn=$('bkNow'); if(bn){ bn.disabled=ro; bn.onclick=function(){ act('api/backup',{device:n}).then(loadDetail); }; }
+    var bp=$('bkPrev'); if(bp) bp.onclick=function(){ api('api/device/'+encodeURIComponent(n)+'/diff?vs=prev').then(function(j){   // HS v1.24
+      ask(j.previous+' vs '+j.backup, '<div class="muted">'+j.added+' line(s) added, '+j.removed+' removed</div><div class="mono" style="font-size:12px;white-space:pre;max-height:55vh;overflow:auto">'+esc(j.diff||'identical')+'</div>', []); }); };
+    var bd=$('bkDiff'); if(bd) bd.onclick=function(){ api('api/device/'+encodeURIComponent(n)+'/diff').then(function(j){
+      // v514: say so when there is nothing to compare, rather than "identical"
+      if(!j.backup) return ask('Planned vs backup', '<div class="muted">No backup of this device yet; nothing compared.</div>', []);
+      if(j.planned===false) return ask('Planned vs '+j.backup, '<div class="muted">No planned configuration found for this device; nothing compared.</div>', []);
+      ask('Planned vs '+j.backup, '<div class="muted">'+j.removed+' line(s) only in the plan, '+j.added+' only on the device; '+(j.same||0)+' the same'+(j.defaults_hidden?('; '+j.defaults_hidden+' device defaults not shown'):'')+' (order, ranges, quoting and secrets ignored)</div><div class="mono" style="font-size:12px;white-space:pre;max-height:55vh;overflow:auto">'+esc(j.diff||'identical')+'</div>', []); }); };
+  } else BK.style.display='none';
+  var R=$('dRma'), rma=dc&&dc.state.rma&&dc.state.rma.state==='open'?dc.state.rma:null;
+  if(rma && live){ R.style.display='flex';
+    var _rv=$('rmaVal'), _rk=_rv?_rv.value:'', _rf=!!_rv&&document.activeElement===_rv, _rs=_rf?_rv.selectionStart:0;   // HS v1.23
+    R.innerHTML='<b>RMA'+(rma.ticket?(' · ticket '+esc(rma.ticket)):'')+'</b><div>Old identity: <span class="mono">'+esc(rma.old?rma.old.value:'—')+'</span> (retired)'+(rma['new']?(' · new: <span class="mono">'+esc(rma['new'].value)+'</span>'):'')+'</div>'
+      +(rma['new']?'':'<div class="row"><input type="text" id="rmaVal" placeholder="Replacement serial or MAC (scan or type)" class="f" style="flex:1 1 180px"><button class="act" id="rmaGo">Register</button></div><div class="muted">Or power the replacement on and bind it from Unclaimed: option 82 shows it on this device’s port.</div>')
+      +'<div class="row"><b>From the customer’s backup system</b><input type="file" id="rmaFile" accept=".cfg,.conf,.txt" style="font-size:12px"></div>'   // HS v1.24
+      +'<div class="row"><b>Apply</b><button class="act" data-ap="planned" style="min-height:32px;'+(((rma.apply||{}).source||'planned')==='planned'?'background:#3b2780;color:#fff':'')+'">Planned</button><button class="act" data-ap="backup" style="min-height:32px;'+((rma.apply||{}).source==='backup'?'background:#3b2780;color:#fff':'')+'"'+(bks.length?'':' disabled')+'>Last backup</button>'+(bks.length?'':'<span class="muted">no backup of this device</span>')+'</div>'
+      +(rma.mnha?'<div>MNHA: <b>'+esc({hold:'push with preemption held', 'await-sync':'waiting for SRG0 session sync', restore:'restoring preemption', done:'preemption restored'}[rma.mnha]||rma.mnha)+'</b>'+(rma.mnha==='await-sync'?' <button class="act" id="mnhaGo" style="min-height:30px">Sync confirmed: restore</button>':'')+'</div>':'')
+      +rma.checklist.map(function(c){ return '<div class="row" style="flex-wrap:nowrap;align-items:flex-start"><span class="chip k-'+(c.done?'done':'warn')+'">'+(c.done?'Done':'Open')+'</span><span style="flex:1 1 auto">'+esc(c.label)+(c.blocks_push?' <span class="muted">(push waits)</span>':'')+(c.note?'<br><span class="muted">'+esc(c.note)+'</span>':'')+'</span>'+(c.done?'':'<button class="act" data-rc="'+c.key+'" style="min-height:32px">Confirm</button>')+'</div>'; }).join('');
+    R.querySelectorAll('[data-ap]').forEach(function(b){ if(!b.disabled) b.disabled=ro; b.onclick=function(){ act('api/rma/apply',{device:n, source:b.dataset.ap}).then(loadDetail); }; });
+    var mg=$('mnhaGo'); if(mg){ mg.disabled=ro; mg.onclick=function(){ act('api/rma/mnha-restore',{device:n}).then(loadDetail); }; }
+    var _rf2=$('rmaFile'); if(_rf2){ _rf2.disabled=ro; _rf2.onchange=function(){ var fl=this.files&&this.files[0]; if(!fl) return; var rd=new FileReader();   // HS v1.24
+      rd.onload=function(){ act('api/rma/upload',{device:n, text:String(rd.result)}).then(loadDetail); }; rd.readAsText(fl); }; }
+    var _nv=$('rmaVal'); if(_nv && _rk){ _nv.value=_rk; } if(_nv && _rf){ _nv.focus(); try{ _nv.setSelectionRange(_rs,_rs); }catch(e){} }   // HS v1.23
+    var g=$('rmaGo'); if(g){ g.disabled=ro; g.onclick=function(){ act('api/rma/identity',{device:n, value:$('rmaVal').value}).then(loadDetail); }; }
+    R.querySelectorAll('[data-rc]').forEach(function(b){ b.disabled=ro; b.onclick=function(){ act('api/rma/check',{device:n, key:b.dataset.rc}).then(loadDetail); }; });
+  } else R.style.display='none';
+}
+// ------------------------------------------------------------------ controls
+$('bStart').onclick=function(){ var pl=$('runPlane').value; api('api/run',{plane:pl}).then(function(){ refresh(); }).catch(function(e){ if(e.message==='login') return; if(/^Readiness/.test(e.message)) readyDlg(); else actMsg('Start failed: '+e.message,'err'); }); };   // HS v1.25
+function readyDlg(){   // HS v1.25: the Readiness panel
+  api('api/readiness').then(function(r){ var RK={pass:['Pass','done'], warn:['Warn','warn'], fail:['Fail','failed'], confirm:['Confirm','warn'], confirmed:['Confirmed','done']};
+    var html='<div class="muted" style="margin-bottom:8px">Start build waits until every item passes or is confirmed; a warning is noted. Fails can be accepted with a reason (audited, in the as-built record).</div><ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px">'
+      +r.items.map(function(i){ var k=RK[i.result]||RK.warn; return '<li class="row" style="align-items:flex-start;flex-wrap:nowrap;gap:8px"><span class="chip k-'+k[1]+'" style="flex:0 0 86px;justify-content:center">'+k[0]+'</span><span style="flex:1 1 auto"><span>'+esc(i.label)+'</span>'+(i.note?'<br><span class="muted" style="font-size:12px">'+esc(i.note)+'</span>':'')
+        +(i.result==='confirm'?'<br><button class="act" data-rc2="'+esc(i.key.slice(2))+'" style="min-height:30px;margin-top:4px">Confirm…</button>':'')+'</span></li>'; }).join('')+'</ul>'
+      +(r.accepted?'<div class="muted" style="margin-top:8px">Accepted by '+esc(r.accepted.by)+': '+esc(r.accepted.note)+'</div>':'')
+      +'<div class="row" style="margin-top:10px;gap:6px"><button class="act" id="rdRe">Re-check</button>'+(r.fails?'<button class="act warn" id="rdAcc">Accept '+r.fails+' item(s) with a reason…</button>':'')+'<span class="muted" style="font-size:12px">'+(r.ok?'Ready: Start build is open.':'Start build is held.')+'</span></div>';
+    ask('Readiness', html, []);
+    var re=$('rdRe'); if(re) re.onclick=function(){ $('dlg').close(); readyDlg(); };
+    var ac=$('rdAcc'); if(ac) ac.onclick=function(){ $('dlg').close(); ask('Accept readiness items','The items that fail or wait for confirmation are accepted as they are; your reason goes into the audit log and the as-built record.',[{key:'note',label:'Reason'}]).then(function(v){ if(v) act('api/readiness/confirm',{key:'_accept', note:v.note}).then(function(){ setTimeout(readyDlg, 300); }); else readyDlg(); }); };
+    document.querySelectorAll('[data-rc2]').forEach(function(b){ b.onclick=function(){ var k=b.dataset.rc2; $('dlg').close(); ask('Confirm','Who checked it, and how (ticket, test, sign-off).',[{key:'note',label:'Note'}]).then(function(v){ if(v) act('api/readiness/confirm',{key:k, note:v.note}).then(function(){ setTimeout(readyDlg, 300); }); else readyDlg(); }); }; });
+  }).catch(function(e){ if(e.message!=='login') actMsg(e.message,'err'); }); }
+$('bReady').onclick=readyDlg;
+$('bPause').onclick=function(){ act('api/pause',{}); };
+$('bCred').onclick=function(){ ask('Push credential','Used by the service to push Junos and SR Linux configurations. Held in memory only; never written to disk.',[{key:'user',label:'User',value:'netadmin'},{key:'password',label:'Password',type:'password'}]).then(function(v){ if(v) act('api/push-credential',v); }); };
+$('bMyPw').onclick=function(){ showPw(false); $('pwWho').textContent='Change your password: at least 12 characters, not your user name. Your other sessions end.'; $('pwCancel').style.display=''; };
+$('bLogout').onclick=function(){ api('api/logout',{}).then(signedOut).catch(signedOut); };   // HS v1.21: the previous user's plan goes too
+function planesTxt(u){ return u.role==='admin'?'all':(u.role==='operator'?(u.planes.join(', ')||'none'):'read only'); }
+function usersDlg(){
+  api('api/users').then(function(v){
+    var cv=v.coverage||{}, keys=Object.keys(cv.per_plane||{});
+    var rows=v.users.map(function(u){ return '<tr><td class="mono">'+esc(u.name)+'</td><td>'+(u.org==='customer'?'Customer':'DWR')+'</td><td>'+esc(u.role)+'</td><td>'+esc(planesTxt(u))+'</td><td>'+(u.disabled?'disabled':u.must_change?'change pending':'active')+'</td>'
+      +'<td style="white-space:nowrap"><button class="act" data-ue="'+esc(u.name)+'">Edit</button> <button class="act" data-ur="'+esc(u.name)+'">Reset password</button> <button class="act" data-ud="'+esc(u.name)+'" data-dis="'+(u.disabled?0:1)+'">'+(u.disabled?'Enable':'Disable')+'</button></td></tr>'; }).join('');
+    ask('Logins', '<div class="muted" style="margin-bottom:6px">People who can act per plane: '+keys.map(function(k){ var n=cv.per_plane[k]; return '<b'+(n<2?' style="color:#8a4b00"':'')+'>'+esc(k)+' '+n+'</b>'; }).join(' · ')
+      +' (two or more recommended; fewer is a warning, never a block). Admins act on every plane.</div>'
+      +'<table style="width:100%;border-collapse:collapse;font-size:13px"><tr><th align="left">User</th><th align="left">Org</th><th align="left">Role</th><th align="left">Planes</th><th align="left">State</th><th></th></tr>'+rows+'</table>'
+      +'<div style="margin-top:10px"><button class="pri act" id="uAdd">Add login…</button></div>', []);
+    var done=function(){ $('dlg').close(); setTimeout(usersDlg, 50); };
+    var shownPw=function(j){ if(j&&j.password) ask('Temporary password', 'Give this to <b>'+esc(j.name||'')+'</b> privately. It works once: the console asks for a new password at first sign-in.<div class="mono" style="font-size:16px;margin-top:8px;user-select:all">'+esc(j.password)+'</div>', []).then(usersDlg); else usersDlg(); };
+    $('uAdd').onclick=function(){ $('dlg').close();
+      ask('Add login','Operators act only on the planes listed (oob, edge, fe, be). A temporary password is shown once.',
+        [{key:'name',label:'User name'},{key:'org',label:'Organization (Release DWR access disables the DWR logins)',options:[['customer','Customer'],['dwr','DWR Networking']]},{key:'role',label:'Role',options:[['operator','operator'],['admin','admin'],['viewer','viewer (read only)']]},{key:'planes',label:'Planes (operator), comma-separated',value:'fe,edge'}])
+      .then(function(f){ if(!f) return usersDlg(); api('api/users/add',f).then(function(j){ j.name=f.name; shownPw(j); }).catch(function(e){ alert(e.message); usersDlg(); }); }); };
+    document.querySelectorAll('[data-ur]').forEach(function(b){ b.onclick=function(){ var nm=b.dataset.ur; $('dlg').close();
+      api('api/users/reset',{name:nm}).then(function(j){ j.name=nm; shownPw(j); }).catch(function(e){ alert(e.message); usersDlg(); }); }; });
+    document.querySelectorAll('[data-ud]').forEach(function(b){ b.onclick=function(){ var nm=b.dataset.ud;
+      api('api/users/update',{name:nm, disabled:b.dataset.dis==='1'}).then(done).catch(function(e){ alert(e.message); }); }; });
+    document.querySelectorAll('[data-ue]').forEach(function(b){ b.onclick=function(){ var nm=b.dataset.ue, u=v.users.filter(function(x){ return x.name===nm; })[0]; $('dlg').close();
+      ask('Edit '+nm,'Role, planes and organization. The last two admins cannot be demoted.',[{key:'org',label:'Organization',options:[['customer','Customer'],['dwr','DWR Networking']],value:u.org||'dwr'},{key:'role',label:'Role',options:[['operator','operator'],['admin','admin'],['viewer','viewer (read only)']],value:u.role},{key:'planes',label:'Planes (operator)',value:u.planes.join(',')}])
+      .then(function(f){ if(!f) return usersDlg(); api('api/users/update',{name:nm, role:f.role, planes:f.planes, org:f.org}).then(usersDlg).catch(function(e){ alert(e.message); usersDlg(); }); }); }; });
+  }).catch(function(e){ if(e.message!=='login') alert(e.message); });
+}
+$('bUsers').onclick=usersDlg;
+// HS v1.24: hand-over (HS-DEP-003 steps 6.1 and 6.5). The export and the release are the customer's admins' to do.
+function handDlg(inPlace){   // HS v1.24, v1.25: updates in place while open
+  api('api/whoami').then(function(me){ var h=(S.st&&S.st.handover)||{}, fin=h.final||{}, bu=h.built||{}, ex=h.exported||{}, rel=h.release||{}, cust=me.role==='admin'&&me.org==='customer';
+    var t=function(x){ return x?new Date(x*1000).toISOString().replace('T',' ').slice(0,16)+'Z':''; };
+    var step=function(n,title,state,body){ return '<div style="border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:8px"><div class="row" style="justify-content:space-between"><b>'+n+'. '+title+'</b><span class="chip k-'+(state[1]||'queued')+'">'+esc(state[0])+'</span></div><div class="muted" style="font-size:12.5px;margin-top:4px">'+body+'</div></div>'; };
+    var relDone=rel.state==='done', canRel=cust&&!!ex.ts&&!relDone&&rel.state!=='running';
+    var html=step(1,'Final as-built backup', fin.state==='done'?['Done','done']:fin.state==='running'?['Running','active']:['Not taken','queued'],
+        (fin.state==='done'?('Taken '+t(fin.ts)+' by '+esc(fin.by)+': '+fin.ok+' of '+fin.n+' devices'+(fin.failed&&fin.failed.length?('; not possible on '+esc(fin.failed.slice(0,5).join(', '))):'')+'. '):'')+'Backs up every Done device once more; the export carries the newest backup of each.'
+        +'<div style="margin-top:6px"><button class="act" id="hFinal"'+(me.role!=='admin'||fin.state==='running'||relDone?' disabled':'')+'>Take the final backup</button></div>')
+      +step(2,'Hand-over export (customer admin)', ex.ts?['Received','done']:bu.ts?['Downloaded, not confirmed','warn']:['Not downloaded','queued'],
+        (ex.ts?('Receipt confirmed '+t(ex.ts)+' by '+esc(ex.by)+'. '):bu.ts?('Built '+t(bu.ts)+' for '+esc(bu.by)+' ('+esc(bu.name||'')+'). '):'')
+        +'As-built, SoT status and the as-built SoT overlay with apply_asbuilt.py, the device backups, audit and events. It counts once its receipt is confirmed against the file’s SHA-256; from then on the console takes no scheduled backups.'
+        +(bu.sha256?('<div class="mono" style="font-size:11.5px;margin-top:6px;word-break:break-all">SHA-256 '+esc(bu.sha256)+'</div><div style="font-size:11.5px">Windows: Get-FileHash -Algorithm SHA256 &lt;file&gt; · Linux/macOS: sha256sum &lt;file&gt;</div>'):'')
+        +'<div class="row" style="margin-top:6px;gap:6px">'+(cust?('<button class="act" id="hEx"'+(relDone?' disabled':'')+'>Download the hand-over export</button>'+(bu.ts&&!ex.ts?'<button class="act pri" id="hRcv">Confirm receipt…</button>':'')):'<i>Only a customer admin can download it.</i>')+'</div>')
+      +step(3,'Release DWR access (customer admin, last step)', relDone?['Released','done']:rel.state==='partial'?['Partly released','failed']:rel.state==='running'?['Running','active']:['Not released','queued'],
+        (rel.ts?('By '+esc(rel.by)+', '+t(rel.ts)+': dwr-netadmin removed from '+rel.removed+' of '+rel.n+' devices'+(rel.failed&&rel.failed.length?('; failed on '+esc(rel.failed.slice(0,4).map(function(x){ return x.device+' ('+x.why+')'; }).join(', '))):'')+'. '):'')
+        +'Removes dwr-netadmin from every device, disables the DWR console logins, locks DWR’s OS accounts on this host and removes their SSH keys and sudo rules, and clears the push credential. Needs: the export received, two customer admin logins (now '+(h.customer_admins||0)+'), and the confirmations.'
+        +'<div style="margin-top:6px"><button class="act warn" id="hRel"'+(canRel?'':' disabled')+'>Release DWR access…</button></div>');
+    if(inPlace){ if(!($('dlg').open && $('dlgT').textContent==='Hand-over')) return; $('dlgB').innerHTML=html; } else ask('Hand-over', html, []);
+    var f=$('hFinal'); if(f) f.onclick=function(){ act('api/handover/final-backup',{}).then(function(){ setTimeout(function(){ handDlg(true); }, 600); }); };
+    var e=$('hEx'); if(e) e.onclick=function(){ var sel='#hEx'; BUSY[sel]={st:'run', label:'Building the export…', text:'Download the hand-over export'}; busyPaint(); var fn='handover.zip';
+      fetch('api/handover/export.zip',{credentials:'same-origin', headers:{'X-Requested-With':'estate-console'}}).then(function(r){ if(!r.ok) return r.json().then(function(j){ throw new Error(j.msg||j.error||('HTTP '+r.status)); });
+          var cd=r.headers.get('Content-Disposition')||'', m=/filename=([^;]+)/.exec(cd); if(m) fn=m[1].trim(); return r.blob(); })
+        .then(function(b){ var u=URL.createObjectURL(b), a=document.createElement('a'); a.href=u; a.download=fn; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(u); }, 60000);
+          BUSY[sel]={st:'ok', label:'', text:'Download the hand-over export'}; busyPaint(); setTimeout(function(){ delete BUSY[sel]; refresh(); setTimeout(function(){ handDlg(true); }, 800); }, 1500);
+          actMsg('Saved '+fn+'. Check its SHA-256 against the one in Hand-over, then Confirm receipt.', 'ok'); })
+        .catch(function(x){ BUSY[sel]={st:'err', label:'', text:'Download the hand-over export'}; busyPaint(); setTimeout(function(){ delete BUSY[sel]; handDlg(true); }, 4000); actMsg('Export failed: '+x.message, 'err'); }); };
+    var rc=$('hRcv'); if(rc) rc.onclick=function(){ $('dlg').close(); ask('Confirm receipt','Compute the SHA-256 of the file you saved and enter its first 12 characters. This confirms the customer holds the export: scheduled console backups stop, and Release DWR access opens.',[{key:'sha',label:'First 12 characters of the file’s SHA-256'}])
+      .then(function(v){ if(v) act('api/handover/received',{sha:v.sha}).then(function(){ setTimeout(handDlg, 500); }); else handDlg(); }); };
+    var r=$('hRel'); if(r) r.onclick=function(){ $('dlg').close();
+      ask('Release DWR access','This is the last hand-over step and cannot be undone from here. The netadmin password is used for this action only and never stored.',
+        [{key:'tacacs_vpn',label:'DWR’s TACACS and remote-access accounts are disabled',options:[['no','Not yet'],['yes','Yes, confirmed']]},
+         {key:'backup_system',label:'Our backup system has taken a first backup of every device',options:[['no','Not yet'],['yes','Yes, confirmed']]},
+         {key:'dwr_attest',label:'Reference of DWR Networking’s written attestation that it keeps no copies'},
+         {key:'password',label:'netadmin password',type:'password'},{key:'typed',label:'Type RELEASE to go ahead'}])
+      .then(function(v){ if(v) act('api/release-vendor',v).then(function(){ setTimeout(handDlg, 400); }); }); };
+  }); }
+setInterval(function(){ try{ if($('dlg').open && $('dlgT').textContent==='Hand-over') handDlg(true); }catch(e){} }, 3000);   // HS v1.25: live while open
+$('bHand').onclick=handDlg;
+$('bReplay').onclick=function(){ api('api/events?since=0&limit=200000').then(function(r){ r.sort(function(a,b){ return a.ts-b.ts||a.id-b.id; }); S.events=r; S.lastId=r.reduce(function(m,e){ return Math.max(m,e.id); },0); S.mode='replay'; S.rt=0; S.rplay=true; render(); }); };
+$('rBack').onclick=function(){ S.mode='live'; S.rplay=false; refresh(); };
+$('rPlay').onclick=function(){ var mx=+$('rPos').max; if(!S.rplay && S.rt>=mx) S.rt=0; S.rplay=!S.rplay; render(); };
+$('rPos').oninput=function(){ S.rt=+this.value; S.rplay=false; render(); };
+setInterval(function(){ if(S.mode==='replay' && S.rplay){ var mx=+$('rPos').max; S.rt=Math.min(mx, S.rt+0.25*S.speed); if(S.rt>=mx) S.rplay=false; render(); } }, 250);
+api('api/whoami').then(boot).catch(function(){});
+})();
+</script>
+</body>
+</html>

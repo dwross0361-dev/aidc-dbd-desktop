@@ -1,0 +1,13 @@
+Monitor Failure codes:
+    CS  Cold Sync monitoring        FL  Fabric Connection monitoring
+
+Cluster ID: 1
+Node   Priority Status               Preempt Manual   Monitor-failures
+
+Redundancy group: 0 , Failover count: 1
+node0  200      primary              no      no       None
+node1  100      secondary            no      no       None
+
+Redundancy group: 1 , Failover count: 1
+node0  200      primary              yes     no       None
+node1  100      secondary            yes     no       None

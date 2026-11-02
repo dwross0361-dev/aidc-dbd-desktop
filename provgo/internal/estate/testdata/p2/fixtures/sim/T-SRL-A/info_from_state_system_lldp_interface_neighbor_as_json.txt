@@ -1,0 +1,19 @@
+{
+    "system": {
+        "lldp": {
+            "interface": [
+                {
+                    "name": "ethernet-1/1",
+                    "neighbor": [
+                        {
+                            "id": "1A:2B:3C:00:00:01",
+                            "system-name": "T-SRL-SP1",
+                            "port-id": "ethernet-1/49",
+                            "port-description": "to leaf"
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+}

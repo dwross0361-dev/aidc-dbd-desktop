@@ -1,0 +1,1 @@
+TiMOS-C-25.10.R2 cpm/x86_64 Nokia 7750 SR Copyright (c) 2000-2025 Nokia.

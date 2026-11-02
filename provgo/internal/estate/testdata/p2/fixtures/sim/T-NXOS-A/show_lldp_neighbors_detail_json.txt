@@ -1,0 +1,18 @@
+{
+    "TABLE_nbor_detail": {
+        "ROW_nbor_detail": [
+            {
+                "chassis_type": "Mac Address",
+                "chassis_id": "b08b.d0aa.0001",
+                "l_port_id": "Eth1/1",
+                "port_type": "Interface Name",
+                "port_id": "Ethernet1/49",
+                "ttl": 120,
+                "sys_name": "T-NXOS-SP1",
+                "sys_desc": "Cisco NX-OS"
+            }
+        ]
+    },
+    "neigh_hdr": "neigh_hdr",
+    "neigh_count": 1
+}

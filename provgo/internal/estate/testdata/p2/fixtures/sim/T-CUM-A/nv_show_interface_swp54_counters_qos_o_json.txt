@@ -1,0 +1,26 @@
+{
+    "egress-queue-stats": {
+        "3": {
+            "tx-frames": 1200,
+            "tx-bytes": 99000,
+            "ecn-marked-packets": 0,
+            "uc-buffer-discards": 0
+        },
+        "0": {
+            "tx-frames": 10,
+            "uc-buffer-discards": 5
+        }
+    },
+    "pfc-stats": {
+        "3": {
+            "rx-pause-frames": 2,
+            "tx-pause-frames": 1,
+            "rx-pause-duration": 120
+        }
+    },
+    "ingress-buffer-stats": {
+        "priority-group-3": {
+            "discards": 0
+        }
+    }
+}

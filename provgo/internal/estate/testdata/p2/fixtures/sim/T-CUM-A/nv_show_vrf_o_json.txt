@@ -1,0 +1,15 @@
+{
+    "default": {
+        "evpn": {
+            "enable": "on"
+        },
+        "router": {
+            "bgp": {
+                "enable": "on"
+            }
+        }
+    },
+    "mgmt": {
+        "table": "1001"
+    }
+}

@@ -1,0 +1,16 @@
+{
+    "swp51": {
+        "peer-group": "underlay",
+        "remote-as": "external",
+        "state": "established",
+        "type": "unnumbered",
+        "uptime": 812345
+    },
+    "swp52": {
+        "peer-group": "underlay",
+        "remote-as": "external",
+        "state": "established",
+        "type": "unnumbered",
+        "uptime": 812345
+    }
+}

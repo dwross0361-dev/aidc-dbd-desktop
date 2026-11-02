@@ -1,0 +1,8 @@
+Fri Oct 31 22:01:02.345 UTC
+
+VRF: default
+------------
+Neighbor        Spk    AS MsgRcvd MsgSent   TblVer  InQ OutQ  Up/Down  St/PfxRcd
+10.204.0.4        0 4200002000   43812   43790     1203    0    0     3w0d         24
+10.204.0.6        0 4200002000       0       0        0    0    0 00:00:12 Idle (Admin)
+10.204.0.8        0 4200002000       0       0        0    0    0 00:01:40 Active

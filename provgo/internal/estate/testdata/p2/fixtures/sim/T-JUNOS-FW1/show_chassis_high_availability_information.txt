@@ -1,0 +1,36 @@
+Node failure codes:
+    HW  Hardware monitoring    LB  Loopback monitoring
+    MB  Mbuf monitoring        SP  SPU monitoring
+
+Node Status: ONLINE
+Local-id: 1
+Local-IP: 10.255.0.1
+HA Peer Information:
+
+  Peer Id: 2   IP address: 10.255.0.2   Interface: ge-0/0/2.0
+   Routing Instance: default
+   Encrypted: YES    Conn State: UP
+   Cold Sync Status: COMPLETE
+
+Services Redundancy Group: 0
+        Current State: ONLINE
+        Peer Information:
+          Peer Id: 2
+
+SRG failure event codes:
+    BF  BFD monitoring
+
+Services Redundancy Group: 1
+        Deployment Type: ROUTING
+        Status: ACTIVE
+        Activeness Priority: 200
+        Preemption: ENABLED
+        Process Packet In Backup State: NO
+        Control Plane State: READY
+        System Integrity Check: N/A
+        Failure Events: NONE
+        Peer Information:
+          Peer Id: 2
+          Status : BACKUP
+          Health Status: HEALTHY
+          Failover Readiness: READY

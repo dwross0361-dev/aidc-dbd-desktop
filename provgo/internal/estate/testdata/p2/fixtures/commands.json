@@ -1,0 +1,136 @@
+{
+ "T-JUNOS-A": [
+  "show bgp summary | display json",
+  "show configuration class-of-service | display set | match \"pfc|explicit-congestion|ecn\"",
+  "show configuration | display set",
+  "show interfaces extensive | display json",
+  "show interfaces queue | display json",
+  "show lldp neighbors | display json",
+  "show version"
+ ],
+ "T-JUNOS-B": [
+  "show bgp summary | display json",
+  "show configuration class-of-service | display set | match \"pfc|explicit-congestion|ecn\"",
+  "show configuration | display set",
+  "show version"
+ ],
+ "T-JUNOS-FW1": [
+  "show chassis high-availability information"
+ ],
+ "T-JUNOS-FW2": [
+  "show chassis high-availability information"
+ ],
+ "T-JUNOS-CL": [
+  "show chassis cluster status"
+ ],
+ "T-EOS-A": [
+  "show bgp evpn summary | json",
+  "show interfaces counters queue detail | json",
+  "show ip bgp summary vrf all | json",
+  "show lldp neighbors | json",
+  "show priority-flow-control",
+  "show priority-flow-control counters detail | json",
+  "show priority-flow-control counters watchdog | json",
+  "show running-config",
+  "show version"
+ ],
+ "T-EOS-B": [
+  "show bgp evpn summary | json",
+  "show ip bgp summary vrf all | json",
+  "show priority-flow-control",
+  "show running-config",
+  "show version"
+ ],
+ "T-NXOS-A": [
+  "show bgp l2vpn evpn summary | json",
+  "show interface priority-flow-control",
+  "show interface priority-flow-control detail | json",
+  "show ip bgp summary vrf all | json",
+  "show lldp neighbors detail | json",
+  "show queuing interface | json",
+  "show queuing pfc-queue detail | json",
+  "show running-config",
+  "show version"
+ ],
+ "T-NXOS-B": [
+  "show bgp l2vpn evpn summary | json",
+  "show interface priority-flow-control",
+  "show ip bgp summary vrf all | json",
+  "show running-config",
+  "show version"
+ ],
+ "T-CUM-A": [
+  "cat /etc/lsb-release",
+  "nv config show -o commands",
+  "nv show interface lldp -o json",
+  "nv show interface swp51 counters qos -o json",
+  "nv show interface swp52 counters qos -o json",
+  "nv show interface swp53 counters qos -o json",
+  "nv show interface swp54 counters qos -o json",
+  "nv show qos pfc-watchdog -o json",
+  "nv show qos roce -o json",
+  "nv show vrf -o json",
+  "nv show vrf default router bgp neighbor -o json",
+  "nv show vrf mgmt router bgp neighbor -o json"
+ ],
+ "T-CUM-B": [
+  "cat /etc/lsb-release",
+  "nv config show -o commands",
+  "nv show interface lldp -o json",
+  "nv show qos roce -o json",
+  "nv show vrf -o json",
+  "nv show vrf TENANT-01 router bgp neighbor -o json",
+  "nv show vrf default router bgp neighbor -o json",
+  "nv show vrf mgmt router bgp neighbor -o json"
+ ],
+ "T-SRL-A": [
+  "info flat /",
+  "info flat qos",
+  "info from state network-instance * protocols bgp neighbor * session-state | as json",
+  "info from state system information version",
+  "info from state system lldp interface * neighbor * | as json"
+ ],
+ "T-SRL-B": [
+  "info flat /",
+  "info flat qos",
+  "info from state network-instance * protocols bgp neighbor * session-state | as json",
+  "info from state system information version"
+ ],
+ "T-SROS-A": [
+  "admin show configuration /configure flat",
+  "show router bgp summary all",
+  "show router bgp summary family evpn",
+  "show version"
+ ],
+ "T-SROS-B": [
+  "show router bgp summary all",
+  "show router bgp summary family evpn",
+  "show version"
+ ],
+ "T-XR-A": [
+  "show bgp l2vpn evpn summary",
+  "show bgp vrf all summary",
+  "show running-config",
+  "show version"
+ ],
+ "T-XR-B": [
+  "show bgp l2vpn evpn summary",
+  "show bgp vrf all summary",
+  "show version"
+ ],
+ "T-XE-A": [
+  "show running-config",
+  "show version"
+ ],
+ "T-XE-B": [
+  "show version"
+ ],
+ "T-FTD-A": [
+  "show bgp summary",
+  "show failover"
+ ],
+ "T-FTD-B": [
+  "show bgp summary",
+  "show failover"
+ ]
+}

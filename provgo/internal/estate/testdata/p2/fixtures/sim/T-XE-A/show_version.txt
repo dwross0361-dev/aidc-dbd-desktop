@@ -1,0 +1,12 @@
+Cisco IOS XE Software, Version 17.12.04
+Cisco IOS Software [Dublin], Catalyst L3 Switch Software (CAT9K_IOSXE), Version 17.12.4, RELEASE SOFTWARE (fc3)
+Technical Support: http://www.cisco.com/techsupport
+Copyright (c) 1986-2024 by Cisco Systems, Inc.
+
+ROM: IOS-XE ROMMON
+BOOTLDR: System Bootstrap, Version 17.12.1r, RELEASE SOFTWARE (P)
+
+T-XE-A uptime is 2 weeks, 1 day, 3 hours, 4 minutes
+System image file is "flash:packages.conf"
+
+cisco C9300-48T (X86) processor with 1338490K/6147K bytes of memory.

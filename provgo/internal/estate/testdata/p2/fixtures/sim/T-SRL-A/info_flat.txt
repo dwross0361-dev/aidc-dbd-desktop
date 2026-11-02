@@ -1,0 +1,4 @@
+set / system name host-name T-SRL-A
+set / interface ethernet-1/1 mtu 9232
+set / qos interfaces interface ethernet-1/1 output pfc pfc-enable true
+set / system aaa authentication user admin password $y$j9T$abc

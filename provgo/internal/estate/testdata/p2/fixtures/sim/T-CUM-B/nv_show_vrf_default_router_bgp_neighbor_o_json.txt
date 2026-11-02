@@ -1,0 +1,19 @@
+{
+    "swp51": {
+        "peer-group": "underlay",
+        "remote-as": "external",
+        "state": "established",
+        "type": "unnumbered"
+    },
+    "swp52": {
+        "peer-group": "underlay",
+        "remote-as": "external",
+        "state": "idle",
+        "type": "unnumbered"
+    },
+    "swp53": {
+        "remote-as": "external",
+        "state": "established",
+        "type": "unnumbered"
+    }
+}

@@ -1,0 +1,7 @@
+{
+    "default": {},
+    "TENANT-01": {
+        "table": "1002"
+    },
+    "mgmt": {}
+}

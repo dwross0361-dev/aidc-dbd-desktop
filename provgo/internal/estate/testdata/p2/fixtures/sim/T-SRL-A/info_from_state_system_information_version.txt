@@ -1,0 +1,5 @@
+    system {
+        information {
+            version v24.10.1-492-g7a1b2c3d4e
+        }
+    }

@@ -1,0 +1,16 @@
+Arista DCS-7280DR3A-36-F
+Hardware version: 11.01
+Serial number: JPE21120001
+Hardware MAC address: 2899.3a00.0001
+System MAC address: 2899.3a00.0001
+
+Software image version: 4.32.1F
+Architecture: x86_64
+Internal build version: 4.32.1F-38936741.4321F
+Internal build ID: 3a9b0f1e-7f2c-4d7a-9a3a-1d2e3f4a5b6c
+Image format version: 3.0
+Image optimization: Strata-4GB
+
+Uptime: 1 week, 2 days, 3 hours and 4 minutes
+Total memory: 32556392 kB
+Free memory: 25163720 kB

@@ -1,0 +1,581 @@
+{
+ "messages": [
+  {
+   "subject": "[ACME] WARN ACME-ACME-OOB-FW01: OOB-FW01: not called in after 45 min -- waiting (slow)",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "warn",
+    "device": "ACME-ACME-OOB-FW01",
+    "text": "OOB-FW01: not called in after 45 min -- waiting (slow)",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] WARN ACME-ACME-OOB-FW01: OOB-FW01: not called in after 45 min\r\n -- waiting (slow)\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"warn\",\r\n  \"device\": \"ACME-ACME-OOB-FW01\",\r\n  \"text\": \"OOB-FW01: not called in after 45 min -- waiting (slow)\",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] WARN ACME-ACME-OOB-FW01: OOB-FW01: not called in after 45 min -- waiting (slow)",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "fail",
+    "device": "",
+    "text": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] WARN ACME-ACME-OOB-FW01: OOB-FW01: not called in after 45 min\r\n -- waiting (slow)\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: quoted-printable\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"fail\",\r\n  \"device\": \"\",\r\n  \"text\": \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx=\r\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx=\r\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] WARN ACME-ACME-OOB-FW01: OOB-FW01: not called in after 45 min -- waiting (slow)",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "info",
+    "device": "",
+    "text": "Gate passed: Out-of-band",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] WARN ACME-ACME-OOB-FW01: OOB-FW01: not called in after 45 min\r\n -- waiting (slow)\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"info\",\r\n  \"device\": \"\",\r\n  \"text\": \"Gate passed: Out-of-band\",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] WARN ACME-ACME-OOB-FW01: OOB-FW01: not called in after 45 min -- waiting (slow)",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "warn",
+    "device": "",
+    "text": "has = signs == and trailing space ",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] WARN ACME-ACME-OOB-FW01: OOB-FW01: not called in after 45 min\r\n -- waiting (slow)\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"warn\",\r\n  \"device\": \"\",\r\n  \"text\": \"has = signs == and trailing space \",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] WARN ACME-ACME-OOB-FW01: OOB-FW01: not called in after 45 min -- waiting (slow)",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "warn",
+    "device": "",
+    "text": "\u00e9\u2019 non-ascii zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] WARN ACME-ACME-OOB-FW01: OOB-FW01: not called in after 45 min\r\n -- waiting (slow)\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: quoted-printable\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"warn\",\r\n  \"device\": \"\",\r\n  \"text\": \"\\u00e9\\u2019 non-ascii zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz=\r\nzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz\",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] FAIL ACME-ACME-OOB-MCS02: OOB-MCS02: failed at Config -- push exited 3: ERROR: commit failed on ACME-ACME-OOB-MCS02: x",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "warn",
+    "device": "ACME-ACME-OOB-FW01",
+    "text": "OOB-FW01: not called in after 45 min -- waiting (slow)",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] FAIL ACME-ACME-OOB-MCS02: OOB-MCS02: failed at Config -- push\r\n exited 3: ERROR: commit failed on ACME-ACME-OOB-MCS\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"warn\",\r\n  \"device\": \"ACME-ACME-OOB-FW01\",\r\n  \"text\": \"OOB-FW01: not called in after 45 min -- waiting (slow)\",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] FAIL ACME-ACME-OOB-MCS02: OOB-MCS02: failed at Config -- push exited 3: ERROR: commit failed on ACME-ACME-OOB-MCS02: x",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "fail",
+    "device": "",
+    "text": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] FAIL ACME-ACME-OOB-MCS02: OOB-MCS02: failed at Config -- push\r\n exited 3: ERROR: commit failed on ACME-ACME-OOB-MCS\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: quoted-printable\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"fail\",\r\n  \"device\": \"\",\r\n  \"text\": \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx=\r\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx=\r\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] FAIL ACME-ACME-OOB-MCS02: OOB-MCS02: failed at Config -- push exited 3: ERROR: commit failed on ACME-ACME-OOB-MCS02: x",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "info",
+    "device": "",
+    "text": "Gate passed: Out-of-band",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] FAIL ACME-ACME-OOB-MCS02: OOB-MCS02: failed at Config -- push\r\n exited 3: ERROR: commit failed on ACME-ACME-OOB-MCS\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"info\",\r\n  \"device\": \"\",\r\n  \"text\": \"Gate passed: Out-of-band\",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] FAIL ACME-ACME-OOB-MCS02: OOB-MCS02: failed at Config -- push exited 3: ERROR: commit failed on ACME-ACME-OOB-MCS02: x",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "warn",
+    "device": "",
+    "text": "has = signs == and trailing space ",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] FAIL ACME-ACME-OOB-MCS02: OOB-MCS02: failed at Config -- push\r\n exited 3: ERROR: commit failed on ACME-ACME-OOB-MCS\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"warn\",\r\n  \"device\": \"\",\r\n  \"text\": \"has = signs == and trailing space \",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] FAIL ACME-ACME-OOB-MCS02: OOB-MCS02: failed at Config -- push exited 3: ERROR: commit failed on ACME-ACME-OOB-MCS02: x",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "warn",
+    "device": "",
+    "text": "\u00e9\u2019 non-ascii zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] FAIL ACME-ACME-OOB-MCS02: OOB-MCS02: failed at Config -- push\r\n exited 3: ERROR: commit failed on ACME-ACME-OOB-MCS\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: quoted-printable\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"warn\",\r\n  \"device\": \"\",\r\n  \"text\": \"\\u00e9\\u2019 non-ascii zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz=\r\nzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz\",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] FAIL DPU image install (bfb-install over each host\u2019s rshim) failed: 287 of 288 DPU images installed (each DPU counts once it answers on its OOB port)",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "warn",
+    "device": "ACME-ACME-OOB-FW01",
+    "text": "OOB-FW01: not called in after 45 min -- waiting (slow)",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] FAIL DPU image install (bfb-install over each =?utf-8?q?host?=\r\n =?utf-8?q?=E2=80=99s?= rshim) failed: 287 of 288 DPU images installed (each\r\n DPU cou\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"warn\",\r\n  \"device\": \"ACME-ACME-OOB-FW01\",\r\n  \"text\": \"OOB-FW01: not called in after 45 min -- waiting (slow)\",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] FAIL DPU image install (bfb-install over each host\u2019s rshim) failed: 287 of 288 DPU images installed (each DPU counts once it answers on its OOB port)",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "fail",
+    "device": "",
+    "text": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] FAIL DPU image install (bfb-install over each =?utf-8?q?host?=\r\n =?utf-8?q?=E2=80=99s?= rshim) failed: 287 of 288 DPU images installed (each\r\n DPU cou\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: quoted-printable\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"fail\",\r\n  \"device\": \"\",\r\n  \"text\": \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx=\r\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx=\r\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] FAIL DPU image install (bfb-install over each host\u2019s rshim) failed: 287 of 288 DPU images installed (each DPU counts once it answers on its OOB port)",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "info",
+    "device": "",
+    "text": "Gate passed: Out-of-band",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] FAIL DPU image install (bfb-install over each =?utf-8?q?host?=\r\n =?utf-8?q?=E2=80=99s?= rshim) failed: 287 of 288 DPU images installed (each\r\n DPU cou\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"info\",\r\n  \"device\": \"\",\r\n  \"text\": \"Gate passed: Out-of-band\",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] FAIL DPU image install (bfb-install over each host\u2019s rshim) failed: 287 of 288 DPU images installed (each DPU counts once it answers on its OOB port)",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "warn",
+    "device": "",
+    "text": "has = signs == and trailing space ",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] FAIL DPU image install (bfb-install over each =?utf-8?q?host?=\r\n =?utf-8?q?=E2=80=99s?= rshim) failed: 287 of 288 DPU images installed (each\r\n DPU cou\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"warn\",\r\n  \"device\": \"\",\r\n  \"text\": \"has = signs == and trailing space \",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] FAIL DPU image install (bfb-install over each host\u2019s rshim) failed: 287 of 288 DPU images installed (each DPU counts once it answers on its OOB port)",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "warn",
+    "device": "",
+    "text": "\u00e9\u2019 non-ascii zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] FAIL DPU image install (bfb-install over each =?utf-8?q?host?=\r\n =?utf-8?q?=E2=80=99s?= rshim) failed: 287 of 288 DPU images installed (each\r\n DPU cou\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: quoted-printable\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"warn\",\r\n  \"device\": \"\",\r\n  \"text\": \"\\u00e9\\u2019 non-ascii zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz=\r\nzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz\",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] INFO Gate passed: Out-of-band",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "warn",
+    "device": "ACME-ACME-OOB-FW01",
+    "text": "OOB-FW01: not called in after 45 min -- waiting (slow)",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] INFO Gate passed: Out-of-band\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"warn\",\r\n  \"device\": \"ACME-ACME-OOB-FW01\",\r\n  \"text\": \"OOB-FW01: not called in after 45 min -- waiting (slow)\",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] INFO Gate passed: Out-of-band",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "fail",
+    "device": "",
+    "text": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] INFO Gate passed: Out-of-band\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: quoted-printable\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"fail\",\r\n  \"device\": \"\",\r\n  \"text\": \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx=\r\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx=\r\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] INFO Gate passed: Out-of-band",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "info",
+    "device": "",
+    "text": "Gate passed: Out-of-band",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] INFO Gate passed: Out-of-band\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"info\",\r\n  \"device\": \"\",\r\n  \"text\": \"Gate passed: Out-of-band\",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] INFO Gate passed: Out-of-band",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "warn",
+    "device": "",
+    "text": "has = signs == and trailing space ",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] INFO Gate passed: Out-of-band\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"warn\",\r\n  \"device\": \"\",\r\n  \"text\": \"has = signs == and trailing space \",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] INFO Gate passed: Out-of-band",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "warn",
+    "device": "",
+    "text": "\u00e9\u2019 non-ascii zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] INFO Gate passed: Out-of-band\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: quoted-printable\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"warn\",\r\n  \"device\": \"\",\r\n  \"text\": \"\\u00e9\\u2019 non-ascii zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz=\r\nzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz\",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] WARN xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "warn",
+    "device": "ACME-ACME-OOB-FW01",
+    "text": "OOB-FW01: not called in after 45 min -- waiting (slow)",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] WARN =?utf-8?q?xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx?=\r\n =?utf-8?q?xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx?=\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"warn\",\r\n  \"device\": \"ACME-ACME-OOB-FW01\",\r\n  \"text\": \"OOB-FW01: not called in after 45 min -- waiting (slow)\",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] WARN xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "fail",
+    "device": "",
+    "text": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] WARN =?utf-8?q?xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx?=\r\n =?utf-8?q?xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx?=\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: quoted-printable\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"fail\",\r\n  \"device\": \"\",\r\n  \"text\": \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx=\r\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx=\r\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] WARN xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "info",
+    "device": "",
+    "text": "Gate passed: Out-of-band",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] WARN =?utf-8?q?xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx?=\r\n =?utf-8?q?xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx?=\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"info\",\r\n  \"device\": \"\",\r\n  \"text\": \"Gate passed: Out-of-band\",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] WARN xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "warn",
+    "device": "",
+    "text": "has = signs == and trailing space ",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] WARN =?utf-8?q?xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx?=\r\n =?utf-8?q?xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx?=\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"warn\",\r\n  \"device\": \"\",\r\n  \"text\": \"has = signs == and trailing space \",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] WARN xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "warn",
+    "device": "",
+    "text": "\u00e9\u2019 non-ascii zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] WARN =?utf-8?q?xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx?=\r\n =?utf-8?q?xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx?=\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: quoted-printable\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"warn\",\r\n  \"device\": \"\",\r\n  \"text\": \"\\u00e9\\u2019 non-ascii zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz=\r\nzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz\",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] WARN caf\u00e9 cr\u00e8me br\u00fbl\u00e9e na\u00efve \u2014 \u201cquoted\u201d words here and there to fold the header across lines",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "warn",
+    "device": "ACME-ACME-OOB-FW01",
+    "text": "OOB-FW01: not called in after 45 min -- waiting (slow)",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] WARN =?utf-8?b?Y2Fmw6kgY3LDqG1lIGJyw7tsw6llIG5hw692ZSDigJQg?=\r\n =?utf-8?b?4oCccXVvdGVk4oCd?= words here and there to fold the header across\r\n lines\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"warn\",\r\n  \"device\": \"ACME-ACME-OOB-FW01\",\r\n  \"text\": \"OOB-FW01: not called in after 45 min -- waiting (slow)\",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] WARN caf\u00e9 cr\u00e8me br\u00fbl\u00e9e na\u00efve \u2014 \u201cquoted\u201d words here and there to fold the header across lines",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "fail",
+    "device": "",
+    "text": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] WARN =?utf-8?b?Y2Fmw6kgY3LDqG1lIGJyw7tsw6llIG5hw692ZSDigJQg?=\r\n =?utf-8?b?4oCccXVvdGVk4oCd?= words here and there to fold the header across\r\n lines\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: quoted-printable\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"fail\",\r\n  \"device\": \"\",\r\n  \"text\": \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx=\r\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx=\r\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] WARN caf\u00e9 cr\u00e8me br\u00fbl\u00e9e na\u00efve \u2014 \u201cquoted\u201d words here and there to fold the header across lines",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "info",
+    "device": "",
+    "text": "Gate passed: Out-of-band",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] WARN =?utf-8?b?Y2Fmw6kgY3LDqG1lIGJyw7tsw6llIG5hw692ZSDigJQg?=\r\n =?utf-8?b?4oCccXVvdGVk4oCd?= words here and there to fold the header across\r\n lines\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"info\",\r\n  \"device\": \"\",\r\n  \"text\": \"Gate passed: Out-of-band\",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] WARN caf\u00e9 cr\u00e8me br\u00fbl\u00e9e na\u00efve \u2014 \u201cquoted\u201d words here and there to fold the header across lines",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "warn",
+    "device": "",
+    "text": "has = signs == and trailing space ",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] WARN =?utf-8?b?Y2Fmw6kgY3LDqG1lIGJyw7tsw6llIG5hw692ZSDigJQg?=\r\n =?utf-8?b?4oCccXVvdGVk4oCd?= words here and there to fold the header across\r\n lines\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"warn\",\r\n  \"device\": \"\",\r\n  \"text\": \"has = signs == and trailing space \",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] WARN caf\u00e9 cr\u00e8me br\u00fbl\u00e9e na\u00efve \u2014 \u201cquoted\u201d words here and there to fold the header across lines",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "warn",
+    "device": "",
+    "text": "\u00e9\u2019 non-ascii zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] WARN =?utf-8?b?Y2Fmw6kgY3LDqG1lIGJyw7tsw6llIG5hw692ZSDigJQg?=\r\n =?utf-8?b?4oCccXVvdGVk4oCd?= words here and there to fold the header across\r\n lines\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: quoted-printable\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"warn\",\r\n  \"device\": \"\",\r\n  \"text\": \"\\u00e9\\u2019 non-ascii zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz=\r\nzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz\",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] FAIL Refused the standby at https://10.0.0.2:8443: its certificate (SHA-256 abababababababababababababababababababababababababababababababab) is not the pinned one",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "warn",
+    "device": "ACME-ACME-OOB-FW01",
+    "text": "OOB-FW01: not called in after 45 min -- waiting (slow)",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] FAIL Refused the standby at https://10.0.0.2:8443: its\r\n certificate (SHA-256 ababababababababababababababababababa\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"warn\",\r\n  \"device\": \"ACME-ACME-OOB-FW01\",\r\n  \"text\": \"OOB-FW01: not called in after 45 min -- waiting (slow)\",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] FAIL Refused the standby at https://10.0.0.2:8443: its certificate (SHA-256 abababababababababababababababababababababababababababababababab) is not the pinned one",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "fail",
+    "device": "",
+    "text": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] FAIL Refused the standby at https://10.0.0.2:8443: its\r\n certificate (SHA-256 ababababababababababababababababababa\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: quoted-printable\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"fail\",\r\n  \"device\": \"\",\r\n  \"text\": \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx=\r\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx=\r\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] FAIL Refused the standby at https://10.0.0.2:8443: its certificate (SHA-256 abababababababababababababababababababababababababababababababab) is not the pinned one",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "info",
+    "device": "",
+    "text": "Gate passed: Out-of-band",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] FAIL Refused the standby at https://10.0.0.2:8443: its\r\n certificate (SHA-256 ababababababababababababababababababa\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"info\",\r\n  \"device\": \"\",\r\n  \"text\": \"Gate passed: Out-of-band\",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] FAIL Refused the standby at https://10.0.0.2:8443: its certificate (SHA-256 abababababababababababababababababababababababababababababababab) is not the pinned one",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "warn",
+    "device": "",
+    "text": "has = signs == and trailing space ",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] FAIL Refused the standby at https://10.0.0.2:8443: its\r\n certificate (SHA-256 ababababababababababababababababababa\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"warn\",\r\n  \"device\": \"\",\r\n  \"text\": \"has = signs == and trailing space \",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] FAIL Refused the standby at https://10.0.0.2:8443: its certificate (SHA-256 abababababababababababababababababababababababababababababababab) is not the pinned one",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "warn",
+    "device": "",
+    "text": "\u00e9\u2019 non-ascii zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] FAIL Refused the standby at https://10.0.0.2:8443: its\r\n certificate (SHA-256 ababababababababababababababababababa\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: quoted-printable\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"warn\",\r\n  \"device\": \"\",\r\n  \"text\": \"\\u00e9\\u2019 non-ascii zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz=\r\nzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz\",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "short",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "warn",
+    "device": "ACME-ACME-OOB-FW01",
+    "text": "OOB-FW01: not called in after 45 min -- waiting (slow)",
+    "site": "ACME"
+   },
+   "msg": "Subject: short\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"warn\",\r\n  \"device\": \"ACME-ACME-OOB-FW01\",\r\n  \"text\": \"OOB-FW01: not called in after 45 min -- waiting (slow)\",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "short",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "fail",
+    "device": "",
+    "text": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "site": "ACME"
+   },
+   "msg": "Subject: short\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: quoted-printable\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"fail\",\r\n  \"device\": \"\",\r\n  \"text\": \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx=\r\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx=\r\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "short",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "info",
+    "device": "",
+    "text": "Gate passed: Out-of-band",
+    "site": "ACME"
+   },
+   "msg": "Subject: short\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"info\",\r\n  \"device\": \"\",\r\n  \"text\": \"Gate passed: Out-of-band\",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "short",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "warn",
+    "device": "",
+    "text": "has = signs == and trailing space ",
+    "site": "ACME"
+   },
+   "msg": "Subject: short\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"warn\",\r\n  \"device\": \"\",\r\n  \"text\": \"has = signs == and trailing space \",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "short",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "warn",
+    "device": "",
+    "text": "\u00e9\u2019 non-ascii zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+    "site": "ACME"
+   },
+   "msg": "Subject: short\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: quoted-printable\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"warn\",\r\n  \"device\": \"\",\r\n  \"text\": \"\\u00e9\\u2019 non-ascii zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz=\r\nzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz\",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] WARN a b",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "warn",
+    "device": "ACME-ACME-OOB-FW01",
+    "text": "OOB-FW01: not called in after 45 min -- waiting (slow)",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] WARN a b\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"warn\",\r\n  \"device\": \"ACME-ACME-OOB-FW01\",\r\n  \"text\": \"OOB-FW01: not called in after 45 min -- waiting (slow)\",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] WARN a b",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "fail",
+    "device": "",
+    "text": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] WARN a b\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: quoted-printable\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"fail\",\r\n  \"device\": \"\",\r\n  \"text\": \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx=\r\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx=\r\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] WARN a b",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "info",
+    "device": "",
+    "text": "Gate passed: Out-of-band",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] WARN a b\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"info\",\r\n  \"device\": \"\",\r\n  \"text\": \"Gate passed: Out-of-band\",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] WARN a b",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "warn",
+    "device": "",
+    "text": "has = signs == and trailing space ",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] WARN a b\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"warn\",\r\n  \"device\": \"\",\r\n  \"text\": \"has = signs == and trailing space \",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] WARN a b",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "warn",
+    "device": "",
+    "text": "\u00e9\u2019 non-ascii zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] WARN a b\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: quoted-printable\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"warn\",\r\n  \"device\": \"\",\r\n  \"text\": \"\\u00e9\\u2019 non-ascii zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz=\r\nzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz\",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] WARN exactly-long-word-yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy tail",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "warn",
+    "device": "ACME-ACME-OOB-FW01",
+    "text": "OOB-FW01: not called in after 45 min -- waiting (slow)",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] WARN =?utf-8?q?exactly-long-word-yyyyyyyyyyyyyyyyyyyyyyyyyyy?=\r\n =?utf-8?q?yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy?= tail\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"warn\",\r\n  \"device\": \"ACME-ACME-OOB-FW01\",\r\n  \"text\": \"OOB-FW01: not called in after 45 min -- waiting (slow)\",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] WARN exactly-long-word-yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy tail",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "fail",
+    "device": "",
+    "text": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] WARN =?utf-8?q?exactly-long-word-yyyyyyyyyyyyyyyyyyyyyyyyyyy?=\r\n =?utf-8?q?yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy?= tail\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: quoted-printable\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"fail\",\r\n  \"device\": \"\",\r\n  \"text\": \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx=\r\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx=\r\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] WARN exactly-long-word-yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy tail",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "info",
+    "device": "",
+    "text": "Gate passed: Out-of-band",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] WARN =?utf-8?q?exactly-long-word-yyyyyyyyyyyyyyyyyyyyyyyyyyy?=\r\n =?utf-8?q?yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy?= tail\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"info\",\r\n  \"device\": \"\",\r\n  \"text\": \"Gate passed: Out-of-band\",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] WARN exactly-long-word-yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy tail",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "warn",
+    "device": "",
+    "text": "has = signs == and trailing space ",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] WARN =?utf-8?q?exactly-long-word-yyyyyyyyyyyyyyyyyyyyyyyyyyy?=\r\n =?utf-8?q?yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy?= tail\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"warn\",\r\n  \"device\": \"\",\r\n  \"text\": \"has = signs == and trailing space \",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  },
+  {
+   "subject": "[ACME] WARN exactly-long-word-yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy tail",
+   "alert": {
+    "ts": "2026-11-01T00:00:00Z",
+    "level": "warn",
+    "device": "",
+    "text": "\u00e9\u2019 non-ascii zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+    "site": "ACME"
+   },
+   "msg": "Subject: [ACME] WARN =?utf-8?q?exactly-long-word-yyyyyyyyyyyyyyyyyyyyyyyyyyy?=\r\n =?utf-8?q?yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy?= tail\r\nFrom: estate@example.net\r\nTo: noc@example.net, ops@example.net\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: quoted-printable\r\nMIME-Version: 1.0\r\n\r\n{\r\n  \"ts\": \"2026-11-01T00:00:00Z\",\r\n  \"level\": \"warn\",\r\n  \"device\": \"\",\r\n  \"text\": \"\\u00e9\\u2019 non-ascii zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz=\r\nzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz\",\r\n  \"site\": \"ACME\"\r\n}\r\n"
+  }
+ ],
+ "quote": {
+  "": "''",
+  "abc": "abc",
+  "a b": "'a b'",
+  "it's": "'it'\"'\"'s'",
+  "100TB (Acme's 'tier 1')": "'100TB (Acme'\"'\"'s '\"'\"'tier 1'\"'\"')'",
+  "/dev/nvme0n1 /dev/nvme1n1": "'/dev/nvme0n1 /dev/nvme1n1'",
+  "x=y,z:1.2/3-4@%+": "x=y,z:1.2/3-4@%+",
+  "$HOME": "'$HOME'",
+  "caf\u00e9": "'caf\u00e9'"
+ },
+ "canon": [
+  [
+   {
+    "b": 1,
+    "a": [
+     1.5,
+     "x\u00e9\n\"q\""
+    ],
+    "c": {
+     "z": null,
+     "y": true
+    }
+   },
+   "{\"a\":[1.5,\"x\u00e9\\n\\\"q\\\"\"],\"b\":1,\"c\":{\"y\":true,\"z\":null}}"
+  ]
+ ]
+}

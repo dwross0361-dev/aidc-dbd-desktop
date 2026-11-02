@@ -1,0 +1,18 @@
+{
+    "interfaceCounters": {
+        "Ethernet1/1": {
+            "rxFrames": 120,
+            "txFrames": 33,
+            "priorities": {
+                "3": {
+                    "rxFrames": 120,
+                    "txFrames": 33
+                },
+                "0": {
+                    "rxFrames": 0,
+                    "txFrames": 0
+                }
+            }
+        }
+    }
+}

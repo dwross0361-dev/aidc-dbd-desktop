@@ -1,0 +1,4 @@
+Failover On
+Failover unit Secondary
+        This host: Secondary - Failed
+        Other host: Primary - Active

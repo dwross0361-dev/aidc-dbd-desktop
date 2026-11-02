@@ -1,0 +1,4 @@
+BGP router identifier 10.0.250.52, local AS number 65010
+Neighbor        V           AS MsgRcvd MsgSent   TblVer  InQ OutQ Up/Down  State/PfxRcd
+10.205.0.9      4        65020    8812    8810       41    0    0 6d03h          12
+10.205.0.13     4        65020       0       0        1    0    0 never    Active

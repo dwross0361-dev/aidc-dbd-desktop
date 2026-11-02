@@ -1,0 +1,15 @@
+{
+    "tablesLastChangeTime": 1761900000.5,
+    "tablesAgeOuts": 0,
+    "tablesInserts": 4,
+    "tablesDeletes": 0,
+    "tablesDrops": 0,
+    "lldpNeighbors": [
+        {
+            "port": "Ethernet1/1",
+            "neighborDevice": "T-EOS-SP1",
+            "neighborPort": "Ethernet49/1",
+            "ttl": 120
+        }
+    ]
+}

@@ -1,0 +1,3 @@
+set class-of-service congestion-notification-profile CNP-ROCE input ieee-802.1 code-point 011 pfc
+set class-of-service schedulers SCH-ROCE explicit-congestion-notification
+set class-of-service interfaces et-0/0/0 congestion-notification-profile CNP-ROCE

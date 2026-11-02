@@ -1,3 +1,24 @@
+# AIDC DBD Desktop 2.0.49 (builder HS-v1.56 r2, site runner 1.9.0)
+
+- **A run of all no longer stalls on a design with an empty plane** (both engines, Python and Go). A build with no devices, for example the edge and front end of a back-end-only design, is marked complete when the run starts, with one event: "No devices in plane edge: build marked complete". The run goes straight on to the next build.
+  - Before, the service hit an error on every tick from then on: Kea (DHCP) updates and pushes stopped, and a push-based back end (Junos) never finished.
+  - Starting the back end alone no longer needs an override when only empty builds come before it.
+  - A build record with no waves can no longer stop the service's tick.
+- **Proved before shipping:** both engines compared side by side on the four designs with an empty plane (provisioning and gate checks), and on B-BE-JUNOS through pushes, RMA, runners, tuning, hand-over and switching engines mid-build. Device configurations are unchanged.
+
+# AIDC DBD Desktop 2.0.48 (builder HS-v1.56, site runner 1.9.0)
+
+- **The .run carries the provisioning service as a Go binary too.** `provision/bin/` holds `aidc-prov` for Linux amd64 and arm64 (static, gzip). `sudo ./setup.sh --engine go` (or `sudo bash <run> --engine go`) installs the one for the host's CPU and runs the service on it.
+  - **Python stays the default.** Without `--engine`, setup.sh installs and runs `estate_build.py` as before; a re-run keeps whichever engine is installed.
+  - **Same plan, state, console and commands.** Either engine takes over the other's state, so `--engine python` switches back with nothing lost. The console page is byte-identical.
+  - **Proved before shipping:** both engines compared side by side on fake devices of all nine platforms: provisioning and gate checks on all 25 regression designs; pushes, RMA, runners, tuning, hand-over and switching engines mid-build on 7 of them; the standby host on one.
+  - **DSX Air TC-208** runs the zero-touch test on the Go engine (`sudo bash air/ztp-host.sh --engine go`) to compare with Python.
+- **Two fixes to the provisioning service** (both engines):
+  - Release DWR access on Junos now commits the account removal. Before, the removal was discarded and the device reported failed.
+  - A GPU host that failed its rail check passes on retry once fixed. Before, it kept failing until its log file was deleted.
+- The builder file is about 14 MB larger (the two binaries).
+- **CONFIRM:** run TC-208 in DSX Air, and the first real pod on the Go engine, before making it the default.
+
 # AIDC DBD Desktop 2.0.47 (builder HS-v1.55, site runner 1.9.0)
 
 - **The light Deploy panel is compact.** It's now a 560-pixel box instead of a full-width panel, with the same button, the same facts in fewer words, and file names that don't break across lines.

@@ -1,0 +1,1629 @@
+{
+ "checks": [
+  {
+   "kind": "bgp",
+   "dev": "T-JUNOS-A"
+  },
+  {
+   "kind": "evpn",
+   "dev": "T-JUNOS-A"
+  },
+  {
+   "kind": "roce",
+   "dev": "T-JUNOS-A"
+  },
+  {
+   "kind": "lossless",
+   "dev": "T-JUNOS-A"
+  },
+  {
+   "kind": "software",
+   "dev": "T-JUNOS-A"
+  },
+  {
+   "kind": "cabling",
+   "dev": "T-JUNOS-A"
+  },
+  {
+   "kind": "bgp",
+   "dev": "T-JUNOS-B"
+  },
+  {
+   "kind": "evpn",
+   "dev": "T-JUNOS-B"
+  },
+  {
+   "kind": "roce",
+   "dev": "T-JUNOS-B"
+  },
+  {
+   "kind": "lossless",
+   "dev": "T-JUNOS-B"
+  },
+  {
+   "kind": "software",
+   "dev": "T-JUNOS-B"
+  },
+  {
+   "kind": "cabling",
+   "dev": "T-JUNOS-B"
+  },
+  {
+   "kind": "bgp",
+   "dev": "T-EOS-A"
+  },
+  {
+   "kind": "evpn",
+   "dev": "T-EOS-A"
+  },
+  {
+   "kind": "roce",
+   "dev": "T-EOS-A"
+  },
+  {
+   "kind": "lossless",
+   "dev": "T-EOS-A"
+  },
+  {
+   "kind": "software",
+   "dev": "T-EOS-A"
+  },
+  {
+   "kind": "cabling",
+   "dev": "T-EOS-A"
+  },
+  {
+   "kind": "bgp",
+   "dev": "T-EOS-B"
+  },
+  {
+   "kind": "evpn",
+   "dev": "T-EOS-B"
+  },
+  {
+   "kind": "roce",
+   "dev": "T-EOS-B"
+  },
+  {
+   "kind": "lossless",
+   "dev": "T-EOS-B"
+  },
+  {
+   "kind": "software",
+   "dev": "T-EOS-B"
+  },
+  {
+   "kind": "cabling",
+   "dev": "T-EOS-B"
+  },
+  {
+   "kind": "bgp",
+   "dev": "T-NXOS-A"
+  },
+  {
+   "kind": "evpn",
+   "dev": "T-NXOS-A"
+  },
+  {
+   "kind": "roce",
+   "dev": "T-NXOS-A"
+  },
+  {
+   "kind": "lossless",
+   "dev": "T-NXOS-A"
+  },
+  {
+   "kind": "software",
+   "dev": "T-NXOS-A"
+  },
+  {
+   "kind": "cabling",
+   "dev": "T-NXOS-A"
+  },
+  {
+   "kind": "bgp",
+   "dev": "T-NXOS-B"
+  },
+  {
+   "kind": "evpn",
+   "dev": "T-NXOS-B"
+  },
+  {
+   "kind": "roce",
+   "dev": "T-NXOS-B"
+  },
+  {
+   "kind": "lossless",
+   "dev": "T-NXOS-B"
+  },
+  {
+   "kind": "software",
+   "dev": "T-NXOS-B"
+  },
+  {
+   "kind": "cabling",
+   "dev": "T-NXOS-B"
+  },
+  {
+   "kind": "bgp",
+   "dev": "T-CUM-A"
+  },
+  {
+   "kind": "evpn",
+   "dev": "T-CUM-A"
+  },
+  {
+   "kind": "roce",
+   "dev": "T-CUM-A"
+  },
+  {
+   "kind": "lossless",
+   "dev": "T-CUM-A"
+  },
+  {
+   "kind": "software",
+   "dev": "T-CUM-A"
+  },
+  {
+   "kind": "cabling",
+   "dev": "T-CUM-A"
+  },
+  {
+   "kind": "bgp",
+   "dev": "T-CUM-B"
+  },
+  {
+   "kind": "evpn",
+   "dev": "T-CUM-B"
+  },
+  {
+   "kind": "roce",
+   "dev": "T-CUM-B"
+  },
+  {
+   "kind": "lossless",
+   "dev": "T-CUM-B"
+  },
+  {
+   "kind": "software",
+   "dev": "T-CUM-B"
+  },
+  {
+   "kind": "cabling",
+   "dev": "T-CUM-B"
+  },
+  {
+   "kind": "bgp",
+   "dev": "T-SRL-A"
+  },
+  {
+   "kind": "evpn",
+   "dev": "T-SRL-A"
+  },
+  {
+   "kind": "roce",
+   "dev": "T-SRL-A"
+  },
+  {
+   "kind": "lossless",
+   "dev": "T-SRL-A"
+  },
+  {
+   "kind": "software",
+   "dev": "T-SRL-A"
+  },
+  {
+   "kind": "cabling",
+   "dev": "T-SRL-A"
+  },
+  {
+   "kind": "bgp",
+   "dev": "T-SRL-B"
+  },
+  {
+   "kind": "evpn",
+   "dev": "T-SRL-B"
+  },
+  {
+   "kind": "roce",
+   "dev": "T-SRL-B"
+  },
+  {
+   "kind": "lossless",
+   "dev": "T-SRL-B"
+  },
+  {
+   "kind": "software",
+   "dev": "T-SRL-B"
+  },
+  {
+   "kind": "cabling",
+   "dev": "T-SRL-B"
+  },
+  {
+   "kind": "bgp",
+   "dev": "T-SROS-A"
+  },
+  {
+   "kind": "evpn",
+   "dev": "T-SROS-A"
+  },
+  {
+   "kind": "roce",
+   "dev": "T-SROS-A"
+  },
+  {
+   "kind": "lossless",
+   "dev": "T-SROS-A"
+  },
+  {
+   "kind": "software",
+   "dev": "T-SROS-A"
+  },
+  {
+   "kind": "cabling",
+   "dev": "T-SROS-A"
+  },
+  {
+   "kind": "bgp",
+   "dev": "T-SROS-B"
+  },
+  {
+   "kind": "evpn",
+   "dev": "T-SROS-B"
+  },
+  {
+   "kind": "roce",
+   "dev": "T-SROS-B"
+  },
+  {
+   "kind": "lossless",
+   "dev": "T-SROS-B"
+  },
+  {
+   "kind": "software",
+   "dev": "T-SROS-B"
+  },
+  {
+   "kind": "cabling",
+   "dev": "T-SROS-B"
+  },
+  {
+   "kind": "bgp",
+   "dev": "T-XR-A"
+  },
+  {
+   "kind": "evpn",
+   "dev": "T-XR-A"
+  },
+  {
+   "kind": "roce",
+   "dev": "T-XR-A"
+  },
+  {
+   "kind": "lossless",
+   "dev": "T-XR-A"
+  },
+  {
+   "kind": "software",
+   "dev": "T-XR-A"
+  },
+  {
+   "kind": "cabling",
+   "dev": "T-XR-A"
+  },
+  {
+   "kind": "bgp",
+   "dev": "T-XR-B"
+  },
+  {
+   "kind": "evpn",
+   "dev": "T-XR-B"
+  },
+  {
+   "kind": "roce",
+   "dev": "T-XR-B"
+  },
+  {
+   "kind": "lossless",
+   "dev": "T-XR-B"
+  },
+  {
+   "kind": "software",
+   "dev": "T-XR-B"
+  },
+  {
+   "kind": "cabling",
+   "dev": "T-XR-B"
+  },
+  {
+   "kind": "bgp",
+   "dev": "T-XE-A"
+  },
+  {
+   "kind": "evpn",
+   "dev": "T-XE-A"
+  },
+  {
+   "kind": "roce",
+   "dev": "T-XE-A"
+  },
+  {
+   "kind": "lossless",
+   "dev": "T-XE-A"
+  },
+  {
+   "kind": "software",
+   "dev": "T-XE-A"
+  },
+  {
+   "kind": "cabling",
+   "dev": "T-XE-A"
+  },
+  {
+   "kind": "bgp",
+   "dev": "T-XE-B"
+  },
+  {
+   "kind": "evpn",
+   "dev": "T-XE-B"
+  },
+  {
+   "kind": "roce",
+   "dev": "T-XE-B"
+  },
+  {
+   "kind": "lossless",
+   "dev": "T-XE-B"
+  },
+  {
+   "kind": "software",
+   "dev": "T-XE-B"
+  },
+  {
+   "kind": "cabling",
+   "dev": "T-XE-B"
+  },
+  {
+   "kind": "bgp",
+   "dev": "T-FTD-A"
+  },
+  {
+   "kind": "evpn",
+   "dev": "T-FTD-A"
+  },
+  {
+   "kind": "roce",
+   "dev": "T-FTD-A"
+  },
+  {
+   "kind": "lossless",
+   "dev": "T-FTD-A"
+  },
+  {
+   "kind": "software",
+   "dev": "T-FTD-A"
+  },
+  {
+   "kind": "cabling",
+   "dev": "T-FTD-A"
+  },
+  {
+   "kind": "bgp",
+   "dev": "T-FTD-B"
+  },
+  {
+   "kind": "evpn",
+   "dev": "T-FTD-B"
+  },
+  {
+   "kind": "roce",
+   "dev": "T-FTD-B"
+  },
+  {
+   "kind": "lossless",
+   "dev": "T-FTD-B"
+  },
+  {
+   "kind": "software",
+   "dev": "T-FTD-B"
+  },
+  {
+   "kind": "cabling",
+   "dev": "T-FTD-B"
+  },
+  {
+   "kind": "bgp",
+   "dev": "T-JUNOS-FW1"
+  },
+  {
+   "kind": "evpn",
+   "dev": "T-JUNOS-FW1"
+  },
+  {
+   "kind": "roce",
+   "dev": "T-JUNOS-FW1"
+  },
+  {
+   "kind": "lossless",
+   "dev": "T-JUNOS-FW1"
+  },
+  {
+   "kind": "software",
+   "dev": "T-JUNOS-FW1"
+  },
+  {
+   "kind": "cabling",
+   "dev": "T-JUNOS-FW1"
+  },
+  {
+   "kind": "bgp",
+   "dev": "T-JUNOS-FW2"
+  },
+  {
+   "kind": "evpn",
+   "dev": "T-JUNOS-FW2"
+  },
+  {
+   "kind": "roce",
+   "dev": "T-JUNOS-FW2"
+  },
+  {
+   "kind": "lossless",
+   "dev": "T-JUNOS-FW2"
+  },
+  {
+   "kind": "software",
+   "dev": "T-JUNOS-FW2"
+  },
+  {
+   "kind": "cabling",
+   "dev": "T-JUNOS-FW2"
+  },
+  {
+   "kind": "bgp",
+   "dev": "T-JUNOS-CL"
+  },
+  {
+   "kind": "evpn",
+   "dev": "T-JUNOS-CL"
+  },
+  {
+   "kind": "roce",
+   "dev": "T-JUNOS-CL"
+  },
+  {
+   "kind": "lossless",
+   "dev": "T-JUNOS-CL"
+  },
+  {
+   "kind": "software",
+   "dev": "T-JUNOS-CL"
+  },
+  {
+   "kind": "cabling",
+   "dev": "T-JUNOS-CL"
+  },
+  {
+   "kind": "bgp",
+   "dev": "T-NOREL"
+  },
+  {
+   "kind": "evpn",
+   "dev": "T-NOREL"
+  },
+  {
+   "kind": "roce",
+   "dev": "T-NOREL"
+  },
+  {
+   "kind": "lossless",
+   "dev": "T-NOREL"
+  },
+  {
+   "kind": "software",
+   "dev": "T-NOREL"
+  },
+  {
+   "kind": "cabling",
+   "dev": "T-NOREL"
+  },
+  {
+   "kind": "bgp",
+   "dev": "T-NOIP"
+  },
+  {
+   "kind": "evpn",
+   "dev": "T-NOIP"
+  },
+  {
+   "kind": "roce",
+   "dev": "T-NOIP"
+  },
+  {
+   "kind": "lossless",
+   "dev": "T-NOIP"
+  },
+  {
+   "kind": "software",
+   "dev": "T-NOIP"
+  },
+  {
+   "kind": "cabling",
+   "dev": "T-NOIP"
+  },
+  {
+   "kind": "bgp",
+   "dev": "T-WEKA"
+  },
+  {
+   "kind": "evpn",
+   "dev": "T-WEKA"
+  },
+  {
+   "kind": "roce",
+   "dev": "T-WEKA"
+  },
+  {
+   "kind": "lossless",
+   "dev": "T-WEKA"
+  },
+  {
+   "kind": "software",
+   "dev": "T-WEKA"
+  },
+  {
+   "kind": "cabling",
+   "dev": "T-WEKA"
+  },
+  {
+   "kind": "bgp",
+   "dev": "T-CUM-SP1"
+  },
+  {
+   "kind": "evpn",
+   "dev": "T-CUM-SP1"
+  },
+  {
+   "kind": "roce",
+   "dev": "T-CUM-SP1"
+  },
+  {
+   "kind": "lossless",
+   "dev": "T-CUM-SP1"
+  },
+  {
+   "kind": "software",
+   "dev": "T-CUM-SP1"
+  },
+  {
+   "kind": "cabling",
+   "dev": "T-CUM-SP1"
+  },
+  {
+   "kind": "bgp",
+   "dev": "T-CUM-SP2"
+  },
+  {
+   "kind": "evpn",
+   "dev": "T-CUM-SP2"
+  },
+  {
+   "kind": "roce",
+   "dev": "T-CUM-SP2"
+  },
+  {
+   "kind": "lossless",
+   "dev": "T-CUM-SP2"
+  },
+  {
+   "kind": "software",
+   "dev": "T-CUM-SP2"
+  },
+  {
+   "kind": "cabling",
+   "dev": "T-CUM-SP2"
+  },
+  {
+   "kind": "bgp",
+   "dev": "T-CUM-SP3"
+  },
+  {
+   "kind": "evpn",
+   "dev": "T-CUM-SP3"
+  },
+  {
+   "kind": "roce",
+   "dev": "T-CUM-SP3"
+  },
+  {
+   "kind": "lossless",
+   "dev": "T-CUM-SP3"
+  },
+  {
+   "kind": "software",
+   "dev": "T-CUM-SP3"
+  },
+  {
+   "kind": "cabling",
+   "dev": "T-CUM-SP3"
+  },
+  {
+   "kind": "bgp",
+   "dev": "T-CUM-SP4"
+  },
+  {
+   "kind": "evpn",
+   "dev": "T-CUM-SP4"
+  },
+  {
+   "kind": "roce",
+   "dev": "T-CUM-SP4"
+  },
+  {
+   "kind": "lossless",
+   "dev": "T-CUM-SP4"
+  },
+  {
+   "kind": "software",
+   "dev": "T-CUM-SP4"
+  },
+  {
+   "kind": "cabling",
+   "dev": "T-CUM-SP4"
+  },
+  {
+   "kind": "mnha",
+   "dev": "T-JUNOS-FW1",
+   "c": {
+    "devices": [
+     "T-JUNOS-FW1",
+     "T-JUNOS-FW2"
+    ]
+   }
+  },
+  {
+   "kind": "mnha",
+   "dev": "T-JUNOS-FW2",
+   "c": {
+    "devices": [
+     "T-JUNOS-FW1",
+     "T-JUNOS-FW2"
+    ]
+   }
+  },
+  {
+   "kind": "mnha",
+   "dev": "T-JUNOS-CL",
+   "c": {
+    "devices": [
+     "T-JUNOS-CL"
+    ]
+   }
+  },
+  {
+   "kind": "mnha",
+   "dev": "T-FTD-A",
+   "c": {
+    "devices": [
+     "T-FTD-A",
+     "T-FTD-B"
+    ]
+   }
+  },
+  {
+   "kind": "mnha",
+   "dev": "T-FTD-B",
+   "c": {
+    "devices": [
+     "T-FTD-A",
+     "T-FTD-B"
+    ]
+   }
+  },
+  {
+   "kind": "mnha",
+   "dev": "T-EOS-A",
+   "c": {
+    "devices": [
+     "T-EOS-A"
+    ]
+   }
+  },
+  {
+   "kind": "bgp",
+   "dev": "T-JUNOS-A",
+   "c": {
+    "min": 4
+   }
+  },
+  {
+   "kind": "bgp",
+   "dev": "T-EOS-A",
+   "c": {
+    "min": "2"
+   }
+  },
+  {
+   "kind": "zzz",
+   "dev": "T-EOS-A"
+  },
+  {
+   "write": {
+    "T-CUM-B/nv_show_vrf_default_router_bgp_neighbor_o_json.txt": "{\"swp51\": {\"state\": \"idle\"}, \"swp52\": {\"state\": \"idle\"}, \"swp53\": {\"state\": \"established\"}}"
+   }
+  },
+  {
+   "kind": "bgp",
+   "dev": "T-CUM-B"
+  },
+  {
+   "kind": "bgp",
+   "dev": "T-CUM-B"
+  },
+  {
+   "write": {
+    "T-CUM-B/nv_show_vrf_default_router_bgp_neighbor_o_json.txt": "{\"swp51\": {\"state\": \"established\"}, \"swp52\": {\"state\": \"connect\"}, \"swp53\": {\"state\": \"established\"}}"
+   }
+  },
+  {
+   "kind": "bgp",
+   "dev": "T-CUM-B"
+  },
+  {
+   "write": {
+    "T-CUM-A/nv_show_vrf_default_router_bgp_neighbor_o_json.txt": "{\"swp53\": {\"state\": \"idle\"}}"
+   }
+  },
+  {
+   "kind": "bgp",
+   "dev": "T-CUM-A"
+  },
+  {
+   "write": {
+    "T-CUM-A/nv_show_interface_lldp_o_json.txt": "garbage that is not json\n"
+   }
+  },
+  {
+   "kind": "cabling",
+   "dev": "T-CUM-A"
+  },
+  {
+   "write": {
+    "T-CUM-A/nv_show_interface_lldp_o_json.txt": "lldp.swp51.chassis.name=T-CUM-SP1\nlldp.swp51.port.descr=to leaf\nlldp.swp51.port.ifname=swp1\nlldp.swp52.chassis.name=T-CUM-SP2.lab.example\nlldp.swp52.port.descr=swp1\n"
+   }
+  },
+  {
+   "kind": "cabling",
+   "dev": "T-CUM-A"
+  },
+  {
+   "write": {
+    "T-CUM-B/nv_show_vrf_o_json.txt": "Error: timeout"
+   }
+  },
+  {
+   "kind": "evpn",
+   "dev": "T-CUM-B"
+  },
+  {
+   "write": {
+    "T-CUM-B/nv_show_vrf_o_json.txt": "[\"default\"]"
+   }
+  },
+  {
+   "kind": "evpn",
+   "dev": "T-CUM-B"
+  }
+ ],
+ "parsers": {
+  "nv_expand": [
+   "swp1-4,swp9",
+   "swp1-24,33-36,swp1s0-1",
+   "swp7",
+   "eth0,swp1-2",
+   "swp5-3",
+   "swp1-5000",
+   "swp0-0,lo",
+   "x10-12,y,1-2",
+   "",
+   "swp1s0-3,s4-5"
+  ],
+  "cfg_norm": [
+   [
+    "nv set interface swp1-3,swp5 link mtu 9216  # comment here\nnv set qos egress-scheduler default-global traffic-class 0,3,4 mode dwrr\nnv set vrf default router static 10.0.0.0/8 via 10.1.1.1 type ipv4-address\nnv config apply -y\nnv set system aaa user x password 'abc def'\nnv set system aaa user y hashed-password \"$6$z\"\n  # just a comment\n! bang\n\nnv set system message pre-login \"hello  world\"\nnv set interface swp1s0-1 type swp",
+    "cumulus"
+   ],
+   [
+    "set system login user a authentication encrypted-password \"$6$abc\"\nset snmp community s3cret\nset interfaces et-0/0/1 mtu 9216 # trailing\nset protocols bgp group G authentication-key \"k3y\"\n   set  x   y  \nsnmp-server community readonly-community public RO\nusername u secret 5 $1$abc\nset system tacacs-server 1.1.1.1 secret 'my secret'\n",
+    "junos"
+   ],
+   [
+    "nv set interface swp1-2 link mtu 9216\nnv set qos roce mode lossless",
+    ""
+   ],
+   [
+    "nv set interface swp10-12,swp20 qos pfc-watchdog\nnv set qos pfc-watchdog polling-interval 100\nnv set x 1,2",
+    "cumulus"
+   ]
+  ],
+  "same_dev": [
+   [
+    "T-CUM-SP1.lab",
+    "T-CUM-SP1",
+    "CUM-SP1"
+   ],
+   [
+    "cum-sp1",
+    "T-CUM-SP1",
+    "CUM-SP1"
+   ],
+   [
+    "",
+    "a",
+    "b"
+   ],
+   [
+    "x",
+    "y",
+    ""
+   ],
+   [
+    "Y.z",
+    "y",
+    null
+   ]
+  ],
+  "vnum": [
+   "25.2X100-D30",
+   "4.33.2F",
+   "10.4(5)",
+   "v24.10.1-492",
+   "",
+   "abc"
+  ],
+  "lldp_text": [
+   "lldp.swp1.chassis.name=sp1\nlldp.swp1.port.ifname=swp9\n",
+   "lldp.eth0.port.descr=x\n",
+   "",
+   "{}",
+   "[]",
+   "{\"swp1\": {\"neighbor\": {\"x\": {\"chassis\": {\"system-name\": \"\", \"name\": \"alt\"}, \"port\": {\"id\": 7}}}}}",
+   "{\"Ethernet1\": [{\"systemName\": true, \"description\": \"d\"}], \"other\": {\"et-0/0/1\": {\"chassis-name\": 12}}}"
+  ],
+  "bgp_texts": [
+   [
+    "{\"peers\": {\"1.1.1.1\": {\"peerState\": [\"Established\"]}, \"2.2.2.2\": {\"state\": \"Idle (Admin)\"}}}"
+   ],
+   [
+    "{\"a\": [{\"neighbor\": [{\"data\": \"3.3.3.3\"}], \"state\": [{\"data\": \"Active\"}]}]}",
+    "{\"b\": {\"connection-state\": \"openconfirm\"}}"
+   ],
+   [
+    "Neighbor V AS\n10.0.0.1 4 65000 1 2 3 0 0 1d02h 5\n10.0.0.2 4 65000 0 0 0 0 0 never Idle\n  admin down text\n10.0.0.3 4 65000 0 0 0 0 0 never Connect"
+   ],
+   [
+    "fe80::1:2 0 65000 1 1 1 0 0 01:00:00 3\n2001:db8:0:1::2\n   65001 10 10 0 01h00m00s 1/1/1 (IPv6)"
+   ],
+   [
+    "",
+    "   ",
+    "Error: nothing"
+   ],
+   [
+    "{\"x\": {\"peer-state\": \"Established\", \"peer-address\": [\"a\", \"b\"]}, \"y\": {\"peerState\": \"Idle\", \"note\": \"disabled by administrator action\"}}"
+   ]
+  ],
+  "acc_flat_text": [
+   "",
+   "error: nope",
+   "% Invalid input",
+   "rx_pause: 12\ntx pause (pri3) = 7.5\n  queue 3 drops : -2\nbad line\n",
+   "{\"a\": {\"B\": [1, \"2\", true, null, \"x\", 3.5, \" 4 \", \"1_000\", \"-3e2\"]}}",
+   "5",
+   "[1, [2, {\"C\": 3}]]"
+  ],
+  "acc_parse": [
+   [
+    "ACCEPT T1 port_gbps=400 min_gbps=391.2 note=ok\nNIC T1 rx_discards_phy 0\nNIC T1 rx_discards_phy 3\nNIC T2 x 1\n  ACCEPT T1 extra=1e3\n",
+    "T1"
+   ],
+   [
+    "ACCEPT T10 a=1\nACCEPT T1a b=2\n",
+    "T1"
+   ],
+   [
+    "",
+    "T4"
+   ]
+  ],
+  "slug": [
+   "show bgp summary | display json",
+   "nv show vrf default router bgp neighbor -o json",
+   "info from state network-instance * protocols bgp neighbor * session-state | as jsoninfo from state network-instance * protocols bgp neighbor * session-state | as json",
+   "@@"
+  ]
+ },
+ "counters": [
+  "T-JUNOS-A",
+  "T-EOS-A",
+  "T-NXOS-A",
+  "T-CUM-A",
+  "T-SRL-A",
+  "T-JUNOS-B",
+  "T-CUM-B"
+ ],
+ "acc_score": [
+  {
+   "test": "T1",
+   "text": "ACCEPT T1 port_gbps=400 min_gbps=392.5\nNIC T1 rx_discards_phy 0\nACCEPT T2 min_gbps=90 max_gbps=97 mean_gbps=95.25\nNIC T2 np_ecn_marked_roce_packets 12\nACCEPT T3 busbw=401.5\nACCEPT T4 busbw=383.25\n",
+   "s0": {
+    "T-CUM-A": {
+     "pfc_tx": 10.0,
+     "pfc_rx": 5.0,
+     "ecn": 3.0,
+     "drops": 0.0,
+     "wd": 0.0,
+     "seen": [
+      "pfc",
+      "ecn",
+      "drops",
+      "wd"
+     ]
+    },
+    "T-CUM-SP1": {
+     "pfc_tx": 1.0,
+     "pfc_rx": 1.0,
+     "ecn": 0.0,
+     "drops": 2.0,
+     "wd": 1.0,
+     "seen": [
+      "pfc",
+      "drops"
+     ]
+    }
+   },
+   "s1": {
+    "T-CUM-A": {
+     "pfc_tx": 10.0,
+     "pfc_rx": 5.0,
+     "ecn": 3.0,
+     "drops": 0.0,
+     "wd": 0.0,
+     "seen": [
+      "pfc",
+      "ecn",
+      "drops",
+      "wd"
+     ]
+    },
+    "T-CUM-SP1": {
+     "pfc_tx": 1.0,
+     "pfc_rx": 1.0,
+     "ecn": 0.0,
+     "drops": 2.0,
+     "wd": 1.0,
+     "seen": [
+      "pfc",
+      "drops"
+     ]
+    }
+   },
+   "crit": {
+    "line_rate_pct": 95
+   }
+  },
+  {
+   "test": "T1",
+   "text": "ACCEPT T1 port_gbps=400 min_gbps=300\nNIC T1 rx_discards_phy 0\nACCEPT T2 min_gbps=90 max_gbps=97 mean_gbps=95.25\nNIC T2 np_ecn_marked_roce_packets 12\nACCEPT T3 busbw=401.5\nACCEPT T4 busbw=383.25\n",
+   "s0": {
+    "T-CUM-A": {
+     "pfc_tx": 10.0,
+     "pfc_rx": 5.0,
+     "ecn": 3.0,
+     "drops": 0.0,
+     "wd": 0.0,
+     "seen": [
+      "pfc",
+      "ecn",
+      "drops",
+      "wd"
+     ]
+    }
+   },
+   "s1": {
+    "T-CUM-A": {
+     "pfc_tx": 30.0,
+     "pfc_rx": 9.0,
+     "ecn": 40.0,
+     "drops": 0.0,
+     "wd": 0.0,
+     "seen": [
+      "pfc",
+      "ecn",
+      "drops",
+      "wd"
+     ]
+    }
+   }
+  },
+  {
+   "test": "T2",
+   "text": "ACCEPT T1 port_gbps=400 min_gbps=392.5\nNIC T1 rx_discards_phy 0\nACCEPT T2 min_gbps=90 max_gbps=97 mean_gbps=95.25\nNIC T2 np_ecn_marked_roce_packets 12\nACCEPT T3 busbw=401.5\nACCEPT T4 busbw=383.25\n",
+   "s0": {
+    "T-CUM-A": {
+     "pfc_tx": 10.0,
+     "pfc_rx": 5.0,
+     "ecn": 3.0,
+     "drops": 0.0,
+     "wd": 0.0,
+     "seen": [
+      "pfc",
+      "ecn",
+      "drops",
+      "wd"
+     ]
+    },
+    "T-CUM-SP1": {
+     "pfc_tx": 1.0,
+     "pfc_rx": 1.0,
+     "ecn": 0.0,
+     "drops": 2.0,
+     "wd": 1.0,
+     "seen": [
+      "pfc",
+      "drops"
+     ]
+    }
+   },
+   "s1": {
+    "T-CUM-A": {
+     "pfc_tx": 30.0,
+     "pfc_rx": 9.0,
+     "ecn": 40.0,
+     "drops": 0.0,
+     "wd": 0.0,
+     "seen": [
+      "pfc",
+      "ecn",
+      "drops",
+      "wd"
+     ]
+    },
+    "T-CUM-SP1": {
+     "pfc_tx": 1.0,
+     "pfc_rx": 0.0,
+     "ecn": 0.0,
+     "drops": 5.0,
+     "wd": 1.0,
+     "seen": [
+      "pfc",
+      "drops"
+     ]
+    }
+   },
+   "crit": {
+    "fairness_pct": 5
+   }
+  },
+  {
+   "test": "T2",
+   "text": "ACCEPT T1 port_gbps=400 min_gbps=392.5\nNIC T1 rx_discards_phy 0\nACCEPT T2 min_gbps=90 max_gbps=97 mean_gbps=95.25\nNIC T2 np_ecn_marked_roce_packets 12\nACCEPT T3 busbw=401.5\nACCEPT T4 busbw=383.25\n",
+   "s0": {
+    "T-CUM-A": {
+     "pfc_tx": 10.0,
+     "pfc_rx": 5.0,
+     "ecn": 3.0,
+     "drops": 0.0,
+     "wd": 0.0,
+     "seen": [
+      "pfc",
+      "ecn",
+      "drops",
+      "wd"
+     ]
+    }
+   },
+   "s1": {
+    "T-CUM-A": "no counter reader for srl"
+   }
+  },
+  {
+   "test": "T3",
+   "text": "ACCEPT T1 port_gbps=400 min_gbps=392.5\nNIC T1 rx_discards_phy 0\nACCEPT T2 min_gbps=90 max_gbps=97 mean_gbps=95.25\nNIC T2 np_ecn_marked_roce_packets 12\nACCEPT T3 busbw=401.5\nACCEPT T4 busbw=383.25\n",
+   "s0": {
+    "T-CUM-A": {
+     "pfc_tx": 10.0,
+     "pfc_rx": 5.0,
+     "ecn": 3.0,
+     "drops": 0.0,
+     "wd": 0.0,
+     "seen": [
+      "pfc",
+      "ecn",
+      "drops",
+      "wd"
+     ]
+    },
+    "T-CUM-SP1": {
+     "pfc_tx": 1.0,
+     "pfc_rx": 1.0,
+     "ecn": 0.0,
+     "drops": 2.0,
+     "wd": 1.0,
+     "seen": [
+      "pfc",
+      "drops"
+     ]
+    }
+   },
+   "s1": {
+    "T-CUM-A": {
+     "pfc_tx": 30.0,
+     "pfc_rx": 9.0,
+     "ecn": 40.0,
+     "drops": 0.0,
+     "wd": 0.0,
+     "seen": [
+      "pfc",
+      "ecn",
+      "drops",
+      "wd"
+     ]
+    },
+    "T-CUM-SP1": {
+     "pfc_tx": 1.0,
+     "pfc_rx": 0.0,
+     "ecn": 0.0,
+     "drops": 5.0,
+     "wd": 1.0,
+     "seen": [
+      "pfc",
+      "drops"
+     ]
+    }
+   }
+  },
+  {
+   "test": "T3",
+   "text": "ACCEPT T3 busbw=0\n",
+   "s0": null,
+   "s1": null,
+   "rc": 2
+  },
+  {
+   "test": "T4",
+   "text": "ACCEPT T1 port_gbps=400 min_gbps=392.5\nNIC T1 rx_discards_phy 0\nACCEPT T2 min_gbps=90 max_gbps=97 mean_gbps=95.25\nNIC T2 np_ecn_marked_roce_packets 12\nACCEPT T3 busbw=401.5\nACCEPT T4 busbw=383.25\n",
+   "s0": null,
+   "s1": null,
+   "conf_target": 380
+  },
+  {
+   "test": "T4",
+   "text": "ACCEPT T1 port_gbps=400 min_gbps=392.5\nNIC T1 rx_discards_phy 0\nACCEPT T2 min_gbps=90 max_gbps=97 mean_gbps=95.25\nNIC T2 np_ecn_marked_roce_packets 12\nACCEPT T3 busbw=401.5\nACCEPT T4 busbw=383.25\n",
+   "s0": null,
+   "s1": null
+  },
+  {
+   "test": "T4",
+   "text": "nothing here\n",
+   "s0": null,
+   "s1": null,
+   "rc": 1
+  },
+  {
+   "test": "T1",
+   "text": "ACCEPT T1 min_gbps=10\n",
+   "s0": {
+    "a": {
+     "pfc_tx": 10.0,
+     "pfc_rx": 5.0,
+     "ecn": 3.0,
+     "drops": 0.0,
+     "wd": 0.0,
+     "seen": [
+      "pfc",
+      "ecn",
+      "drops",
+      "wd"
+     ]
+    },
+    "b": {
+     "pfc_tx": 10.0,
+     "pfc_rx": 5.0,
+     "ecn": 3.0,
+     "drops": 0.0,
+     "wd": 0.0,
+     "seen": [
+      "pfc",
+      "ecn",
+      "drops",
+      "wd"
+     ]
+    },
+    "c": {
+     "pfc_tx": 10.0,
+     "pfc_rx": 5.0,
+     "ecn": 3.0,
+     "drops": 0.0,
+     "wd": 0.0,
+     "seen": [
+      "pfc",
+      "ecn",
+      "drops",
+      "wd"
+     ]
+    },
+    "d": {
+     "pfc_tx": 10.0,
+     "pfc_rx": 5.0,
+     "ecn": 3.0,
+     "drops": 0.0,
+     "wd": 0.0,
+     "seen": [
+      "pfc",
+      "ecn",
+      "drops",
+      "wd"
+     ]
+    }
+   },
+   "s1": {
+    "a": "x",
+    "b": "y",
+    "c": "z",
+    "d": "w"
+   }
+  }
+ ],
+ "results": [
+  {
+   "kind": "accept",
+   "text": "ACCEPT T1 port_gbps=400 min_gbps=392.5\nNIC T1 rx_discards_phy 0\nACCEPT T2 min_gbps=90 max_gbps=97 mean_gbps=95.25\nNIC T2 np_ecn_marked_roce_packets 12\nACCEPT T3 busbw=401.5\nACCEPT T4 busbw=383.25\n",
+   "crit": {
+    "line_rate_pct": 95,
+    "fairness_pct": 10
+   }
+  },
+  {
+   "kind": "accept",
+   "text": "ACCEPT T1 port_gbps=400 min_gbps=100\nACCEPT T3 busbw=1\n"
+  },
+  {
+   "kind": "accept",
+   "text": "no lines\n"
+  },
+  {
+   "kind": "isolation",
+   "tenants": [
+    "TENANT-01",
+    "TENANT-02"
+   ],
+   "text": "ISOLATION TENANT-01 bind PASS vip on ns tenant-01\nISOLATION TENANT-01 snat PASS 10.240.1.1\nISOLATION TENANT-01 cross PASS none\nISOLATION TENANT-02 bind PASS ok\nISOLATION TENANT-02 snat FAIL wrong pool\nISOLATION TENANT-02 cross PASS none\n"
+  },
+  {
+   "kind": "isolation",
+   "tenants": [
+    "TENANT-01"
+   ],
+   "text": "ISOLATION TENANT-01 bind PASS\nISOLATION TENANT-01 snat PASS\n"
+  },
+  {
+   "kind": "isolation",
+   "tenants": null,
+   "text": "ISOLATION T9 setup PASS ok\nISOLATION T9 bind PASS ok\nISOLATION T9 snat PASS ok\n"
+  },
+  {
+   "kind": "isolation",
+   "tenants": [
+    "A",
+    "B"
+   ],
+   "text": "ISOLATION A bind PASS ok\n"
+  },
+  {
+   "kind": "isolation",
+   "tenants": [
+    "A"
+   ],
+   "text": "nothing\n"
+  }
+ ],
+ "tuned": [
+  {
+   "state": {}
+  },
+  {
+   "state": {
+    "versions": [
+     {
+      "v": 1,
+      "values": {
+       "ECN_MIN": 200
+      },
+      "note": "",
+      "by": "a",
+      "ts": 1.0
+     }
+    ]
+   }
+  },
+  {
+   "state": {
+    "approved": {
+     "v": 0,
+     "by": "admin",
+     "ts": 1.0
+    }
+   }
+  },
+  {
+   "state": {
+    "versions": [
+     {
+      "v": 1,
+      "values": {
+       "ECN_MIN": 200
+      }
+     }
+    ],
+    "approved": {
+     "v": 1,
+     "by": "admin",
+     "ts": 1.0
+    },
+    "dev": {
+     "T-JUNOS-A": {
+      "v": 1,
+      "ok": true
+     },
+     "T-JUNOS-B": {
+      "v": 1,
+      "ok": true
+     },
+     "T-EOS-A": {
+      "v": 1,
+      "ok": true
+     },
+     "T-EOS-B": {
+      "v": 1,
+      "ok": true
+     },
+     "T-NXOS-A": {
+      "v": 1,
+      "ok": true
+     },
+     "T-NXOS-B": {
+      "v": 1,
+      "ok": true
+     },
+     "T-CUM-A": {
+      "v": 1,
+      "ok": true
+     },
+     "T-CUM-B": {
+      "v": 1,
+      "ok": true
+     },
+     "T-SRL-A": {
+      "v": 1,
+      "ok": true
+     },
+     "T-SRL-B": {
+      "v": 1,
+      "ok": true
+     },
+     "T-SROS-A": {
+      "v": 1,
+      "ok": true
+     },
+     "T-SROS-B": {
+      "v": 1,
+      "ok": true
+     },
+     "T-XR-A": {
+      "v": 1,
+      "ok": true
+     },
+     "T-XR-B": {
+      "v": 1,
+      "ok": true
+     },
+     "T-XE-A": {
+      "v": 1,
+      "ok": true
+     },
+     "T-XE-B": {
+      "v": 1,
+      "ok": true
+     },
+     "T-FTD-A": {
+      "v": 1,
+      "ok": true
+     },
+     "T-FTD-B": {
+      "v": 1,
+      "ok": true
+     },
+     "T-JUNOS-FW1": {
+      "v": 1,
+      "ok": true
+     },
+     "T-JUNOS-FW2": {
+      "v": 1,
+      "ok": true
+     },
+     "T-JUNOS-CL": {
+      "v": 1,
+      "ok": true
+     },
+     "T-NOREL": {
+      "v": 1,
+      "ok": true
+     },
+     "T-NOIP": {
+      "v": 1,
+      "ok": true
+     },
+     "T-CUM-SP1": {
+      "v": 1,
+      "ok": true
+     },
+     "T-CUM-SP2": {
+      "v": 1,
+      "ok": true
+     },
+     "T-CUM-SP3": {
+      "v": 1,
+      "ok": true
+     },
+     "T-CUM-SP4": {
+      "v": 1,
+      "ok": true
+     }
+    }
+   }
+  },
+  {
+   "state": {
+    "versions": [
+     {
+      "v": 1,
+      "values": {
+       "ECN_MIN": 200
+      }
+     }
+    ],
+    "approved": {
+     "v": 1,
+     "by": "admin",
+     "ts": 1.0
+    },
+    "dev": {
+     "T-CUM-A": {
+      "v": 0,
+      "ok": false,
+      "note": "rejected: x"
+     },
+     "T-CUM-B": {
+      "v": 1
+     }
+    },
+    "rollout": {
+     "state": "stopped at pod 1"
+    }
+   }
+  },
+  {
+   "state": {
+    "approved": {
+     "v": 0,
+     "by": "admin"
+    },
+    "rollout": {
+     "state": "complete"
+    }
+   }
+  },
+  {
+   "state": {},
+   "plan": {}
+  }
+ ],
+ "swap": [
+  {
+   "dev": "T-CUM-A",
+   "planned": [
+    "nv set qos congestion-control default-global traffic-class 3 min-threshold 150KB",
+    "nv set qos roce mode lossless"
+   ],
+   "state": {
+    "versions": [
+     {
+      "v": 1,
+      "values": {
+       "ECN_MIN": 300
+      }
+     }
+    ],
+    "dev": {
+     "T-CUM-A": {
+      "v": 1
+     }
+    }
+   }
+  },
+  {
+   "dev": "T-CUM-A",
+   "planned": [
+    "a"
+   ],
+   "state": {
+    "versions": [],
+    "dev": {
+     "T-CUM-A": {
+      "v": 0
+     }
+    }
+   }
+  }
+ ],
+ "diff": [
+  {
+   "dev": "T-CUM-A",
+   "backups": [
+    [
+     "20261030T100000Z.cfg",
+     "nv set system hostname T-CUM-A\nnv set interface swp51-52 link mtu 9216\nnv set qos roce mode lossless\nnv set system aaa role nvue-admin class nvapply\nnv set interface swp51 type swp\n"
+    ],
+    [
+     "20261031T100000Z.cfg",
+     "nv set system hostname T-CUM-A\nnv set interface swp51-54 link mtu 9216\nnv set qos roce mode lossless\nnv set extra 1\n"
+    ]
+   ]
+  },
+  {
+   "dev": "T-JUNOS-A",
+   "backups": [
+    [
+     "20261031T000000Z.cfg",
+     "set version 25.2X100-D30.5\nset system host-name T-JUNOS-A\n"
+    ]
+   ]
+  },
+  {
+   "dev": "T-XE-A",
+   "backups": [
+    [
+     "20261031T000000Z.cfg",
+     "hostname T-XE-A\n"
+    ],
+    [
+     "20261031T000001Z.cfg",
+     "hostname T-XE-A\n"
+    ]
+   ]
+  },
+  {
+   "dev": "T-EOS-A",
+   "backups": []
+  },
+  {
+   "dev": "T-NXOS-A",
+   "backups": [
+    [
+     "20261031T000000Z.cfg",
+     "line 0\nx0\nx1\nx2\nx3\nx4\nx5\nx6\nx7\nx8\nx9\nx10\nx11\nx12\nx13\nx14\nx15\nx16\nx17\nx18\nx19\nx20\nx21\nx22\nx23\nx24\nx25\nx26\nx27\nx28\nx29\n"
+    ],
+    [
+     "20261031T000001Z.cfg",
+     "line 0\nx1\nx2\nx3\nx4\nx5\nx6\nx7\nx8\nx9\nx10\nx11\nx12\nx13\nx14\nx15\nx16\nx17\nx18\nx19\nx20\nx21\nx22\nx23\nx24\nx25\nx26\nx27\nx28\nx29\n"
+    ],
+    [
+     "20261031T000002Z.cfg",
+     "line 0\nx2\nx3\nx4\nx5\nx6\nx7\nx8\nx9\nx10\nx11\nx12\nx13\nx14\nx15\nx16\nx17\nx18\nx19\nx20\nx21\nx22\nx23\nx24\nx25\nx26\nx27\nx28\nx29\n"
+    ]
+   ]
+  }
+ ]
+}

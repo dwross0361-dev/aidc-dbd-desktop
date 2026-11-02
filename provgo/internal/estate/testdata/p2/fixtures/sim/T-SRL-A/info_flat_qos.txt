@@ -1,0 +1,3 @@
+set / qos classifiers dscp-policy dscp-default dscp 26 forwarding-class fc3
+set / qos output-queues ... pfc-enable true
+set / qos interfaces interface ethernet-1/1 output pfc pfc-enable true

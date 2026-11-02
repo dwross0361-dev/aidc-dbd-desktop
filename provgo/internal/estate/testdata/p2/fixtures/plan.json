@@ -1,0 +1,491 @@
+{
+ "site": {
+  "code": "TST",
+  "prov_ip": "127.0.0.1"
+ },
+ "dhcp": {
+  "subnet_id": 1
+ },
+ "devices": [
+  {
+   "name": "T-JUNOS-A",
+   "short": "JUNOS-A",
+   "os": "junos",
+   "role": "backend leaf",
+   "ip": "127.250.0.1",
+   "release": {
+    "target": "25.2X100-D30"
+   },
+   "planned_config": "configs/T-JUNOS-A.conf",
+   "_state": {
+    "stage": 6,
+    "flag": ""
+   }
+  },
+  {
+   "name": "T-JUNOS-B",
+   "short": "JUNOS-B",
+   "os": "junos",
+   "role": "backend leaf",
+   "ip": "127.250.0.2",
+   "release": {
+    "target": "25.2X100-D30"
+   },
+   "planned_config": "configs/T-JUNOS-B.conf",
+   "_state": {
+    "stage": 6,
+    "flag": ""
+   }
+  },
+  {
+   "name": "T-EOS-A",
+   "short": "EOS-A",
+   "os": "eos",
+   "role": "backend leaf",
+   "ip": "127.250.0.3",
+   "release": {
+    "target": "4.33.2F"
+   },
+   "planned_config": "configs/T-EOS-A.conf",
+   "_state": {
+    "stage": 6,
+    "flag": ""
+   }
+  },
+  {
+   "name": "T-EOS-B",
+   "short": "EOS-B",
+   "os": "eos",
+   "role": "backend leaf",
+   "ip": "127.250.0.4",
+   "release": {
+    "target": "4.33.2F"
+   },
+   "planned_config": "configs/T-EOS-B.conf",
+   "_state": {
+    "stage": 6,
+    "flag": ""
+   }
+  },
+  {
+   "name": "T-NXOS-A",
+   "short": "NXOS-A",
+   "os": "nxos",
+   "role": "backend leaf",
+   "ip": "127.250.0.5",
+   "release": {
+    "target": "10.4(5)"
+   },
+   "planned_config": "configs/T-NXOS-A.conf",
+   "_state": {
+    "stage": 6,
+    "flag": ""
+   }
+  },
+  {
+   "name": "T-NXOS-B",
+   "short": "NXOS-B",
+   "os": "nxos",
+   "role": "backend leaf",
+   "ip": "127.250.0.6",
+   "release": {
+    "target": "10.4(5)"
+   },
+   "planned_config": "configs/T-NXOS-B.conf",
+   "_state": {
+    "stage": 6,
+    "flag": ""
+   }
+  },
+  {
+   "name": "T-CUM-A",
+   "short": "CUM-A",
+   "os": "cumulus",
+   "role": "backend leaf",
+   "ip": "127.250.0.7",
+   "release": {
+    "target": "5.18.3"
+   },
+   "planned_config": "configs/T-CUM-A.conf",
+   "_state": {
+    "stage": 6,
+    "flag": ""
+   }
+  },
+  {
+   "name": "T-CUM-B",
+   "short": "CUM-B",
+   "os": "cumulus",
+   "role": "backend leaf",
+   "ip": "127.250.0.8",
+   "release": {
+    "target": "5.18.3"
+   },
+   "planned_config": "configs/T-CUM-B.conf",
+   "_state": {
+    "stage": 6,
+    "flag": ""
+   }
+  },
+  {
+   "name": "T-SRL-A",
+   "short": "SRL-A",
+   "os": "srl",
+   "role": "backend leaf",
+   "ip": "127.250.0.9",
+   "release": {
+    "target": "24.10.1"
+   },
+   "planned_config": "configs/T-SRL-A.conf",
+   "_state": {
+    "stage": 6,
+    "flag": ""
+   }
+  },
+  {
+   "name": "T-SRL-B",
+   "short": "SRL-B",
+   "os": "srl",
+   "role": "backend leaf",
+   "ip": "127.250.0.10",
+   "release": {
+    "target": "24.10.1"
+   },
+   "planned_config": "configs/T-SRL-B.conf",
+   "_state": {
+    "stage": 6,
+    "flag": ""
+   }
+  },
+  {
+   "name": "T-SROS-A",
+   "short": "SROS-A",
+   "os": "sros",
+   "role": "backend leaf",
+   "ip": "127.250.0.11",
+   "release": {
+    "target": "26.7.R1"
+   },
+   "_state": {
+    "stage": 6,
+    "flag": ""
+   }
+  },
+  {
+   "name": "T-SROS-B",
+   "short": "SROS-B",
+   "os": "sros",
+   "role": "backend leaf",
+   "ip": "127.250.0.12",
+   "release": {
+    "target": "26.7.R1"
+   },
+   "_state": {
+    "stage": 6,
+    "flag": ""
+   }
+  },
+  {
+   "name": "T-XR-A",
+   "short": "XR-A",
+   "os": "iosxr",
+   "role": "backend leaf",
+   "ip": "127.250.0.13",
+   "release": {
+    "target": "24.4.2"
+   },
+   "_state": {
+    "stage": 6,
+    "flag": ""
+   }
+  },
+  {
+   "name": "T-XR-B",
+   "short": "XR-B",
+   "os": "iosxr",
+   "role": "backend leaf",
+   "ip": "127.250.0.14",
+   "release": {
+    "target": "24.4.2"
+   },
+   "_state": {
+    "stage": 6,
+    "flag": ""
+   }
+  },
+  {
+   "name": "T-XE-A",
+   "short": "XE-A",
+   "os": "iosxe",
+   "role": "backend leaf",
+   "ip": "127.250.0.15",
+   "release": {
+    "target": "17.12.04"
+   },
+   "_state": {
+    "stage": 6,
+    "flag": ""
+   }
+  },
+  {
+   "name": "T-XE-B",
+   "short": "XE-B",
+   "os": "iosxe",
+   "role": "backend leaf",
+   "ip": "127.250.0.16",
+   "release": {
+    "target": "17.12.04"
+   },
+   "_state": {
+    "stage": 6,
+    "flag": ""
+   }
+  },
+  {
+   "name": "T-FTD-A",
+   "short": "FTD-A",
+   "os": "ftd",
+   "role": "backend leaf",
+   "ip": "127.250.0.17",
+   "release": {
+    "target": "7.6.0"
+   },
+   "_state": {
+    "stage": 6,
+    "flag": ""
+   }
+  },
+  {
+   "name": "T-FTD-B",
+   "short": "FTD-B",
+   "os": "ftd",
+   "role": "backend leaf",
+   "ip": "127.250.0.18",
+   "release": {
+    "target": "7.6.0"
+   },
+   "_state": {
+    "stage": 6,
+    "flag": ""
+   }
+  },
+  {
+   "name": "T-JUNOS-FW1",
+   "short": "JUNOS-FW1",
+   "os": "junos",
+   "role": "FE firewall (SRX MNHA node 1)",
+   "ip": "127.250.0.19",
+   "release": {
+    "target": "24.4R2-S3"
+   },
+   "_state": {
+    "stage": 6,
+    "flag": ""
+   }
+  },
+  {
+   "name": "T-JUNOS-FW2",
+   "short": "JUNOS-FW2",
+   "os": "junos",
+   "role": "FE firewall (SRX MNHA node 2)",
+   "ip": "127.250.0.20",
+   "release": {
+    "target": "24.4R2-S3"
+   },
+   "_state": {
+    "stage": 6,
+    "flag": ""
+   }
+  },
+  {
+   "name": "T-JUNOS-CL",
+   "short": "JUNOS-CL",
+   "os": "junos",
+   "role": "mgmt firewall (SRX HA primary)",
+   "ip": "127.250.0.21",
+   "_state": {
+    "stage": 6,
+    "flag": ""
+   }
+  },
+  {
+   "name": "T-NOREL",
+   "short": "NOREL",
+   "os": "junos",
+   "role": "test",
+   "ip": "127.250.0.22",
+   "_state": {
+    "stage": 6,
+    "flag": ""
+   }
+  },
+  {
+   "name": "T-NOIP",
+   "short": "NOIP",
+   "os": "junos",
+   "role": "test",
+   "ip": "127.250.0.23",
+   "release": {
+    "target": "1.0"
+   },
+   "_state": {
+    "stage": 6,
+    "flag": ""
+   }
+  },
+  {
+   "name": "T-WEKA",
+   "short": "WEKA",
+   "os": "weka",
+   "role": "WEKA storage node",
+   "ip": "127.250.0.24",
+   "release": {
+    "target": "1.0"
+   },
+   "_state": {
+    "stage": 6,
+    "flag": ""
+   }
+  },
+  {
+   "name": "T-CUM-SP1",
+   "short": "CUM-SP1",
+   "os": "cumulus",
+   "role": "backend spine",
+   "ip": "127.250.0.25",
+   "_state": {
+    "stage": 6,
+    "flag": ""
+   }
+  },
+  {
+   "name": "T-CUM-SP2",
+   "short": "CUM-SP2",
+   "os": "cumulus",
+   "role": "backend spine",
+   "ip": "127.250.0.26",
+   "_state": {
+    "stage": 6,
+    "flag": ""
+   }
+  },
+  {
+   "name": "T-CUM-SP3",
+   "short": "CUM-SP3",
+   "os": "cumulus",
+   "role": "backend spine",
+   "ip": "127.250.0.27",
+   "_state": {
+    "stage": 6,
+    "flag": "quarantined"
+   }
+  },
+  {
+   "name": "T-CUM-SP4",
+   "short": "CUM-SP4",
+   "os": "cumulus",
+   "role": "backend spine",
+   "ip": "127.250.0.28",
+   "_state": {
+    "stage": 2,
+    "flag": ""
+   }
+  }
+ ],
+ "builds": [
+  {
+   "key": "be",
+   "num": 1,
+   "name": "Test",
+   "waves": [
+    {
+     "name": "all",
+     "devices": [
+      "T-JUNOS-A",
+      "T-JUNOS-B",
+      "T-EOS-A",
+      "T-EOS-B",
+      "T-NXOS-A",
+      "T-NXOS-B",
+      "T-CUM-A",
+      "T-CUM-B",
+      "T-SRL-A",
+      "T-SRL-B",
+      "T-SROS-A",
+      "T-SROS-B",
+      "T-XR-A",
+      "T-XR-B",
+      "T-XE-A",
+      "T-XE-B",
+      "T-FTD-A",
+      "T-FTD-B",
+      "T-JUNOS-FW1",
+      "T-JUNOS-FW2",
+      "T-JUNOS-CL",
+      "T-NOREL",
+      "T-NOIP",
+      "T-WEKA",
+      "T-CUM-SP1",
+      "T-CUM-SP2",
+      "T-CUM-SP3",
+      "T-CUM-SP4"
+     ]
+    }
+   ],
+   "gate": [
+    {
+     "key": "lossless",
+     "type": "auto",
+     "kind": "lossless",
+     "label": "lossless",
+     "devices": [
+      "T-JUNOS-A",
+      "T-JUNOS-B",
+      "T-EOS-A",
+      "T-EOS-B",
+      "T-NXOS-A",
+      "T-NXOS-B",
+      "T-CUM-A",
+      "T-CUM-B",
+      "T-SRL-A",
+      "T-SRL-B",
+      "T-SROS-A",
+      "T-SROS-B",
+      "T-XR-A",
+      "T-XR-B",
+      "T-XE-A",
+      "T-XE-B",
+      "T-FTD-A",
+      "T-FTD-B",
+      "T-JUNOS-FW1",
+      "T-JUNOS-FW2",
+      "T-JUNOS-CL",
+      "T-NOREL",
+      "T-NOIP",
+      "T-CUM-SP1",
+      "T-CUM-SP2",
+      "T-CUM-SP3",
+      "T-CUM-SP4"
+     ]
+    }
+   ]
+  }
+ ],
+ "tuning": {
+  "os": "cumulus",
+  "params": [
+   {
+    "key": "ECN_MIN",
+    "label": "ECN min",
+    "base": 150,
+    "min": 50,
+    "max": 1000,
+    "step": 10,
+    "unit": "KB"
+   }
+  ],
+  "lines": [
+   "nv set qos congestion-control default-global traffic-class 3 min-threshold {ECN_MIN}KB"
+  ]
+ }
+}

@@ -1,0 +1,24 @@
+{
+    "network-instance": [
+        {
+            "name": "default",
+            "protocols": {
+                "srl_nokia-bgp:bgp": {
+                    "neighbor": [
+                        {
+                            "peer-address": "10.203.0.4",
+                            "session-state": "established"
+                        },
+                        {
+                            "peer-address": "10.203.0.6",
+                            "session-state": "connect"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "mgmt"
+        }
+    ]
+}

@@ -1,0 +1,5 @@
+    system {
+        information {
+            version v23.10.3-21-g0000000000
+        }
+    }

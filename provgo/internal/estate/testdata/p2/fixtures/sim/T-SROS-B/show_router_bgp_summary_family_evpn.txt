@@ -1,0 +1,21 @@
+===============================================================================
+BGP Router ID:10.0.250.31      AS:4200009000  Local AS:4200009000
+===============================================================================
+BGP Admin State         : Up          BGP Oper State              : Up
+Total Peer Groups       : 2           Total Peers                 : 3
+Total VPN Peer Groups   : 0           Total VPN Peers             : 0
+Current Internal Groups : 2           Max Internal Groups         : 2
+Total BGP Paths         : 1702338     Total Path Memory           : 220303776
+
+===============================================================================
+BGP Summary
+===============================================================================
+Legend : D - Dynamic Neighbor
+===============================================================================
+Neighbor
+Description
+                   AS PktRcvd InQ  Up/Down   State|Rcv/Act/Sent (Addr Family)
+                      PktSent OutQ
+-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
+No Matching Entries Found

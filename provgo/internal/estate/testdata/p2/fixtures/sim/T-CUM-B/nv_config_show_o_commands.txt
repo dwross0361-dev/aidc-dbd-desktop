@@ -1,0 +1,3 @@
+nv set system hostname T-CUM-B
+nv set interface swp51-52 link mtu 9216
+nv set qos roce mode lossless

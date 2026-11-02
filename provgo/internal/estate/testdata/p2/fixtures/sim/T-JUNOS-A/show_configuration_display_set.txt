@@ -1,0 +1,11 @@
+set version 25.2X100-D30.5
+set system host-name T-JUNOS-A
+set system root-authentication encrypted-password "$6$abc$def"
+set system login user netadmin authentication encrypted-password "$6$xyz$uvw"
+set interfaces et-0/0/0 mtu 9216
+set interfaces et-0/0/1 mtu 9216
+set class-of-service congestion-notification-profile CNP-ROCE input ieee-802.1 code-point 011 pfc
+set class-of-service schedulers SCH-ROCE explicit-congestion-notification
+set class-of-service drop-profiles DP-ROCE interpolate fill-level [ 10 50 ] drop-probability [ 0 20 ]
+set protocols bgp group UNDERLAY neighbor 10.200.0.0 peer-as 4200002000
+set snmp community "s3cret" authorization read-only

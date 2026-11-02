@@ -1,0 +1,12 @@
+Fri Oct 31 22:01:04.000 UTC
+Cisco IOS XR Software, Version 24.4.2 LNT
+Copyright (c) 2013-2025 by Cisco Systems, Inc.
+
+Build Information:
+ Built By     : swtools
+ Built On     : Tue Feb 18 08:00:00 UTC 2025
+ Version      : 24.4.2
+ Location     : /opt/cisco/XR/packages/
+
+cisco 8000 (8201-32FH)
+System uptime is 3 weeks, 0 days, 4 hours, 12 minutes

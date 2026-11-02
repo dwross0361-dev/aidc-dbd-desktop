@@ -1,0 +1,57 @@
+{
+    "TABLE_vrf": {
+        "ROW_vrf": [
+            {
+                "vrf-name-out": "default",
+                "vrf-router-id": "10.0.250.21",
+                "vrf-local-as": "4200001001",
+                "TABLE_af": {
+                    "ROW_af": {
+                        "af-id": 1,
+                        "TABLE_saf": {
+                            "ROW_saf": {
+                                "safi": 1,
+                                "af-name": "IPv4 Unicast",
+                                "tableversion": 182,
+                                "configuredpeers": 2,
+                                "capablepeers": 2,
+                                "totalnetworks": 24,
+                                "totalpaths": 48,
+                                "TABLE_neighbor": {
+                                    "ROW_neighbor": [
+                                        {
+                                            "neighborid": "10.202.0.0",
+                                            "neighborversion": 4,
+                                            "msgrecvd": 31337,
+                                            "msgsent": 31220,
+                                            "neighbortableversion": 182,
+                                            "inq": 0,
+                                            "outq": 0,
+                                            "neighboras": "4200002000",
+                                            "time": "1w2d",
+                                            "state": "Established",
+                                            "prefixreceived": 24
+                                        },
+                                        {
+                                            "neighborid": "10.202.0.2",
+                                            "neighborversion": 4,
+                                            "msgrecvd": 31337,
+                                            "msgsent": 31220,
+                                            "neighbortableversion": 182,
+                                            "inq": 0,
+                                            "outq": 0,
+                                            "neighboras": "4200002000",
+                                            "time": "1w2d",
+                                            "state": "Established",
+                                            "prefixreceived": 24
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        ]
+    }
+}

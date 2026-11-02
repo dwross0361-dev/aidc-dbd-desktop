@@ -1,0 +1,11 @@
+Building configuration...
+
+Current configuration : 4211 bytes
+!
+version 17.12
+hostname T-XE-A
+enable secret 9 $9$abc
+username netadmin privilege 15 secret 9 $9$def
+!
+system mtu 9198
+end

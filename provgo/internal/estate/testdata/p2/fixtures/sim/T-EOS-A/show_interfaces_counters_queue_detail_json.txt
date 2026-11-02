@@ -1,0 +1,21 @@
+{
+    "egressQueueCounters": {
+        "interfaces": {
+            "Ethernet1/1": {
+                "ucastQueues": {
+                    "trafficClasses": {
+                        "TC3": {
+                            "enqueuedPackets": 1000,
+                            "droppedPackets": 0,
+                            "ecnMarkedPackets": 77
+                        },
+                        "TC0": {
+                            "enqueuedPackets": 5,
+                            "droppedPackets": 2
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

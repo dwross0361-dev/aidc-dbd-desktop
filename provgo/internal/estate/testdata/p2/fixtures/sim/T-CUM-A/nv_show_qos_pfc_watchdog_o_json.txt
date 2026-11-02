@@ -1,0 +1,9 @@
+{
+    "polling-interval": "100",
+    "robustness": 3,
+    "state": "enabled",
+    "swp51": {
+        "storm-detected": 0,
+        "storm-restored": 0
+    }
+}

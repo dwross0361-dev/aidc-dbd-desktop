@@ -1,0 +1,56 @@
+{
+    "interface-information": [
+        {
+            "physical-interface": [
+                {
+                    "name": [
+                        {
+                            "data": "et-0/0/0"
+                        }
+                    ],
+                    "mtu": [
+                        {
+                            "data": "9216"
+                        }
+                    ],
+                    "ethernet-pfc-statistics": [
+                        {
+                            "input-pfc-statistics": [
+                                {
+                                    "pfc-priority-3": [
+                                        {
+                                            "data": "44"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "output-pfc-statistics": [
+                                {
+                                    "pfc-priority-3": [
+                                        {
+                                            "data": "17"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ],
+                    "pfc-watchdog": [
+                        {
+                            "storm-detected-count": [
+                                {
+                                    "data": "0"
+                                }
+                            ],
+                            "watchdog-recovery-time": [
+                                {
+                                    "data": "200"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
