@@ -233,3 +233,82 @@ v1.53 installers' copy the same way).
 - Runners against real systems (bfb-install, WEKA, BNK, FMC, rail checks), SMTP and webhooks against real receivers, host account
   locking on a real DWR account, and HA sync between real hosts over a real network.
 - Push concurrency at the real push duration (Junos commit confirmed: tens of seconds) and with PyEZ memory per push process.
+
+# Phase 5: SSH reliability and acceptance scripts (HS v1.56 r3, task #203)
+
+Evidence: DSX Air TC-208 (11 Cumulus VX switches, both engines reached Done with identical as-built and readiness): Python
+backups 6 ok / 11 failed ("Authentication timeout", netmiko auth_timeout 90), Go backups 0 ok / 15+ failed ("Error reading
+SSH protocol banner", "Unable to find prompt"), Go gate reads (software, cabling, eBGP) failed on banner errors, 8 concurrent
+backups on Python failed on authentication. The switch configurations order TACACS before local logins with two TACACS
+servers that do not exist in Air: every login waited on TACACS timeouts, and concurrent logins queued on the VX.
+
+## Decisions (Phase 5)
+
+| # | Decision | Why |
+|---|---|---|
+| P5-1 | **DSX Air lab mode, lab only.** `air/lab-auth.sh` (run by `air/ztp-host.sh` after setup.sh unless `--prod-auth`) comments out `nv set system aaa tacacs ...` and `nv set system aaa authentication order ...` in the copies served from `/var/www/html` to the switches in `air/slice.csv` (configuration file and, for switches whose ZTP script carries their configuration, `ztp/<node>.sh`), each line prefixed `# LAB (air/lab-auth.sh, DSX Air only): `; it refuses on a host other than `oob-mgmt-server` (`LAB_AIR=1` overrides; ztp-host.sh sets it), lists the files in `/etc/fabric/lab-auth.txt`, `--undo` restores the package copies. Neither engine changes; nothing outside `air/` calls it. `ztp-host.sh` prints `[ok] engine: go (/opt/estate-build/aidc-prov, linux/<arch>)` / `[ok] engine: python (...)` as the test sheet says. | Air has no TACACS servers; the production configurations must stay byte for byte (package and .run parity). The service only serves files: changing the published copy is enough and is engine-agnostic. setup.sh republishes the production copies, so the sheet re-runs lab-auth.sh after an engine switch. |
+| P5-2 | **One SSH limiter per device**, the same rules in both engines (Python `SSHGate`, Go `sshGate`): at most `ssh_per_device` (default 1) sessions to a device across gate reads, backups, RMA reads, tuning writes, Release DWR access and pushes (a push holds its slot until its process ends; at the limit the candidate waits a pass). Within a checker pass or a gate re-check a healthy read session is held and reused by the next read of that device with the same login (backups included); the pass closes them. A device with a session open is counted up by the probes and the push pass without a TCP connect. | Concurrent logins to one slow device (a gate read, an after-build backup, a requested backup) queued behind each other until the third passed the auth timeout, and the probes' connects added to sshd's unauthenticated-connection count (MaxStartups) so later logins were dropped before the banner. One login per device per pass also cuts the work: a back-end pass reads five checks (six reads on Cumulus) over one session. |
+| P5-3 | **Retries with backoff** on transient SSH failures (`Error reading SSH protocol banner`, `Connection reset by peer`, `Unable to find prompt`, `Authentication timeout`, `Socket is closed`, `SSH session not active`; matched in any case): `ssh_retries` (2) more attempts after `ssh_backoff_s` x 3^(k-1) (5 s, 15 s), the slot freed while waiting; reads retry whole, writes only the connection; a refused connection, a rejected password and ReaderUnavailable are never retried; the last error is reported unchanged. Go reader: paramiko's phases and wording (banner -- a line starting `SSH-` -- within 60 s, then key exchange and authentication within 90 s; a timeout after the banner reads netmiko's `... Authentication timeout.`, EOF or reset before it `Error reading SSH protocol banner[...]`). | Before, Go applied one 90 s deadline to banner, key exchange and authentication together and called any timeout a banner error, so a login Python finished (60 s banner + 90 s authentication) failed in Go. A dropped connection or a lost prompt on a busy device succeeds on a second try; a wrong password must not be retried (account lockout). |
+| P5-4 | **Staggered backups**: job i of a backup pass (i below `reader_workers`) starts i x `backup_stagger_s` (2 s) after the first; a device's next scheduled backup is due `backup_every_h` plus crc32(name) mod 1000 / 1000 x min(600 s, 10 % of the interval) (after a failure 900 s plus the same share of 600 s). | Devices that reach Done together were all backed up in the same second, then again together every 6 h. In-memory only (`backup_due` is not stored), so the shared state is unchanged. |
+| P5-5 | Harness expectations, timing only (the approved limiter, reuse and stagger change when a read or backup lands, not what it reads): p2diff waits, before the SR OS login is fixed at the Edge-PoP gate, until both engines have tried a backup of every Done edge device (a backup pass now reaches them at a speed that depends on the engine: Go's after-build backup failed on the wrong login, Python's, later, succeeded); p2diff lets "gate after the fixes" settle up to 90 s, as "gate with the NCCL result" already did (C64-3p: Python's re-check reads of 3,073-line spines queue behind backups on the same device); p3diff compares the newest backup per device, as p2diff has since Phase 4 (Go kept one extra intermediate version of a rail leaf taken mid-tuning). difftest's mismatch report also prints what each side of a multiset has more of (diagnostic). | Same rules in both engines; each change only waits or compares what a restore uses. |
+| P5-6 | **Approved (Captain, 2 Nov 2026).** `acceptance/nccl.sh` takes GPUs per host from the GPU profile (`ACCEPT_GPUS_PER_HOST` default: 4 on GB300/Vera Rubin NVL72 trays, 8 on gpu8x400, gpu8x800, hgx800dlc, smc4u_b300); `lossless.sh` T3/T4 the same default. | It assumed 8: on NVL72 mpirun asked for twice the GPUs a tray has. |
+| P5-7 | **Approved (Captain, 2 Nov 2026).** `acceptance/lossless.sh` T1 and T2 run on every rail NIC of every host: the ACTIVE RDMA devices whose netdev is addressed in the back-end rail block (`RAIL_NET`, from the plan), in address (rail) order, so every plane of a dual- or multi-plane host is covered; T1 a ring per rail, T2 an incast per rail, all rails at once. `ACCEPT_RAILS` defaults to the plan's rails per host; a host with fewer reports `RAILS <host> found N of M` and T1 appends `min_gbps=0 short_rails=N` (the console fails "line rate on every path"). `ACCEPT_HCA` (one NIC) or `ACCEPT_HCAS` (a list) is kept for debugging. NIC counters are summed over every rail NIC. New ACCEPT keys `rails`, `rails_min`, `rails_expected` are read and ignored by both engines' parsers. | T1/T2 tested `ACCEPT_HCA` (default `mlx5_0`) only: "every path" covered one rail per host. |
+| P5-8 | **Approved (Captain, 2 Nov 2026).** `provision/rail_check.sh` floor `RAIL_MBPS` = the design's rail leg speed (`laneG()`: NIC speed / planes on the NVL72 lane fabrics, the 400G leg on dual-plane HGX B300, the port speed single-plane), with the reason in a comment; `RAIL_MBPS` overrides. | A fixed 200G floor passed a 400G leg that trained at 200G. |
+
+## Verification (Phase 5)
+
+Reproduction (`provgo-work/p5/farm.py`, `repro.py`): 11 real OpenSSH 9.6 servers on 127.50.0.x:22 shaped like Air's Cumulus VX
+(MaxStartups 2; a PAM wait before pam_unix, 50 s per login and one login at a time per device, standing in for the TACACS
+time-outs; bash login shell answering from p2diff's recorded outputs), the B-NV-SN5600 back end (3 spines, 8 rail leaves; every
+other device set aside with lab-slice), the switches made Done, then 10 minutes without an override: the gate's automatic checks,
+after-build backups, and at minute 2 a burst of 11 requested backups (8 switches, plus 3 at once on one spine).
+
+| Run | Login wait | After-build backups | Burst | backup failed events | Logins | Most logins queued on one device | MaxStartups drops |
+|---|---|---|---|---|---|---|---|
+| Python HS v1.56 r2 | 50 s | 11 of 11 | 1 of 11 (81 s) | 10 (banner) | 108 | 2 | 11 |
+| Go HS v1.56 r2 | 50 s | 0 of 11 | 9 of 11 (84 s) | 13 (banner, handshake EOF) | 106 | 2 | 11 |
+| Python r3 | 50 s | 11 of 11 | 11 of 11 (22 s) | 0 | 77 | 1 | 0 |
+| Go r3 | 50 s | 11 of 11 | 11 of 11 (18 s) | 0 | 77 | 1 | 0 |
+| Go r3, release binary, 5 min | 50 s | 11 of 11 | 11 of 11 (18 s) | 0 | 44 | 1 | 0 |
+| Python r2, lab mode (no wait) | 0 | 11 of 11 | 10 of 11 | 1 (banner: 3 at once on one spine) | | | 1 |
+| Go r2, lab mode (no wait) | 0 | 11 of 11 | 10 of 11 | 1 (handshake reset) | | | 1 |
+| Python r3, ssh_per_device 3 (retry path) | 0 | 11 of 11 | 11 of 11 | 0 (1 retry after 5 s) | | | 1 |
+| Go r3, ssh_per_device 3 (retry path) | 0 | 11 of 11 | 11 of 11 | 0 (1 retry after 5 s) | | | 1 |
+
+The before runs fail as Air did (Go losing every after-build backup to banner errors; Python losing concurrent backups). The lab
+mode alone does not fix a burst on one switch (MaxStartups); the engine fixes do. The retry runs found two Go wording defects,
+fixed before the final binary: a reset is lowercase in Go ("connection reset by peer"; the match is now case-insensitive in both
+engines), and OpenSSH writes "Exceeded MaxStartups" before dropping, which Go took for a banner (the banner now counts from an
+`SSH-` line, as paramiko reads it). Not reproduced here: TC-208's gate-read failures (no gate evidence read failed in any run, before
+or after; the gate results were the same before and after in each engine) and Go's "Unable to find prompt".
+
+Unit tests (`sshgate_test.go`): `TestSSHGateLimit` (1 and 2 per device, 24 callers), `TestSSHGateReuse`, `TestSSHGateWaitAndTry`,
+`TestSSHBackoffAndTransient`, `TestSSHRetry`, `TestBackupStaggerAndOffset` (offsets equal to Python's), `TestDialMaxStartupsDrop`;
+`go test ./...` passes.
+
+Harnesses (final engines: Go binary amd64 sha256 5d1955b7dd94438f, arm64 0e7cf0c08e74086d; Python `/tmp/ex153` with `fixes.json`):
+- Phase 1: B-NV-SN5600, B-BE-EOS, C64-3p, C-FTD: 129 comparisons each, 0 mismatches.
+- Phase 2: B-NV-SN5600 56, B-BE-EOS 46, C64-3p 56, C-FTD 56 comparisons, 0 mismatches (with the P5-5 waits). Fake-device logins
+  on C64-3p: 3,021 (Phase 4: 9,806). One earlier C64-3p run showed Go's "read failed: Pattern not detected" on two 1,536-link
+  spines (the P4-9 symptom, on the shared single-process fake under load); the rerun passed.
+- Phase 3: B-NV-SN5600, 343 comparisons, 0 mismatches (engine switch probes included).
+
+Package (`hs/b156r3.html` through the site runner): B-BE-EOS 198 and B-NV-SN5600 767 device configuration files byte-identical to
+HS v1.55 / v1.56 r2; parity 197 of 197 and 766 of 766; `pkgproof.py` PASS (16 checks; run from a short work path: a long one
+puts the fake Kea socket past the AF_UNIX limit, and the two engines word that error differently). .run files that change:
+`acceptance/lossless.sh`, `acceptance/nccl.sh`, `provision/rail_check.sh`, `provision/estate_build.py`, `provision/bin/*`,
+`provision/estate.json` (time stamp), `air/README.md`, `air/ztp-host.sh`, new `air/lab-auth.sh`. Acceptance values per profile
+(built from B-BE-EOS with each profile): GPUs per host 8 (gpu8x400, gpu8x800, hgx800dlc, smc4u_b300), 4 (gpu_nvl72, gpu_vr_nvl72);
+rails per host 8 / 16 / 32 as the rails runner's `rails_per_host`; rail speed 400G (gpu8x400, the dual-plane HGX B300 profiles,
+NVL72 cx8 2 planes, VR cx9 4 planes), 200G (NVL72 cx8 4 planes, VR cx8 4 planes, VR cx9 8 planes). lossless.sh checked on a mock
+(fake ssh, rdma, ip, ib_write_bw): rail NICs found by rail address, a front-end NIC skipped, a ring per rail, a missing rail fails T1.
+air/lab-auth.sh checked on the B-NV-SN5600 package's 12-switch slice (84 lines in 12 files; again: no change; --undo restores
+byte for byte; refused off oob-mgmt-server).
+
+## Unproven after Phase 5
+
+- The lab mode and the engine fixes in DSX Air itself: TC-208b. The TACACS wait was modeled (a PAM delay), not run against
+  Cumulus's own TACACS client and NSS module.
+- Retries on Junos, EOS, NX-OS, SR Linux, SR OS and FTD sshd behavior (only OpenSSH was used); a session held for reuse on
+  platforms that close idle sessions sooner than a checker pass.
+- lossless.sh on real hosts (rdma and ip output formats on the shipped OS, ib_write_bw on every rail at once).

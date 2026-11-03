@@ -1,3 +1,18 @@
+# AIDC DBD Desktop 2.0.50 (builder HS-v1.56 r3, site runner 1.9.0)
+
+- **SSH to the switches holds up on slow logins** (both engines, Python and Go). DSX Air TC-208 lost most backups and gate reads to SSH timeouts. Now:
+  - At most one SSH session per switch at a time (`ssh_per_device` in estate.conf), across gate checks, backups, RMA reads, tuning, Release DWR access and pushes. Others wait their turn instead of piling onto a slow login.
+  - One session serves all the reads of a gate pass on a switch, so a switch logs in once per pass instead of once per check.
+  - A banner, prompt, reset or login timeout is retried twice (after 5 s, then 15 s) before it is reported. A wrong password is never retried.
+  - A switch with a session open is not probed on port 22 again (it is counted as up).
+  - The backups of a pass start 2 s apart instead of in the same second, and each switch's next scheduled backup is offset so they stay spread out.
+- **DSX Air lab mode:** `air/ztp-host.sh` now serves lab copies of the slice switches' configurations with the TACACS lines commented out (`air/lab-auth.sh`), so logins use the local accounts at once. Lab only: the package and the .run keep the production configurations byte for byte. Use `--prod-auth` to keep TACACS. The test sheet adds TC-208b, which lets the gate checks run and requires every backup to succeed in both engines.
+- **Acceptance scripts follow the design:**
+  - `acceptance/nccl.sh` takes the GPUs per host from the GPU profile (4 per NVL72 tray, 8 per HGX host). Before, it assumed 8.
+  - `acceptance/lossless.sh` T1 and T2 now test every rail NIC of every host, in every plane. Before, they tested only `mlx5_0`, one rail per host. `ACCEPT_HCA` still picks a single NIC for debugging. A host with a rail missing fails T1.
+  - `provision/rail_check.sh` checks each rail at the design's speed (for example 400G legs on dual-plane 800G, 200G on 4-plane NVL72), not a fixed 200G.
+- **Proved before shipping:** both engines on real OpenSSH servers set up like Cumulus in Air (slow TACACS-style logins, low MaxStartups), before and after; side-by-side engine comparisons on four designs; device configurations unchanged.
+
 # AIDC DBD Desktop 2.0.49 (builder HS-v1.56 r2, site runner 1.9.0)
 
 - **A run of all no longer stalls on a design with an empty plane** (both engines, Python and Go). A build with no devices, for example the edge and front end of a back-end-only design, is marked complete when the run starts, with one event: "No devices in plane edge: build marked complete". The run goes straight on to the next build.

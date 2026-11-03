@@ -982,8 +982,16 @@ def run_p3(args, run, rep):
     rep.same("p3 state dir files", sorted(norm3(os.listdir(S[0]))), sorted(norm3(os.listdir(S[1]))))
     fa, fb2 = state_files(S[0]), state_files(S[1])
     rep.same("p3 state dir file contents", fa, {k: v for k, v in fb2.items()})
-    bk = lambda s: {d: sorted(open(os.path.join(s, "backups", d, f)).read() for f in os.listdir(os.path.join(s, "backups", d))) for d in sorted(os.listdir(os.path.join(s, "backups")))}
-    rep.same("p3 backup contents", bk(S[0]), bk(S[1]))
+    # Phase 5 (DECISIONS P5-5): the newest backup of each device (what a restore uses), as Phase 2 compares since Phase 4. Which
+    # earlier versions exist depends on when each engine's staggered backup pass reached a device (one caught a rail leaf in the
+    # middle of the tuning apply); the set of devices backed up is compared too
+    def bk(s):
+        out = {}
+        for d in sorted(os.listdir(os.path.join(s, "backups"))):
+            fs = sorted(os.listdir(os.path.join(s, "backups", d)))
+            out[d] = open(os.path.join(s, "backups", d, fs[-1])).read() if fs else None
+        return out
+    rep.same("p3 backup contents (newest per device)", bk(S[0]), bk(S[1]))
     ka = open(json.load(open(PY.conf))["kea_live"]).read()
     kb = open(json.load(open(GO.conf))["kea_live"]).read().replace("/go/kea.sock", "/py/kea.sock")
     rep.same("p3 kea-live.conf (byte-identical)", ka, kb)

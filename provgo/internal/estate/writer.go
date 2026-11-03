@@ -168,6 +168,11 @@ func WriteConfig(os_, host string, port int, user, pw string, lines []string, wh
 		return nil, err
 	}
 	defer s.close()
+	return writeConfigOn(s, os_, lines, why)
+}
+
+// writeConfigOn applies the lines on an open session (the service dials inside the device's session limit).
+func writeConfigOn(s *cliSession, os_ string, lines []string, why string) (*WriteResult, error) {
 	var out string
 	var ok bool
 	switch os_ {
@@ -232,6 +237,11 @@ func RemoveAccount(os_, host string, port int, user, pw string, cmds []string, h
 		return "", &loginErr{err.Error()}
 	}
 	defer s.close()
+	return removeAccountOn(s, cmds, how, backupCmd)
+}
+
+// removeAccountOn runs the removal on an open session.
+func removeAccountOn(s *cliSession, cmds []string, how, backupCmd string) (string, error) {
 	if how == "shell" {
 		for _, c := range cmds {
 			if _, err := s.sendCommand(c, 240*time.Second); err != nil {

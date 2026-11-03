@@ -81,6 +81,7 @@ Effective config = `DEFAULTS` updated with the file's top-level keys (unreadable
 | `reader_sim_dir` | — | reader simulation; readiness service probes forced true (P1/P2) |
 | `vendor_access` | `/etc/fabric/vendor-access.json` | (P3) |
 | `probe_every_s` 15, `done_probe_s` 120, `push_concurrency` 4, `check_every_s` 60, `reader_workers` 16, `backup_every_h` 6, `backup_keep` 20 | | (P2/P3) |
+| `ssh_per_device` 1, `ssh_retries` 2, `ssh_backoff_s` 5, `backup_stagger_s` 2 | | (HS v1.56 r3, section 16) |
 | `tftp` true, `tftp_standby`, `tftp_bind`, `tftp_port` 69, `tftp_root` `/srv/tftp` | | (P2) |
 | `peer_url`, `peer_cert_sha256`, `sync_every_s` 60, `sites`, `sites_every_s` 3600 | | (P3) |
 | `alert_webhook`, `smtp_host`, `smtp_port` 25, `smtp_from`, `smtp_to`, `smtp_starttls`, `smtp_user`, `smtp_password` | | (P3) |
@@ -375,7 +376,8 @@ Implemented in `internal/estate/{reader,parsers,checks,results,probes,backups,tf
 - **Reader** (`read`): `reader_sim_dir` → `<dir>/<device>/<slug(cmd)>.txt` (missing: unavailable `no recorded output for D: C`). Else OS
   must be in `DT` (junos eos nxos cumulus srl sros iosxr iosxe ftd) with an `ip` (`no SSH reader for OS`); login
   `READ_USER_<OS>`/`READ_USER`, `READ_PASSWORD_<OS>`/`READ_PASSWORD` from secrets.env (`READ_USER / READ_PASSWORD not set in
-  secrets.env`); one SSH session per call, netmiko session semantics per device type (DECISIONS P2-2). Errors other than
+  secrets.env`); one SSH session per call (HS v1.56 r3: inside the device's session limit, reused within a checker pass, transient
+  failures retried: section 16), netmiko session semantics per device type (DECISIONS P2-2). Errors other than
   "unavailable" become `read failed: <text>` in the check.
 - **Command sets**: `CMDS` (bgp, evpn, mnha, roce; `@nvue-bgp` = `nv show vrf -o json` then `nv show vrf V router bgp neighbor -o json`
   per sorted VRF, outputs starting `Error:` dropped unless all do), `CNT_CMDS` (`@per-if:` expands over the planned
@@ -475,4 +477,39 @@ Implemented in `internal/estate/{push,rma,runners,tuning,handover,ha,alerts,writ
   lines; read from `provgo-work/bin/` when the patch runs), `provisionGoFiles()` adding them to the deploy package after
   the secrets manifest (a damaged block writes `provision/bin/ERROR.txt`, which stops the site runner), the setup.sh,
   README, .run header and air changes above. The Final package is unchanged (device configurations byte-identical).
+
+## 16. SSH reliability (HS v1.56 r3, both engines; DECISIONS P5-1 .. P5-5)
+
+- **Session limit** (`ssh_per_device`, default 1, minimum 1): at most that many SSH sessions to one device at a time, counted
+  across gate reads, backups (scheduled, after build, gate, requested), RMA reads, tuning writes, Release DWR access and pushes
+  (a push holds a slot from its start to its process's end). A reader or writer waits for a slot; a push candidate at its limit
+  is skipped for that pass (`try_take`). A session held for reuse by another login is closed to free a slot.
+- **Reuse**: each checker pass (`checker`, one loop iteration including `rma_automation`) and each gate re-check is a pass. Within
+  a pass a read session that ended without error is held and taken by the next read of the same device with the same login
+  (`read:<user>`), whoever reads (a backup in the same window included); one closed by the device since is replaced. The last
+  pass to end closes the held sessions. Writes never reuse.
+- **Retries** (`ssh_retries` 2, `ssh_backoff_s` 5): a failure whose text contains `Error reading SSH protocol banner`,
+  `Connection reset by peer`, `Unable to find prompt`, `Authentication timeout`, `Socket is closed` or `SSH session not active`
+  (matched in any case) is retried after base x 3^(k-1) s (5 s, 15 s); ReaderUnavailable, a refused TCP connection and a rejected password are not.
+  Reads retry the whole read; writes retry only the connection. The last error is the one reported (event and check texts
+  unchanged); each retry is a stderr line `ssh: <device>: <first line>; retry k of n in Ws`.
+- **Probes**: a device with a session open (in use or held) counts as answering in the probe cycle (todo and Done groups) and in
+  the push pass, without a TCP connect. Aggregate members are probed as before.
+- **Backups**: job i of a backup pass (i < `reader_workers`) waits i x `backup_stagger_s` before its read; the next due time after
+  a success is `backup_every_h` x 3600 + offset, after a failure 900 s + offset(600), offset(n, ivl) = (crc32(n) mod 1000) / 1000 x
+  min(600, ivl x 0.1) (in-memory `backup_due`, not stored).
+- **Go reader phases** (P5-3): server banner (a line starting `SSH-`; lines before it, such as OpenSSH's "Exceeded MaxStartups", are not) within 60 s (`banner_timeout`), then key exchange and authentication within 90 s
+  (`auth_timeout`). Wording as paramiko/netmiko: no banner (timeout, EOF) `Error reading SSH protocol banner`, reset
+  `...banner[Errno 104] Connection reset by peer`; timeout after the banner: netmiko's authentication message ending
+  `Authentication timeout.`.
+- **DSX Air lab mode** (P5-1): `air/lab-auth.sh` (lab only; refuses on a host other than `oob-mgmt-server` unless `LAB_AIR=1`)
+  comments out `nv set system aaa tacacs ...` and `nv set system aaa authentication order ...` in the published copies
+  (`/var/www/html/<cfg>` and `/var/www/html/ztp/<node>.sh`) of the switches in `air/slice.csv`, prefix `# LAB (air/lab-auth.sh,
+  DSX Air only): `, list in `/etc/fabric/lab-auth.txt`; `--undo` copies the package files back. `air/ztp-host.sh` runs it after
+  setup.sh unless `--prod-auth`, and prints `[ok] engine: go (/opt/estate-build/aidc-prov, linux/<arch>)` or
+  `[ok] engine: python (/opt/estate-build/estate_build.py)`. Neither engine changes; the package and .run configurations do not.
+- **Acceptance scripts** (P5-6 .. P5-8, builder): `acceptance/nccl.sh` and `lossless.sh` default `ACCEPT_GPUS_PER_HOST` to the
+  profile's GPUs per host; `lossless.sh` T1/T2 run on every rail NIC of every host (`ACCEPT_RAILS` per host from the plan,
+  `ACCEPT_HCA`/`ACCEPT_HCAS` override; extra ACCEPT keys `rails`, `rails_min`, `rails_expected`, and `min_gbps=0 short_rails=N`
+  appended to T1 when a host has fewer rail NICs); `provision/rail_check.sh` floor `RAIL_MBPS` = the design's rail leg speed.
 

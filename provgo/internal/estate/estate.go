@@ -134,6 +134,8 @@ type Estate struct {
 
 	p2once   sync.Once
 	p2c      *p2
+	gateOnce sync.Once
+	sshg     *sshGate // SSH sessions per device (sshgate.go)
 	bondHome string
 
 	// Out receives the event log lines (stdout in the service).

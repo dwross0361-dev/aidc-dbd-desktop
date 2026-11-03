@@ -38,10 +38,11 @@ func isUnavailable(err error) (*ReaderUnavailable, bool) {
 // Reader timeouts (Python: netmiko conn_timeout=15, banner_timeout=60, auth_timeout=90 for the TACACS fall-back,
 // read_timeout=120 per command).
 var (
-	ReaderConnTimeout = 15 * time.Second
-	ReaderAuthTimeout = 90 * time.Second
-	ReaderCmdTimeout  = 120 * time.Second
-	ReaderPrepTimeout = 20 * time.Second
+	ReaderConnTimeout   = 15 * time.Second
+	ReaderAuthTimeout   = 90 * time.Second
+	ReaderBannerTimeout = 60 * time.Second
+	ReaderCmdTimeout    = 120 * time.Second
+	ReaderPrepTimeout   = 20 * time.Second
 )
 
 // Read runs the commands on a device and returns their outputs (Python: Phase2Mixin.read).
@@ -78,21 +79,83 @@ func (e *Estate) Read(name string, cmds []string) ([]string, error) {
 	if u == "" || p == "" {
 		return nil, unavailable("READ_USER / READ_PASSWORD not set in secrets.env")
 	}
-	port := 22
-	s, err := dialSession(os_, d.Str("ip"), port, u, p)
+	// HS v1.56 r3 (DECISIONS P5-2, P5-3): inside the device's session limit, a session of this pass reused, transient
+	// failures retried
+	var out []string
+	err := e.sshRetry(name, func() error {
+		var err error
+		out, err = e.readOnce(name, os_, d.Str("ip"), 22, u, p, cmds)
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}
-	defer s.close()
+	return out, nil
+}
+
+func (e *Estate) readOnce(name, os_, host string, port int, u, p string, cmds []string) ([]string, error) {
+	g, key := e.gate(), "read:"+u
+	var s *cliSession
+	if c := g.take(name, key, e.sshPerDevice()); c != nil && c.(*cliSession).alive() {
+		s = c.(*cliSession)
+	} else {
+		if c != nil { // held for reuse but closed by the device since: its slot serves a new session
+			c.close()
+		}
+		x, err := dialSession(os_, host, port, u, p)
+		if err != nil {
+			g.release(name)
+			return nil, err
+		}
+		s = x
+	}
 	out := make([]string, 0, len(cmds))
 	for _, c := range cmds {
 		t, err := s.sendCommand(c, ReaderCmdTimeout)
 		if err != nil {
+			g.give(name, key, s, false)
 			return nil, err
 		}
 		out = append(out, t)
 	}
+	g.give(name, key, s, true)
 	return out, nil
+}
+
+// phaseConn notes when the server's first bytes (its banner) arrive and then gives key exchange and authentication
+// their own deadline (paramiko: banner_timeout, then auth_timeout).
+// The banner counts once a line starting "SSH-" has arrived: lines before it (OpenSSH's "Exceeded MaxStartups" before it
+// drops a connection) are not a banner, as paramiko sees it.
+type phaseConn struct {
+	net.Conn
+	mu   sync.Mutex
+	got  bool
+	head []byte // what arrived before the version line (bounded)
+}
+
+func (c *phaseConn) Read(b []byte) (int, error) {
+	n, err := c.Conn.Read(b)
+	if n > 0 {
+		c.mu.Lock()
+		if !c.got {
+			c.head = append(c.head, b[:n]...)
+			if bytes.HasPrefix(c.head, []byte("SSH-")) || bytes.Contains(c.head, []byte("\nSSH-")) {
+				c.got = true
+				c.head = nil
+				_ = c.Conn.SetDeadline(time.Now().Add(ReaderAuthTimeout))
+			} else if len(c.head) > 8192 {
+				c.head = c.head[len(c.head)-8192:]
+			}
+		}
+		c.mu.Unlock()
+	}
+	return n, err
+}
+
+func (c *phaseConn) banner() bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.got
 }
 
 // ------------------------------------------------------------------------------------- interactive session
@@ -146,16 +209,28 @@ func dialSession(os_, host string, port int, user, pw string) (*cliSession, erro
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 		Timeout:         ReaderConnTimeout,
 	}
-	_ = conn.SetDeadline(time.Now().Add(ReaderAuthTimeout))
-	c, chans, reqs, err := ssh.NewClientConn(conn, addr, cfg)
+	// HS v1.56 r3 (DECISIONS P5-3): paramiko's phases -- the server's banner within banner_timeout (60 s), then key
+	// exchange and authentication within auth_timeout (90 s; a TACACS fall-back takes time) -- and its wording for each
+	pc := &phaseConn{Conn: conn}
+	_ = conn.SetDeadline(time.Now().Add(ReaderBannerTimeout))
+	c, chans, reqs, err := ssh.NewClientConn(pc, addr, cfg)
 	if err != nil {
 		conn.Close()
 		if strings.Contains(err.Error(), "unable to authenticate") {
 			return nil, errors.New(authFailMsg(devType, host, port))
 		}
 		var ne net.Error
-		if errors.As(err, &ne) && ne.Timeout() {
-			return nil, errors.New("\nA paramiko SSHException occurred during connection creation:\n\nError reading SSH protocol banner\n\n")
+		timeout := errors.As(err, &ne) && ne.Timeout()
+		if !pc.banner() {
+			why := ""
+			if strings.Contains(err.Error(), "connection reset") {
+				why = "[Errno 104] Connection reset by peer"
+			}
+			if timeout || why != "" || strings.Contains(err.Error(), "EOF") {
+				return nil, errors.New("\nA paramiko SSHException occurred during connection creation:\n\nError reading SSH protocol banner" + why + "\n\n")
+			}
+		} else if timeout {
+			return nil, errors.New(strings.TrimSuffix(authFailMsg(devType, host, port), "Authentication failed.") + "Authentication timeout.")
 		}
 		return nil, fmt.Errorf("\nA paramiko SSHException occurred during connection creation:\n\n%v\n\n", err)
 	}
@@ -219,6 +294,13 @@ func dialSession(os_, host string, port int, user, pw string) (*cliSession, erro
 		return nil, err
 	}
 	return s, nil
+}
+
+// alive: the device has not closed the session (one held for reuse is checked before it is used again).
+func (s *cliSession) alive() bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return !s.closed
 }
 
 func (s *cliSession) close() {

@@ -81,6 +81,7 @@ type probeJob struct {
 	ports   []int64
 	timeout time.Duration
 	up      bool
+	inUse   bool // HS v1.56 r3 (DECISIONS P5-2): an SSH session is open to the device: up, not probed
 }
 
 func (e *Estate) confFloat(k string, def float64) float64 {
@@ -137,7 +138,7 @@ func (e *Estate) ProbeCycle() {
 		if stg < 4 {
 			to = ProbeEarlyTimeout
 		}
-		jobs = append(jobs, &probeJob{ip: d.Str("ip"), ports: portsOf(d, "verify_ports", []int64{22}), timeout: to})
+		jobs = append(jobs, &probeJob{ip: d.Str("ip"), ports: portsOf(d, "verify_ports", []int64{22}), timeout: to, inUse: e.gate().active(n)})
 		todo = append(todo, todoT{n, d, stg, len(jobs) - 1})
 	}
 	for _, n := range e.DevOrder {
@@ -168,7 +169,7 @@ func (e *Estate) ProbeCycle() {
 			continue
 		}
 		c.probeDue["done:"+n] = t + doneEvery
-		jobs = append(jobs, &probeJob{ip: d.Str("ip"), ports: portsOf(d, "verify_ports", []int64{22}), timeout: ProbeTimeout})
+		jobs = append(jobs, &probeJob{ip: d.Str("ip"), ports: portsOf(d, "verify_ports", []int64{22}), timeout: ProbeTimeout, inUse: e.gate().active(n)})
 		done = append(done, doneT{n, d, len(jobs) - 1})
 	}
 	e.Mu.Unlock()
@@ -186,7 +187,7 @@ func (e *Estate) ProbeCycle() {
 			sem <- struct{}{}
 			go func(j *probeJob) {
 				defer wg.Done()
-				j.up = tcpProbe(j.ip, j.ports, j.timeout)
+				j.up = j.inUse || tcpProbe(j.ip, j.ports, j.timeout)
 				<-sem
 			}(j)
 		}

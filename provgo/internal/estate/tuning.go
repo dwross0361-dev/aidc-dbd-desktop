@@ -127,7 +127,13 @@ func (e *Estate) tuneWrite(n string, lines []string, why string) (bool, string) 
 	if _, ok := DT[os_]; !ok || !d.Truthy("ip") {
 		return false, "no SSH writer for " + os_
 	}
-	out, err := WriteConfig(os_, d.Str("ip"), 22, u, pw, lines, why)
+	// HS v1.56 r3 (DECISIONS P5-2, P5-3): inside the device's session limit; a transient login failure is retried
+	s, done, err := e.dialFor(n, os_, d.Str("ip"), 22, u, pw)
+	if err != nil {
+		return false, "write failed: " + err.Error()
+	}
+	defer done()
+	out, err := writeConfigOn(s, os_, lines, why)
 	if err != nil {
 		return false, "write failed: " + err.Error()
 	}

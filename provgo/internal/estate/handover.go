@@ -377,7 +377,13 @@ func (e *Estate) removeDWRDev(n, pw string) (string, string) {
 	if v, ok := e.Conf.Get("break_glass_user"); ok {
 		bg = PyStr(v)
 	}
-	cfg, err := RemoveAccount(os_, d.Str("ip"), 22, bg, pw, spec.cmds, spec.how, BackupCmd[os_])
+	// HS v1.56 r3 (DECISIONS P5-2, P5-3): inside the device's session limit; a transient login failure is retried
+	s, done, err := e.dialFor(n, os_, d.Str("ip"), 22, bg, pw)
+	if err != nil {
+		return "failed", "netadmin login: " + trunc(err.Error(), 160)
+	}
+	defer done()
+	cfg, err := removeAccountOn(s, spec.cmds, spec.how, BackupCmd[os_])
 	if err != nil {
 		if le, isL := err.(*loginErr); isL {
 			return "failed", "netadmin login: " + trunc(le.msg, 160)

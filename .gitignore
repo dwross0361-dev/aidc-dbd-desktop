@@ -3,3 +3,5 @@ runner/node_modules/
 dist/
 vendor/node/*
 !vendor/node/.gitkeep
+__pycache__/
+*.pyc

@@ -100,18 +100,23 @@ func (e *Estate) backupPass() {
 	}
 	e.Mu.Unlock()
 	res := make([]string, len(due))
-	e.poolMap(len(due), func(i int) { res[i] = e.TakeBackup(due[i], whys[i]) })
+	// HS v1.56 r3 (DECISIONS P5-4): the pass's first sessions start backup_stagger_s apart, not all in the same second
+	w, step := e.readerWorkers(), e.confFloat("backup_stagger_s", 2)
+	e.poolMap(len(due), func(i int) {
+		sshSleep(staggerDelay(i, w, step))
+		res[i] = e.TakeBackup(due[i], whys[i])
+	})
 	e.Mu.Lock()
 	defer e.Mu.Unlock()
 	for i, n := range due {
 		if res[i] != "" {
 			if ivl > 0 {
-				c.backupDue[n] = Now() + ivl
+				c.backupDue[n] = Now() + ivl + backupOffset(n, ivl) // P5-4: devices Done together are not all due together again
 			} else {
 				c.backupDue[n] = Now() + 1e9
 			}
 		} else {
-			c.backupDue[n] = Now() + 900
+			c.backupDue[n] = Now() + 900 + backupOffset(n, 600)
 		}
 	}
 }

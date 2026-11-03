@@ -539,9 +539,28 @@ def run_p2(args, run, rep, os_over=None, tag="p2"):
             for f in [f for f in faults if f[0] == bk]:
                 f[2]()
             if bk == "edge" and sros_auth:
+                # Phase 5 (DECISIONS P5-5): sessions are one per device and backups start staggered, so how soon each engine's
+                # backup pass reaches the edge devices depends on its reading speed. Both engines must try every Done edge
+                # device with the wrong SR OS login before it is fixed (up to 5 minutes), or one engine's after-build backup
+                # fails while the other's, later, succeeds
+                bdev_e = [n for w in next(b for b in plan["builds"] if b["key"] == bk)["waves"] for n in w["devices"]
+                          if byn[n].get("os") in A.CMDS["backup"] and byn[n].get("ip")]
+                def tried(E):
+                    s_ = st(E)["devices"]
+                    seen = {x[1] for x in D.events_of(os.path.join(E.base, "state")) if ("backup failed" in x[4] or "backed up" in x[4]) and x[1]}
+                    return all(n in seen for n in bdev_e if s_[n]["stage"] == 6 and s_[n].get("flag") != "quarantined")
+                if wait(tried, "edge backups tried before the SR OS login is fixed", timeout=300, step=5) is None:
+                    for E in eng:
+                        seen = {x[1] for x in D.events_of(os.path.join(E.base, "state")) if ("backup failed" in x[4] or "backed up" in x[4]) and x[1]}
+                        print("    %s: not tried: %s" % (E.name, [n for n in bdev_e if n not in seen]))
                 secrets(True)
             cmp("p2 %s: recheck after the fixes" % bk, lambda E: rv(post(E, "/api/gate/recheck", {"build": bk})))
             time.sleep(3)   # one engine tick: a gate that now passes is complete in both
+            # Phase 5 (P5-5): a re-check still reading after 60 s (C64: 3,073 lossless lines per spine, sessions one per device,
+            # queued behind backups) lands later; compared once both engines have settled (up to 90 s more)
+            t0 = time.time()
+            while time.time() - t0 < 90 and norm2(gate_view(PY, bk)) != norm2(gate_view(GO, bk)):
+                time.sleep(3)
             cmp("p2 %s: gate after the fixes" % bk, lambda E: gate_view(E, bk))
             if bk == "be":
                 cmp("p2 be: NCCL result at target (CLI)", lambda E: E.cmd("result", "401.5", "380")[:2])

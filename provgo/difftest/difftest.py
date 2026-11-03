@@ -353,6 +353,10 @@ class Report:
             sa, sb = json.dumps(a, sort_keys=True, default=str), json.dumps(b, sort_keys=True, default=str)
             k = next((i for i in range(min(len(sa), len(sb))) if sa[i] != sb[i]), min(len(sa), len(sb)))
             print("  MISMATCH %s\n    py: ...%s\n    go: ...%s" % (what, sa[max(0, k - 160):k + 200], sb[max(0, k - 160):k + 200]))
+            if isinstance(a, list) and isinstance(b, list):   # Phase 5: a list compared as a multiset: what each side has more of
+                import collections
+                ca, cb = collections.Counter(map(str, a)), collections.Counter(map(str, b))
+                print("    only py: %s\n    only go: %s" % ([x[:300] for x in (ca - cb)][:8], [x[:300] for x in (cb - ca)][:8]))
             return False
         return True
 

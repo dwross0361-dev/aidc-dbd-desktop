@@ -229,6 +229,9 @@ func (e *Estate) Pushes() {
 	free := conc - e.runningPushes()
 	e.Mu.Unlock()
 	up := probeInOrder(len(cands), free, func(i int) bool {
+		if e.gate().active(cands[i].n) { // HS v1.56 r3 (DECISIONS P5-2): a session is open: up, not probed
+			return true
+		}
 		return tcpProbe(cands[i].ip, []int64{cands[i].port}, 3*time.Second)
 	})
 	e.Mu.Lock()
@@ -242,10 +245,14 @@ func (e *Estate) Pushes() {
 		if !up[i] || running >= conc || !e.pushReady(n) {
 			continue
 		}
+		if !e.gate().tryTake(n, e.sshPerDevice()) { // P5-2: the push is a session to the device; at its limit it waits a pass
+			continue
+		}
 		s, d := e.St[n], e.Devs[n]
 		args := pyjson.StrList(d.M("push").V("cmd"))
 		ov, err := e.pushOverride(n)
 		if err != nil {
+			e.gate().release(n)
 			panic(err) // Python: the OSError ends this push pass (the engine logs it)
 		}
 		if ov != "" {
@@ -253,11 +260,13 @@ func (e *Estate) Pushes() {
 		}
 		lf, err := os.Create(filepath.Join(e.Conf.Str("state_dir"), "push-"+safeName(n)+".log"))
 		if err != nil {
+			e.gate().release(n)
 			panic(err)
 		}
 		py, perr := exec.LookPath("python3")
 		if perr != nil {
 			lf.Close()
+			e.gate().release(n)
 			e.fail(n, "push could not start: [Errno 2] No such file or directory: 'python3'")
 			continue
 		}
@@ -267,6 +276,7 @@ func (e *Estate) Pushes() {
 		cmd.Stdout, cmd.Stderr = lf, lf
 		if err := cmd.Start(); err != nil {
 			lf.Close()
+			e.gate().release(n)
 			e.fail(n, "push could not start: "+pyErrno(err))
 			continue
 		}
@@ -274,6 +284,7 @@ func (e *Estate) Pushes() {
 		go func() {
 			err := cmd.Wait()
 			p.rc = exitCode(cmd, err)
+			e.gate().release(p.n) // P5-2: the push's session slot, when the push process ends
 			p.done.Store(true)
 		}()
 		e.push.running = append(e.push.running, p)

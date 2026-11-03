@@ -913,6 +913,9 @@ func (e *Estate) checkerPass() {
 		}
 	}
 	e.Mu.Unlock()
+	// HS v1.56 r3 (DECISIONS P5-2): a read session opened in this pass serves the device's next read in the pass
+	e.gate().beginPass()
+	defer e.gate().endPass()
 	for _, x := range todo {
 		e.RunAuto(x.k, x.c)
 	}
@@ -966,6 +969,8 @@ func (e *Estate) GateRecheck(k, user string) (bool, string) {
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
+		e.gate().beginPass() // P5-2: one pass
+		defer e.gate().endPass()
 		for _, c := range checks {
 			func() {
 				defer func() {
