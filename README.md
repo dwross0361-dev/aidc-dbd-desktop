@@ -2,7 +2,7 @@
 
 DWR Networking internal. The AIDC DBD Hyperscale builder as a Windows app, with the site runner built in.
 
-- **The builder** runs unchanged in the main window (builder `HS-v1.58`).
+- **The builder** runs unchanged in the main window (builder `HS-v1.59`).
 - **Saves:** every download lands in your project folder. Nothing is overwritten: a second copy is saved as `name (2)`.
 - **Past 512 racks**, the Final package, the Review package and the .run are built by the built-in site runner.
   - The runner is a separate process with the workstation's memory, so a window's 4 GB limit does not apply to it.
@@ -39,6 +39,7 @@ DWR Networking internal. The AIDC DBD Hyperscale builder as a Windows app, with 
   - **Load input sheet…** sets the design from a filled sheet (`.xlsx`, or CSV `key,value,unit,source`) in one step and shows the import report. A value outside the offered options is built at the nearest one and flagged as a design choice; rows the builder does not model are listed as not modeled. The session input file (the record) is saved to the project folder.
   - **Input sheet template (blank)** and **Input sheet filled from this design** save the template, generated from the builder's catalog. The builder's **Input sheet** button does the same in a browser.
   - The values without a control (compute rack feed, busbar rating) ride in the design file and its fingerprint, so the site runner rebuilds what was imported. The builder file and its platform profiles are never changed.
+  - 2.0.53 r2 adds two rows: `fabric.be.keep_planes` (Keep plane count, NVL72 platforms) and `fe.ns_dpu` (north-south DPU, Vera Rubin NVL72: BlueField-3 B3240 or BlueField-4 B4240V).
 - **Output folders:** each job writes to its own folder in the project folder, `{BUILD}-{job}-{date-time}/`. The folder holds the package and/or .run, the site-runner file it was built from, and `site-runner.log`.
 - **The release gate (2.0.51):** the site runner refuses a design unless it was exported from the same builder file (same SHA-256). Site-runner files exported before 2.0.51 carry no SHA-256: export them again.
 - **The fingerprint gate:** the runner and the Layout service rebuild the design from its settings and refuse unless the design fingerprint matches the window's. "Does not match" means the canvas has hand edits the settings don't carry.

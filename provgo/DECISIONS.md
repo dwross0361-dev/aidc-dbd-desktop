@@ -417,3 +417,66 @@ Implements D1 to D3 (design Section 3). The provisioning engines are unchanged.
 - `go test ./...` passes; difftest Phase 1 on the 16-rack .run: 129 comparisons, 0 mismatches.
 - Neutrality gate 0 hits: repository; `--inputs` output folders for GB300 (25,872 files) and Vera Rubin (32,018 files),
   the customer-data files included; the portable build.
+
+# Evaluation readiness D11: Vera Rubin at 2 planes x 800G (HS v1.59, desktop 2.0.53)
+
+Implements D11 (design Section 7; rule NVR-015). The provisioning engines are unchanged.
+
+## Source check (3 Nov 2026)
+
+| Source | Finding |
+|---|---|
+| DGX SuperPOD Spectrum-X Reference Architecture with DGX Vera Rubin NVL72, https://docs.nvidia.com/dgx-superpod-spectrum-x-reference-architecture-with-dgx-vera-rubin-nvl72.pdf (no document number, revision or date; (c) 2024; no newer public revision found) | Eight ConnectX-9 per tray, "2x800 Gbps Ethernet connectivity per GPU", two independent fabrics; 2 planes, "4 switches per plane at leaf layer representing 4 rails"; rail-aligned, non-blocking, "8x 800G connections per compute tray"; SU 3 racks (216 GPUs), 4 leaves and 2 spines per plane per SU (Table 3, to 6,912 GPUs); compute switch SN6600 ("SN6600-LD has 128 ports of 800 Gbps"); N-S "BlueField-4 B4240V dual-port card at 400Gbps". NVR-015 confirmed. |
+| NVIDIA technical blog, Inside the NVIDIA Vera Rubin Platform: Six New Chips, One AI Supercomputer (5 Jan 2026) | ConnectX-9 "800 Gb/s per port", "1600 Gb/s (2 x 800 Gb/s) per GPU". It gives SN6800 as "512 ports of 800 Gb/s or 2048 ports of 200 Gb/s". |
+| Spectrum-6 SN6000 Hardware User Manual, Introduction and Specifications (last updated 16 Sep 2026) | SN6600, SN6600-LD and SN6810-LD: 128 x 800GbE. SN6800-LD: "2048 x 200GbE" (and 100GbE) only. The manual governs, so the SN6800's lane list stays 200/100G. |
+
+## Decisions (D11)
+
+| # | Decision | Why |
+|---|---|---|
+| D11-1 | **Vera Rubin `planeOpts` [2,4,8]**; `planeDef` stays 4. | NVIDIA's reference is 2 planes. A design without a plane setting builds as before; making 2 the default is open to the Owner. |
+| D11-2 | **ConnectX-9 option carries `ports:2, portG:800`.** When a plane's lane equals a whole port (`hostPortPerPlane()`), the host side is one 800G optic per NIC port (two per GPU), not one 1.6T optic split into legs. The BoM rows, the rack-to-leaf connector and the CPO connector text follow. The 4- and 8-plane host model is unchanged. | The RA and the blog give two 800G ports per GPU. Only the new layout's text and optic counts change. |
+| D11-3 | **No new lane on the SN6800.** A 2-plane request there builds at 8 planes and says so, as 4 planes already did. | The hardware manual lists 200GbE only. |
+| D11-4 | **Plane raising is unchanged:** the smallest offered count at or above the request that stays on two tiers; if none does, the requested count with super-spines. | Applies to 2 planes as to any other count. At 364 racks (26,208 GPUs) a 2 x 800G plane needs about 410 leaves, more than any offered spine takes. The 1.6T and CPO switches therefore build 8 or 4 planes, and the 64 x 800G switches build 2 planes with super-spines. Keeping 2 planes with a third tier on every switch would be a new preference (Owner decision). |
+| D11-5 | **GB300 NVL72 reviewed, unchanged:** 2 or 4 planes, ConnectX-8 800G. | NVIDIA's GB300 RA is dual-plane, 2 x 400G per GPU. |
+| D11-6 | **Vera Rubin FE NIC:** the source note cites the BlueField-4 B4240V, dual-port 400G. The model stays BlueField-3 B3240. | The link count and speed that size the front end match. The generated DPU software (HBN bundle, bf.cfg, 13,106 files at 364 racks) is BlueField-3's, and no BlueField-4 software target is pinned (Owner decision). |
+| D11-7 | **Fix: flat spine count on lane fabrics.** If the per-plane spine count cannot carry the plane's uplinks (`nP x SPR < upP`), use one spine per uplink lane of the fullest leaf (`nP = mxP`). | With leaves of different uplink counts in a plane, the count fell back to the largest power of two and left leaves without uplinks, with no warning. That happened in HS-v1.58 too, on existing options. The guard fires only on a short spine tier, so a correctly built design is unchanged. |
+
+## Verification (D11)
+
+- Vera Rubin 96 racks (6,912 GPUs), SN6600, 2 planes, 16-rack pods: 2 x 800G per GPU (1.6 Tb/s), 4 rails per plane, 120 leaves and 58 spines per plane, no super-spines, 356 switches. Every GPU has one leg per plane; 13,824 host legs against 13,824 uplink lanes; no switch port used twice. No hard stops, catalog, scheme or ASN problems, no high front-end warnings. Site runner parity 4,262 of 4,262. NVIDIA's Table 3 at 6,912 GPUs: 128 leaves and 64 spines per plane, 384 switches. The builder's 16-rack pods fill leaves more fully than the 3-rack SU.
+- Vera Rubin 364 racks, SN6800, 2 planes: built at 8 x 200G ("2 planes do not fit this switch's 200/100G lanes"), parity 14,958 of 14,958, plan digest 36c4c2a744fa391e.
+- Unchanged against 2.0.52, all package configuration files byte-identical: Vera Rubin 364 racks on SN6800 at 4 planes (14,959 files, fingerprint 20297e2cfe6e3716), on SN6800 at 8 planes (14,959, 10407090a45b80e9) and on SN6600 at 4 planes (18,322, 190bb91cd2582856); GB300 NVL72 256 racks on SN5610 (11,636, b98ba38d0e5f6230, plan digest 3e234672d4271114).
+- Platform sweep at 24 racks, all 12 back-end platforms, both profiles, every NIC: every 4- and 8-plane pick unchanged. Sweep at 96 racks (192 builds, default and 16-rack pods): leaves without uplinks in 20 builds on HS-v1.58, 0 on HS-v1.59. 125 builds keep their fingerprint. Of the 67 that change, 48 are Vera Rubin 2-plane requests (newly offered); the other 19 are builds HS-v1.58 left with leaves without uplinks.
+- `go test ./...` passes; difftest on a 16-rack Vera Rubin 2-plane .run: 129 comparisons, 0 mismatches.
+
+# D11 follow-up (r2): Keep plane count and the BlueField-4 north-south DPU (HS v1.59, desktop 2.0.53 r2)
+
+Resolves the two Owner decisions D11 left open (D11-4, D11-6) as options; the defaults are unchanged. The provisioning engines are unchanged.
+
+## Sources (BlueField-4)
+
+| Source | Finding |
+|---|---|
+| NVIDIA BlueField-4 DPU datasheet, doc 5193854, JUN26, https://dam-cdn.nvd.orangelogic.com/AssetLink/whs8mhb340t412js4612g3356607hapf.pdf | 800 Gb/s max; 800G per port on 200G SerDes; up to 8 split ports; Ethernet and InfiniBand; PCIe Gen6 x16 with Socket Direct; 64-core Grace (Neoverse V2), up to 128 GB LPDDR5x, up to 512 GB SSD; integrated DPU BMC, 1GbE OOB, Redfish, PXE/UEFI; DOCA, no version stated. Not stated: power, OPN, physical port count, cage. |
+| DGX SuperPOD Spectrum-X RA with DGX Vera Rubin NVL72, https://docs.nvidia.com/dgx-superpod-spectrum-x-reference-architecture-with-dgx-vera-rubin-nvl72.pdf | North-south: one BlueField-4 B4240V per compute tray at 2 x 400G. |
+
+## Decisions (r2)
+
+| # | Decision | Why |
+|---|---|---|
+| R2-1 | **Keep plane count** (`keepplanes`, off by default, NVL72 platforms). On: `laneApply` picks the requested count when the switch runs its lane (`laneFor().ok`), with super-spines when it does not stay on two tiers. A count the switch cannot run falls back as before, and the note adds "Keep plane count cannot apply". | D11-4 left keeping the plane count with a third tier as an Owner preference. Off is the D11 rule, byte for byte. On all 12 back-end platforms, the only fallbacks are the SN6800-LD (200/100G lanes): Vera Rubin 2 and 4 planes, GB300 2 planes. |
+| R2-2 | **North-south DPU selector** (`nsdpu`: `bf3` default, `bf4`), offered on Vera Rubin NVL72 only. The options sit in `NS_DPU_OPTS`, not in `PROFILES`, so the profiles digest (5.2 proof) is unchanged. | The BlueField-4 source is NVIDIA's Vera Rubin RA. No source pairs BlueField-4 with GB300 or the HGX profiles; adding it there is an Owner decision. |
+| R2-3 | **BlueField-4 builds as 2 x 400G**, a 2-way split of the 800G port. The FE NIC count and speed are the BlueField-3's, so the topology, the front-end sizing and every switch configuration are unchanged. BoM: a B4240V line, OPN CONFIRM. Cable plan, FEF cable map and cable matrix: the host end is a 400G leg of the split 800G port, physical port count, cage and assembly CONFIRM. Host PCIe Gen6 x16. OOB management cabling and MGMT-DPU addressing as BlueField-3. | The RA gives 2 x 400G; the datasheet gives 800G ports with splits and no physical port count or cage. |
+| R2-4 | **No BlueField-4 DPU configuration files.** `genHbnPackage` emits `hbn/README.md` ("software target pending: no published DOCA release names BlueField-4") and `hbn/dpu-management.csv` only. No HBN OS profile, no DPU image install step in the .run, no DPU telemetry job (its endpoint is set up by bf.cfg). Health: a medium front-end item, not an error. | The datasheet names DOCA without a version, and no published DOCA release names BlueField-4. Generating BlueField-3 HBN files for it would be wrong software. |
+| R2-5 | **Rack power keeps the current figure;** the design register adds "BF-4 power not published" (placeholder, not load-bearing). | The datasheet gives no power figure; the host power figures include the DPU. |
+| R2-6 | **Saved only when used.** `ctrlSnapshot` leaves out `keepplanes` and `nsdpu` at their defaults (and where they do not apply); a whole snapshot without them sets them back to the default; the input sheet and share-link paths apply only the keys given. Input sheet rows `fabric.be.keep_planes` and `fe.ns_dpu`. | A design that does not use them keeps its fingerprint, so the site-runner release and fingerprint gates accept designs from the first 2.0.53 build. |
+| R2-7 | **No NVIDIA reference rule code to change.** The builder has no NVR rule checks; the Vera Rubin FE NIC source note (D11-6) is kept as it is, so the default output is unchanged. | Changing the note would change BlueField-3 outputs. |
+
+## Verification (r2)
+
+- Defaults: every package configuration file byte-identical to the first 2.0.53 build, same fingerprints: Vera Rubin 364 racks SN6800 at 4 planes (14,959 files, 20297e2cfe6e3716) and 8 planes (14,959, 10407090a45b80e9), SN6600 at 4 planes (18,322, 190bb91cd2582856); GB300 NVL72 256 racks SN5610 (11,636, b98ba38d0e5f6230). 24-rack sweep, 12 platforms x every plane count x both NVL72 profiles (60 builds): fingerprints and plane picks identical. The four HGX profiles at 16 racks: fingerprints identical.
+- Keep plane count on, Vera Rubin 364 racks at 2 planes: SN6600 (b1fc62dec6575e34) 2 x 800G, 1,104 leaves, 1,104 spines, 552 super-spines, parity 17,514 of 17,514; SN5610 (456a632a14aeb898) 2 x 800G, 1,840 leaves, 2,668 spines, 1,334 super-spines, parity 20,739 of 20,739. One leg per GPU per plane, no port used twice, no leaf with fewer uplinks than downlinks, no hard stops, catalog, scheme or ASN problems, no high front-end warnings. SN6800-LD: 8 planes with the reason.
+- BlueField-4, Vera Rubin 364 racks SN6600 4 planes (418d99e85b269587): 13,104 DPU files not generated, every switch configuration byte-identical to BlueField-3, parity 5,217 of 5,217; no hard stops or high warnings; neutrality 0 hits on the outputs.
+- Input sheet round trip: fingerprint kept with both settings set and at their defaults; profiles digest unchanged.
+- `go test ./...` passes; difftest on a 16-rack Vera Rubin .run with both settings set: 129 comparisons, 0 mismatches.

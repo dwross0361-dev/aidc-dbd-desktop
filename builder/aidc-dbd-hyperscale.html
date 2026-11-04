@@ -649,7 +649,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   <button id="btnCircuits" title="Carrier-assigned public addressing for the FE and management edges" style="height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 10px;background:#fff;font-family:var(--body);font-size:12px;font-weight:600;color:var(--ink-soft);cursor:pointer">Public IPs <span id="circuitsBadge" style="font-family:var(--mono);font-size:10px;color:#b45309">&bull;</span></button>
   <span style="width:1px;height:24px;background:var(--line-strong);margin:0 3px"></span>
   <label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600">Fabric:
-    <select id="profile" style="height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--body);margin:0 4px" autocomplete="off"></select><select id="vroem" title="Vera Rubin NVL72 rack vendor: the rack, power shelves and CDU integration follow the OEM (CONFIRM each)" style="display:none;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;margin:0 4px" autocomplete="off"><option value="reference">OEM: NVIDIA reference</option><option value="supermicro">OEM: Supermicro</option><option value="dell">OEM: Dell</option></select><select id="planesel" title="Back-end planes: every GPU has one leg in each plane; the lane speed is the NIC speed divided by the planes. The builder raises the count when two tiers no longer reach every GPU in a plane." style="display:none;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;margin:0 4px" autocomplete="off"></select><select id="nicsel" title="Vera Rubin east-west NIC (one per GPU)" style="display:none;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;margin:0 4px" autocomplete="off"></select><select id="coolsel" title="NVL72 cooling: direct liquid (cold plate) or single-phase immersion tanks (16 per container; leaf and spine switches in the tanks)" style="display:none;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;margin:0 4px" autocomplete="off"></select>
+    <select id="profile" style="height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--body);margin:0 4px" autocomplete="off"></select><select id="vroem" title="Vera Rubin NVL72 rack vendor: the rack, power shelves and CDU integration follow the OEM (CONFIRM each)" style="display:none;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;margin:0 4px" autocomplete="off"><option value="reference">OEM: NVIDIA reference</option><option value="supermicro">OEM: Supermicro</option><option value="dell">OEM: Dell</option></select><select id="planesel" title="Back-end planes: every GPU has one leg in each plane; the lane speed is the NIC speed divided by the planes. The builder raises the count when two tiers no longer reach every GPU in a plane, unless Keep plane count is on." style="display:none;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;margin:0 4px" autocomplete="off"></select><select id="nicsel" title="Vera Rubin east-west NIC (one per GPU)" style="display:none;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;margin:0 4px" autocomplete="off"></select><select id="coolsel" title="NVL72 cooling: direct liquid (cold plate) or single-phase immersion tanks (16 per container; leaf and spine switches in the tanks)" style="display:none;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;margin:0 4px" autocomplete="off"></select><label id="keepplanes-w" style="display:none;margin:0 4px;font-family:var(--mono);font-size:11px;white-space:nowrap" title="Keep plane count: when the requested plane count does not stay on two tiers on this switch, keep it and add super-spines instead of raising the plane count. A plane count the switch cannot run at all (no lane at that speed) still falls back, with the reason. Off: the builder raises the count."><input type="checkbox" id="keepplanes" autocomplete="off"> Keep plane count</label><select id="nsdpu" title="North-south DPU, one per compute tray (Vera Rubin NVL72). BlueField-3 B3240 is the default; BlueField-4 B4240V is NVIDIA&#39;s reference part, built as 2 x 400G with its software target pending." style="display:none;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;margin:0 4px" autocomplete="off"><option value="bf3">N-S DPU: BlueField-3 B3240</option><option value="bf4">N-S DPU: BlueField-4 B4240V</option></select>
   </label>
   <label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600" title="How many racks make one pod. This does NOT set the size of the build — that is 'Total racks' to the right.">Pod size:
     <select id="podsize" style="height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--body);margin:0 4px" autocomplete="off"></select>
@@ -947,7 +947,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.58';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.59';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  // HS v1.59: Vera Rubin NVL72 at 2 planes x 800G, NVIDIA's public reference layout (Owner decision D11); see the VR profile.
   // HS v1.58: the customer input sheet and importer (inputSheetImport, the SESSION_IN overlay); see the input sheet block.
   // HS v1.57 (release identity): the release is identified by the SHA-256 of this file, not by the string above (HS-v1.56 r1, r2
   // and r3 shared one string). The desktop app and the site runner read the file and supply its SHA-256; a builder opened
@@ -1022,9 +1023,24 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   };
   // v480: VERA RUBIN NVL72 (Owner decision, 14 Oct 2026). Built on the GB300 NVL72 rack-scale model: 18 compute trays x 4
   // packages, 9 NVLink 6 switch trays, rack busbar and power shelves, 100% direct-to-chip liquid. Every figure that is
-  // not GB300's carries CONFIRM until the OEM publishes it. The network attachment is modeled as GB300's (ConnectX-8
-  // class, 2 x 400G per GPU across two planes): Vera Rubin ships ConnectX-9 SuperNICs, so the port speed and the
-  // switch generation must be re-validated before an order.
+  // not GB300's carries CONFIRM until the OEM publishes it. The network attachment started as GB300's (ConnectX-8
+  // class, 2 x 400G per GPU across two planes); v538 added ConnectX-9 at 4 or 8 planes, and HS v1.59 the 2-plane layout below.
+  // HS v1.59 (Owner decision D11): NVIDIA's public reference, "NVIDIA DGX SuperPOD: Next Generation Scalable Infrastructure
+  // for AI Factories" -- DGX SuperPOD Spectrum-X Reference Architecture with DGX Vera Rubin NVL72,
+  // https://docs.nvidia.com/dgx-superpod-spectrum-x-reference-architecture-with-dgx-vera-rubin-nvl72.pdf (no document
+  // number, revision or date; (c) 2024; retrieved 3 Nov 2026, no newer public revision found):
+  //   - compute tray: "eight ConnectX-9 NICs, with 2x800 Gbps Ethernet connectivity per GPU"; "Each GPU has 2 ConnectX-9,
+  //     which can be used as 2x 800 Gbps to connect to fabrics that are independent of each other";
+  //   - compute fabric: 2 planes, "4 switches per plane at leaf layer representing 4 rails", rail-aligned, non-blocking,
+  //     "8x 800G connections per compute tray"; SU = 3 racks (216 GPUs), 4 leaves and 2 spines per plane per SU (Table 3,
+  //     published to 6,912 GPUs); switch "NVIDIA Spectrum 6 SN6600" ("SN6600-LD has 128 ports of 800 Gbps speed");
+  //   - north-south: "one BlueField-4 NIC to support 2x400 Gbps", "BlueField-4 B4240V dual-port card at 400Gbps".
+  // NVIDIA technical blog "Inside the NVIDIA Vera Rubin Platform: Six New Chips, One AI Supercomputer" (5 Jan 2026,
+  // https://developer.nvidia.com/blog/inside-the-nvidia-rubin-platform-six-new-chips-one-ai-supercomputer/): ConnectX-9
+  // "800 Gb/s per port", "1600 Gb/s (2 x 800 Gb/s) per GPU".
+  // Spectrum-6 SN6000 Hardware User Manual, Introduction and Specifications (https://networking-docs.nvidia.com/sn6000hw/,
+  // last updated 16 Sep 2026): SN6600 / SN6600-LD / SN6810-LD 128 x 800GbE; SN6800-LD "2048 x 200GbE" only, so the
+  // 2-plane (800G) layout is not offered on the SN6800 (the blog's "512 ports of 800 Gb/s" for SN6800 is not in the manual).
   PROFILES.gpu_vr_nvl72=(function(){
     var p=JSON.parse(JSON.stringify(PROFILES.gpu_nvl72));
     p.preset='Vera Rubin NVL72';
@@ -1035,7 +1051,10 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     p.rackScale.model='Vera Rubin NVL72 rack (vendor-integrated)';
     p.rackScale.note='Ships integrated: 18 compute trays, 9 NVLink 6 switch trays, NVLink spine, power shelves, busbar and liquid manifold. Shelf count and rating CONFIRM (modeled 7 + 7 x 33 kW, so one side carries about 210 kW).';
     p.note='18 compute trays/rack \u00b7 4 Rubin packages (2 dies each) + 2 Vera per tray = 72 GPUs (NVIDIA counts packages; the 2025 roadmap\u2019s \u201cNVL144\u201d counted dies) \u00b7 network modeled as GB300 (2 x 400G per GPU, two planes): Vera Rubin ships ConnectX-9 -- CONFIRM port speed \u00b7 NVLink 6 scale-up domain = 72 \u00b7 scalable unit 16 racks (1,152 GPUs, Supermicro)';
-    p.feNic=JSON.parse(JSON.stringify(p.feNic)); p.feNic.src='Modeled as BlueField-3 B3240; Vera Rubin pairs with BlueField-4 -- CONFIRM';
+    // HS v1.59: NVIDIA's VR NVL72 Spectrum-X RA (above) gives one BlueField-4 B4240V, dual-port 400G, per tray: the same
+    // 2 x 400G the front end is sized for. The model stays BlueField-3 B3240 because the DPU software (HBN bundle, bf.cfg)
+    // generated for it is BlueField-3's; a BlueField-4 software target is not yet pinned (Owner decision).
+    p.feNic=JSON.parse(JSON.stringify(p.feNic)); p.feNic.src='Modeled as BlueField-3 B3240 (2 x 400G); NVIDIA’s DGX SuperPOD Spectrum-X RA with DGX Vera Rubin NVL72 specifies BlueField-4 B4240V, dual-port 400G -- link count and speed match; DPU model and software CONFIRM';
     return p;
   })();
   // v538: plane and NIC options (Owner decision, 19 Oct 2026). laneFabric: leaf uplinks and spine ports break out to the lane speed.
@@ -1043,9 +1062,13 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   PROFILES.gpu_nvl72.immersionOk=true; PROFILES.gpu_vr_nvl72.immersionOk=true;   // v540: cooling choice
   PROFILES.gpu_nvl72.nicOpts={cx8:{label:'ConnectX-8 800G', g:800}}; PROFILES.gpu_nvl72.nicDef='cx8';
   PROFILES.gpu_nvl72.note=String(PROFILES.gpu_nvl72.note).replace('2 independent planes \u00d7 4 rails, every GPU in both at 400G', 'every GPU in every plane: 2 planes x 400G or 4 x 200G (Planes)');
-  PROFILES.gpu_vr_nvl72.laneFabric=true; PROFILES.gpu_vr_nvl72.planes=4; PROFILES.gpu_vr_nvl72.planeOpts=[4,8]; PROFILES.gpu_vr_nvl72.planeDef=4;
-  PROFILES.gpu_vr_nvl72.nicOpts={cx9:{label:'ConnectX-9 1.6T', g:1600}, cx8:{label:'ConnectX-8 800G', g:800}}; PROFILES.gpu_vr_nvl72.nicDef='cx9';
-  PROFILES.gpu_vr_nvl72.note=String(PROFILES.gpu_vr_nvl72.note).replace(/network modeled as GB300[^\u00b7]*/, 'network: ConnectX-9 1.6T or ConnectX-8 800G per GPU, 4 or 8 planes (NIC / Planes) ');
+  // HS v1.59 (D11): 2 planes added -- NVIDIA's reference layout, each GPU's two ConnectX-9 800G ports one per plane, 4 rails
+  // per plane (source above). planeDef stays 4, so a design without a plane setting builds as before.
+  // cx9 ports/portG: two 800G ports per GPU (RA, blog above). When a plane's lane is a whole port (2 planes), the host
+  // side is one 800G port per plane (hostPortPerPlane), not one 1.6T optic split into legs.
+  PROFILES.gpu_vr_nvl72.laneFabric=true; PROFILES.gpu_vr_nvl72.planes=4; PROFILES.gpu_vr_nvl72.planeOpts=[2,4,8]; PROFILES.gpu_vr_nvl72.planeDef=4;
+  PROFILES.gpu_vr_nvl72.nicOpts={cx9:{label:'ConnectX-9 1.6T', g:1600, ports:2, portG:800}, cx8:{label:'ConnectX-8 800G', g:800}}; PROFILES.gpu_vr_nvl72.nicDef='cx9';
+  PROFILES.gpu_vr_nvl72.note=String(PROFILES.gpu_vr_nvl72.note).replace(/network modeled as GB300[^\u00b7]*/, 'network: ConnectX-9 1.6T (2 x 800G) or ConnectX-8 800G per GPU, 2, 4 or 8 planes (NIC / Planes; NVIDIA\u2019s reference is 2 planes x 4 rails at 800G) ');
   // OEM overlay for Vera Rubin NVL72: the rack is NVIDIA-defined; the OEM changes the rack, its power shelves and feed,
   // and the CDU integration. Values stay CONFIRM until that OEM's datasheet is in hand.
   var VR_OEM='reference';
@@ -1174,6 +1197,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   // host-facing, uplink and spine -- so a 64-cage switch has 64 x lanes ports and a plane reaches
   // (32 x lanes) x (64 x lanes) GPUs on two tiers. The NVL72 profiles use it; the HGX B300 profiles do not.
   var PLANE_SEL={}, NIC_SEL={}, LANE_NOTE='';
+  // HS v1.59 (2.0.53): Keep plane count (off by default). On: a plane count that does not stay on two tiers keeps the
+  // requested count and adds super-spines, where the switch runs that lane at all (laneFor().ok); off: raised as before.
+  var KEEP_PLANES=false;
   function laneFab(){ var p=(typeof PROFILES!=='undefined'&&PROFILES[profileKey])||{}; return !!p.laneFabric; }
   function beCageG(){ try{ return (BE_MODELS[beModel]||{}).cageG||800; }catch(e){ return 800; } }
   function beMaxPorts(){ try{ return (BE_MODELS[beModel]||{}).maxPorts||256; }catch(e){ return 256; } }
@@ -1204,10 +1230,15 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     L.forEach(function(x){ var dnOne=Math.ceil(RACKS_PER_POD*HOSTS/x.lpc), lpr=Math.max(p.leavesPerRail||1, Math.ceil(dnOne/(RADIX/2)));
       x.leaves=pods*ACC_PER_HOST*lpr; x.flat=x.leaves<=RADIX*x.lpc; });   // two tiers while a plane's leaves fit one spine's ports
     var up=L.filter(function(x){ return x.planes>=sel; }), pick=null, note='';
+    var keep=KEEP_PLANES?L.filter(function(x){ return x.planes===sel; })[0]:null;   // HS v1.59 (2.0.53): Keep plane count
+    if(keep){ pick=keep;
+      if(!pick.flat) note='\u26a0 '+pick.leaves.toLocaleString()+' leaves per plane exceed one spine\u2019s '+(RADIX*pick.lpc)+' ports -- built with super-spines at '+pick.planes+' planes (Keep plane count)'; }
+    else {
     for(var i=0;i<up.length;i++){ if(up[i].flat){ pick=up[i]; break; } }
     if(!pick){ pick=(up.length?up:L)[0];
       note='\u26a0 '+pick.leaves.toLocaleString()+' leaves per plane exceed one spine\u2019s '+(RADIX*pick.lpc)+' ports at every plane count -- built with super-spines at '+pick.planes+' planes'; }
-    if(pick.planes!==sel) note=(note?note+'; ':'')+'Planes '+sel+' \u2192 '+pick.planes+((pick.planes>sel && (laneFor(sel,p)||{}).ok)?' (raised: two tiers per plane)':' ('+sel+' planes do not fit '+((BE_MODELS[beModel]||{}).rates?('this switch\u2019s '+BE_MODELS[beModel].rates.join('/')+'G lanes'):'these switch ports')+')');
+    }
+    if(pick.planes!==sel) note=(note?note+'; ':'')+'Planes '+sel+' \u2192 '+pick.planes+((pick.planes>sel && (laneFor(sel,p)||{}).ok)?' (raised: two tiers per plane)':' ('+sel+' planes do not fit '+((BE_MODELS[beModel]||{}).rates?('this switch\u2019s '+BE_MODELS[beModel].rates.join('/')+'G lanes'):'these switch ports')+')')+(KEEP_PLANES?' -- Keep plane count cannot apply: '+sel+' planes are not possible on this switch':'');
     if(pick.partial) note=(note?note+'; ':'')+'each '+beCageG()+'G cage runs '+pick.lpc+' of its '+pick.full+' '+pick.g+'G lanes (the switch\u2019s '+beMaxPorts()+'-port limit) -- CONFIRM the breakout mode';
     p.planes=pick.planes; ACC_PER_CAGE=pick.lpc; LANE_G=pick.g; p.hostFF=(pick.planes===2&&pick.g===400)?'osfp2x400':('osfp'+pick.planes+'x'+pick.g);
     if(!pick.flat){ var _ta=laneTwoTierAdvice(nRacks); if(_ta) note=(note?note+'; ':'')+_ta; }   // v545
@@ -1247,6 +1278,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   function laneG(){ return (laneFab()&&LANE_G)?LANE_G:Math.round(beCageG()/Math.max(1,ACC_PER_CAGE)); }
   function cageBW(){ return laneFab()?ACC_PER_CAGE*laneG():beCageG(); }   // what a cage carries
   function hostLaneSplit(){ return laneFab() && /^osfp\d+x\d+$/.test(PROFILES[profileKey].hostFF||'') && PROFILES[profileKey].hostFF!=='osfp2x400'; }
+  // HS v1.59 (D11): the GPU NIC has one port per plane at the lane speed (Vera Rubin, ConnectX-9 2 x 800G at 2 planes), so
+  // the host side is one plain port per leg -- no host breakout optic.
+  function hostPortPerPlane(){ if(!hostLaneSplit()) return false; var n=nicOf(), o=n&&(PROFILES[profileKey].nicOpts||{})[n.key]; return !!(o && o.ports && o.portG && o.ports===PLANES() && o.portG===laneG()); }
   var PLANE_COLORS=['#0F6E56','#B0653F','#4A4CA0','#96731A','#2E7D9A','#A0457A','#5F7F2E','#7A5A3A'];
   function planeCol(pl){ return PLANE_COLORS[(+pl||0)%PLANE_COLORS.length]; }
   // Host-side cage on a downlink. Breakout profiles land QSFP112-400G on the host; native-800G
@@ -2471,6 +2505,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     if(FE.nicModel && FE.nicConfirmed===false){
       warn.push({sev:'med', msg:'Host FE NIC '+FE.nicModel+' ('+FE.nicsPerHost+' links @ '+FE.nicGbps+'G per host) is a reference-architecture assumption, not confirmed for this build: '+(FE.nicSrc||'')});
     }
+    if(nsDpuBf4()) warn.push({sev:'med', msg:'BlueField-4 B4240V north-south DPU: '+BF4_PENDING+'. The DPU configuration files (HBN NVUE, bf.cfg) and the DPU image install step are not generated; hbn/README.md says so. Cabling, port map, addressing, the front-end leaf configs and the 1GbE OOB management drop are built as for BlueField-3 (2 x 400G). Pin a DOCA release that lists BlueField-4 to generate them.'});   // HS v1.59 (2.0.53)
     if(FE.nicGbps > LSW.access.gbps){
       warn.push({sev:'high', msg:'Host FE NIC is '+FE.nicGbps+'G but '+LSW.label+' access ports are '
         +LSW.access.gbps+'G ('+LSW.access.ff+'). Endpoints will run below rated speed \u2014 confirm this is intentional.'});
@@ -3251,8 +3286,29 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   // The FE NIC belongs to the PROFILE: model, ports and speed differ by system, and the FE
   // leaf sizing (host links, speed-match check) follows them. It used to be one builder-wide
   // value (B3240, 2 x 400G) that every profile inherited unflagged.
+  // HS v1.59 (2.0.53): the north-south DPU is selectable on Vera Rubin NVL72: BlueField-3 B3240 (default, the profile's
+  // feNic, unchanged) or BlueField-4 B4240V. Kept out of PROFILES so the profiles digest (5.2 proof) is unchanged.
+  // Sources:
+  //  - NVIDIA BlueField-4 DPU datasheet, doc 5193854, JUN26
+  //    (https://dam-cdn.nvd.orangelogic.com/AssetLink/whs8mhb340t412js4612g3356607hapf.pdf): 800 Gb/s max, 800G per port
+  //    on 200G SerDes, up to 8 split ports, Ethernet / InfiniBand; PCIe Gen6 x16 with Socket Direct; 64-core Grace
+  //    (Neoverse V2), up to 128 GB LPDDR5x, up to 512 GB SSD; integrated DPU BMC, 1GbE OOB, Redfish, PXE/UEFI; DOCA (no
+  //    version stated). Not stated there: power, OPN, physical port count, cage.
+  //  - NVIDIA DGX SuperPOD Spectrum-X RA with DGX Vera Rubin NVL72
+  //    (https://docs.nvidia.com/dgx-superpod-spectrum-x-reference-architecture-with-dgx-vera-rubin-nvl72.pdf): north-south
+  //    "BlueField-4 B4240V dual-port card at 400Gbps", one per compute tray.
+  // Built as 2 x 400G (a 2-way split of the 800G port; physical port count and cage CONFIRM), so the link count and speed
+  // that size the front end are the BlueField-3's: topology and front-end sizing do not change. Host PCIe Gen6 x16; the same
+  // 1GbE OOB management cabling (Arm OS + DPU BMC on one drop). No published DOCA release names BlueField-4, so its DPU
+  // software (HBN NVUE, bf.cfg) is not generated: hbn/README.md and a Health item say so (software target pending).
+  var NS_DPU='bf3';
+  var NS_DPU_OPTS={gpu_vr_nvl72:{bf3:{label:'BlueField-3 B3240'}, bf4:{label:'BlueField-4 B4240V', model:'BlueField-4 B4240V', kind:'DPU', mode:'DPU', perHost:1, ports:2, gbps:400, confirmed:false,
+    src:'NVIDIA DGX SuperPOD Spectrum-X RA with DGX Vera Rubin NVL72: one BlueField-4 B4240V dual-port 400G per compute tray (north-south); NVIDIA BlueField-4 datasheet 5193854 (JUN26): 800G per port, up to 8 split ports, PCIe Gen6 x16 -- built as 2 x 400G (a 2-way split of the 800G port); OPN, physical port count, cage and power CONFIRM; software target pending (no published DOCA release names BlueField-4)'}}};
+  var BF4_PENDING='software target pending: no published DOCA release names BlueField-4';
+  function nsDpuBf4(){ return NS_DPU==='bf4' && !!(NS_DPU_OPTS[profileKey]||{}).bf4; }
   function applyFeNic(p){
     var n=(p&&p.feNic)||null; if(!n) return;
+    if(p===PROFILES[profileKey] && nsDpuBf4()) n=Object.assign({}, n, NS_DPU_OPTS[profileKey].bf4);   // HS v1.59 (2.0.53)
     FE.nicModel=n.model; FE.nicKind=n.kind; FE.nicConfirmed=!!n.confirmed; FE.nicSrc=n.src;
     // Operating mode. DPU mode: the card's Arm OS owns the data path, so tenant isolation and
     // the FE overlay can be enforced on the card, outside the host's control. NIC mode: the
@@ -5636,13 +5692,14 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     if(CZ){   // v510: one host group per drawn leaf pair; markers carry the rest
       var _sto={}; try{ storagePlan().all.forEach(function(nd){ var p0=nd.ports[0]; if(p0) _sto[p0.leaf]=(_sto[p0.leaf]||0)+1; }); }catch(e){}
       var _nic=(((PROFILES[profileKey]||{}).feNic||{}).model||'DPU').replace(/^BlueField-3 /,'BF3 ');
+      var _nicSw=' \u00b7 HBN'; if(nsDpuBf4()){ _nic='BF4 B4240V'; _nicSw=' \u00b7 software pending'; }   // HS v1.59 (2.0.53)
       for(var i=0;i<lfs.length;){ var d=lfs[i];
         if(d.mk){ if(!d.pods){ var hh=perPair*Math.floor(d.n/2);
             s+='<rect x="'+(xLf[i]-80)+'" y="'+(Y.hs-24)+'" width="160" height="50" rx="8" fill="#EEF0F1" stroke="#9AA1A6" stroke-dasharray="5 4"/>'+T(xLf[i],Y.hs-3,'+'+hh+' GPU hosts',{fs:12})+T(xLf[i],Y.hs+14,'on '+d.sub,{fs:10,fw:400,c:'#4A5056'}); }
           i++; continue; }
         var e=lfs[i+1], x1=xLf[i], x2=(e&&!e.mk)?xLf[i+1]:x1, xh=(x1+x2)/2, ns=(_sto[d.name]||0), hx=ns?xh-100:xh, hw=ns?170:220, sx=xh+88;
         [x1,x2].forEach(function(xf){ s+=ln(xf,Y.lf+BH/2,hx,Y.hs-24); if(ns) s+=ln(xf,Y.lf+BH/2,sx,Y.hs-24,'#7F9CC4'); });
-        s+='<rect x="'+(hx-hw/2)+'" y="'+(Y.hs-24)+'" width="'+hw+'" height="50" rx="8" fill="#D6DADD" stroke="#9AA1A6"/>'+T(hx,Y.hs-3,perPair+' GPU hosts',{fs:12.5})+T(hx,Y.hs+14,'dual-homed '+_nic+' · HBN',{fs:10,fw:400,c:'#4A5056'});
+        s+='<rect x="'+(hx-hw/2)+'" y="'+(Y.hs-24)+'" width="'+hw+'" height="50" rx="8" fill="#D6DADD" stroke="#9AA1A6"/>'+T(hx,Y.hs-3,perPair+' GPU hosts',{fs:12.5})+T(hx,Y.hs+14,'dual-homed '+_nic+_nicSw,{fs:10,fw:400,c:'#4A5056'});
         if(ns) s+='<rect x="'+(sx-70)+'" y="'+(Y.hs-24)+'" width="140" height="50" rx="8" fill="#E3ECF7" stroke="#7F9CC4"/>'+T(sx,Y.hs-3,STORAGE_PLATFORM.vendorLabel+' · '+ns+' node'+(ns>1?'s':''),{fs:12})+T(sx,Y.hs+14,(STORAGE_PLATFORM.nics||2)+' × '+STORAGE_PLATFORM.nicGbps+'G · '+stoTransportShort(),{fs:10,fw:400,c:'#4A5056'});
         i+=((e&&!e.mk)?2:1); }
       _czPods.forEach(function(p){ var t='pod '+(+p.pod+1)+' · '+p.ns+' spines · '+p.nl+' leaves'+(p.up?' · '+p.up+' links up':''), w=t.length*5.4+16, mx=(p.lo+p.hi)/2, yy=Y.sp-BH/2-22;
@@ -5656,7 +5713,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     xHs.forEach(function(xh,k){
       var ns=_stoN[k]||0, hx=ns?xh-100:xh, hw=ns?190:240, sx=xh+90;   // side by side within the pair's 380 px span
       [xLf[2*k],xLf[2*k+1]].forEach(function(xf){ if(xf==null) return; s+=ln(xf,Y.lf+BH/2,hx,Y.hs-24); if(ns) s+=ln(xf,Y.lf+BH/2,sx,Y.hs-24,'#7F9CC4'); });
-      s+='<rect x="'+(hx-hw/2)+'" y="'+(Y.hs-24)+'" width="'+hw+'" height="50" rx="8" fill="#D6DADD" stroke="#9AA1A6"/>'+T(hx,Y.hs-3,perPair+' GPU hosts',{fs:12.5})+T(hx,Y.hs+14,'dual-homed '+(((PROFILES[profileKey]||{}).feNic||{}).model||'DPU').replace(/^BlueField-3 /,'BF3 ')+' \u00b7 HBN',{fs:10,fw:400,c:'#4A5056'});
+      s+='<rect x="'+(hx-hw/2)+'" y="'+(Y.hs-24)+'" width="'+hw+'" height="50" rx="8" fill="#D6DADD" stroke="#9AA1A6"/>'+T(hx,Y.hs-3,perPair+' GPU hosts',{fs:12.5})+T(hx,Y.hs+14,'dual-homed '+(nsDpuBf4()?'BF4 B4240V \u00b7 software pending':((((PROFILES[profileKey]||{}).feNic||{}).model||'DPU').replace(/^BlueField-3 /,'BF3 ')+' \u00b7 HBN')),{fs:10,fw:400,c:'#4A5056'});
       if(ns) s+='<rect x="'+(sx-75)+'" y="'+(Y.hs-24)+'" width="150" height="50" rx="8" fill="#E3ECF7" stroke="#7F9CC4"/>'+T(sx,Y.hs-3,STORAGE_PLATFORM.vendorLabel+' \u00b7 '+ns+' node'+(ns>1?'s':''),{fs:12.5})+T(sx,Y.hs+14,(STORAGE_PLATFORM.nics||2)+' \u00d7 '+STORAGE_PLATFORM.nicGbps+'G \u00b7 '+stoTransportShort(),{fs:10,fw:400,c:'#4A5056'});
     });
     // device boxes last (drawn over lines)
@@ -15044,7 +15101,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     osDeviceRows().forEach(function(r){ if(!r.p) return; var k=r.p.key;
       if(!use[k]){ use[k]={p:OS_PROFILES[k], key:k, devices:[], models:{}, floors:{}, images:{}}; order.push(k); }
       use[k].devices.push(r.name); if(r.p.image) use[k].images[r.p.image]=1; if(r.model) use[k].models[r.model]=1; if(r.p.floorNote) use[k].floors[r.model]=r.p.baseline+' ('+r.p.floorNote+')'; });
-    try{ if(FE.on && feDpuMode() && allDpus().length){ if(!use.hbn){ use.hbn={p:OS_PROFILES.hbn, key:'hbn', devices:allDpus().map(function(x){ return x.host+'-DPU'; }), models:{'BlueField-3 B3240':1}, floors:{}}; order.push('hbn'); } } }catch(e){}
+    try{ if(FE.on && feDpuMode() && !nsDpuBf4() && allDpus().length){ if(!use.hbn){ use.hbn={p:OS_PROFILES.hbn, key:'hbn', devices:allDpus().map(function(x){ return x.host+'-DPU'; }), models:{'BlueField-3 B3240':1}, floors:{}}; order.push('hbn'); } } }catch(e){}
     try{ if(spxMode()){ if(!use.cx8){ var _h=[]; try{ var _SX=spxPlan(); _h=Object.keys(_SX.idx).map(function(k){ return spxHostName(_SX.idx[k]); });   /* v515: hosts is a count */ }catch(e){}
       use.cx8={p:OS_PROFILES.cx8, key:'cx8', devices:_h, models:{'ConnectX-8':1}, floors:{}}; order.push('cx8'); } } }catch(e){}
     return order.map(function(k){ return use[k]; });
@@ -16697,7 +16754,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
               var _LSW2=feLeafSW(), _acc=_LSW2.access, _g=(_acc.gbps||100);
               access.push({host:hn, rack:rk.name, nic:'NIC'+nn, leaf:lf2.name,
                            ifname:feIfName(_LSW2, pn), speed:_g+'G',
-                           media:_g+'G AOC ('+(_acc.ff||'SFP-DD')+') \u00b7 host\u2192leaf, inter-rack'});
+                           media:_g+'G AOC ('+(_acc.ff||'SFP-DD')+') \u00b7 host\u2192leaf, inter-rack'+(nsDpuBf4()?' \u00b7 '+BF4_HOST_END:'')});   // HS v1.59 (2.0.53): the port map names the BlueField-4 host end
             }
           }
         });
@@ -20373,6 +20430,22 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
   function genHbnPackage(){
     if(!(FE.on && feDpuMode())) return [];
     var D=allDpus(), F=[], MG=dpuMgmtByHost();
+    if(nsDpuBf4()){   // HS v1.59 (2.0.53): no BlueField-4 DPU configuration files until a software release can be pinned
+      F.push(['hbn/README.md',[
+        '# DPU configuration -- BlueField-4 B4240V: software target pending',
+        '','**Software target pending: no published DOCA release names BlueField-4.** The DPU configuration files (one HBN NVUE file and one bf.cfg per DPU) are not generated for this design, and the deployment bundle has no DPU image install step. Pin a DOCA release that lists BlueField-4, then generate them.',
+        '','| Item | Value |','|---|---|',
+        '| DPU | NVIDIA BlueField-4 B4240V, one per compute tray ('+D.length+' DPUs), north-south (NVIDIA DGX SuperPOD Spectrum-X RA with DGX Vera Rubin NVL72) |',
+        '| Ports | 2 x 400G, a 2-way split of the 800G port (datasheet 5193854: 800G per port, up to 8 split ports). Physical port count and cage CONFIRM |',
+        '| Host | PCIe Gen6 x16 (Socket Direct capable) |',
+        '| Management | integrated DPU BMC and 1GbE OOB port (Redfish, PXE/UEFI): cabled to the pod OOB access switch (DPU band), two addresses from MGMT-DPU as for BlueField-3, in `dpu-management.csv` |',
+        '| Software | DOCA; the datasheet states no version. '+BF4_PENDING+' |',
+        '| Power | not published; the rack power keeps the current figure |',
+        '| OPN | not published (B4240V is the RA\u2019s part name) -- CONFIRM |',
+        '','## Built as for BlueField-3','The front-end leaf configurations, the DPU underlay and VTEP addressing, the cabling and the port map are generated: the link count and speed (2 x 400G per host) are the same.',
+        ''].join('\n')]);
+      F.push(['hbn/dpu-management.csv', ['host,dpu_hostname,oob_net0,dpu_bmc,oob_switch,oob_port'].concat(D.map(function(x){ var m=MG[x.host]||{}; return [x.host, x.host+'-DPU', m.oob||'', m.bmc||'', m.sw||'', m.port||''].join(','); })).join('\n')+'\n']);
+      return F; }
     F.push(['hbn/README.md',[
       '# DPU configuration -- NVIDIA DOCA Host-Based Networking (HBN)',
       '','One NVUE file per DPU ('+D.length+'), from the same plan as the front-end leaf and spine configs.',
@@ -20849,7 +20922,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     try{ if(FE && FE.on && feDpuMode()){ var MG=dpuMgmtByHost(), byPod={};
       allDpus().forEach(function(x){ var m=MG[x.host]||{}, pod=(/Pod(\d+)/.exec(x.host)||[])[1]||'1'; (byPod[pod]=byPod[pod]||{d:[],h:[]});
         byPod[pod].d.push((m.oob||'<'+x.host+'-DPU-OOB>')+':'+DTS_PROM_PORT); byPod[pod].h.push(x.host+':'+DTS_PROM_PORT); });
-      Object.keys(byPod).sort(function(a,b){ return a-b; }).forEach(function(p){ dp.push(grp(byPod[p].d, {job_role:'dts-dpu', pod:p})); hs.push(grp(byPod[p].h, {job_role:'dts-host', pod:p})); }); } }catch(e){}
+      Object.keys(byPod).sort(function(a,b){ return a-b; }).forEach(function(p){ if(!nsDpuBf4()) dp.push(grp(byPod[p].d, {job_role:'dts-dpu', pod:p})); hs.push(grp(byPod[p].h, {job_role:'dts-host', pod:p})); }); } }catch(e){}   // HS v1.59 (2.0.53): BlueField-4 has no bf.cfg, so no DPU DTS endpoint
     F.push(['monitoring/prometheus/targets-telegraf.json', JSON.stringify(tg,null,2)]);
     if(dp.length) F.push(['monitoring/prometheus/targets-dpu-dts.json', JSON.stringify(dp,null,2)]);
     if(hs.length) F.push(['monitoring/prometheus/targets-host-dts.json', JSON.stringify(hs,null,2)]);
@@ -26423,10 +26496,10 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     return {buckets:out};
   }
   function catDefaults(){
-    if(beCpo()) return {rackleaf:{len:5,conn:'MMC-16 \u2192 MPO-16 breakout fiber (CPO lanes to GPU NIC optics, one leg per plane)'},   // v546
+    if(beCpo()) return {rackleaf:{len:5,conn:(hostPortPerPlane()&&!(ACC_PER_CAGE>1))?('MMC-16 \u2192 MPO fiber (one CPO '+laneG()+'G port to one GPU NIC '+laneG()+'G port, one per plane)'):'MMC-16 \u2192 MPO-16 breakout fiber (CPO lanes to GPU NIC optics, one leg per plane)'},   // v546; HS v1.59 (D11)
                         leafspine:{len:10,conn:'MMC-16 fiber, one fiber pair per lane (CPO to CPO, no transceivers)'},
                         spinessp:{len:15,conn:'MMC-16 fiber, one fiber pair per lane (CPO to CPO, no transceivers)'}};
-    return {rackleaf:{len:5,conn:hostLaneSplit()?('MPO jumper ('+PLANES()+'-leg breakout optics, one leg per plane)'):hostSplit2x400()?'MPO-12 APC jumper (twin-port 2\u00d7400G-DR4 optics)':(hostNative800()?'800G AOC':'800G\u21922\u00d7400G AOC')},
+    return {rackleaf:{len:5,conn:hostPortPerPlane()?(ACC_PER_CAGE>1?('MPO-16 breakout ('+beCageG()+'G switch cage, '+ACC_PER_CAGE+' \u00d7 '+laneG()+'G legs; each leg to one GPU NIC '+laneG()+'G port, one per plane)'):(laneG()+'G structured fiber (one GPU NIC '+laneG()+'G port per plane)')):hostLaneSplit()?('MPO jumper ('+PLANES()+'-leg breakout optics, one leg per plane)'):hostSplit2x400()?'MPO-12 APC jumper (twin-port 2\u00d7400G-DR4 optics)':(hostNative800()?'800G AOC':'800G\u21922\u00d7400G AOC')},
             leafspine:{len:10,conn:upLanes()>1?'MPO-16 breakout, one fiber pair per lane (structured fiber)':'800G AOC'},
             spinessp:{len:15,conn:upLanes()>1?'MPO-16 breakout, one fiber pair per lane (structured fiber)':'800G AOC'}};
   }
@@ -26535,7 +26608,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     var qHost = (hostOptics && !_asm('rackleaf'))?cat.rackleaf:0;
     // dual-plane: each GPU's OSFP cage carries ONE twin-port 2x400G-DR4 optic for its two legs
     var q400  = (hostNative800()||hostSplit2x400()||hostLaneSplit())?0:qHost;      // QSFP112-400G breakout legs
-    var qh800 = hostSplit2x400()?Math.ceil(qHost/2):(hostLaneSplit()?Math.ceil(qHost/Math.max(1,PLANES())):(hostNative800()?qHost:0));   // OSFP host ends (v538: one per GPU NIC port)
+    var qh800 = hostSplit2x400()?Math.ceil(qHost/2):hostPortPerPlane()?qHost:(hostLaneSplit()?Math.ceil(qHost/Math.max(1,PLANES())):(hostNative800()?qHost:0));   // OSFP host ends (v538: one per GPU NIC port)
     return {switches:switches,nLeaf:nLeaf,nSpine:nSpine,nSSP:nSSP,cat:cat,q800:q800,cpoPorts:cpoPorts,q400:q400,qh800:qh800,dnCages:dnCages,
             accels:byType('rack').reduce(function(a,r){return a+r.hosts*ACC_PER_HOST;},0), racks:byType('rack').length};
   }
@@ -27377,8 +27450,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
         manual_hint:stoIsWeka()?'join the cluster with the weka/ files, then mark configured':('install and join per '+_SPk.vendorLabel+' (storage/ files: addressing'+(_SPk.attach==='bgp'?', BGP':'')+'), then mark configured'), id:null},'fe',2); }
     }); });
     var dpuIps=Object.keys(mp.oob).filter(function(k){ return /\|dpu\d+$/.test(k); }).map(function(k){ return mp.oob[k].ip; }).filter(Boolean);
-    if(FE.on && dpuIps.length) put({name:(clientCode?clientCode+'-':'')+'DPU-ALL', short:'DPUs', role:dpuIps.length+' BlueField-3 DPUs (HBN)', os:'hbn',
-      os_label:'DOCA HBN', ip:'', plane:'fe', rack:'all compute racks', files:[], aggregate:dpuIps.length, probe_ips:dpuIps, probe_port:22,
+    if(FE.on && dpuIps.length) put({name:(clientCode?clientCode+'-':'')+'DPU-ALL', short:'DPUs', role:dpuIps.length+(nsDpuBf4()?' BlueField-4 DPUs (software target pending)':' BlueField-3 DPUs (HBN)'), os:nsDpuBf4()?'bf4-pending':'hbn',
+      os_label:nsDpuBf4()?'software target pending':'DOCA HBN', ip:'', plane:'fe', rack:'all compute racks', files:[], aggregate:dpuIps.length, probe_ips:dpuIps, probe_port:22,
       config_signal:'aggregate', id:null},'fe',3);
     dp.be.forEach(function(d){ var e=entry(d,'be'); put(e,'be',/spine|ssp/.test(String(d.role))?0:1); });
     var hostSet={}; M.cabinets.forEach(function(c){ c.items.forEach(function(i){ if(i.role==='host') hostSet[i.name]=1; }); });
@@ -27401,7 +27474,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
              {key:'fwpair', type:'auto', kind:'mnha', devices:W.edge[3], label:fwMnha()?'Firewall pair formed (MNHA: SRG1 active on node 1, backup on node 2)':'Firewall pair formed (FTD failover: node 1 active, node 2 standby ready)'},   // v515: per FE firewall platform
              {key:'fwbgp', type:'auto', kind:'bgp', devices:W.edge[3], label:'Firewall BGP up to both border leaves in each tenant VRF'},
              {key:'lb', type:'confirm', warn_only:true, label:'Load-balancer sessions (warn only)'}]},
-      {key:'fe', num:3, name:'Front end', waves:[['Spines'],['Leaves'],['Storage'],['DPUs (BlueField-3, HBN)']], w:W.fe,
+      {key:'fe', num:3, name:'Front end', waves:[['Spines'],['Leaves'],['Storage'],[nsDpuBf4()?'DPUs (BlueField-4, software target pending)':'DPUs (BlueField-3, HBN)']], w:W.fe,
        gate:[{key:'done', type:'devices_done', label:'Every device done, DPUs counted'},
              {key:'reach', type:'reachable', label:'Management reachable'},
              {key:'blspine', type:'auto', kind:'evpn', devices:W.fe[0].concat(W.edge[2]), label:'Border-leaf spine ports (pending FE) up; underlay and EVPN established'},
@@ -27439,7 +27512,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
         env_keys:['NIC0_DEV','NIC1_DEV','DRIVE_CORES','COMPUTE_CORES','NVME_DEVICES','DATA_DRIVES','PARITY_DRIVES','CAPACITY'],
         steps:[{each:true, script:'weka/01-node-network.sh'},{on:W.fe[2][0], script:'weka/02-cluster-create.sh'},{on:W.fe[2][0], script:'weka/03-checks.sh', fail_regex:'^FAIL'}]}); }
     var dpuAgg=W.fe[3][0], railAgg=W.be[2][0];
-    if(dpuAgg){ var _ad=[]; try{ _ad=allDpus(); }catch(e){}
+    if(dpuAgg && !nsDpuBf4()){ var _ad=[]; try{ _ad=allDpus(); }catch(e){}   // HS v1.59 (2.0.53): no BlueField-4 image install (no bf.cfg)
       runners.push({key:'dpu', kind:'dpu', label:'DPU image install (bfb-install over each host\u2019s rshim)', targets:[dpuAgg], hosts_conf:'host_ssh', conf:['host_ssh'],
         image_glob:'bf-bundle-*.bfb', dpus:_ad.map(function(x){ return {host:x.host, cfg:'hbn/'+x.host+'-DPU.bf.cfg'}; })}); }
     if(railAgg){ var _hs=Object.keys(hostSet).sort();
@@ -28088,7 +28161,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     var inv=deployOsInventory(), ORD=['junos','eos','nxos','iosxe','cumulus','srl','sros','iosxr','ftd'],
         oss=ORD.filter(function(o){ return inv[o]; }).concat(Object.keys(inv).filter(function(o){ return ORD.indexOf(o)<0; })), has=function(o){ return !!inv[o]; };
     var R=[], H=function(t){ R.push(''); R.push('='.repeat(64)); R.push(t); R.push('='.repeat(64)); };
-    var rs=!!PROFILES[profileKey].rackScale, hbn=false; try{ hbn=FE.on && feDpuMode(); }catch(e){}
+    var rs=!!PROFILES[profileKey].rackScale, hbn=false, bf4=false; try{ hbn=FE.on && feDpuMode(); bf4=hbn && nsDpuBf4(); if(bf4) hbn=false; }catch(e){}   // HS v1.59 (2.0.53)
     var http=oss.some(function(o){ return /^(junos|cumulus|eos|srl|sros)$/.test(o); }), tftp=has('nxos')||has('iosxe');
     R.push('DEPLOY PACKAGE \u2014 '+cli); R.push('='.repeat(64)); R.push('');
     R.push('The fabric builder runs in a browser and CANNOT push to devices. Run this package from a');
@@ -28109,6 +28182,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     oss.forEach(function(o){ var i=OS_INFO[o]; if(i) R.push('  '+i.name+': '+i.files); });
     if(has('junos')) R.push('  push_configs.py           PyEZ/NETCONF loader for the Junos devices (diff review + commit, plane-ordered)');
     if(hbn) R.push('  hbn/                      BlueField DPU (HBN) configs, bf.cfg and the DPU management CSV');
+    if(bf4) R.push('  hbn/                      BlueField-4: '+BF4_PENDING+' (README.md); the DPU management CSV');
     try{ if(spxMode()) R.push('  spectrum-x/               Spectrum-X host package (NIC firmware, DOCA, topology, CIDR pools)'); }catch(e){}
     H('STEP 0a \u2014 SET CREDENTIALS  (first: nothing provisions with a placeholder in it)');
     oss.forEach(function(o){ var i=OS_INFO[o]; if(i && i.hash!=='n/a') R.push('  '+i.name+': '+i.hash); });
@@ -28219,6 +28293,9 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       R.push('  Each tenant\u2019s VIP is advertised by BGP only while its backends are healthy; the Gateway is the metering boundary.'); }
     if(hbn){ R.push('');
       R.push('  BlueField DPUs: install each DPU\u2019s BFB with hbn/<host>-DPU.bf.cfg, then apply hbn/<host>-DPU.nvue;');
+      R.push('  set each DPU BMC address from hbn/dpu-management.csv at first access. Tenant assignment: Tenants panel.'); }
+    if(bf4){ R.push('');
+      R.push('  BlueField-4 DPUs: '+BF4_PENDING+'. No DPU configuration files are generated (hbn/README.md);');
       R.push('  set each DPU BMC address from hbn/dpu-management.csv at first access. Tenant assignment: Tenants panel.'); }
     H('NOTES');
     R.push('  - Keep the provisioning host on the OOB network only; it is never in the data path.');
@@ -29684,7 +29761,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       devices('fef').forEach(function(r){ out.push(r); });
       cables('fef').forEach(function(r){ out.push(r); });
       out.push(['Note','Storage platform',STORAGE_PLATFORM.label+': '+STORAGE_PLATFORM.note+' Transport: '+stoTransport()+'.','','','']);
-      out.push(['Note','Host front-end adapters','BlueField DPUs ship with the GPU hosts ('+fx.hosts+' hosts \u00d7 '+(FE.nicsPerHost||2)+' ports); not network BoM','','','']);
+      if(nsDpuBf4()) out.push(['DPU','NVIDIA BlueField-4 B4240V north-south DPU -- OPN CONFIRM','One per compute tray, ships with the GPU hosts ('+fx.hosts+' hosts): 2 \u00d7 400G (a 2-way split of the 800G port; physical port count and cage CONFIRM), PCIe Gen6 x16, integrated BMC on the 1GbE OOB port. Power not published (BF-4 power not published). '+BF4_PENDING,'','',fx.hosts]);   // HS v1.59 (2.0.53)
+      else out.push(['Note','Host front-end adapters','BlueField DPUs ship with the GPU hosts ('+fx.hosts+' hosts \u00d7 '+(FE.nicsPerHost||2)+' ports); not network BoM','','','']);
     }
     // ---- 3. BACK-END FABRIC ----
     out.push({sep:(fx?'3':'1')+' \u00b7 BACK-END FABRIC (BEF) \u2014 rail leaves, spines'});
@@ -29696,9 +29774,10 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     var g=OPTIC_GENS[opticGen];
     var _tw=(typeof hostSplit2x400==='function' && hostSplit2x400());
     var _ln=hostLaneSplit(), _cn=beCageG()>800?'OSFP 1.6T (8\u00d7224G)':'OSFP 800G', _nic=nicOf();
-    if(_ln && b.q800) out.push(['Optic',_cn+' '+ACC_PER_CAGE+'\u00d7'+laneG()+'G breakout (switch)','Every switch cage: '+ACC_PER_CAGE+' lanes of '+laneG()+'G -- host-facing legs, leaf uplinks and spine ports','MPO-16','',b.q800]);
+    if(_ln && b.q800) out.push(['Optic',_cn+(ACC_PER_CAGE>1?(' '+ACC_PER_CAGE+'\u00d7'+laneG()+'G breakout (switch)'):' (switch, one '+laneG()+'G port per cage)'),'Every switch cage: '+ACC_PER_CAGE+' lanes of '+laneG()+'G -- host-facing legs, leaf uplinks and spine ports','MPO-16','',b.q800]);
     if(b.cpoPorts) out.push(['Optic','None at the switch: co-packaged optics ('+nvSku(beModel)+'-LD)','Switch ports are CPO with MMC-16 fiber connectors, no switch transceivers to order ('+b.cpoPorts.toLocaleString()+' ports in use). Replaceable laser source modules: spares CONFIRM','MMC-16','',0]);   // v546
-    if(_ln && b.qh800) out.push(['Optic',(_nic&&_nic.g>800?'OSFP 1.6T':'OSFP 800G')+' '+PLANES()+'\u00d7'+laneG()+'G ('+(_nic?_nic.label:'GPU NIC')+', flat top)','One per GPU: one leg per plane, '+PLANES()+' planes','MPO-16','',b.qh800]);
+    if(_ln && b.qh800 && hostPortPerPlane()) out.push(['Optic','OSFP '+laneG()+'G ('+(_nic?_nic.label:'GPU NIC')+' port, flat top) -- host cage form factor CONFIRM','One per GPU NIC port: '+PLANES()+' per GPU, one per plane','MPO-12','',b.qh800]);   // HS v1.59 (D11)
+    else if(_ln && b.qh800) out.push(['Optic',(_nic&&_nic.g>800?'OSFP 1.6T':'OSFP 800G')+' '+PLANES()+'\u00d7'+laneG()+'G ('+(_nic?_nic.label:'GPU NIC')+', flat top)','One per GPU: one leg per plane, '+PLANES()+' planes','MPO-16','',b.qh800]);
     if(!_ln && b.q800) out.push(['Optic',_tw?'OSFP 800G twin-port 2\u00d7400G-DR4 (leaf)':g.n800,_tw?'Leaf downlink cage: two 400G legs, each to a GPU in this plane':'Switch-side 800G ends of links cabled with structured fiber','dual MPO-12 APC','',b.q800]);
     if(!_ln && b.qh800) out.push(['Optic',_tw?'OSFP 800G twin-port 2\u00d7400G-DR4 (ConnectX-8, flat top)':g.n800+' (host)',_tw?'One per GPU: leg 1 to plane 1, leg 2 to plane 2':'Host-side native 800G ends (structured fiber only)','dual MPO-12 APC','',b.qh800]);
     if(b.q400) out.push(['Optic',g.n400,'Host-side 400G ends (structured fiber only)','','',b.q400]);
@@ -30959,6 +31038,11 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
         var nP=optsP[optsP.length-1]; for(var oq=0; oq<optsP.length; oq++){ if(optsP[oq]>=minP && upP/(optsP[oq]*SPR())<=1){ nP=optsP[oq]; break; } }
         if(laneFab()){ var _us={}; byType('leaf').forEach(function(l){ if(planeOfRail(l.rail)===pl) _us[leafUpLanes(l)]=1; }); var _uk=Object.keys(_us).map(Number);   /* v538: a divisor of the uplink lanes */
           if(_uk.length===1){ var _U=_uk[0]; for(var _d=Math.max(2,minP); _d<=_U; _d++){ if(_U%_d===0){ nP=_d; break; } } } }
+        // HS v1.59: leaves of one plane with different uplink counts (a partly filled pod) left nP at the largest power of two, which
+        // can be short of the plane's uplinks (96 racks, 2 planes, 16-rack pods: 32 spines for 6,960 lanes, 96 leaves unwired).
+        // One spine per uplink lane of the fullest leaf always carries them: each leaf takes at most one lane per spine, and
+        // laneApply keeps a two-tier plane's leaves within one spine's ports.
+        if(laneFab() && nP*SPR()<upP) nP=mxP;
         for(var sq=0; sq<nP; sq++){ var sid=mk('spine'); dev(sid).plane=pl; }
       }
     } else if(tier3[0]){   // v480: single plane, three tiers -- pod-scoped spines sized to the pod
@@ -31871,6 +31955,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
         if(P.failCapKw) add('Compute','Single-side outage host cap (DV-02)', P.failCapKw+' kW per host through the BMC; four 60 A PDUs per side; cords at the OEM rating (DV-03)', 'derived', 'accepted deviations DV-02 / DV-03 -- the BMC power-cap setting is part of turn-up and acceptance');
         add('Compute','Host maximum draw (OEM)', vinOk(VENDOR_IN.hostMaxKw,VENDOR_IN.hostSrc)?VENDOR_IN.hostMaxKw+' kW':'\u2014 (13.2 kW PSU ceiling used)', vinOk(VENDOR_IN.hostMaxKw,VENDOR_IN.hostSrc)?'confirmed':'missing', 'Supermicro: maximum system draw for the configuration; no longer blocks the power plan'); }
     }
+    if(nsDpuBf4()) add('Compute','North-south DPU power (BlueField-4 B4240V)', 'BF-4 power not published: the rack and host power keep the current figure (it includes the BlueField-3 DPU)', 'placeholder', 'NVIDIA BlueField-4 datasheet 5193854 (JUN26) states no power figure', false);   // HS v1.59 (2.0.53)
     if(P.rackScale){
       var _rp=(typeof POWER_PRESETS!=='undefined'&&POWER_PRESETS[P.preset])||{}, _rok=_rp.conf==='vendor';   // HS v1.38: the selected rack's figures
       add('Compute','Rack power', (_rp.kwNode!=null?_rp.kwNode:'?')+' kW per '+(P.preset||'rack-scale')+' rack', _rok?'confirmed':'inferred', (_rp.src||'no source')+(!_rok&&P.oemSrc?'; '+P.oemSrc:''));
@@ -32240,6 +32325,14 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       var end=function(dev, port, role){ if(c.cage && cg(role)>800 && sb(port)) return {name:'1.6T OSFP224 2xDR4 transceiver (MPO-16, legs broken out at the patch panel)', cage:dev+'|'+String(port).replace(/(:\d+|s\d+|\/\d+)$/,'')};
         return {name:OPT[0]+' transceiver ('+OPT[1]+')', cage:null}; };
       return {k:'Structured fiber run, '+OPT[1]+' (beyond the '+AOC_REACH_M+' m AOC reach)', conn:OPT[1]+' single-mode', structured:{m:+L.m.toFixed(1), conn:OPT[1], colA:L.colA, colB:L.colB, a:end(l.a,l.ap,ra), b:end(l.b,l.bp,rb)}}; }; })(cableFamilyOf);
+  // HS v1.59 (2.0.53): with a BlueField-4 north-south DPU, the host end of each host-to-leaf leg is one half of a 2-way
+  // split of the DPU's 800G port (2 x 400G); the leaf end, the link and its count are unchanged.
+  var BF4_HOST_END='BlueField-4 host end: 400G leg of a 2-way split of its 800G port; physical port count, cage and assembly CONFIRM';
+  cableFamilyOf=(function(f){ return function(l, ra, rb){ var c=f.apply(this, arguments);
+      if(!c || !nsDpuBf4() || l.plane!=='fe' || !/host\u2192leaf/.test(String(l.media||''))) return c;
+      c=Object.assign({}, c);
+      if(c.structured){ var st=Object.assign({}, c.structured), hostB=/^NIC\d/.test(String(l.bp||'')); st[hostB?'b':'a']={name:'BlueField-4 800G port optic, 2 \u00d7 400G split -- CONFIRM', cage:null}; c.structured=st; return c; }
+      c.k=String(c.k).replace(/ QSFP112 AOC/,' AOC').replace(/\(leaf cage to two DPU ports\)/,'(leaf cage to two DPU 400G legs)')+' -- '+BF4_HOST_END; return c; }; })(cableFamilyOf);
   var CM_MEDIUM=/AOC|DAC|Cat6|copper|DR4|DR1|SMF|single-mode|jumper|fiber|optic|MPO|MMC/i;
   function cmMedia(l, ra, rb){
     var md=String(l.media||'');
@@ -32715,10 +32808,15 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
           return '<option value="'+n+'"'+(n===sel?' selected':'')+'>'+n+' planes'+(L?(' \u00b7 '+L.g+'G'):'')+(L&&!L.ok?' (not on this switch)':(L&&L.partial?(' ('+L.lpc+' of '+L.full+' lanes per cage)'):''))+'</option>'; }).join(''); } }
       if(nc){ var many=on&&p.nicOpts&&Object.keys(p.nicOpts).length>1; nc.style.display=many?'':'none';
         if(many){ var k=NIC_SEL[profileKey]||p.nicDef; nc.innerHTML=Object.keys(p.nicOpts).map(function(x){ return '<option value="'+x+'"'+(x===k?' selected':'')+'>NIC: '+p.nicOpts[x].label+'</option>'; }).join(''); } } }
+    var kp=document.getElementById('keepplanes'), kw=document.getElementById('keepplanes-w'), nd=document.getElementById('nsdpu');   // HS v1.59 (2.0.53)
+    var fill0=fill; fill=function(){ fill0(); var p=PROFILES[profileKey]||{}; if(kw) kw.style.display=p.laneFabric?'':'none'; if(nd) nd.style.display=NS_DPU_OPTS[profileKey]?'':'none'; };
     window.__laneFill=fill;
     function redo(){ laneApply(0); fill(); if(byType('rack').length) buildFromRacks(); else render(); if(LANE_NOTE) setStatus(LANE_NOTE); }
     if(pl) pl.onchange=function(){ PLANE_SEL[profileKey]=+this.value; redo(); };
     if(nc) nc.onchange=function(){ NIC_SEL[profileKey]=this.value; redo(); };
+    if(kp){ kp.checked=KEEP_PLANES; kp.onchange=function(){ KEEP_PLANES=!!this.checked; redo(); }; }
+    if(nd){ nd.value=NS_DPU; nd.onchange=function(){ NS_DPU=(this.value==='bf4')?'bf4':'bf3'; applyFeNic(PROFILES[profileKey]); redo();
+      if(nsDpuBf4()) setStatus('North-south DPU \u2192 BlueField-4 B4240V (2 x 400G): '+BF4_PENDING+'; no DPU configuration files are generated'); }; }
     setTimeout(fill,0); })();
   (function(){   // v540: cooling (NVL72 profiles)
     var cs=document.getElementById('coolsel');
@@ -33231,7 +33329,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       var v=kv[f[0]]; o[f[1]]=(f[2]==='bool')?(v==='1'||v==='true'):v; any=true;
     });
     if(!any)return false;
-    ctrlApply(o);   // ordered, with each control's own change handler, exactly as a user would set them
+    ctrlApply(o, true);   // ordered, with each control's own change handler, exactly as a user would set them
     // FE toggle drives control visibility + FE.on; set it before building so the FE settings apply.
     var feEl=document.getElementById('fe-on');
     if(feEl){ FE.on=feEl.checked; }
@@ -33332,14 +33430,19 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
   // saved: the browser's own form restoration brought back a few dropdowns and not others, which is the
   // half-restored, inconsistent state a reload produced.
   var AUTOSAVE_KEY='gpu-fabric-builder.autosave.v1', RESTORING=false, _asT=null;
-  var CTRL_ORDER=['clientname','custname','custcode','profile','nicsel','planesel','coolsel','podsize','rackcount','be-model','regioncode','siteidx','fe-on','fe-tenants','fe-nsgbps','fe-inggbps',
+  var CTRL_ORDER=['clientname','custname','custcode','profile','nicsel','planesel','keepplanes','coolsel','nsdpu','podsize','rackcount','be-model','regioncode','siteidx','fe-on','fe-tenants','fe-nsgbps','fe-inggbps',
     'fe-leaf-model','fe-spine-model','fe-spine-auto','fe-spine-target','fe-edge-model','fe-bl-model','fe-bg-model','fe-hub-model','fe-fw-model',
     'fe-sto-gen','fe-sto-pp','fe-spares','fe-spare-optics','netfeed','oobspine','cpower','netfoot','sitefeed','sitepue',
     'dbasis','measkw','cfgvendor','cfgstyle','cfgtier','mgmtvendor','mgmtsecvendor','mgmtlab','deployos',
     'feul','beul','rownet','floorcols','floorpods','aocreach','hallmw','cabu','rowfeed','vroem','fe-sto-rdma','fe-sto-dscpok','provha'];   // v513 (HS v1.14: floorcols)
+  // HS v1.59 (2.0.53): settings added after a release are saved only when set (or where they apply), so a design that does not
+  // use them keeps its fingerprint; a whole snapshot without one sets it back to its default.
+  var CTRL_OMIT_DEF={keepplanes:{v:false, on:function(){ return !!(PROFILES[profileKey]||{}).laneFabric; }}, nsdpu:{v:'bf3', on:function(){ return !!NS_DPU_OPTS[profileKey]; }}};
   function ctrlSnapshot(){ var o={skuRev:SKU_REV}; CTRL_ORDER.forEach(function(id){ var el=document.getElementById(id); if(!el) return;
-    o[id]=(el.type==='checkbox')?!!el.checked:el.value; }); return o; }
-  function ctrlApply(o){
+    var v=(el.type==='checkbox')?!!el.checked:el.value, od=CTRL_OMIT_DEF[id]; if(od && (v===od.v || !od.on())) return;
+    o[id]=v; }); return o; }
+  function ctrlApply(o, partial){   // partial: only the keys given (input sheet, share link); otherwise a whole snapshot
+    if(o && !partial){ var _ad={}; Object.keys(CTRL_OMIT_DEF).forEach(function(id){ if(!(id in o)) _ad[id]=CTRL_OMIT_DEF[id].v; }); if(Object.keys(_ad).length) o=Object.assign({}, o, _ad); }   // HS v1.59 (2.0.53)
     o=skuMigrateCtrls(o);   // HS v1.28
     if(o && /^block\d$/.test(o.rownet||'')) o=Object.assign({}, o, {rownet:'block'});   // HS v1.14: block widths retired
     CTRL_ORDER.forEach(function(id){ if(!(id in o)) return; var el=document.getElementById(id); if(!el) return;
@@ -33442,6 +33545,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       ['Fabric','fabric.cooling','Cooling (NVL72 platforms)','',{c:'coolsel', prof:'cool'}],
       ['Fabric','fabric.nic','Back-end NIC','',{c:'nicsel', prof:'nic'}],
       ['Fabric','fabric.be.planes','Back-end planes','planes',{c:'planesel', prof:'planes'}],
+      ['Fabric','fabric.be.keep_planes','Keep the requested plane count: add super-spines instead of raising the plane count (NVL72 platforms)',Y,{c:'keepplanes', bool:true, lane:true}],
       ['Fabric','fabric.be.rails_per_plane','Back-end rails per plane','rails',{d:'rails'}],
       ['Fabric','fabric.be.oversubscription','Back-end oversubscription','ratio',{d:'beos'}],
       ['Fabric','fabric.fe.spine_auto','Front-end spines sized automatically to the oversubscription target',Y,{c:'fe-spine-auto', bool:true}],
@@ -33465,6 +33569,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       ['Front end & storage','fe.tenants','Tenants','tenants',{c:'fe-tenants', num:[1,989,1]}],
       ['Front end & storage','fe.north_south_gbps','North-south bandwidth','Gb/s',{c:'fe-nsgbps', num:[0,100000,1]}],
       ['Front end & storage','fe.ingress_gbps','Ingress bandwidth','Gb/s',{c:'fe-inggbps', num:[0,100000,1]}],
+      ['Front end & storage','fe.ns_dpu','North-south DPU (Vera Rubin NVL72)','',{c:'nsdpu', prof:'dpu'}],
       ['Front end & storage','fe.storage_platform','Storage platform','',{c:'fe-sto-gen'}],
       ['Front end & storage','fe.storage_nodes_per_pod','Storage nodes per pod','nodes',{c:'fe-sto-pp', num:[0,64,1]}],
       ['Front end & storage','fe.storage_rdma','Storage over RDMA',Y,{c:'fe-sto-rdma', bool:true}],
@@ -33489,7 +33594,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     if(id==='profile') return Object.keys(PROFILES).map(function(k){ return {v:k, t:insheetPresetName(k), a:[PROFILES[k].label]}; });
     var el=document.getElementById(id); if(!el || el.tagName!=='SELECT') return null;
     return [].filter.call(el.options, function(o){ return all || !o.disabled; }).map(function(o){
-      var t=String(o.textContent||'').replace(/^(Net cabinets|Floor|Row network|FE\+EDG|OOB spine|Compute|Rows|Net feed|Basis|OEM|NIC|Cooling):\s*/,'').trim();
+      var t=String(o.textContent||'').replace(/^(Net cabinets|Floor|Row network|FE\+EDG|OOB spine|Compute|Rows|Net feed|Basis|OEM|NIC|Cooling|N-S DPU):\s*/,'').trim();
       if(id==='fe-hub-model' && o.value==='') t='follow gateway';
       if(/^(be-model|fe-leaf-model|fe-spine-model|fe-edge-model|fe-bl-model|fe-bg-model|fe-hub-model|fe-fw-model|cabu|floorcols|podsize|planesel|fe-spine-target|regioncode)$/.test(id)) t=(id==='fe-hub-model'&&o.value==='')?t:(id==='fe-spine-target'?o.value+':1':o.value);
       return {v:o.value, t:t, a:[String(o.textContent||'').trim()], x:o.disabled?String(o.title||''):''}; }); }
@@ -33498,11 +33603,14 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     if(kind==='planes') return p.laneFabric?(p.planeOpts||[p.planes]).map(String):[];
     if(kind==='nic') return (p.laneFabric&&p.nicOpts)?Object.keys(p.nicOpts).map(function(x){ return p.nicOpts[x].label; }):[];
     if(kind==='cool') return p.immersionOk?['direct liquid (cold plate)','single-phase immersion (container)']:[];
+    if(kind==='dpu') return NS_DPU_OPTS[k]?Object.keys(NS_DPU_OPTS[k]).map(function(x){ return NS_DPU_OPTS[k][x].label; }):[];   // HS v1.59 (2.0.53)
     return []; }
+  function insheetProfOk(kind, k){ var p=PROFILES[k]||{}; return kind==='cool'?!!p.immersionOk:kind==='dpu'?!!NS_DPU_OPTS[k]:!!p.laneFabric; }
   function insheetProfOptsVal(kind, k){ var p=PROFILES[k]||{};
     if(kind==='nic') return (p.nicOpts?Object.keys(p.nicOpts):[]).map(function(x){ return {v:x, t:p.nicOpts[x].label, a:[x]}; });
     if(kind==='planes') return (p.planeOpts||[p.planes]).map(function(n){ return {v:String(n), t:String(n), a:[]}; });
     if(kind==='cool') return [{v:'dlc', t:'direct liquid (cold plate)', a:['dlc','direct liquid','cold plate']},{v:'imm1p', t:'single-phase immersion (container)', a:['immersion']}];
+    if(kind==='dpu') return NS_DPU_OPTS[k]?Object.keys(NS_DPU_OPTS[k]).map(function(x){ return {v:x, t:NS_DPU_OPTS[k][x].label, a:[x, x==='bf4'?'BlueField-4':'BlueField-3', x==='bf4'?'B4240V':'B3240']}; }):[];
     return []; }
   function insheetNorm(s){ return String(s==null?'':s).toUpperCase().replace(/[^A-Z0-9]/g,''); }
   // the value read from a cell: number, text, rich text or a formula's result
@@ -33553,12 +33661,13 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
 
   // ---- the template (D1)
   function insheetValueNow(s){ var m=s.m, el=m.c?document.getElementById(m.c):null;
-    if(m.c){ if(!el) return ''; if(m.bool) return el.checked?'Yes':'No';
+    if(m.c){ if(!el) return ''; if(m.lane && !(PROFILES[profileKey]||{}).laneFabric) return ''; if(m.bool) return el.checked?'Yes':'No';
       if(m.c==='fe-spine-target') return el.value?el.value+':1':'';
       if(m.c==='profile') return insheetPresetName(el.value);
       if(m.prof==='nic'){ var p=PROFILES[profileKey]||{}; var k=el.value||p.nicDef; return (p.laneFabric&&p.nicOpts&&p.nicOpts[k])?p.nicOpts[k].label:''; }
       if(m.prof==='cool'){ var p2=PROFILES[profileKey]||{}; if(!p2.immersionOk) return ''; return (el.value||'dlc')==='imm1p'?'single-phase immersion (container)':'direct liquid (cold plate)'; }
       if(m.prof==='planes'){ var p3=PROFILES[profileKey]||{}; return p3.laneFabric?(el.value||String(p3.planeDef||'')):''; }
+      if(m.prof==='dpu'){ var o4=NS_DPU_OPTS[profileKey]; return o4?((o4[el.value]||o4.bf3).label):''; }   // HS v1.59 (2.0.53)
       if(el.tagName==='SELECT'){ var o=(insheetOpts(m.c)||[]).filter(function(x){ return x.v===el.value; })[0]; return o?o.t:el.value; }
       return el.value; }
     if(m.s==='rackFeedKw') return rackKWBudget(PROFILES[profileKey]);
@@ -33691,6 +33800,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       var cs=hold.filter(function(h){ return h[0].m.c; }).sort(function(a,b){ var la=a[0].m.late?1:0, lb=b[0].m.late?1:0; return (la-lb)||(idx(a[0].m.c)-idx(b[0].m.c)); });
       var applyOne=function(h){ var s=h[0], x=h[1], m=s.m, el=document.getElementById(m.c), val=null, st='applied', why=x.unote||'', shown='';
         if(!el){ add(x, s, 'not supported', '', 'this release has no such control'); return; }
+        if(m.lane && !(PROFILES[profileKey]||{}).laneFabric){ add(x, s, 'not supported', '', 'the '+insheetPresetName(profileKey)+' platform has no such choice; ignored'); return; }   // HS v1.59 (2.0.53)
         if(m.bool){ var b=insheetBool(x.v); if(b===null){ add(x, s, 'not supported', el.checked?'Yes':'No', 'not Yes or No; the builder default is kept'); return; } val=b; shown=b?'Yes':'No'; }
         else if(m.text){ var t=String(x.v).trim(); if(m.up) t=t.toUpperCase();
           if(!m.text.test(t)){ var t2=m.up?t.replace(/[^A-Z0-9]/g,'').slice(0,4):t.replace(/[<>`"\u0000-\u001f]/g,'').slice(0,80);
@@ -33700,14 +33810,14 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
           if(!q.exact){ st='nearest supported'; why=q.why+(why?'; '+why:''); } val=String(q.v); shown=q.v; }
         else {
           var opts=m.prof?insheetProfOptsVal(m.prof, profileKey):insheetOpts(m.c), req=m.ratio?String(x.v).replace(/\s*:\s*1\s*$/,''):x.v;
-          if(m.prof && !(PROFILES[profileKey]||{})[m.prof==='cool'?'immersionOk':'laneFabric']){ add(x, s, 'not supported', '', 'the '+insheetPresetName(profileKey)+' platform has no such choice; ignored'); return; }
+          if(m.prof && !insheetProfOk(m.prof, profileKey)){ add(x, s, 'not supported', '', 'the '+insheetPresetName(profileKey)+' platform has no such choice; ignored'); return; }
           if(m.prof==='planes' || m.prof==='nic'){ var live=insheetOpts(m.c)||[]; if(live.length) opts=opts.filter(function(o){ return live.some(function(l){ return l.v===o.v; }); }); }
           var pk=opts&&opts.length?insheetPick(req, opts, /^(siteidx|podsize|cabu|floorcols|planesel|fe-spine-target)$/.test(m.c)):null;
           if(!pk){ var cur=(opts||[]).filter(function(o){ return o.v===el.value; })[0]; add(x, s, 'not supported', cur?cur.t:el.value, 'not one of the offered options ('+(opts||[]).map(function(o){ return o.t; }).join(', ')+'); the builder value is kept'); return; }
           if(!pk.exact){ st='nearest supported'; why=pk.why+(why?'; '+why:''); }
           val=pk.o.v; shown=m.ratio?pk.o.v+':1':pk.o.t; }
         if(el.tagName==='SELECT' && ![].some.call(el.options,function(o){ return o.value===String(val); }) && opts && opts.length===1){ add(x, s, st, shown, (why?why+'; ':'')+'the only option for this platform'); return; }
-        var one={}; one[m.c]=val; ctrlApply(one); ctrls[m.c]=val;
+        var one={}; one[m.c]=val; ctrlApply(one, true); ctrls[m.c]=val;
         if(m.c==='custcode'){ try{ IDENT.code=String(val); }catch(e){} }
         add(x, s, st, shown, why); h.done=true; };
       cs.filter(function(h){ return !h[0].m.late; }).forEach(applyOne);
@@ -33722,12 +33832,12 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     // the build, the way the site runner rebuilds a design: controls, build, controls again
     RESTORING=true;
     // the pod size last: its options follow the switch radix and the rack count, so it is checked against the built design
-    try{ ctrlApply(ctrls); buildFromRacks(); cs.filter(function(h){ return h[0].m.late; }).forEach(applyOne); ctrlApply(ctrls); } finally { RESTORING=prevRest; }
+    try{ ctrlApply(ctrls, true); buildFromRacks(); cs.filter(function(h){ return h[0].m.late; }).forEach(applyOne); ctrlApply(ctrls, true); } finally { RESTORING=prevRest; }
     try{ render(); }catch(e){}
     // after the build: what the builder made of each control, and the derived rows
     var snap=ctrlSnapshot(), dv=insheetDerived(), P=PROFILES[profileKey]||{};
     rep.forEach(function(r){ var s=insheetSpecFor(r.key,S); if(!s || !s.m.c || r.status==='not supported' || r.status==='not modeled' || r.status==='not applied') return;
-      var c=s.m.c, want=ctrls[c]; if(want===undefined) return; var got=snap[c];
+      var c=s.m.c, want=ctrls[c]; if(want===undefined) return; var got=(c in snap)?snap[c]:(CTRL_OMIT_DEF[c]?CTRL_OMIT_DEF[c].v:undefined);   // HS v1.59 (2.0.53): a default left out of the snapshot
       if(String(got)!==String(want)){ r.status='nearest supported'; r.class='design choice'; r.applied=s.m.bool?(got?'Yes':'No'):insheetValueNow(s); r.reason=(r.reason?r.reason+'; ':'')+'the builder set it from the other inputs (the option is not available with them)'; } });
     rep.forEach(function(r){ if(r.key==='fabric.be.planes' && P.laneFabric && r.status==='applied' && +r.applied!==+P.planes){ r.status='nearest supported'; r.class='design choice'; r.reason='built at '+P.planes+' planes: '+(LANE_NOTE||'the plane count the switch and NIC support'); r.applied=P.planes; } });
     hold.filter(function(h){ return h[0].m.d; }).forEach(function(h){ var s=h[0], x=h[1], m=s.m, got=dv[m.d];
