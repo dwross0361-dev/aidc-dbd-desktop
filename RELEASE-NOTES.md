@@ -1,3 +1,32 @@
+# AIDC DBD Desktop 2.0.55 (builder HS-v1.61, site runner 1.11.0)
+
+Bug fix: an input sheet that asks for the air-cooled NV-SN6600 now gets it. Also ASCII apostrophes in package text and the SN6800-LD name.
+
+- **Fix: input sheet with `NV-SN6600`.** The importer applied each value through the saved-design path, which maps the pre-HS-v1.28 name `NV-SN6600` to the liquid-cooled `NV-SN6600-LD`. The sheet then reported "nearest supported" with "the builder set it from the other inputs". Input sheet values are current names and are no longer migrated. This applied to every row that names an SN6600: back-end switch, front-end leaf and front-end spine.
+  - The NV-SN6600 is offered on every platform, both NVL72 coolings and every plane count; it is now applied as requested.
+  - Saved designs and site-runner files from before HS v1.28 still migrate to the SN6600-LD, as before.
+- **Fix: share links.** A link made in this release carries `sk=2` and opens an NV-SN6600 as the NV-SN6600. Links without it (every earlier release) keep the migration, so an air-cooled SN6600 in an earlier link still opens as the SN6600-LD.
+- **Input sheet reason for the CPO switches.** On an HGX platform, a request for the SN6800-LD or SN6810-LD says: "NV-SN6800-LD is a co-packaged switch for the NVL72 lane fabrics only; the HGX B300 platform does not offer it".
+- **ASCII apostrophes in package text.** Text the builder writes (READMEs, Markdown, CSV, YAML, scripts, DPU NVUE files, `estate.json`) uses a straight apostrophe instead of U+2019. The interface text changes the same way. Exceptions: the regular expressions that read text, the Deployment Console page and the deviation records inside the design.
+  - Fingerprints are unchanged. Plan digests change, because `estate.json` labels contain apostrophes. The profiles digest changes, because two Vera Rubin profile texts contain apostrophes.
+  - Other non-ASCII characters are unchanged: em dash, middle dot, arrows, multiplication sign, ellipsis. Switch configurations were already ASCII.
+- **SN6800-LD and SN6810-LD names.** The back-end list and the input sheet show `NV-SN6800-LD` and `NV-SN6810-LD`. The keys stay `NV-SN6800` and `NV-SN6810`, so saved designs and fingerprints are unchanged. The input sheet accepts either name.
+- **SN6800-LD BoM note** (NVIDIA SN6000 hardware manual):
+  - 16-core x86 CPU, 96 GB DDR5, 160 GB NVMe SSD, 4 x 256 MB packet buffers;
+  - RS-232 console, 1GbE OOB and 1GbE BMC (all RJ45), and USB Type-A;
+  - MGX v1.2 rail kit 930-9SRKT-00F0-00C, one per switch, as a note because the BoM lists no rail kits;
+  - from a reseller listing only, marked CONFIRM: 4 x QSFP112 ports and a second OOB port.
+  - Management cabling is unchanged: one OOB drop and one console port per switch, as for every switch model. No switch model gets a BMC drop.
+- **Proved before shipping:**
+  - Input sheet `NV-SN6600` on Vera Rubin, 2 planes, Keep plane count: applied, built at 2 planes. `NV-SN6800` at 2 planes: 8 planes, with the lane reason, as before. 330-case switch sweep (every back-end, front-end leaf and spine switch, 6 platforms, both NVL72 coolings, every plane count): 34 requests changed in HS-v1.60, 8 now, all CPO switches on HGX platforms with the specific reason.
+  - Pre-HS-v1.28 design file (no `skuRev`) with NV-SN6600: still opens as the NV-SN6600-LD. Share links: without `sk`, SN6600-LD as before; with `sk=2`, SN6600.
+  - Same fingerprints and full parity as 2.0.54: GB300 NVL72 256 racks SN5610 (b98ba38d0e5f6230, 11,635 of 11,635), Vera Rubin 364 racks SN6800-LD at 8 planes (10407090a45b80e9, 14,958 of 14,958) and the 4-plane SN6600 test design (190bb91cd2582856, 18,321 of 18,321). That file carries no `skuRev`, so it builds as the SN6600-LD, as in every release since HS v1.28.
+    - Every switch configuration is byte-identical.
+    - Files that differ from 2.0.54 only in the apostrophe: 4,630 or 6,574 package files, mostly the DPU NVUE and bf.cfg files (6,553 on Vera Rubin), plus the BNK, WEKA and k8s files and the design register. Also 4,656 or 6,600 .run files.
+    - Other changes: the plan digest in `estate.json`, README and readiness. SN6800-LD builds also get the BoM note.
+  - Input sheet round trip keeps the fingerprint, including an air-cooled SN6600 design (HS-v1.60 changed it to the SN6600-LD). The template's back-end list now shows `NV-SN6800-LD` and `NV-SN6810-LD`.
+  - `go test ./...` passes. The engine comparison on a 16-rack Vera Rubin BlueField-4 .run: 129 comparisons, 0 mismatches. Neutrality gate: 0 hits.
+
 # AIDC DBD Desktop 2.0.54 (builder HS-v1.60, site runner 1.11.0)
 
 BlueField-4 Health: one item instead of two.

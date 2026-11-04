@@ -492,3 +492,20 @@ Resolves the two Owner decisions D11 left open (D11-4, D11-6) as options; the de
 - BlueField-3 (default): every package configuration file byte-identical to 2.0.53, same fingerprints: Vera Rubin 364 racks SN6800 8 planes (10407090a45b80e9), SN6600 4 planes (190bb91cd2582856); GB300 NVL72 256 racks SN5610 (b98ba38d0e5f6230). Parity full.
 - BlueField-4, Vera Rubin 364 racks SN6600 4 planes (418d99e85b269587): one BlueField-4 Health item (medium), no hard stops; switch configurations byte-identical; no DPU configuration files; parity 5,217 of 5,217.
 - `go test ./...` passes; difftest on a 16-rack Vera Rubin BlueField-4 .run: 129 comparisons, 0 mismatches. Input sheet round trip keeps the fingerprint.
+
+# Input sheet SKU fix, ASCII apostrophes, SN6800-LD name (HS v1.61, desktop 2.0.55)
+
+| # | Decision | Why |
+|---|---|---|
+| SK-1 | **Input sheet values are never SKU-migrated.** `inputSheetApply` passes `skuRev: SKU_REV` on its partial `ctrlApply` objects. The session input file's `ctrls` are unchanged. `skuMigrateCtrls` and `skuMigrate` are unchanged for saved designs, autosave and site-runner files. | The sheet format (HS v1.58) always uses current names. The HS v1.28 migration mapped a requested `NV-SN6600` to `NV-SN6600-LD`. |
+| SK-2 | **Share links carry `sk=2`.** `designToFragment` appends it, and `restoreFromFragment` skips the migration when it is present. A link without it migrates as before. | Same bug for links made at the current revision. Earlier links cannot be told apart, so they keep the old reading. |
+| SK-3 | **Specific reason for a CPO switch on an HGX platform:** "... is a co-packaged switch for the NVL72 lane fabrics only". The generic "set from the other inputs" reason is kept. The 330-case switch sweep no longer reaches it. | The only cause of the generic reason the sweep found was SK-1. |
+| AP-1 | **U+2019 replaced by a straight apostrophe in the main builder script:** 333 string literals and 1 comment, by a tokenizer-driven rewrite, and the string values were checked equal. Not changed: regular expressions that match U+2019, the `asciiFold` table, the built-in `DEVIATIONS` records, the embedded Python, Go and Deployment Console. The physical model folds U+2019 in the deviation records it writes. | Package text is ASCII apostrophes. Deviation records are design data in the fingerprint, so their text is kept and folded only on output. |
+| LD-1 | **`BE_SHOWN` display names:** `NV-SN6800` is shown as NV-SN6800-LD and `NV-SN6810` as NV-SN6810-LD, in the back-end list and the input sheet. The keys are unchanged, and the sheet accepts either name. | Both parts ship as -LD only. With the keys unchanged, saved designs, sheets and fingerprints are unaffected. |
+| LD-2 | **SN6800-LD BoM note (`SN6800_FACTS`)** from the NVIDIA SN6000 manual: CPU, memory, SSD, buffers, management ports, MGX v1.2 rail kit 930-9SRKT-00F0-00C. The QSFP112 ports and a second OOB port are from a reseller listing only, so CONFIRM. Management cabling is unchanged: one OOB drop (eth0) and one console port per switch. | The builder gives no switch model a BMC drop, so SN6800 is already consistent. It lists no rail kits, so the rail kit is a note. |
+
+## Verification (SK, AP, LD)
+
+- Input sheet: `NV-SN6600` applied, including Vera Rubin at 2 planes with Keep plane count. 330-case sweep: 34 changed requests become 8, the CPO switches on HGX platforms, each with the specific reason. A pre-v1.28 design still migrates. Share links with `sk=2` are not migrated; links without it are.
+- 2.0.54 fingerprints and full parity are kept: GB300 256 SN5610 (b98ba38d0e5f6230), VR364 SN6800-LD 8 planes (10407090a45b80e9), VR364 SN6600 4 planes (190bb91cd2582856; the test file has no `skuRev`, so it builds as the SN6600-LD). Switch configurations are byte-identical. Other files differ only by U+2019 to apostrophe, apart from the plan digest and timestamps. The profiles digest changes.
+- `go test ./...` passes; difftest on a 16-rack Vera Rubin BlueField-4 .run: 129 comparisons, 0 mismatches; neutrality 0 hits.
