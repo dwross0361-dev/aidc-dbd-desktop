@@ -27,6 +27,7 @@ let captured = [], clip = null;
 function shim(w) {
   const store = new Map(); let n = 0;
   w.__AIDC_HEADLESS = true;
+  w.__aidcBuilderSha256 = SRC_SHA;   // app 2.0.51: the builder file's SHA-256
   if (process.env.AIDC_DESK_BIG) w.__aidcBig = +process.env.AIDC_DESK_BIG;   // testing: the app's lowered threshold
   w.__aidcSha256 = (b) => crypto.createHash('sha256').update(b).digest('hex');
   if (typeof zlib.crc32 === 'function') w.__aidcCrc32 = (u) => zlib.crc32(u) >>> 0;
@@ -67,7 +68,7 @@ function shim(w) {
   };
 }
 
-let DOM = null, FP = null, SRC = null;
+let DOM = null, FP = null, SRC = null, SRC_SHA = '';
 const W = () => DOM.window;
 async function ensureDesign(file) {
   if (!file || file.format !== 'aidc-dbd-site-runner/1') throw new Error('the builder window did not send a site-runner design');
@@ -75,7 +76,8 @@ async function ensureDesign(file) {
   if (DOM) { try { DOM.window.close(); } catch (e) {} DOM = null; FP = null; }
   const est = estOf(Number(file.links || 0));
   progress('Loading the builder in the design service…', { stage: 'load', est });
-  if (!SRC) SRC = fs.readFileSync(HTML, 'utf8');
+  if (!SRC) { const b = fs.readFileSync(HTML); SRC_SHA = crypto.createHash('sha256').update(b).digest('hex'); SRC = b.toString('utf8'); }
+  if (file.builderSha256 && file.builderSha256 !== SRC_SHA) throw new Error('release check: the design comes from builder ' + file.builder + ' with SHA-256 ' + file.builderSha256 + ', but the app carries a builder with SHA-256 ' + SRC_SHA);
   const vc = new VirtualConsole(); vc.on('jsdomError', () => {});
   const dom = new JSDOM(SRC, { runScripts: 'dangerously', pretendToBeVisual: true, url: 'file:///aidc-design/builder.html', virtualConsole: vc, beforeParse: shim });
   await new Promise((r) => setTimeout(r, 1500));

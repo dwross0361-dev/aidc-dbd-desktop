@@ -38,6 +38,9 @@ if (!process.env.AIDC_RUNNER_CHILD) {
   process.exit(r.status == null ? 1 : r.status);
 }
 const HTML = arg('html'), DESIGN = arg('design'), OUT = arg('out', '.');
+// 1.10.0 (app 2.0.51, builder HS-v1.57): the release is the builder FILE, identified by its SHA-256. The version string
+// alone let two different files pass as one release (HS-v1.56 r1, r2 and r3 all said HS-v1.56).
+let HTML_BYTES = null, HTML_SHA = '';
 const PARITY_ONLY = argv.includes('--parity-only');
 if (!PARITY_ONLY && (!HTML || !DESIGN)) { console.error('usage: node aidc-runner.js --html <builder .html> --design <site-runner .json> --out <folder> [--heap MB] [--package-only|--run-only|--parity-only] [--review] [--settings [--racks N]] [--cable-matrix xlsx|pdf] [--no-sleep-hold]'); process.exit(2); }
 const RACKS = +arg('racks', 0) || 0, SETTINGS = argv.includes('--settings') || RACKS > 0;
@@ -96,6 +99,7 @@ function shim(w) {
   // native hashes for the package manifest, the .run checksums and the zip CRCs (1.5.0; builder HS-v1.20 uses them, older ones ignore them)
   const crypto = require('crypto');
   w.__aidcSha256 = (b) => crypto.createHash('sha256').update(b).digest('hex');
+  w.__aidcBuilderSha256 = HTML_SHA;   // 1.10.0: the builder file's own SHA-256 (its site-runner export and package README carry it)
   if (typeof zlib.crc32 === 'function') w.__aidcCrc32 = (u) => zlib.crc32(u) >>> 0;
   w.Blob = Blob; w.Response = Response; w.CompressionStream = CompressionStream; w.DecompressionStream = DecompressionStream;
   w.TextEncoder = TextEncoder; w.TextDecoder = TextDecoder; w.ReadableStream = ReadableStream; w.WritableStream = WritableStream; w.TransformStream = TransformStream;
@@ -151,16 +155,20 @@ vc.on('error', (e) => pageErr.push(String(e).slice(0, 300)));
   if (file.format !== 'aidc-dbd-site-runner/1') die(DESIGN + ' is not a site-runner file (export it with the Site runner button in the builder)');
   log('design ' + path.basename(DESIGN) + ': build ' + file.build + ', design fingerprint ' + file.fingerprint + ', ' + file.racks + ' racks, ' + Number(file.links).toLocaleString('en-US') + ' links, exported from ' + file.builder);
   startWatchdog();
-  const dom = new JSDOM(fs.readFileSync(HTML, 'utf8'), { runScripts: 'dangerously', pretendToBeVisual: true, url: 'file:///aidc-runner/builder.html', virtualConsole: vc, beforeParse: shim });
+  HTML_BYTES = fs.readFileSync(HTML); HTML_SHA = require('crypto').createHash('sha256').update(HTML_BYTES).digest('hex');
+  const dom = new JSDOM(HTML_BYTES.toString('utf8'), { runScripts: 'dangerously', pretendToBeVisual: true, url: 'file:///aidc-runner/builder.html', virtualConsole: vc, beforeParse: shim });
   const w = dom.window;
   await new Promise((r) => setTimeout(r, 1500));
   const R = w.__aidcRunner;
   if (!R) die(path.basename(HTML) + ' has no site-runner entry points (a builder release before HS-v1.05)' + (pageErr.length ? ': ' + pageErr[0] : ''));
-  log('builder ' + R.app() + ' ' + R.version() + ' loaded');
+  log('builder ' + R.app() + ' ' + R.version() + ' loaded, SHA-256 ' + HTML_SHA);
+  const FSHA = typeof file.builderSha256 === 'string' ? file.builderSha256.toLowerCase() : '';
   if (SETTINGS) {   // built from the settings alone: there is no approved fingerprint to hold it to
     if (RACKS) { file.design.ctrls = Object.assign({}, file.design.ctrls, { rackcount: String(RACKS) }); log('settings: rack count set to ' + RACKS + ' (the file was ' + file.racks + ')'); }
-    if (R.version() !== file.builder) log('settings: the file is from ' + file.builder + ', building it in ' + R.version());
-  } else if (R.version() !== file.builder) die('the design was exported from ' + file.builder + ' but ' + path.basename(HTML) + ' is ' + R.version() + ': use the same release');
+    if (R.version() !== file.builder || (FSHA && FSHA !== HTML_SHA)) log('settings: the file is from ' + file.builder + (FSHA ? ' (SHA-256 ' + FSHA + ')' : '') + ', building it in ' + R.version() + ' (SHA-256 ' + HTML_SHA + ')');
+  } else if (!FSHA) die('release check: the design file names builder ' + file.builder + ' but carries no builder SHA-256, so the release cannot be checked. Export the site-runner file from the AIDC DBD app (HS-v1.57 or later), or use --settings for a test build. Nothing was built.');
+  else if (FSHA !== HTML_SHA) die('release check: the design was exported from builder ' + file.builder + ' with SHA-256 ' + FSHA + ', but ' + path.basename(HTML) + ' (' + R.version() + ') has SHA-256 ' + HTML_SHA + '. Use the same builder file. Nothing was built.');
+  else log('release check: the builder file is the one the design was exported from (SHA-256 ' + HTML_SHA + ')');
 
   // ---- rebuild and the digest gate
   let L; try { L = R.load(file, { settings: SETTINGS }); } catch (e) { die('the design did not load: ' + e.message); }

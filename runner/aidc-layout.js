@@ -26,14 +26,14 @@ const progress = (t, x) => { const e = Object.assign({ text: t }, x || {}); if (
 let RATE = 1;
 const estOf = (n, rate) => ({ load: 3, rebuild: Math.max(2, n * 29e-6 * rate), model: Math.max(2, n * 50e-6 * rate), place: Math.max(1, n * 2.2e-6 * rate) });
 
-let SRC = null;   // the builder release, read once
-function src() { if (!SRC) SRC = fs.readFileSync(HTML, 'utf8'); return SRC; }
+let SRC = null, SRC_SHA = '';   // the builder release, read once, and its SHA-256 (app 2.0.51)
+function src() { if (!SRC) { const b = fs.readFileSync(HTML); SRC_SHA = require('crypto').createHash('sha256').update(b).digest('hex'); SRC = b.toString('utf8'); } return SRC; }
 function embedded(id) {   // a script the builder carries: the Layout Builder page (base64) and the PDF library
   const s = src(), at = s.indexOf('id="' + id + '"'); if (at < 0) return null;
   const a = s.indexOf('>', at) + 1, b = s.indexOf('</script>', a); return s.slice(a, b);
 }
 function shim(w) {
-  w.__AIDC_HEADLESS = true; w.alert = () => {}; w.confirm = () => true; w.prompt = (m, d) => d;
+  w.__AIDC_HEADLESS = true; w.__aidcBuilderSha256 = SRC_SHA; w.alert = () => {}; w.confirm = () => true; w.prompt = (m, d) => d;
   w.TextEncoder = TextEncoder; w.TextDecoder = TextDecoder; w.Blob = Blob;
   w.HTMLCanvasElement.prototype.getContext = function () { return null; };
   w.URL.createObjectURL = () => 'blob:aidc-layout/x'; w.URL.revokeObjectURL = () => {};
@@ -51,6 +51,7 @@ async function buildModel(file) {
     const R = dom.window.__aidcRunner;
     if (!R || typeof R.phys !== 'function') throw new Error('this builder release has no Layout service entry point (HS-v1.26 or later)' + (errs.length ? ': ' + errs[0] : ''));
     if (R.version() !== file.builder) throw new Error('the design comes from ' + file.builder + ' but the app carries ' + R.version());
+    if (file.builderSha256 && file.builderSha256 !== SRC_SHA) throw new Error('release check: the design comes from builder ' + file.builder + ' with SHA-256 ' + file.builderSha256 + ', but the app carries a builder with SHA-256 ' + SRC_SHA);
     progress('Rebuilding the design from its settings…', { stage: 'rebuild' });
     const t1 = Date.now(), L = R.load(file, {});
     if (nL > 20000) { RATE = Math.min(20, Math.max(0.05, ((Date.now() - t1) / 1000) / (nL * 29e-6))); }   // this workstation against the reference

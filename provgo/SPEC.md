@@ -463,7 +463,7 @@ Implemented in `internal/estate/{push,rma,runners,tuning,handover,ha,alerts,writ
 - **Stop.** SIGTERM/SIGINT: the engine lock is taken (no statement mid-flight), the database closed, exit 0 (P4-3).
 - **Push pass** (P4-11): candidates are probed at once as before; the pass proceeds as soon as the first free-slot count of
   answering candidates in plan order is settled (later probes are dropped and retried next pass).
-- **Empty build** (P4-10, both engines, approved by the Captain 2026-11-02): a build with no devices in any wave is marked complete
+- **Empty build** (P4-10, both engines, approved by the Owner 2026-11-02): a build with no devices in any wave is marked complete
   when a run starts (`passed` set, the run record saved, event "No devices in plane <key>: build marked complete", once), for
   every empty build in the run and before it; an empty build is not unpassed for the builds after it. The tick completes an
   empty build in the run instead of starting it, and the timeouts pass skips a build with no waves (and stops at a build's last

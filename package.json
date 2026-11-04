@@ -1,7 +1,7 @@
 {
   "name": "aidc-dbd-desktop",
   "productName": "AIDC DBD",
-  "version": "2.0.50",
+  "version": "2.0.51",
   "description": "DWR Networking AIDC DBD Hyperscale builder, desktop edition: the builder with the site runner built in",
   "author": "DWR Networking",
   "license": "UNLICENSED",
@@ -9,6 +9,7 @@
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",
+    "neutrality": "node tools/neutrality-check.js",
     "dist:win": "electron-builder --win nsis --x64 --publish never"
   },
   "devDependencies": {

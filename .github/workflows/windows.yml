@@ -20,6 +20,8 @@ jobs:
         with:
           node-version: '22'
           cache: npm
+      - name: Neutrality gate (builder, the files it embeds, runner, app, provgo)
+        run: node tools/neutrality-check.js
       - name: App dependencies
         run: npm ci
       - name: Site runner dependencies (jsdom, canvas for Windows)

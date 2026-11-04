@@ -1,3 +1,26 @@
+# AIDC DBD Desktop 2.0.51 (builder HS-v1.57, site runner 1.10.0)
+
+Evaluation readiness, Phase 0 (the Owner approved decisions D1 to D15 of the evaluation readiness design).
+
+- **Customer-neutral builder and outputs (D14).** Internal standards document ids, recorded-deviation ids, tenancy and Edge PoP clause ids, and personal attributions are gone from the builder, the pages and files it embeds, the runner and the app, in UI strings, generated files and code comments alike.
+  - Standards are named by subject instead (for example "the IP plan", "the front-end standard").
+  - Decision sources in the design register and the provenance rows read "Owner decision".
+  - The recorded deviations are renumbered DV-01 to DV-04, owner "Owner decision". A design saved by an earlier release loads with the built-in records, not its old copies.
+  - The requirement and clause ids of the former standards set (back-end, front-end, OOB, IP plan, naming, cabling, cabinet, interconnect, edge, tenancy, firewall, delivery and emergency-access families) are gone too: dropped where the sentence stands alone, otherwise replaced by the subject.
+  - Open-item and question ids are gone from on-screen warnings, the register and generated comments (the sentence stays), and the sample site code in the build-number and device-ID examples is now ACME-LAX.
+  - Device configurations change in comment lines only (the clause references in the node network, DCI, rail overlay, border leaf and edge hardening comments). Every configuration statement is unchanged (trailing comments on a statement line may change). Outside the device configurations, the EVE-NG lab's edge-router interconnect description and the lab and BNK READMEs lose their clause references.
+- **Neutrality gate.** `tools/neutrality-check.js` fails on any of those patterns, the clause-id families, open-item and question ids, and old sample site codes, in the builder (including its embedded DC Layout Builder page, Deployment Console and provisioning engines), the runner, the app and `provgo`. It is the first step of the GitHub build. Given a job folder, it reads into the package zip, the .run payload, workbooks and PDFs.
+- **The release is the builder file (D15).** HS-v1.56 r1, r2 and r3 were three files with one version string, so the runner's release check could not tell them apart. Now:
+  - HS-v1.57 is a clean release string.
+  - The app reads the builder file's SHA-256 and gives it to the window; the site-runner file carries it (`builderSha256`), and so does the package README (Builder SHA-256 row).
+  - The site runner, the design service and the Layout service refuse a design exported from a different builder file, naming both SHA-256 values. A site-runner file without a builder SHA-256 (exported before 2.0.51, or from a builder opened in a browser) is refused by the site runner: export it again from the app, or use `--settings` for a test build.
+  - The About box shows the builder's SHA-256.
+- **Proved before shipping:**
+  - Neutrality gate: 0 hits on the repository and on the unzipped package and .run of a 256-rack GB300 test build (25,867 files). On the 2.0.50 build of the same design it finds 27,761.
+  - 256-rack GB300 (SN5610): parity 11,635 of 11,635, plan digest unchanged. Against 2.0.50, 5,347 of 11,636 device configuration files are byte-identical; 6,282 differ in comments only (every statement identical with comments stripped), plus one line of the BNK README.
+  - Release gate: a file without a builder SHA-256, a wrong SHA-256, the HS-v1.56 r3 builder and an earlier HS-v1.57 build are refused; a 16-rack design exported from HS-v1.57 builds with its fingerprint matched (parity 775 of 775).
+  - `go test ./...` passes; the engine comparison (Phase 1, 129 comparisons) shows 0 mismatches.
+
 # AIDC DBD Desktop 2.0.50 (builder HS-v1.56 r3, site runner 1.9.0)
 
 - **SSH to the switches holds up on slow logins** (both engines, Python and Go). DSX Air TC-208 lost most backups and gate reads to SSH timeouts. Now:
@@ -63,7 +86,7 @@ Redundancy pass. Efficiency: nothing derived or shipped twice without need. Effe
   - **CONFIRM:** prove one Cumulus ZTP on real hardware or in DSX Air before delivery.
 - **Each switch configuration is generated once per build.** Choosing the DSX Air test slice used to generate every back-end leaf's configuration just to pick two leaves. It now stops at the first match and finds devices through the index. Generations per .run dropped from two per switch to one, plus about a dozen for the Air slice itself.
 - **The DPU tenant scan runs once per build** instead of once for every front-end configuration.
-- **Save suggests the build number,** for example `VORT-ORD-295K-001.json`. Without a customer code it falls back to the old name.
+- **Save suggests the build number,** for example `ACME-LAX-295K-001.json`. Without a customer code it falls back to the old name.
 - **25-design regression:** parity holds on all 25. The configurations, source of truth and every other file are unchanged, except the new ZTP scripts, the provisioning plan and its design digest, the secrets manifest (no `ztp/` copies) and the OS table text.
 
 # AIDC DBD Desktop 2.0.44 (builder HS-v1.52, site runner 1.9.0)
@@ -97,7 +120,7 @@ Redundancy pass. Efficiency: nothing derived or shipped twice without need. Effe
 
 # AIDC DBD Desktop 2.0.42 (builder HS-v1.50, site runner 1.8.0)
 
-- **XL Final package: the design viewer no longer stalls past 8.4 million interfaces.** The 2.0.41 watchdog traced the 4,096-rack stall to the interface table in the source of truth. That table was one JavaScript object keyed by device and port. Past 8,388,607 entries the engine renumbers such an object on every insert, so each new interface cost a pass over all the others. FIRE-BAN-295K has about 9.5 million interfaces.
+- **XL Final package: the design viewer no longer stalls past 8.4 million interfaces.** The 2.0.41 watchdog traced the 4,096-rack stall to the interface table in the source of truth. That table was one JavaScript object keyed by device and port. Past 8,388,607 entries the engine renumbers such an object on every insert, so each new interface cost a pass over all the others. ACME-LAX-295K has about 9.5 million interfaces.
   - The table is now 16 sharded Maps. It stays linear past 10 million entries (about 5 s per 2 million) and keeps the insertion order.
   - The interface list is built in one pass instead of a sort, and the design viewer skips it, since it doesn't use it.
   - Every package file is unchanged: the 25-design regression shows identical source of truth, interfaces and configurations.
@@ -166,7 +189,7 @@ Redundancy pass. Efficiency: nothing derived or shipped twice without need. Effe
 - **What a profile changes.**
   - The back-end configs carry the measured values: Junos ECN, PFC and watchdog; EOS ECN and watchdog; NX-OS ECN; and Cumulus ECN on TC3, written only where the values differ from the RoCE defaults.
   - The markers read `TUNED (profile …, proven on <release>, <date>)`, or `VERIFIED` for defaults that passed.
-  - The Release check row **Back-end lossless thresholds** reads confirmed, and OD-T02 closes for that platform.
+  - The Release check row **Back-end lossless thresholds** reads confirmed, and the tuning item closes for that platform.
   - The Console's v0 starts from the profile.
 - **Release match is major.minor.** A profile proven on another release is still applied, but its markers stay TUNE with "re-run acceptance", and the Release check row reads inferred. The row isn't load-bearing, because thresholds are set at acceptance, not for construction.
 - **Without a profile, the configs are unchanged.**

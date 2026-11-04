@@ -18,7 +18,7 @@ npm install
 
 ## Use
 
-1. In the builder: build the design, set the customer code, then click **Site runner**. The builder downloads `{CUST}-{SITE}-...-site-runner.json`. The file holds the settings the design is rebuilt from, the builder release and the design fingerprint (64 bits over every setting, device and link).
+1. In the builder: build the design, set the customer code, then click **Site runner**. The builder downloads `{CUST}-{SITE}-...-site-runner.json`. The file holds the settings the design is rebuilt from, the builder release and its SHA-256 (exported from the AIDC DBD app), and the design fingerprint (64 bits over every setting, device and link).
 2. On the workstation:
 
 ```
@@ -39,7 +39,7 @@ Options:
 
 ## What it checks
 
-- **The release:** the design file and the builder file must be the same release, or nothing is built.
+- **The release (1.10.0):** the design file must carry the SHA-256 of the builder file it was exported from, and the builder file given with `--html` must have that SHA-256, or nothing is built. The version string alone is not enough: HS-v1.56 r1, r2 and r3 were three different files with one string. A file without a builder SHA-256 (from a builder opened in a browser, or from before HS-v1.57) is refused; export it from the AIDC DBD app, or use `--settings` for a test build.
 - **The fingerprint:** the runner rebuilds the design from the file and stops unless its design fingerprint matches the one the browser exported. A match means it is building exactly the approved design. Hand edits on the canvas are not carried, and a design that has them stops here.
 - **Failed exports:** if any export in the Final package fails, the package is written but the run stops with "must not be delivered".
 - **Parity:** every device configuration in the package must be byte-identical to the one the .run installs.

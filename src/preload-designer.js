@@ -6,6 +6,7 @@ let fileFn = null, menuFn = null, saveFn = null;
 contextBridge.exposeInMainWorld('aidcDesktop', {
   version: 'desktop',
   big: (process.argv.find((a) => a.indexOf('--aidc-big=') === 0) || '').slice(11) || '',
+  builderSha256: (process.argv.find((a) => a.indexOf('--aidc-builder-sha256=') === 0) || '').slice(22) || '',   // 2.0.51: release identity
   job: (req) => ipcRenderer.invoke('job', req).then((r) => { if (r && r.error) note('⚠ ' + r.error); return r; }),
   openLayout: (req) => ipcRenderer.send('open-layout', req),
   onLayoutFileRequest: (fn) => { fileFn = fn; },   // 2.0.20: the Layout service rebuilds the design from this

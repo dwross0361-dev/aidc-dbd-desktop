@@ -23,6 +23,9 @@ function measureHeap(w, label) {
 
 const RES = app.isPackaged ? process.resourcesPath : path.join(__dirname, '..');
 const BUILDER = path.join(RES, 'builder', 'aidc-dbd-hyperscale.html');
+// 2.0.51: the release is the builder file, identified by its SHA-256. The window carries it into every
+// site-runner file it exports, and the site runner refuses a design exported from a different builder file.
+let BUILDER_SHA256 = ''; try { BUILDER_SHA256 = require('crypto').createHash('sha256').update(fs.readFileSync(BUILDER)).digest('hex'); } catch (e) {}
 const RUNNER = path.join(RES, 'runner', 'aidc-runner.js');
 const LAYOUT_SVC = path.join(RES, 'runner', 'aidc-layout.js');
 const DESIGN_SVC = path.join(RES, 'runner', 'aidc-design.js');   // 2.0.24
@@ -52,7 +55,7 @@ function send(ch, v) { if (main && !main.isDestroyed()) main.webContents.send(ch
 function createMain() {
   main = new BrowserWindow({ width: 1600, height: 1000, title: 'AIDC DBD', backgroundColor: '#ffffff',
     webPreferences: { preload: path.join(__dirname, 'preload-designer.js'), contextIsolation: true, nodeIntegration: false,
-      additionalArguments: process.env.AIDC_DESK_BIG ? ['--aidc-big=' + process.env.AIDC_DESK_BIG] : [] } });
+      additionalArguments: (process.env.AIDC_DESK_BIG ? ['--aidc-big=' + process.env.AIDC_DESK_BIG] : []).concat(BUILDER_SHA256 ? ['--aidc-builder-sha256=' + BUILDER_SHA256] : []) } });
   main.webContents.setWindowOpenHandler(() => ({ action: 'allow', overrideBrowserWindowOptions: { width: 1500, height: 950 } }));   // up to 512 racks the builder opens its own tabs
   main.on('close', (e) => { if (closing) return; e.preventDefault(); askBeforeClose(); });   // the design is offered for saving first
   main.on('unresponsive', () => { clearTimeout(builderIdle); builderBusy = true; keepAwake(); });   // a build holds the window: keep the machine up
@@ -315,7 +318,7 @@ function menu() {
     { label: 'View', submenu: [ { role: 'reload' }, { role: 'toggleDevTools' }, { type: 'separator' }, { role: 'resetZoom' }, { role: 'zoomIn' }, { role: 'zoomOut' }, { type: 'separator' }, { role: 'togglefullscreen' } ] },
     { label: 'Help', submenu: [ { label: 'About AIDC DBD', click: () => dialog.showMessageBox(main, { type: 'info', title: 'AIDC DBD',
       message: 'AIDC DBD ' + app.getVersion() + ' — DWR Networking',
-      detail: 'Builder ' + (BUILDER_INFO.builder || '?') + '\nSite runner built in (Node ' + NODE_VER() + ')\nBuilder window memory ' + (HEAPS.get('builder window') || RENDER_HEAP).toLocaleString('en-US') + ' MB (a window\'s limit), site runner and Layout service ' + RUNNER_HEAP.toLocaleString('en-US') + ' MB\nProject folder: ' + (CFG.projectDir || 'not chosen yet') }) } ] } ];
+      detail: 'Builder ' + (BUILDER_INFO.builder || '?') + (BUILDER_SHA256 ? ' (SHA-256 ' + BUILDER_SHA256.slice(0, 16) + '…)' : '') + '\nSite runner built in (Node ' + NODE_VER() + ')\nBuilder window memory ' + (HEAPS.get('builder window') || RENDER_HEAP).toLocaleString('en-US') + ' MB (a window\'s limit), site runner and Layout service ' + RUNNER_HEAP.toLocaleString('en-US') + ' MB\nProject folder: ' + (CFG.projectDir || 'not chosen yet') }) } ] } ];
   Menu.setApplicationMenu(Menu.buildFromTemplate(tpl));
 }
 let _nv = null; function NODE_VER() { if (_nv) return _nv; try { _nv = require('child_process').execFileSync(NODE, ['-v'], { windowsHide: true }).toString().trim(); } catch (e) { _nv = 'not found'; } return _nv; }

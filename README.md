@@ -2,7 +2,7 @@
 
 DWR Networking internal. The AIDC DBD Hyperscale builder as a Windows app, with the site runner built in.
 
-- **The builder** runs unchanged in the main window (builder `HS-v1.56`).
+- **The builder** runs unchanged in the main window (builder `HS-v1.57`).
 - **Saves:** every download lands in your project folder. Nothing is overwritten: a second copy is saved as `name (2)`.
 - **Past 512 racks**, the Final package, the Review package and the .run are built by the built-in site runner.
   - The runner is a separate process with the workstation's memory, so a window's 4 GB limit does not apply to it.
@@ -36,6 +36,7 @@ DWR Networking internal. The AIDC DBD Hyperscale builder as a Windows app, with 
 - **Up to 512 racks**, the Blueprint package and Deploy buttons work in the window, as in the browser.
 - **Past 512 racks**, those buttons and the menu items send the job to the site runner.
 - **Output folders:** each job writes to its own folder in the project folder, `{BUILD}-{job}-{date-time}/`. The folder holds the package and/or .run, the site-runner file it was built from, and `site-runner.log`.
+- **The release gate (2.0.51):** the site runner refuses a design unless it was exported from the same builder file (same SHA-256). Site-runner files exported before 2.0.51 carry no SHA-256: export them again.
 - **The fingerprint gate:** the runner and the Layout service rebuild the design from its settings and refuse unless the design fingerprint matches the window's. "Does not match" means the canvas has hand edits the settings don't carry.
 - **Large-site layouts:** Save layout writes the cabinets, devices and your physical edits to the project folder, without the links (they come from the design when the file is opened here again). The all-links CSV and PDF are written to the project folder by the Layout service. Refresh from Fabric Designer takes the design as the builder window has it now and keeps your edits.
 
@@ -64,11 +65,16 @@ GitHub Actions builds the installer on every push to `main` and on `v*` tags (`.
 Locally on Windows (Node 22):
 
 ```
+node tools/neutrality-check.js
 npm ci
 npm ci --prefix runner --omit=dev
 # put node.exe (Node 22 x64) in vendor\node\
 npx electron-builder --win nsis --x64 --publish never
 ```
+
+**Neutrality gate** (`tools/neutrality-check.js`, also the first step of the GitHub build): it fails on an internal standards, deviation, tenancy or Edge PoP clause id, a person's title, or an organization name on the banned list, in the builder (and the pages and binaries it embeds), the runner, the app and `provgo`. Before a release, run it on the outputs of a test build too: `node tools/neutrality-check.js <job folder>` reads into the package zip, the .run payload, workbooks and PDFs.
+
+**Release identity:** a builder release is its file, identified by SHA-256. The app hands the SHA-256 to the window, the site-runner file carries it, and the site runner refuses a design exported from a different builder file.
 
 Run from source: `npm start`. Without a bundled Node it uses the `node` on PATH, or `AIDC_NODE`.
 
