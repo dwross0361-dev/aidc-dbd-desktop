@@ -2,7 +2,7 @@
 
 DWR Networking internal. The AIDC DBD Hyperscale builder as a Windows app, with the site runner built in.
 
-- **The builder** runs unchanged in the main window (builder `HS-v1.61`).
+- **The builder** runs unchanged in the main window (builder `HS-v1.62`).
 - **Saves:** every download lands in your project folder. Nothing is overwritten: a second copy is saved as `name (2)`.
 - **Past 512 racks**, the Final package, the Review package and the .run are built by the built-in site runner.
   - The runner is a separate process with the workstation's memory, so a window's 4 GB limit does not apply to it.
@@ -38,6 +38,11 @@ DWR Networking internal. The AIDC DBD Hyperscale builder as a Windows app, with 
 - **File menu, customer input sheet (2.0.52):**
   - **Load input sheet…** sets the design from a filled sheet (`.xlsx`, or CSV `key,value,unit,source`) in one step and shows the import report. A value outside the offered options is built at the nearest one and flagged as a design choice; rows the builder does not model are listed as not modeled. The session input file (the record) is saved to the project folder.
   - **Input sheet template (blank)** and **Input sheet filled from this design** save the template, generated from the builder's catalog. The builder's **Input sheet** button does the same in a browser.
+- **File menu, Baseline and equivalence report (2.0.56):**
+  - **Load Baseline…** reads the customer's Baseline (`.xlsx`, or CSV `key,value,unit,source`), lists any rows it cannot use (unknown keys, bad values), and opens the equivalence report.
+  - **Baseline template (blank)** and **Baseline filled from this design** save `AIDC-DBD-Baseline-v1.xlsx`, generated from the same key catalog as the report.
+  - **Equivalence report** shows one row per metric: Baseline, Product, Delta, within tolerance, class and reason. A class can be overridden with a reason. **Download report** saves `<build>-equivalence.pdf` and `.csv`; the status line gives the SHA-256 of each. The builder's **Equivalence** button does the same in a browser.
+- **Health verdict (2.0.56):** the Fabric health panel and the Release check show one line, Errors (N) / Open inputs (N) / Advisories (N). Placeholders count as open inputs, never as errors.
   - The values without a control (compute rack feed, busbar rating) ride in the design file and its fingerprint, so the site runner rebuilds what was imported. The builder file and its platform profiles are never changed.
   - 2.0.53 r2 adds two rows: `fabric.be.keep_planes` (Keep plane count, NVL72 platforms) and `fe.ns_dpu` (north-south DPU, Vera Rubin NVL72: BlueField-3 B3240 or BlueField-4 B4240V).
 - **Output folders:** each job writes to its own folder in the project folder, `{BUILD}-{job}-{date-time}/`. The folder holds the package and/or .run, the site-runner file it was built from, and `site-runner.log`.

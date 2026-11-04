@@ -1,3 +1,32 @@
+# AIDC DBD Desktop 2.0.56 (builder HS-v1.62, site runner 1.11.0)
+
+Evaluation readiness Phase 2: the equivalence report against a customer Baseline, and one health verdict. Two fixes found by the new checks.
+
+- **Baseline template and parser.** File > **Baseline template (blank)** or **Baseline filled from this design** saves `AIDC-DBD-Baseline-v1.xlsx`. The tabs are Topology, BoM device counts, Cable summary and Platform specs, 122 keys, generated from the same catalog the report uses. **Load Baseline...** reads the `.xlsx` or a CSV `key,value,unit,source`, and lists unknown keys, bad values and duplicates by row.
+- **Equivalence report.** One row per metric: Baseline, Product, Delta (Delta %), within tolerance, class and reason.
+  - The Product side is read from the BoM's own rows, so the report and the BoM agree.
+  - Tolerance: topology parameters and models must match exactly. Device, cable and transceiver counts may differ by floor(2%) of the Baseline value, per role and in total.
+  - Proposed classes: Design choice, Error (Product), Error (Baseline) and Differs from NVIDIA public reference. The NVIDIA rules come in Phase 2b.
+  - Design choices come from the nearest-supported rows of the session input file (or the last import), from inputs that differ from the Baseline, and from parameters the builder has no option for, such as back-end oversubscription. Error (Baseline) comes from arithmetic checks on the Baseline itself, such as GPUs against trays and leaves against planes and rails.
+  - Any class can be overridden. An override needs a reason before the report is written.
+  - **Download report** saves `<build>-equivalence.pdf` and `.csv`, in plain ASCII. The PDF prints the CSV's SHA-256, and the status line gives the SHA-256 of both.
+- **Health verdict.** The Fabric health panel and the Release check show Errors (N) / Open inputs (N) / Advisories (N). The warning texts are unchanged.
+  - Errors: hard stops, high items tagged integrity (22 of the 37), the new cabling-BoM reconciliation, and switch ports used twice or past the switch.
+  - Placeholders count as open inputs, never as errors.
+  - A site feed below the facility load ("Facility load exceeds the stated feed") counts as an error. The "N% of the feed" messages stay informational.
+  - The panel uses the last BoM; when there is none, it offers **Run it**.
+- **Fix: front-end out-of-band drops.** When a pod grew a management switch, every front-end cabinet drop was recorded on the last front-end management switch, so up to 11 devices shared one port in the cable schedule. Each switch now keeps its own drops.
+  - Default output changes. GB300 256 racks: the plan digest changes, as do `acceptance/cabling-expected.csv`, `estate.json`, the physical model and the Visio drawing. No configuration file changes.
+  - Vera Rubin 364 racks SN6600 4 planes: the same, plus the SNMP location of ACME-OOB-MGT200 and the console server files that name it.
+  - Vera Rubin SN6800-LD 8 planes and the 16-rack designs are unchanged.
+- **Fix: front end off.** The physical model no longer draws the two firewall HA links between firewalls it did not place.
+- **Proved before shipping:**
+  - Fingerprints unchanged: GB300 256 SN5610 (b98ba38d0e5f6230), Vera Rubin 364 SN6800-LD 8 planes (10407090a45b80e9), the SN6600 4-plane test design (190bb91cd2582856), and six 16-rack designs. Full parity on all three large designs.
+  - Health verdict Errors (0) and 0 reconciliation mismatches on every default design.
+  - Self-test: the Product summary used as the Baseline gives 0 differences. Counts moved by 1% stay within tolerance; counts moved by 3% are all flagged.
+  - A nearest-supported import (Vera Rubin SN6800 at 2 planes, built at 8) gives Design choice rows only.
+  - `go test ./...` passes. Neutrality gate: 0 hits.
+
 # AIDC DBD Desktop 2.0.55 (builder HS-v1.61, site runner 1.11.0)
 
 Bug fix: an input sheet that asks for the air-cooled NV-SN6600 now gets it. Also ASCII apostrophes in package text and the SN6800-LD name.

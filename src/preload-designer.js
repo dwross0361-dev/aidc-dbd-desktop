@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld('aidcDesktop', {
   onLayoutFileRequest: (fn) => { fileFn = fn; },   // 2.0.20: the Layout service rebuilds the design from this
   onMenu: (fn) => { menuFn = fn; },
   onInputSheet: (fn) => { ipcRenderer.on('input-sheet-file', (e, m) => { try { fn(m.name, new Uint8Array(m.bytes)); } catch (err) { note('⚠ Input sheet: ' + (err && err.message || err)); } }); },   // 2.0.52
+  onBaseline: (fn) => { ipcRenderer.on('baseline-file', (e, m) => { try { fn(m.name, new Uint8Array(m.bytes)); } catch (err) { note('⚠ Baseline: ' + (err && err.message || err)); } }); },   // 2.0.56
   ready: (info) => ipcRenderer.send('ready', info),
   saveDesign: (o) => ipcRenderer.invoke('save-design', o),
   onSaveStream: (fn) => { ipcRenderer.on('save-stream', (e, id) => { Promise.resolve().then(() => fn(id)).catch((err) => ipcRenderer.send('save-stream-failed', id, String(err && err.message || err))); }); },   // 2.0.29

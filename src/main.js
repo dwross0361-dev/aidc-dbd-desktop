@@ -306,6 +306,15 @@ function loadInputSheet() {
   catch (err) { dialog.showMessageBox(main, { type: 'error', title: 'AIDC DBD', message: 'The input sheet could not be read', detail: err.message }); }
 }
 
+// ---- the Baseline (2.0.56): the app reads the file and hands its bytes to the builder, which parses it and opens the equivalence report
+function loadBaseline() {
+  const r = dialog.showOpenDialogSync(main || undefined, { title: 'Choose the Baseline', defaultPath: CFG.projectDir || app.getPath('documents'),
+    filters: [{ name: 'Baseline', extensions: ['xlsx', 'csv'] }], properties: ['openFile'] });
+  if (!r || !r[0]) return;
+  try { send('baseline-file', { name: path.basename(r[0]), bytes: fs.readFileSync(r[0]) }); }
+  catch (err) { dialog.showMessageBox(main, { type: 'error', title: 'AIDC DBD', message: 'The Baseline could not be read', detail: err.message }); }
+}
+
 // ---- menu
 function menu() {
   const act = (a) => () => send('menu', a);
@@ -318,6 +327,12 @@ function menu() {
       { label: 'Load input sheet…', click: () => loadInputSheet() },
       { label: 'Input sheet template (blank)', click: act('input-template') },
       { label: 'Input sheet filled from this design', click: act('input-template-filled') },
+      { type: 'separator' },
+      // 2.0.56: the Baseline and the equivalence report (builder HS-v1.62)
+      { label: 'Load Baseline…', click: () => loadBaseline() },
+      { label: 'Baseline template (blank)', click: act('baseline-template') },
+      { label: 'Baseline filled from this design', click: act('baseline-template-filled') },
+      { label: 'Equivalence report', click: act('equivalence') },
       { type: 'separator' }, { role: 'quit' } ] },
     { label: 'Site build', submenu: [
       { label: 'Final package and .run (with the parity check)', click: act('job-both') },

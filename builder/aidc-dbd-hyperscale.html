@@ -755,6 +755,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   <button class="btn" id="runnerexp" title="Export this design for the DWR site runner: the settings it is rebuilt from, this release and the design fingerprint. The runner builds the Final package and the .run off the browser (mega sites).">Site runner</button>
   <button class="btn" id="load">Load</button>
   <button class="btn" id="insheetbtn" title="Customer input sheet: load a filled sheet (.xlsx or CSV) to set the design in one step, or get the template">Input sheet</button>
+  <button class="btn" id="eqbtn" title="Equivalence report: load the customer's Baseline and compare it with this design, or get the Baseline template">Equivalence</button>
   <button class="btn" id="reset">Reset</button>
 </div>
 
@@ -778,6 +779,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   <div class="side">
     <div class="panel">
       <h3>Fabric health</h3>
+      <div id="m-verdict"></div>
       <div class="metric"><span title="Leaves, spines and super-spines of the GPU (back-end) network. The front end and OOB are counted on their own lines below.">Back-end switches</span><b id="m-dev">0</b></div>
       <div id="m-planes" style="font-size:11px;line-height:1.5;margin:2px 0 6px;color:var(--ink-soft)"></div>
       <div class="metric"><span>Racks</span><b id="m-racks">0</b></div>
@@ -947,7 +949,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.61';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.62';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   // HS v1.59: Vera Rubin NVL72 at 2 planes x 800G, NVIDIA's public reference layout (Owner decision D11); see the VR profile.
   // HS v1.58: the customer input sheet and importer (inputSheetImport, the SESSION_IN overlay); see the input sheet block.
   // HS v1.57 (release identity): the release is identified by the SHA-256 of this file, not by the string above (HS-v1.56 r1, r2
@@ -2261,21 +2263,21 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       var gaps=[];
       if(sw.breakoutCost==null) gaps.push('breakout cost');
       if(!sw.bankLayout)         gaps.push('bank layout');
-      warn.push({sev:'high', msg:'FE '+p[0]+' platform '+(sw.label||p[1])+
+      warn.push({sev:'high', tag:'advisory', msg:'FE '+p[0]+' platform '+(sw.label||p[1])+
         ' is cataloged but NOT CONFIRMED. Structural figures are from a datasheet; '+
         (gaps.length? ('these are not established: '+gaps.join(', ')+'. ') : '')+
         'Port counts and rack units are usable now. Anything derived from how the '+
         'platform behaves \u2014 channelization cost, cage row map \u2014 must be confirmed '+
         'against the vendor before this reaches a bill of materials or a cable schedule.'});
     });
-    if(maxU>usableU) warn.push({sev:'high', msg:'FE rack exceeds usable U ('+maxU+'/'+usableU+').'});   // v513
-    if(maxKW>FE_RACK.maxKW) warn.push({sev:'high', msg:'FE rack exceeds the '+FE_RACK.maxKW+' kW budget ('+maxKW+' kW).'});
+    if(maxU>usableU) warn.push({sev:'high', tag:'integrity', msg:'FE rack exceeds usable U ('+maxU+'/'+usableU+').'});   // v513
+    if(maxKW>FE_RACK.maxKW) warn.push({sev:'high', tag:'integrity', msg:'FE rack exceeds the '+FE_RACK.maxKW+' kW budget ('+maxKW+' kW).'});
     // The whole point of A/B: no redundant set may sit entirely on one side.
     ['fe-leaf','border','fw','lb'].forEach(function(k){
       var a=sides[0].filter(function(d){return d.kind===k;}).length;
       var b=sides[1].filter(function(d){return d.kind===k;}).length;
       if((a+b)>1 && (a===0||b===0)){
-        warn.push({sev:'high', msg:FE_RACK.dev[k].label+' devices all landed on one side \u2014 A/B split broken.'});
+        warn.push({sev:'high', tag:'integrity', msg:FE_RACK.dev[k].label+' devices all landed on one side \u2014 A/B split broken.'});
       }
     });
     warn.push({sev:'info', msg:'FE racks sit in their own floor space with no shared PDU, branch circuit '
@@ -2507,7 +2509,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     }
     if(nsDpuBf4()) warn.push({sev:'med', msg:'BlueField-4 B4240V north-south DPU (reference-architecture assumption, 2 x 400G per host): '+BF4_PENDING+' (hbn/README.md). OPN (B4240V is the RA\'s part name), physical port count and cage CONFIRM; power not published. Cabling, port map, addressing, front-end leaf configs and the 1GbE OOB drop are built as for BlueField-3.'});   // HS v1.59 (2.0.53); HS v1.60 (2.0.54): one item, merged with the reference-architecture assumption
     if(FE.nicGbps > LSW.access.gbps){
-      warn.push({sev:'high', msg:'Host FE NIC is '+FE.nicGbps+'G but '+LSW.label+' access ports are '
+      warn.push({sev:'high', tag:'advisory', msg:'Host FE NIC is '+FE.nicGbps+'G but '+LSW.label+' access ports are '
         +LSW.access.gbps+'G ('+LSW.access.ff+'). Endpoints will run below rated speed \u2014 confirm this is intentional.'});
     }
 
@@ -2519,7 +2521,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     var hostsPerRack=A.hostsPerRack, fePortsPerRack=A.fePortsPerRack, accessPerPair=A.accessPerPair;
     var racksPerPair=A.racksPerPair, pairs=A.pairs, leaves=A.leaves;
     if(fePortsPerRack>accessPerPair){
-      warn.push({sev:'high', msg:'One rack needs '+fePortsPerRack+' FE ports but a '+LSW.label
+      warn.push({sev:'high', tag:'integrity', msg:'One rack needs '+fePortsPerRack+' FE ports but a '+LSW.label
         +' pair offers '+accessPerPair+' \u2014 a single rack cannot be served by one pair.'});
     }
     var hostPerLeaf=A.hostPerLeaf, fePods=A.fePods;
@@ -2532,7 +2534,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     var upBankUsed=FE.uplinksPerLeaf+storageUpPorts;
 
     if(accessUsedPerLeaf>LSW.access.n){
-      warn.push({sev:'high', msg:'FE leaf access oversubscribed: '+accessUsedPerLeaf+' access ports needed ('
+      warn.push({sev:'high', tag:'integrity', msg:'FE leaf access oversubscribed: '+accessUsedPerLeaf+' access ports needed ('
         +hostPerLeaf+' host'+(storageAccessCost?' + '+storageAccessCost+' lost to storage channelization':'')
         +') but '+LSW.label+' has '+LSW.access.n+' access ports. Add a leaf pair, or cut racks per pair.'});
     } else if(accessUtil>0.95 && !(LSW.bankLayout==='uniform-channelized' && LSW.uplink && LSW.uplink.n>upBankUsed)){
@@ -2591,12 +2593,12 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         var _cm=!_co?'no catalog coherent support'
           :((_co.variants?_co.variants.join(' and '):(_co.modules||'coherent modules'))
             +(typeof _co.ports==='number'?(' on '+_co.ports+' port'+(_co.ports===1?'':'s')):(_co.ports==='all'?' on every port':(' (port count: '+_co.ports+')'))));
-        warn.push({sev:'high', msg:'The inter-site link is set to terminate coherent optics in the '
+        warn.push({sev:'high', tag:'advisory', msg:'The inter-site link is set to terminate coherent optics in the '
           +FE.bgModel+' gateways over '+FE.interSiteSpanKm+' km. The catalog gives that platform '+_cm+'. '
           +'Confirm the module reaches this span (ZR and ZR-M do not), or terminate the line side in an external transponder.'});
       }
       if(FE.interSiteSpanKm > 2 && FE.interSiteOptics === 'gray'){
-        warn.push({sev:'high', msg:'The inter-site link is set to gray optics over '+FE.interSiteSpanKm
+        warn.push({sev:'high', tag:'integrity', msg:'The inter-site link is set to gray optics over '+FE.interSiteSpanKm
           +' km. FR4 reaches 2 km. Expected loss on this span is 35-53 dB against roughly 22-30 dB of '
           +'optic budget, and no transceiver closes that gap.'});
       }
@@ -2615,9 +2617,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         +'only through the hub site (site 1) over the DCI waves: no edge routers, no production carriers and no public block here. '
         +'The hub\'s default arrives over the DCI EVPN; this site\'s VIPs are its slice of the hub\'s block'
         +(bnkOn()&&bnkVip(1)?' (from '+bnkVip(1)+')':'')+' and the hub\'s edge routers announce them. Losing the hub site or the DCI loses this site\'s internet; the out-of-band plane is unaffected.'});
-      if(bnkOn() && !bnkVip(1)) warn.push({sev:'high', msg:'SPOKE VIP SLICE DOES NOT FIT. Site '+(+SITE_INDEX)+'\'s VIPs fall past the end of the hub\'s block ('
+      if(bnkOn() && !bnkVip(1)) warn.push({sev:'high', tag:'integrity', msg:'SPOKE VIP SLICE DOES NOT FIT. Site '+(+SITE_INDEX)+'\'s VIPs fall past the end of the hub\'s block ('
         +((bnkVipBlock()||{}).block||'none')+'): the region needs 8 + sites \u00d7 tenants addresses. Widen the hub\'s primary block and enter it in the FE rows of Public IPs at every site of the region.'});
-      if(!(FE.dciSites>1)) warn.push({sev:'high', msg:'SPOKE SITE WITHOUT DCI. A spoke reaches the internet only through the hub, but the DCI is off in this build. Set the region\'s site count above one.'});
+      if(!(FE.dciSites>1)) warn.push({sev:'high', tag:'integrity', msg:'SPOKE SITE WITHOUT DCI. A spoke reaches the internet only through the hub, but the DCI is off in this build. Set the region\'s site count above one.'});
     } else if(bnkOn() && FE.dciSites>1){
       var _vb=bnkVipBlock(), _need=8+FE.dciSites*Math.max(1,+FE.tenants||1), _have=_vb?Math.pow(2,32-blockMask(_vb.block))-2:0;
       if(_have<_need) warn.push({sev:'med', msg:'HUB BLOCK TOO SMALL FOR THE REGION. The hub\'s primary block ('+(_vb?_vb.block:'none')+') carries every site\'s VIPs: '
@@ -2654,7 +2656,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         +'BNK VRF-per-tenant mode would give the ingress path routing-level separation; deferred until F5 publishes its limits. Confirm the licensing basis.'});
     }
     if(FE.tenants>1 && !FE.natPoolPerVrf){
-      warn.push({sev:'high', msg:'Source NAT pools are not keyed per routing instance. Tenant address '
+      warn.push({sev:'high', tag:'advisory', msg:'Source NAT pools are not keyed per routing instance. Tenant address '
         +'space may overlap, and every flow and metering record has to carry the '
         +'instance. A shared pool destroys tenant attribution and therefore billing.'});
     }
@@ -2667,7 +2669,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     // width is per-SKU -- 8 QSFP-DD cages on the QFX5130-48C, 48 channelized 400G ports on
     // the QFX5240-64OD -- so read it off the SKU rather than assuming the old figure.
     if(upBankUsed>LSW.uplink.n){
-      warn.push({sev:'high', msg:'FE leaf uplink bank exceeded: '+upBankUsed+' of '+LSW.uplink.n
+      warn.push({sev:'high', tag:'integrity', msg:'FE leaf uplink bank exceeded: '+upBankUsed+' of '+LSW.uplink.n
         +' '+(LSW.uplink.ff||'uplink')+' ports ('+FE.uplinksPerLeaf+' to spine + '+storageUpPorts+' storage'
         +(stPerPort>1?(' at '+stPerPort+'x'+stNic+'G'):'')+'). Storage shares this bank with the spine '
         +'uplinks \u2014 reduce uplinks per leaf, add a leaf pair, or move storage to its own pair.'});
@@ -2681,7 +2683,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         +'% \u2014 consider a smaller leaf SKU or more racks per pair.'});
     }
     if(FE.uplinksPerLeaf>LSW.uplink.n){
-      warn.push({sev:'high', msg:LSW.label+' has only '+LSW.uplink.n+' uplink ports.'});
+      warn.push({sev:'high', tag:'integrity', msg:LSW.label+' has only '+LSW.uplink.n+' uplink ports.'});
     }
 
     // --- oversubscription (access bandwidth vs uplink bandwidth) ----------------------
@@ -2705,7 +2707,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         +' = '+Math.round(accessGbps)+'G down vs '+FE.uplinksPerLeaf+' \u00d7 '+LSW.uplink.gbps+'G = '
         +uplinkGbps+'G up. One spine lost \u2192 '+r2+':1.';
       if(oversub>8){
-        warn.push({sev:'high', msg:'FE leaf oversubscription '+r1+':1'+detail
+        warn.push({sev:'high', tag:'advisory', msg:'FE leaf oversubscription '+r1+':1'+detail
           +' The spine tier is fixed at '+SZ.spines+', so uplink bandwidth per leaf does not grow with the '
           +'fabric \u2014 cut hosts per leaf pair (add pairs) or move to a leaf with more/faster uplink ports.'});
       } else if(oversub>4){
@@ -2724,7 +2726,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     var spines=(FE.spinesConditional && pods<FE.spineMinPods)?0:SZ.spines;
     if(SZ.mode==='auto'){
       if(SZ.limitedBy){
-        warn.push({sev:'high', msg:'Spine auto-scale could not reach '+SZ.target+':1 \u2014 '+SZ.wantSpines
+        warn.push({sev:'high', tag:'advisory', msg:'Spine auto-scale could not reach '+SZ.target+':1 \u2014 '+SZ.wantSpines
           +' spines needed, '+SZ.spines+' possible, limited by the '+SZ.limitedBy+' ('+SZ.bankFree
           +' uplink ports free after storage, '+SZ.perSpine+' per spine). Cut hosts per leaf pair, '
           +'move storage off the uplink bank, or accept the resulting ratio.'});
@@ -2735,7 +2737,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       }
     }
     if(/^NV-SN6600(-LD)?$/.test(FE.spineModel||'') && /7280DR3A/.test(FE.borderModel||''))   // HS v1.11 follow-up (HS v1.28: both SN6600 models)
-      warn.push({sev:'high', msg:'Border leaf '+FE.borderModel+' on an '+nvSku(FE.spineModel)+' spine: UNCONFIRMED. The 7280DR3A runs 400G as 8 x 50G (400g-8); a 1.6T spine cage broken out 2 x 400G gives each port 4 lanes, so the link may not come up. Pending NVIDIA confirmation of 50G lanes on Spectrum-6 (one 400G-8 port per cage). Use another border leaf until then.'});
+      warn.push({sev:'high', tag:'advisory', msg:'Border leaf '+FE.borderModel+' on an '+nvSku(FE.spineModel)+' spine: UNCONFIRMED. The 7280DR3A runs 400G as 8 x 50G (400g-8); a 1.6T spine cage broken out 2 x 400G gives each port 4 lanes, so the link may not come up. Pending NVIDIA confirmation of 50G lanes on Spectrum-6 (one 400G-8 port per cage). Use another border leaf until then.'});
     // ---- v484: FRONT-END THREE TIERS ---------------------------------------------------------------------
     var t3=null;
     if(spines>0){
@@ -2751,7 +2753,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         var _broken=null;   // HS v1.46
         if(!_m){ _m=Math.ceil((_np*_U+_att)/_R); _L=Math.max(1,Math.floor(_U/_m));
           _broken={pods:_np, up:_U, ports:_R, attach:_att, need:_np+Math.ceil(_att/Math.max(1,_U)), model:SSW.label};
-          warn.push({sev:'high', msg:'FE super-spine tier does not close: '+_np+' pods at '+_U+' uplinks per pod spine need '+_broken.need+' ports on each super-spine (one per pod plus the border leaves), and the '+SSW.label+' has '+_R+'. No package is built until it closes: fewer racks (at most '+(_R-1)+' pods of '+_ppp+' leaf pairs) or fewer front-end leaves.'}); }
+          warn.push({sev:'high', tag:'integrity', msg:'FE super-spine tier does not close: '+_np+' pods at '+_U+' uplinks per pod spine need '+_broken.need+' ports on each super-spine (one per pod plus the border leaves), and the '+SSW.label+' has '+_R+'. No package is built until it closes: fewer racks (at most '+(_R-1)+' pods of '+_ppp+' leaf pairs) or fewer front-end leaves.'}); }
         t3={pods:_np, pairsPerPod:_ppp, spinesPerPod:spines, perSpine:_ups3, up:_U, down:_D, oversub:_D/Math.max(1,_U), groups:spines, sspPerGroup:_m, linksPerSsp:_L, ssps:spines*_m, attach:_att, broken:_broken};
         warn.push({sev:'info', msg:'FE THREE TIERS \u2014 '+leaves+' leaves need more than one spine tier can hold, so the front end runs as '+_np+' pods of up to '+_ppp+' leaf pairs, '
           +spines+' spines per pod ('+(spines*_np)+' in all), joined by '+(spines*_m)+' super-spines in '+spines+' groups of '+_m+'. Border leaves attach to the super-spines; DPUs peer EVPN with their own pod\'s spines.'
@@ -2772,7 +2774,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       var leavesPerPod=Math.ceil(RACKS_PER_POD/racksPerPair)*2;
       maxPods=Math.floor(SSW.access.n/Math.max(1,leavesPerPod*upPerSpine));
       if(spineUtil>1){
-        warn.push({sev:'high', msg:'Spine capacity exceeded: '+spinePorts+' of '+SSW.access.n
+        warn.push({sev:'high', tag:'integrity', msg:'Spine capacity exceeded: '+spinePorts+' of '+SSW.access.n
           +' ports. Add spines or reduce uplinks per leaf.'});
       } else if(spineUtil>0.9){
         warn.push({sev:'med', msg:'Spines '+Math.round(spineUtil*100)
@@ -2798,11 +2800,11 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     var collapsed=(spines===0);
     if(collapsed){
       if(FE.uplinksPerLeaf%cores!==0){
-        warn.push({sev:'high', msg:FE.uplinksPerLeaf+' uplinks per leaf do not divide evenly across '
+        warn.push({sev:'high', tag:'advisory', msg:FE.uplinksPerLeaf+' uplinks per leaf do not divide evenly across '
           +cores+' border leaves \u2014 dual-homing is asymmetric and a core failure costs more than half the path.'});
       }
       if(FE.uplinksPerLeaf<cores){
-        warn.push({sev:'high', msg:'Fewer uplinks per leaf ('+FE.uplinksPerLeaf+') than cores ('+cores
+        warn.push({sev:'high', tag:'advisory', msg:'Fewer uplinks per leaf ('+FE.uplinksPerLeaf+') than cores ('+cores
           +') \u2014 at least one leaf is single-homed and loses the fabric when its core goes.'});
       }
       warn.push({sev:'info', msg:'Collapsed core: border leaves carry both the VXLAN type-5 gateway and the '
@@ -2850,18 +2852,18 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
               var perBLwaves=wavesPerGw;
               // Gateway coherent budget (the waves land on the gateways, not the border leaves).
               if(wavesPerGw>gwDciPorts(wavesPerGw).length){
-                warn.push({sev:'high', msg:wavesPerGw+' DCI waves per gateway exceed the free ports on a '+FE.bgModel+' \u2014 add a transport tier.'});
+                warn.push({sev:'high', tag:'integrity', msg:wavesPerGw+' DCI waves per gateway exceed the free ports on a '+FE.bgModel+' \u2014 add a transport tier.'});
               }
               // Hub port budget, and the concentration risk that comes with it.
               if(hubSpoke){
                 var hs400=feCoherentPorts(hubModel(),24);   // v514
                 var perHub=Math.ceil(hubPorts/Math.max(1,FE.dciHubRouters));
                 if(perHub>hs400){
-                  warn.push({sev:'high', msg:hubPorts+' hub waves across '+FE.dciHubRouters+' '+hubModel()
+                  warn.push({sev:'high', tag:'integrity', msg:hubPorts+' hub waves across '+FE.dciHubRouters+' '+hubModel()
                     +' routers needs '+perHub+' coherent ports each, past the '+hs400+'\u00d7400G available.'});
                 }
                 if(!FE.dciHubTransitOnly){
-                  warn.push({sev:'high', msg:'Hub is not marked transit-only \u2014 any authoritative service that '
+                  warn.push({sev:'high', tag:'advisory', msg:'Hub is not marked transit-only \u2014 any authoritative service that '
                     +'drifts to the hub turns a hub outage from islanding the sites into orphaning them.'});
                 }
                 if(!FE.dciIpsecFallback){
@@ -2874,19 +2876,19 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
               // it. Refuse rather than emit it.
               var _cb=Math.max(0, FE.classBTenants||0);
               if(_cb>0 && !FE.hostEnforcement){
-                warn.push({sev:'high', msg:_cb+' Class B tenants configured but host enforcement is not in '
+                warn.push({sev:'high', tag:'advisory', msg:_cb+' Class B tenants configured but host enforcement is not in '
                   +'service. Class B is not permitted until host enforcement is proved; a shared firewall context with '
                   +'no host enforcement separates nothing. Set hostEnforcement only once that evidence exists.'});
               }
               var _sm=siteTenantMax(), _cap=edgeTenantMax(), _t=Math.max(1,FE.tenants);   // HS v1.04: per edge block; HS v1.45: and per site
-              try{ edgeSizing({sp:(t3?t3.groups:spines)}).forEach(function(r){ warn.push({sev:r.ok?'info':'high', msg:'Edge PoP sizing -- '+r.tier+': need '+r.need+'; have '+r.have+(r.note?(' -- '+r.note):'')+(r.ok?'':' -- DOES NOT FIT')}); }); }catch(e){}
+              try{ edgeSizing({sp:(t3?t3.groups:spines)}).forEach(function(r){ warn.push({sev:r.ok?'info':'high', tag:'integrity', msg:'Edge PoP sizing -- '+r.tier+': need '+r.need+'; have '+r.have+(r.note?(' -- '+r.note):'')+(r.ok?'':' -- DOES NOT FIT')}); }); }catch(e){}
               if(_t<=_cap && _t>_sm.max){   // HS v1.45: BNK or the VIP block binds first
-                warn.push({sev:'high', msg:'Tenant count '+_t+' exceeds the site tenant ceiling of '+_sm.max+', set by '+_sm.why+'. '
+                warn.push({sev:'high', tag:'integrity', msg:'Tenant count '+_t+' exceeds the site tenant ceiling of '+_sm.max+', set by '+_sm.why+'. '
                   +(_sm.why==='the VIP block'?'Each tenant takes one public /32 from the primary front-end block: enlarge it (Public IPs panel).'
                     :'F5 BNK is shared by every edge block, so its per-tenant limit applies to the whole site.')});
               }
               if(_t>_cap){
-                warn.push({sev:'high', msg:'Tenant count '+_t+' exceeds the tenant ceiling of '+_cap+'. Each tenant takes one sub-interface per side on the firewall ('
+                warn.push({sev:'high', tag:'integrity', msg:'Tenant count '+_t+' exceeds the tenant ceiling of '+_cap+'. Each tenant takes one sub-interface per side on the firewall ('
                   +(secVendor==='ftd'?'Secure Firewall 4245: '+FTD_PLATFORM.virtualRouters+' virtual routers, '+FTD_PLATFORM.subIfs+' sub-interfaces':'SRX4700: '+FW_PLATFORM.rethSubIfs+' reth sub-interfaces')
                   +', '+TENANT_RESERVE+' held back) and the transit addressing holds '+TENANT_ADDR_CEILING+'.'});
               }
@@ -2960,7 +2962,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     // --- the honest checks -----------------------------------------------------------
     var d=p.edge.dci;
     if(d.hubSpoke && d.hubRouters>0){
-      warn.push({sev:'high', msg:'Hub routers ('+d.hubRouters+'\u00d7 '+d.hubModel+') sit in a CARRIER-NEUTRAL '
+      warn.push({sev:'high', tag:'advisory', msg:'Hub routers ('+d.hubRouters+'\u00d7 '+d.hubModel+') sit in a CARRIER-NEUTRAL '
         +'FACILITY, not at this site. The front-end standard scopes spares "per model per site" \u2014 a spare held here does '
         +'not cover the hub, and shipping one to the colo is a courier lead time on the device every site '
         +'depends on. Stock the hub separately or accept the RMA exposure explicitly.'});
@@ -4671,7 +4673,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     }
 
     if(b.feedShortForOneUnit){
-      out.push({sev:'high', msg:'Compute rack: '+b.preset+' is a rack-scale system drawing '
+      out.push({sev:'high', tag:'integrity', msg:'Compute rack: '+b.preset+' is a rack-scale system drawing '
         +b.unitKW+' kW as one unit, against a '+b.rackKW+' kW feed. It does not fit, and it '
         +'cannot be part-fitted \u2014 there is no such thing as a partial NVL72. Either the feed '
         +'is wrong for this platform or this platform is wrong for the hall.'});
@@ -4681,12 +4683,12 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       if(computeOnShelves()) return;   // v514: no rack PDUs to size; the busbar checks speak for shelves
       var ps=pduSpecFor(b.kwUsed);
       if(b.kwUsed && ps.beyondPdu){
-        out.push({sev:'high', msg:'Rack draw of '+b.kwUsed+' kW exceeds what '+PDU_MAX_PER_SIDE
+        out.push({sev:'high', tag:'integrity', msg:'Rack draw of '+b.kwUsed+' kW exceeds what '+PDU_MAX_PER_SIDE
           +' distribution units per side can carry. At this density power is delivered by '
           +'busbar tap and the cabinet specification changes.'});
       } else if(b.kwUsed && ps.count > 1){
         var _short=ps.shortKva>0, _dev=_short && ps.model==='PX3-4700YU-V2K1';
-        out.push({sev:_short&&!_dev?'high':'info', msg:'Rack draw of '+b.kwUsed+' kW: '+ps.count+' \u00d7 '+ps.spec
+        out.push({sev:_short&&!_dev?'high':'info', tag:'integrity', msg:'Rack draw of '+b.kwUsed+' kW: '+ps.count+' \u00d7 '+ps.spec
           +' per side ('+[1,2,3,4,5,6].slice(0,ps.count).map(function(n){ return 'A'+n; }).join('/')+', '+[1,2,3,4,5,6].slice(0,ps.count).map(function(n){ return 'B'+n; }).join('/')+'). Either side must carry the whole rack, so A and B are not summed: '
           +ps.sideUsable+' kVA per side against '+ps.needKva+' kVA'
           +(_short ? (', '+ps.shortKva+' kVA short'+(_dev ? ' \u2014 recorded deviation DV-01 (one side carries the whole rack), covered by BMC host power capping during a single-side outage.'
@@ -4697,7 +4699,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       }
     })();
     if(b.accelExceedsNode){
-      out.push({sev:'high', msg:'Preset '+b.preset+' is internally inconsistent: its accelerators '
+      out.push({sev:'high', tag:'integrity', msg:'Preset '+b.preset+' is internally inconsistent: its accelerators '
         +'alone draw more than the node it sits in. One of the two figures is wrong. This cannot '
         +'be a real system, so it is a data error rather than a design one.'});
     }
@@ -4711,24 +4713,24 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         +'Size the CDU and loop for the first figure and the room air for the second.'});
     }
     if(b.exceedsVendorNpr){
-      out.push({sev:'high', msg:'Compute rack: this profile places '+b.stated+' nodes per rack, '
+      out.push({sev:'high', tag:'integrity', msg:'Compute rack: this profile places '+b.stated+' nodes per rack, '
         +'but the vendor figure for '+b.preset+' is '+b.nprVendor+' ('+b.vendorRackKW+' kW/rack, '
         +b.cooling+'). At '+b.stated+' the rack draws '+b.kwStated+' kW. Every HGX generation '
         +'holds the RACK near 42-43 kW and cuts nodes as the node gets hotter \u2014 a profile that '
         +'holds nodes constant and lets the rack climb has inverted that. Source: '+b.src+'.'});
     }
     if(b.constrained && b.binding==='rack units'){
-      out.push({sev:'high', msg:'Compute rack: the profile states '+b.stated+' hosts at '
+      out.push({sev:'high', tag:'advisory', msg:'Compute rack: the profile states '+b.stated+' hosts at '
         +b.ruPerHost+'U each = '+(b.stated*b.ruPerHost)+'U, against '+RACK_USABLE_U+'U usable in the '
         +'cabinet. Only '+b.used+' fit. Rack units bind here before power does \u2014 this is a '
         +'physical impossibility, not a budget choice.'});
     } else if(b.constrained){
-      out.push({sev:'high', msg:'Compute rack: the profile states '+b.stated+' hosts ('
+      out.push({sev:'high', tag:'advisory', msg:'Compute rack: the profile states '+b.stated+' hosts ('
         +b.kwStated+' kW) but only '+b.used+' fit \u2014 power is the binding limit at '
         +b.rackKW+' kW ('+b.cooling+'-cooled). Building '+b.used+' per rack, so the rack count '
         +'for a given accelerator total rises accordingly.'});
     } else if(b.kwPerHost && b.kwUsed > b.rackKW*0.95){
-      out.push({sev:'high', msg:'Compute rack at '+b.kwUsed+' kW of a '+b.rackKW+' kW '
+      out.push({sev:'high', tag:'advisory', msg:'Compute rack at '+b.kwUsed+' kW of a '+b.rackKW+' kW '
         +b.cooling+'-cooled feed ('+Math.round(b.kwUsed/b.rackKW*100)+'%). At this margin a '
         +'derate, a redundancy requirement or a slightly denser node all put the rack over. '
         +'Confirm the feed against the facility design before committing to this host count.'});
@@ -4771,6 +4773,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     document.getElementById('m-dev').textContent=devs.filter(function(d){return d.type!=='rack';}).length.toLocaleString('en-US');
     try{ renderPlanes(); }catch(e){}   // HS v1.13
     _phSchedule();   // HS v1.19: Front end and OOB stats, once the build settles
+    verdictSchedule();   // HS v1.62: the health verdict (D8), once the build settles
     document.getElementById('m-racks').textContent=byType('rack').length;
     document.getElementById('m-hosts').textContent=byType('rack').reduce(function(a,r){return a+r.hosts;},0).toLocaleString();
     document.getElementById('m-rdu').textContent=byType('rack').reduce(function(a,r){return a+r.hosts*ACC_PER_HOST;},0).toLocaleString();
@@ -4869,8 +4872,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
           var msgs=[];
           if(head < 0){
-            msgs.push(['high','Facility load exceeds the stated feed by '+Math.abs(head).toFixed(2)
-              +' MW. This build does not fit the site.']);
+            msgs.push(['high',facilityOverMsg(head)]);   // HS v1.62: integrity, counted in the health verdict
           } else if(pct > 90){
             msgs.push(['high','Facility load is '+Math.round(pct)+'% of the feed. No margin for a '
               +'derate, a redundancy requirement, or growth.']);
@@ -7606,12 +7608,13 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
         cab.forEach(function(c){ if(c.cls==='fe') c.items=c.items.filter(function(it){ return it.role!=='fe-gw'; }); });
       }
       // security firewalls: beside the border leaves they hairpin off, one per FE cabinet
+      var _fwPl={};   // HS v1.62: the firewalls placed in a cabinet (none without front-end cabinets)
       if(fws.length){
         var feCabs=cab.filter(function(c){ return c.cls==='fe'; });
         fws.forEach(function(d,i){ var c=feCabs[i%Math.max(1,feCabs.length)]; if(c){ var sp=FE_RACK.dev.fw||{u:2,w:1000};
           // Cisco 4200 data sheet: 1RU, 1380 W maximum AC input (4245), 200-240 VAC only
           if(secVendor==='ftd') sp={u:1, w:1380};
-          c.items.push(item(d.name,'sec-fw',sp.u,sp.w)); } });
+          c.items.push(item(d.name,'sec-fw',sp.u,sp.w)); _fwPl[d.name]=1; } });
       }
       // edge links (not in the FE cable map)
       EDGE_LINKS=[];
@@ -7633,6 +7636,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       // (FW_ICL ports in ae0). FTD 4245 active/standby: direct failover and state links on the fixed
       // SFP28 ports.
       for(var _fp=0; _fp+1<fws.length; _fp+=2){ var _f0=fws[_fp], _f1=fws[_fp+1];   // HS v1.04: per pair (edge block)
+        if(!_fwPl[_f0.name] || !_fwPl[_f1.name]) continue;   // HS v1.62: no HA link between firewalls the model did not place (front end off)
         if(secVendor!=='ftd'){
           // SRX4700 MNHA: the inter-chassis link, two 100G data ports in ae0 (no chassis-cluster control or fabric links)
           FW_ICL.ports.forEach(function(p,k){ EL(_f0.name,p,_f1.name,p,'100G','SRX MNHA inter-chassis link '+(k+1)+' (ae0, QSFP28)'); });
@@ -10729,17 +10733,13 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     }); }
     // FE cabinet switches are numbered after the pod switches. A pod that grows a switch
     // during assignment would otherwise share a name with an FE switch.
-    function renumberFe(){
-      var _bySw=null;   // HS v1.35: OOB entries by switch name, built on the first rename and kept as names change
-      feSwitches.forEach(function(s,fk){
-        var old=s.name, nu=oobName('MGT', mgSwitches.length+fk+1);
-        if(old===nu) return;
-        s.name=nu;
-        if(oob['mgsw:'+s.id]) oob['mgsw:'+s.id].dev=synth(nu,'mgmt-access',null);
-        if(!_bySw){ _bySw={}; Object.keys(oob).forEach(function(k){ var w=oob[k].sw; if(w==null) return; (_bySw[w]=_bySw[w]||[]).push(k); }); }
-        var ks=_bySw[old]; if(!ks || !ks.length) return; delete _bySw[old];
-        ks.forEach(function(k){ oob[k].sw=nu; }); _bySw[nu]=(_bySw[nu]||[]).concat(ks);
-      });
+    function renumberFe(){   // HS v1.62: renamed from one snapshot, so a shift by one never moves a switch's drops onto the next one's name
+      var ren=[]; feSwitches.forEach(function(s,fk){ var old=s.name, nu=oobName('MGT', mgSwitches.length+fk+1); if(old!==nu) ren.push([s, old, nu]); });
+      if(!ren.length) return;
+      var mine={}; feOob.forEach(function(k){ mine[k]=1; });   // only the FE cabinets' drops: a grown pod switch can take an FE switch's old name
+      var bySw={}; Object.keys(mine).forEach(function(k){ var w=oob[k]&&oob[k].sw; if(w==null) return; (bySw[w]=bySw[w]||[]).push(k); });
+      ren.forEach(function(r){ var s=r[0]; s.name=r[2]; if(oob['mgsw:'+s.id]) oob['mgsw:'+s.id].dev=synth(r[2],'mgmt-access',null); });
+      ren.forEach(function(r){ (bySw[r[1]]||[]).forEach(function(k){ oob[k].sw=r[2]; }); });
     }
     assignPods(); renumberFe();
     // rack-local drops onto the rack's SN2201s (swp1..48)
@@ -29693,6 +29693,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
   // come from the layout tool's length schedule.
   function bomSections(){
     var pm=physModel(), items=[], roleOf={}, out=[];
+    var _M=new WeakMap(), _cv={}, _raw={}, _seen=new Map(), _dup={n:0, ex:[]}, _m=function(r, o){ _M.set(r, o); return r; };   // HS v1.62: the tally (equivalence summary, cabling-BoM reconciliation)
+    var _cva=function(s, k){ var q=s+'|'+k; _cv[q]=(_cv[q]||0)+1; };
     pm.cabinets.forEach(function(c){ c.items.forEach(function(i){ items.push(i); roleOf[i.name]=i.role; }); });
     function label(k){ if(/^OM22\d\d/.test(String(k))) return 'Opengear '+k; var s=(typeof FE_EDGE_SW!=='undefined'&&FE_EDGE_SW[k])||(typeof FE_SW!=='undefined'&&FE_SW[k])||(typeof BE_MODELS!=='undefined'&&BE_MODELS[k]); return (s&&s.label)||k||'(platform not recorded)'; }
     var ROLE_TXT={'edg-er':'Edge router','edg-gw':'Border gateway','edg-lb':'Load balancer / API gateway — '+FE.lbVendor,'sec-fw':'Edge firewall (HA pair)',
@@ -29706,7 +29708,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     function devices(sec){
       var c={}; items.forEach(function(i){ if(SEC[sec].indexOf(i.role)<0) return; var k=i.role+'|'+(i.model||''); c[k]=(c[k]||0)+1; });
       return Object.keys(c).sort(function(a,b){ return SEC[sec].indexOf(a.split('|')[0])-SEC[sec].indexOf(b.split('|')[0]); }).map(function(k){
-        var p=k.split('|'); return ['Device', label(p[1]), ROLE_TXT[p[0]]||p[0], '', '', c[k]]; });
+        var p=k.split('|'); return _m(['Device', label(p[1]), ROLE_TXT[p[0]]||p[0], '', '', c[k]], {kind:'dev', role:p[0], model:p[1]}); });
     }
     // v560: cable family per link is cableFamilyOf(), shared with the Cable Matrix
     var cab={edge:{}, fef:{}, oob:{}, power:{}}, STR={}, XC={}, _F=null;   // HS v1.15
@@ -29714,39 +29716,41 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     try{ if((pm.rows||[]).some(function(r){ return (r.col||0)>0; })) _F=floorPlace(pm); }catch(e){}
     pm.links.forEach(function(l){
       var ra=roleOf[l.a], rb=roleOf[l.b], s;
+      _raw[l.plane]=(_raw[l.plane]||0)+1;   // HS v1.62: links as drawn, before any BoM rule
+      if(l.plane!=='be'){ var _e1=l.a+'|'+l.ap, _e2=l.b+'|'+l.bp; [_e1,_e2].forEach(function(e){ if(_seen.has(e)){ _dup.n++; if(_dup.ex.length<5) _dup.ex.push(e+' ('+l.plane+')'); } else _seen.set(e, 1); }); }
       if(_F && l.plane!=='power'){ var _a=_F.cabOf[l.a], _b=_F.cabOf[l.b]; if(_a && _b && _F.pos[_a] && _F.pos[_b]){ var _pl=/^oob|eoob|mgmt/.test(l.plane||'')?'oob':(l.plane||'other'); var X=XC[_pl]||(XC[_pl]={x:0,t:0}); X.t++; if(_F.pos[_a].col!==_F.pos[_b].col) X.x++; } }
       if(l.plane==='eoob') return;                                 // counted on its own row below
-      if(l.plane==='power'){ var k=/C20-C19/.test(l.media)?'C20 to C19 power cord':/C20-C13/.test(l.media)?'C20 to C13 power cord (C14 device in a C19 outlet)':'C14 to C13 power cord'; cab.power[k]=(cab.power[k]||0)+1; return; }
+      if(l.plane==='power'){ var k=/C20-C19/.test(l.media)?'C20 to C19 power cord':/C20-C13/.test(l.media)?'C20 to C13 power cord (C14 device in a C19 outlet)':'C14 to C13 power cord'; cab.power[k]=(cab.power[k]||0)+1; _cva('power', k); return; }
       if(l.plane==='be') return;                                   // from the cable plan below
       if(l.plane==='oob'||l.plane==='oob-drop') s='oob';
       else if(secOfRole(ra)==='edge'||secOfRole(rb)==='edge'||l.plane==='edge') s='edge';
       else s='fef';
       // A 400G link on a channelized 800G cage (port name ends :0 / :1) is one leg of a breakout:
       // ONE assembly per cage, whatever the far ends are. Count cages, not links.
-      if(/DR4 leg/.test(l.media||'')){ var dk='__dr4'; cab[s][dk]=cab[s][dk]||{legs:0, nodes:{}, cages:{}}; cab[s][dk].legs++; cab[s][dk].nodes[l.b]=1; cab[s][dk].cages[l.a+'|'+String(l.ap).replace(/[:\/]\d+$/,'')]=1; return; }
+      if(/DR4 leg/.test(l.media||'')){ var dk='__dr4'; cab[s][dk]=cab[s][dk]||{legs:0, nodes:{}, cages:{}}; cab[s][dk].legs++; cab[s][dk].nodes[l.b]=1; cab[s][dk].cages[l.a+'|'+String(l.ap).replace(/[:\/]\d+$/,'')]=1; _cva(s, dk); return; }
       var c=cableFamilyOf(l, ra, rb);   // v560: shared with the Cable Matrix
       if(c.structured){ var _SK=s+'|'+c.structured.conn, S=STR[_SK]||(STR[_SK]={n:0, opt:{}, cages:{}, ports:{}}); S.n++;   // HS v1.15
         [c.structured.a, c.structured.b].forEach(function(o){ if(o.cage){ if(S.cages[o.cage]) return; S.cages[o.cage]=1; } S.opt[o.name]=(S.opt[o.name]||0)+1; });
-        S.ports[c.structured.colA]=(S.ports[c.structured.colA]||0)+1; S.ports[c.structured.colB]=(S.ports[c.structured.colB]||0)+1; return; }
-      if(c.cage){ var _ck=c.k+'|'+c.conn+'|cage'; cab[s]['__cages']=cab[s]['__cages']||{}; (cab[s]['__cages'][_ck]=cab[s]['__cages'][_ck]||{})[c.cage]=1; return; }
+        S.ports[c.structured.colA]=(S.ports[c.structured.colA]||0)+1; S.ports[c.structured.colB]=(S.ports[c.structured.colB]||0)+1; _cva(s, _SK); return; }
+      if(c.cage){ var _ck=c.k+'|'+c.conn+'|cage'; cab[s]['__cages']=cab[s]['__cages']||{}; (cab[s]['__cages'][_ck]=cab[s]['__cages'][_ck]||{})[c.cage]=1; _cva(s, 'cage|'+_ck); return; }
       var key=c.k+'|'+c.conn+'|'+(c.per||1); cab[s][key]=(cab[s][key]||0)+1;
     });
     function cables(sec){
       var rows=Object.keys(cab[sec]).filter(function(k){ return k!=='__cages' && k!=='__dr4'; }).sort().map(function(k){ var p=k.split('|'), n=cab[sec][k];
-        return ['Cable', p[0], p[2]>1?'Breakout assemblies, one per leaf cage (2 links each)':'', p[1], sec==='power'?'':'\u2020', Math.ceil(n/(+p[2]||1))]; });
+        return _m(['Cable', p[0], p[2]>1?'Breakout assemblies, one per leaf cage (2 links each)':'', p[1], sec==='power'?'':'\u2020', Math.ceil(n/(+p[2]||1))], {kind:'cable', sec:sec, links:n}); });
       var cg=cab[sec]['__cages']||{};
-      Object.keys(cg).sort().forEach(function(k){ var p=k.split('|'); rows.push(['Cable', p[0], 'Breakout assemblies, one per channelized cage ('+(/leg spare/.test(p[0])?'1 link each':(/4\u00d7/.test(p[0])?4:2)+' links each')+')', p[1], '\u2020', Object.keys(cg[k]).length]); });
+      Object.keys(cg).sort().forEach(function(k){ var p=k.split('|'); rows.push(_m(['Cable', p[0], 'Breakout assemblies, one per channelized cage ('+(/leg spare/.test(p[0])?'1 link each':(/4\u00d7/.test(p[0])?4:2)+' links each')+')', p[1], '\u2020', Object.keys(cg[k]).length], {kind:'cable', sec:sec, links:_cv[sec+'|cage|'+k]||0})); });
       var dr=cab[sec]['__dr4'];
       if(dr){   // WEKApod Nitro gen 2: single OSFP cage per node, split to two leaves over single-mode jumpers
-        rows.push(['Cable','MPO-12 APC single-mode jumper (OS2)','One per 400G leg, WEKA node cage to leaf cage (an AOC cannot split one node cage across two leaves)','MPO-12 APC','\u2020',dr.legs]);
-        rows.push(['Optic','800G OSFP 2x400G-DR4, flat-top (RHS) for ConnectX-8','WEKA node side, one per node \u2014 CONFIRM the variant with WEKA','dual MPO-12 APC','',Object.keys(dr.nodes).length]);
-        rows.push(['Optic','800G OSFP 2x400G-DR4 twin-port','Leaf side, one per channelized storage cage','dual MPO-12 APC','',Object.keys(dr.cages).length]);
+        rows.push(_m(['Cable','MPO-12 APC single-mode jumper (OS2)','One per 400G leg, WEKA node cage to leaf cage (an AOC cannot split one node cage across two leaves)','MPO-12 APC','\u2020',dr.legs], {kind:'cable', sec:sec, links:_cv[sec+'|__dr4']||0}));
+        rows.push(_m(['Optic','800G OSFP 2x400G-DR4, flat-top (RHS) for ConnectX-8','WEKA node side, one per node \u2014 CONFIRM the variant with WEKA','dual MPO-12 APC','',Object.keys(dr.nodes).length], {kind:'optic', sec:sec}));
+        rows.push(_m(['Optic','800G OSFP 2x400G-DR4 twin-port','Leaf side, one per channelized storage cage','dual MPO-12 APC','',Object.keys(dr.cages).length], {kind:'optic', sec:sec}));
       }
       var _sn=0; Object.keys(STR).filter(function(k){ return k.split('|')[0]===sec; }).sort().forEach(function(k){ var S=STR[k], cn=k.split('|')[1], mpo=/MPO/.test(cn); _sn+=S.n;   // HS v1.15: structured runs past the AOC reach
-        Object.keys(S.opt).sort().forEach(function(o){ rows.push(['Optic', o, 'Structured runs beyond the '+AOC_REACH_M+' m AOC reach, one per end (a breakout cage takes one) — CONFIRM the variant per platform', cn, '', S.opt[o]]); });
+        Object.keys(S.opt).sort().forEach(function(o){ rows.push(_m(['Optic', o, 'Structured runs beyond the '+AOC_REACH_M+' m AOC reach, one per end (a breakout cage takes one) — CONFIRM the variant per platform', cn, '', S.opt[o]], {kind:'optic', sec:sec})); });
         var _pn=(_F&&_F.halls)?'hall patch panel':'column-head patch panel';   // HS v1.17
-        rows.push(['Cable', mpo?(cn+' single-mode patch cord, switch to '+_pn):'LC duplex single-mode jumper, switch to '+_pn, 'Two per structured run', cn, '†', 2*S.n]);
-        rows.push(['Cable', mpo?(cn+' trunk lane between '+_pn+'s'):'LC duplex pair in a trunk between '+_pn+'s', 'One per structured run, bundled into trunks along the '+((_F&&_F.halls)?'hall corridors':'cross tray'), cn, '†', S.n]);
+        rows.push(_m(['Cable', mpo?(cn+' single-mode patch cord, switch to '+_pn):'LC duplex single-mode jumper, switch to '+_pn, 'Two per structured run', cn, '†', 2*S.n], {kind:'cable', sec:sec, links:0, media:'smf'}));
+        rows.push(_m(['Cable', mpo?(cn+' trunk lane between '+_pn+'s'):'LC duplex pair in a trunk between '+_pn+'s', 'One per structured run, bundled into trunks along the '+((_F&&_F.halls)?'hall corridors':'cross tray'), cn, '†', S.n], {kind:'cable', sec:sec, links:_cv[sec+'|'+k]||0, media:'smf'}));
         var _pp=0; Object.keys(S.ports).forEach(function(c2){ _pp+=Math.ceil(S.ports[c2]/48); });
         var _hl=!!(_F&&_F.halls);   // HS v1.17: per hall in a hall layout
         rows.push(['Panel', (_hl?'Hall patch panel':'Column-head patch panel')+', 1U, 48 '+(mpo?cn:'LC duplex')+' ports', (_hl?'In each hall: ':'At the head of each column: ')+Object.keys(S.ports).sort(function(x,y){ return String(x).localeCompare(String(y),undefined,{numeric:true}); }).map(function(c2){ return (_hl?c2:'column '+(+c2+1))+' '+S.ports[c2]+' ports'; }).join(', '), cn, '', _pp]); });
@@ -29760,8 +29764,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       cables('edge').forEach(function(r){ out.push(r); });
       if(FE.fwModel==='FPR4245' && ftdBlOptics().mismatch!==false){
         var nL=Object.keys(cab.edge).filter(function(k){return /DR1/.test(k);}).reduce(function(a,k){return a+cab.edge[k];},0);
-        out.push(['Optic','QSFP-100G-DR-S','FTD 4245 side of each firewall-to-border-leaf link (Threat Defense 7.4+)','LC duplex','',nL]);
-        out.push(['Optic','SDD-100G-DR','Border leaf side of each firewall-to-border-leaf link','LC duplex','',nL]);
+        out.push(_m(['Optic','QSFP-100G-DR-S','FTD 4245 side of each firewall-to-border-leaf link (Threat Defense 7.4+)','LC duplex','',nL], {kind:'optic', sec:'edge'}));
+        out.push(_m(['Optic','SDD-100G-DR','Border leaf side of each firewall-to-border-leaf link','LC duplex','',nL], {kind:'optic', sec:'edge'}));
       }
       if(fx.edge.dia) out.push(['Service','DIA circuit',fx.edge.diaGbps+'G each; diverse carriers; separate entrance facility','','',fx.edge.dia]);
       out.push(['Service','DCI coherent wave','ZR/ZR+ on the gateways; '+fx.edge.dci.sites+' sites, '+fx.edge.dci.wavesPerSite+' waves per site','','',fx.edge.dci.waves||(fx.edge.dci.sites*fx.edge.dci.wavesPerSite)||0]);
@@ -29771,7 +29775,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       devices('fef').forEach(function(r){ out.push(r); });
       cables('fef').forEach(function(r){ out.push(r); });
       out.push(['Note','Storage platform',STORAGE_PLATFORM.label+': '+STORAGE_PLATFORM.note+' Transport: '+stoTransport()+'.','','','']);
-      if(nsDpuBf4()) out.push(['DPU','NVIDIA BlueField-4 B4240V north-south DPU -- OPN CONFIRM','One per compute tray, ships with the GPU hosts ('+fx.hosts+' hosts): 2 \u00d7 400G (a 2-way split of the 800G port; physical port count and cage CONFIRM), PCIe Gen6 x16, integrated BMC on the 1GbE OOB port. Power not published. '+BF4_PENDING+'.','','',fx.hosts]);   // HS v1.59 (2.0.53)
+      if(nsDpuBf4()) out.push(_m(['DPU','NVIDIA BlueField-4 B4240V north-south DPU -- OPN CONFIRM','One per compute tray, ships with the GPU hosts ('+fx.hosts+' hosts): 2 \u00d7 400G (a 2-way split of the 800G port; physical port count and cage CONFIRM), PCIe Gen6 x16, integrated BMC on the 1GbE OOB port. Power not published. '+BF4_PENDING+'.','','',fx.hosts], {kind:'dpu'}));   // HS v1.59 (2.0.53)
       else out.push(['Note','Host front-end adapters','BlueField DPUs ship with the GPU hosts ('+fx.hosts+' hosts \u00d7 '+(FE.nicsPerHost||2)+' ports); not network BoM','','','']);
     }
     // ---- 3. BACK-END FABRIC ----
@@ -29781,17 +29785,17 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     if(XC.be && XC.be.x){ var _hl3=!!(_F&&_F.halls); out.push(['Note',_hl3?'Cross-hall links':'Cross-column links', XC.be.x.toLocaleString('en-US')+' of '+XC.be.t.toLocaleString('en-US')+' back-end links cross '+(_hl3?'halls (routed through the hall corridors':'columns (routed through the column-head or column-foot cross tray')+'; co-packaged optics over fiber, no AOC reach limit)','','','']); }   // HS v1.15
     var b=computeBoM(); ensureCablePlan(b);
     cableCats(b).forEach(function(r){ var plan=cablePlan[r.key];
-      plan.rows.forEach(function(row){ if(row.qty) out.push(['Cable', plan.connector+' \u00b7 '+mediaFor(plan.connector), r.label, plan.connector, row.len+' m', row.qty]); }); });
+      plan.rows.forEach(function(row){ if(row.qty) out.push(_m(['Cable', plan.connector+' \u00b7 '+mediaFor(plan.connector), r.label, plan.connector, row.len+' m', row.qty], {kind:'cable', sec:'bef', cat:r.key, links:+row.qty||0})); }); });
     var g=OPTIC_GENS[opticGen];
     var _tw=(typeof hostSplit2x400==='function' && hostSplit2x400());
     var _ln=hostLaneSplit(), _cn=beCageG()>800?'OSFP 1.6T (8\u00d7224G)':'OSFP 800G', _nic=nicOf();
-    if(_ln && b.q800) out.push(['Optic',_cn+(ACC_PER_CAGE>1?(' '+ACC_PER_CAGE+'\u00d7'+laneG()+'G breakout (switch)'):' (switch, one '+laneG()+'G port per cage)'),'Every switch cage: '+ACC_PER_CAGE+' lanes of '+laneG()+'G -- host-facing legs, leaf uplinks and spine ports','MPO-16','',b.q800]);
+    if(_ln && b.q800) out.push(_m(['Optic',_cn+(ACC_PER_CAGE>1?(' '+ACC_PER_CAGE+'\u00d7'+laneG()+'G breakout (switch)'):' (switch, one '+laneG()+'G port per cage)'),'Every switch cage: '+ACC_PER_CAGE+' lanes of '+laneG()+'G -- host-facing legs, leaf uplinks and spine ports','MPO-16','',b.q800], {kind:'optic', sec:'bef', be:'switch'}));
     if(b.cpoPorts) out.push(['Optic','None at the switch: co-packaged optics ('+nvSku(beModel)+'-LD)','Switch ports are CPO with MMC-16 fiber connectors, no switch transceivers to order ('+b.cpoPorts.toLocaleString()+' ports in use). Replaceable laser source modules: spares CONFIRM','MMC-16','',0]);   // v546
-    if(_ln && b.qh800 && hostPortPerPlane()) out.push(['Optic','OSFP '+laneG()+'G ('+(_nic?_nic.label:'GPU NIC')+' port, flat top) -- host cage form factor CONFIRM','One per GPU NIC port: '+PLANES()+' per GPU, one per plane','MPO-12','',b.qh800]);   // HS v1.59 (D11)
-    else if(_ln && b.qh800) out.push(['Optic',(_nic&&_nic.g>800?'OSFP 1.6T':'OSFP 800G')+' '+PLANES()+'\u00d7'+laneG()+'G ('+(_nic?_nic.label:'GPU NIC')+', flat top)','One per GPU: one leg per plane, '+PLANES()+' planes','MPO-16','',b.qh800]);
-    if(!_ln && b.q800) out.push(['Optic',_tw?'OSFP 800G twin-port 2\u00d7400G-DR4 (leaf)':g.n800,_tw?'Leaf downlink cage: two 400G legs, each to a GPU in this plane':'Switch-side 800G ends of links cabled with structured fiber','dual MPO-12 APC','',b.q800]);
-    if(!_ln && b.qh800) out.push(['Optic',_tw?'OSFP 800G twin-port 2\u00d7400G-DR4 (ConnectX-8, flat top)':g.n800+' (host)',_tw?'One per GPU: leg 1 to plane 1, leg 2 to plane 2':'Host-side native 800G ends (structured fiber only)','dual MPO-12 APC','',b.qh800]);
-    if(b.q400) out.push(['Optic',g.n400,'Host-side 400G ends (structured fiber only)','','',b.q400]);
+    if(_ln && b.qh800 && hostPortPerPlane()) out.push(_m(['Optic','OSFP '+laneG()+'G ('+(_nic?_nic.label:'GPU NIC')+' port, flat top) -- host cage form factor CONFIRM','One per GPU NIC port: '+PLANES()+' per GPU, one per plane','MPO-12','',b.qh800], {kind:'optic', sec:'bef', be:'host'}));   // HS v1.59 (D11)
+    else if(_ln && b.qh800) out.push(_m(['Optic',(_nic&&_nic.g>800?'OSFP 1.6T':'OSFP 800G')+' '+PLANES()+'\u00d7'+laneG()+'G ('+(_nic?_nic.label:'GPU NIC')+', flat top)','One per GPU: one leg per plane, '+PLANES()+' planes','MPO-16','',b.qh800], {kind:'optic', sec:'bef', be:'host'}));
+    if(!_ln && b.q800) out.push(_m(['Optic',_tw?'OSFP 800G twin-port 2\u00d7400G-DR4 (leaf)':g.n800,_tw?'Leaf downlink cage: two 400G legs, each to a GPU in this plane':'Switch-side 800G ends of links cabled with structured fiber','dual MPO-12 APC','',b.q800], {kind:'optic', sec:'bef', be:'switch'}));
+    if(!_ln && b.qh800) out.push(_m(['Optic',_tw?'OSFP 800G twin-port 2\u00d7400G-DR4 (ConnectX-8, flat top)':g.n800+' (host)',_tw?'One per GPU: leg 1 to plane 1, leg 2 to plane 2':'Host-side native 800G ends (structured fiber only)','dual MPO-12 APC','',b.qh800], {kind:'optic', sec:'bef', be:'host'}));
+    if(b.q400) out.push(_m(['Optic',g.n400,'Host-side 400G ends (structured fiber only)','','',b.q400], {kind:'optic', sec:'bef', be:'host400'}));
     // ---- 4. OUT-OF-BAND & CONSOLE ----
     out.push({sep:(fx?'4':'2')+' \u00b7 OUT-OF-BAND MANAGEMENT & CONSOLE (OOB / eOOB)'});
     devices('oob').forEach(function(r){ out.push(r); });
@@ -29799,7 +29803,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     if(ms.edge&&ms.edge.module) out.push(['Module',ms.edge.module.part,ms.edge.module.desc,'','',mp.edgeCount]);
     cables('oob').forEach(function(r){ out.push(r); });
     var _eo=pm.links.filter(function(l){ return l.plane==='eoob'; }).length;
-    out.push(['Cable','Console cable, Cat6 straight RJ45-RJ45','eOOB serial run, device console to console-server port (pinout set per port on the OM2200)','RJ45','\u2020',_eo]);
+    out.push(_m(['Cable','Console cable, Cat6 straight RJ45-RJ45','eOOB serial run, device console to console-server port (pinout set per port on the OM2200)','RJ45','\u2020',_eo], {kind:'cable', sec:'eoob', links:_eo, media:'copper'}));
     if(fx){
       out.push(['Service','OOB internet circuit','2x10G DIA; a third carrier, diverse from both production DIA paths','','',fx.mgmt.circuits]);
       out.push(['Service','eOOB cellular service (per console server)','Different carrier from both production DIA paths; outbound-only to Lighthouse or a private APN','','',(mp.consoleSrv||[]).length]);
@@ -29866,6 +29870,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       res.push(r);
     });
     close();
+    try{ _bomTallyKeep(res, _M, {raw:_raw, dup:_dup, fe:!!fx, hosts:fx?fx.hosts:0, b:b}); }catch(e){ _BOM_TALLY={err:String(e&&e.message||e)}; }   // HS v1.62
     return res;
   }
   // BoM to PDF: the same rows as the Excel export, as a paginated US Letter landscape table with
@@ -32054,7 +32059,9 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
   function renderRelease(){
     var pv=provenance(), col={confirmed:'var(--green,#1a7f37)',derived:'var(--blue,#1f6feb)',measured:'var(--green,#1a7f37)',analog:'#B26B00',inferred:'#B26B00',placeholder:'var(--red,#B00020)',missing:'var(--red,#B00020)'};
     var esc=escHtml;   // v513: quotes too -- VENDOR_IN values land in value="..." attributes
-    var h='<div style="font-size:14px;font-weight:600;margin:4px 0 6px;color:'+(pv.ready?'var(--green,#1a7f37)':'var(--red,#B00020)')+'">'+(pv.ready?'Ready for construction: every load-bearing input is confirmed, derived or measured.':'Not ready for construction: '+pv.blockers.length+' load-bearing input(s) unconfirmed.')+'</div>'
+    var h='';
+    try{ h+='<div style="padding:8px 10px;margin:2px 0 10px;border:1px solid var(--line-strong);border-radius:8px">'+verdictHtml(healthVerdict({recon:'run'}), false)+'</div>'; }catch(e){ h+='<div style="color:var(--red,#B00020)">Health verdict not available: '+escHtml(e&&e.message||e)+'</div>'; }   // HS v1.62 (D8)
+    h+='<div style="font-size:14px;font-weight:600;margin:4px 0 6px;color:'+(pv.ready?'var(--green,#1a7f37)':'var(--red,#B00020)')+'">'+(pv.ready?'Ready for construction: every load-bearing input is confirmed, derived or measured.':'Not ready for construction: '+pv.blockers.length+' load-bearing input(s) unconfirmed.')+'</div>'
       +'<div class="bom-note">Design basis: <b>'+DESIGN_BASIS+'</b> ('+(DESIGN_BASIS==='electrical'?'every host at its maximum':'measured or typical')+'). Host power in use: <b>'+PROFILES[profileKey].kwPerHost+' kW</b>.</div>'
       +'<table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:8px"><tr style="background:#1A1F24;color:#EDEEEA"><th style="text-align:left;padding:4px 8px">Area</th><th style="text-align:left;padding:4px 8px">Input</th><th style="text-align:left;padding:4px 8px">Value</th><th style="text-align:left;padding:4px 8px">Status</th><th style="text-align:left;padding:4px 8px">Source / what closes it</th></tr>';
     pv.rows.forEach(function(r,i){ h+='<tr'+(i%2?' style="background:var(--panel)"':'')+'><td style="padding:4px 8px">'+esc(r.area)+'</td><td style="padding:4px 8px">'+esc(r.item)+(r.lb?'':' <span style="color:var(--muted)">(not load-bearing)</span>')+'</td><td style="padding:4px 8px;font-family:var(--mono)">'+esc(r.value)+'</td><td style="padding:4px 8px;font-weight:600;color:'+(col[r.status]||'inherit')+'">'+r.status+'</td><td style="padding:4px 8px">'+esc(r.src)+'</td></tr>'; });
@@ -32682,7 +32689,9 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
         setStatus('Saving the design…'); d.saveDesign(o).then(function(p){ setStatus(p?('Saved the design to '+p):'Save canceled'); }, function(e){ setStatus('⚠ Save failed: '+(e&&e.message||e)); }); };
       d.onMenu(function(a){ if(a==='job-both') deskJob('both'); else if(a==='job-package') deskJob('package','final'); else if(a==='job-review') deskJob('package','review'); else if(a==='job-run') deskJob('run');
         else if(a==='site-runner') document.getElementById('runnerexp').click(); else if(a==='layout') openDct();
-        else if(a==='input-sheet') inputSheetImport(); else if(a==='input-template') inputSheetDownload(false); else if(a==='input-template-filled') inputSheetDownload(true); });   // HS v1.58
+        else if(a==='input-sheet') inputSheetImport(); else if(a==='input-template') inputSheetDownload(false); else if(a==='input-template-filled') inputSheetDownload(true);   // HS v1.58
+        else if(a==='baseline-template') baselineDownload(false); else if(a==='baseline-template-filled') baselineDownload(true); else if(a==='equivalence') eqShow(); });   // HS v1.62
+      if(d.onBaseline) d.onBaseline(function(name, bytes){ baselineImportBytes(name, bytes); });   // HS v1.62: File > Load Baseline
       if(d.onInputSheet) d.onInputSheet(function(name, bytes){ inputSheetImportBytes(name, bytes); });   // HS v1.58: File > Load input sheet
       if(d.design) dsHook(d);   // HS v1.30
       d.ready({builder:BUILDER_VER, app:APP_NAME}); }
@@ -33874,6 +33883,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       build:{build:identBuild(), racks:byType('rack').length, devices:devs.length, links:links.length, fingerprint:designFingerprint(), profilesDefaultsSha256:profilesDefaultsDigest()},
       sessionChanged:prevSess!==JSON.stringify(SESSION_IN||{})};
     try{ autosaveSoon(); }catch(e){}
+    INSHEET_LAST=sess0;   // HS v1.62: the equivalence report reads its design choices
     return sess0; }
   function inputReportCsv(si){ var q=function(v){ v=String(v==null?'':v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
     return ['row,key,requested,unit,applied,status,reason,class,source'].concat(si.report.map(function(r){ return [r.row,r.key,r.requested,r.unit,r.applied,r.status,r.reason,r.class,r.source].map(q).join(','); })).join('\n')+'\n'; }
@@ -33923,6 +33933,485 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     document.getElementById('insFill').onclick=function(){ b.remove(); inputSheetDownload(true); };
     document.getElementById('insNo').onclick=function(){ b.remove(); }; }
   (function(){ var bt=document.getElementById('insheetbtn'); if(bt) bt.onclick=inputSheetMenu; })();
+  // ---- HS v1.62: EQUIVALENCE REPORT AND HEALTH VERDICT (evaluation readiness, Phase 2; Owner decisions D3 to D5, D8) ----------
+  // equivalenceSummary() emits the stable keys of the Baseline schema (Topology, BoM device counts, Cable summary, Platform
+  // specs). Device, cable and transceiver counts are the BoM's own rows: bomSections() keeps a tally of the rows it emits
+  // (_bomTallyKeep), so the report and the BoM cannot disagree and nothing the BoM derives is derived again. The per-plane
+  // topology comes from devs, the front end from fePlan() (memoized). Customer values (the Baseline) live only in EQ, never
+  // in PROFILES, the design file or this source.
+  var BASELINE_FORMAT='aidc-dbd-baseline/1', BASELINE_NAME='AIDC-DBD-Baseline-v1.xlsx', EQ_FORMAT='aidc-dbd-equivalence/1';
+  var EQ_CLASSES=['Design choice','Error (Product)','Error (Baseline)','Differs from NVIDIA public reference'];
+  var EQ={baseline:null, session:null, overrides:{}, report:null};
+  var INSHEET_LAST=null;   // the session input object of the last import on this page (not saved with the design)
+  var _BOM_TALLY=null;
+  var EQ_SEG={edge:'fe', fef:'fe', oob:'oob', eoob:'oob', power:'power', bef:'be', rackleaf:'host_leaf', leafspine:'leaf_spine', spinessp:'spine_super'};
+  var EQ_SEGS=['host_leaf','leaf_spine','spine_super','fe','oob'], EQ_MEDIA=['dac','acc','aoc','mmf','smf','copper','other'];
+  var EQ_ROLE={'be-leaf':'be_leaf','be-spine':'be_spine','be-superspine':'be_superspine','fe-leaf':'fe_leaf','fe-spine':'fe_spine','fe-border':'fe_border_leaf',
+    'edg-er':'edge_router','edg-gw':'border_gateway','edg-lb':'load_balancer','sec-fw':'edge_firewall','storage':'storage_node','storage-chassis':'storage_chassis',
+    'storage-aux':'storage_enclosure','storage-sw':'storage_switch','oob-access':'oob_access','oob-spine':'oob_spine','oob-agg':'oob_agg','oob-core':'oob_core',
+    'oob-er':'oob_edge_router','oob-fw':'oob_firewall','console':'console_server','mgmt-service':'mgmt_host'};
+  var EQ_NONNET={storage_node:1, storage_chassis:1, storage_enclosure:1, storage_switch:1, mgmt_host:1};
+  function _bomKey(){ return [devs.length, links.length, _phKey(), JSON.stringify(cablePlan), opticGen, cablingMethod, hostOptics, AOC_REACH_M, consoleBundled,
+    COMPUTE_POWER, CAB_U, NET_FOOTPRINT, ROW_NET, ROW_FEED, NET_FEED, RACKS_PER_POD, JSON.stringify(siteInfra)].join('|'); }
+  function eqMedia(part, conn){ var s=String(part||'')+' '+String(conn||'');
+    if(/\bDAC\b/i.test(s)) return 'dac'; if(/\b(ACC|AEC|LACC)\b/i.test(s)) return 'acc'; if(/\bAOC\b/i.test(s)) return 'aoc';
+    if(/RJ45|Cat ?6|copper/i.test(s)) return 'copper';
+    if(/multimode|\bOM[2-5]\b|\bMMF\b|\bSR\d?\b|\bVR\d?\b/i.test(s)) return 'mmf';
+    if(/single-mode|\bOS2\b|\bSMF?\b|\bDR\d?\b|\bFR\d?\b|\bLR\d?\b|\bZR\b|APC|LC duplex|MPO/i.test(s)) return 'smf';
+    return 'other'; }
+  // called at the end of every bomSections(): what the emitted rows hold, by role, model, segment and media
+  function _bomTallyKeep(res, M, x){
+    var t={dev:{}, cable:{}, cov:{}, optic:{}, beOptic:{'switch':0, host:0, host400:0}, beCable:{}, raw:x.raw, dup:x.dup, fe:x.fe, hosts:x.hosts, dpu:0, cpo:(x.b&&x.b.cpoPorts)||0};
+    res.forEach(function(r){ if(!r || r.sep!==undefined) return; var m=M.get(r); if(!m) return; var q=(typeof r[5]==='number')?r[5]:0;
+      if(m.kind==='dev'){ var d=t.dev[m.role]||(t.dev[m.role]={}); d[m.model||'']=(d[m.model||'']||0)+q; return; }
+      if(m.kind==='dpu'){ t.dpu+=q; return; }
+      var seg=EQ_SEG[m.cat||m.sec]||'other';
+      if(m.kind==='cable'){ var md=m.media||eqMedia(r[1], r[3]), c=t.cable[seg]||(t.cable[seg]={}); c[md]=(c[md]||0)+q;
+        var cs=(m.sec==='eoob')?'eoob':(m.cat||seg); t.cov[cs]=(t.cov[cs]||0)+(m.links||0); if(m.cat) t.beCable[m.cat]=(t.beCable[m.cat]||0)+q; return; }
+      if(m.kind==='optic'){ t.optic[seg]=(t.optic[seg]||0)+q; if(m.be) t.beOptic[m.be]+=q; } });
+    _BOM_TALLY={key:_bomKey(), devs:devs, links:links, t:t}; }
+  function _bomTallyFresh(){ var T=_BOM_TALLY; try{ return (T && T.t && T.devs===devs && T.links===links && T.key===_bomKey())?T.t:null; }catch(e){ return null; } }
+  function _bomTallyGet(){ return _bomTallyFresh() || (bomSections(), _bomTallyFresh()) || (_BOM_TALLY&&_BOM_TALLY.t) || null; }
+  function _memoRun(fn){ var own=!__MEMO; if(own){ __MEMO={}; window.__UISCOPE=true; } try{ return fn(); } finally{ if(own){ __MEMO=null; window.__UISCOPE=false; } } }
+
+  // ---- D8: one pass over the back-end links: counts per category, switch cages, and port over-allocation
+  function _beLinkPass(){
+    var D={}; devs.forEach(function(d){ D[d.id]=d; });
+    var asm=function(k){ var p=cablePlan[k]||{}, cn=p.connector||((catDefaults()[k]||{}).conn)||''; return /AOC|DAC|ACC|AEC/i.test(cn); };
+    var A={rackleaf:asm('rackleaf'), leafspine:asm('leafspine'), spinessp:asm('spinessp')}, ul=upLanes();
+    var cat={rackleaf:0, leafspine:0, spinessp:0}, cg=new Set(), dn=new Set(), ends=0, seen=new Set(), dup=0, dupEx=[], over=[];
+    for(var i=0;i<links.length;i++){ var l=links[i], c=linkCategory(l); if(c in cat) cat[c]++;
+      for(var j=0;j<2;j++){ var p=j?l.b:l.a, q=String(p).split('|'), d=D[q[0]]; if(!d || d.type==='rack') continue;
+        if(seen.has(p)){ dup++; if(dupEx.length<5) dupEx.push(d.name+' port '+q.slice(1).join('/')); } else seen.add(p);
+        var ix=+q[1]; if(d.type==='leaf'){ if(d.cages && ix>=d.cages.length) over.push(d.name+' cage '+ix); }
+        else if((d.type==='spine'||d.type==='ssp') && ix>=(d.ports||RADIX)) over.push(d.name+' port '+ix);
+        if(c==='rackleaf'){ if(d.type==='leaf') dn.add(q[0]+'|'+ix); }
+        else if((c==='leafspine'||c==='spinessp') && !A[c]){ if(ul>1) cg.add(q[0]+'|'+(d.type==='leaf'?ix:Math.floor(ix/ul))); else ends++; } } }
+    return {cat:cat, A:A, sw:(ul>1?cg.size:ends)+(A.rackleaf?0:dn.size), dup:dup, dupEx:dupEx, over:over}; }
+  // the reconciliation: every count is taken from the links and set against the BoM line that should carry it
+  function cablingReconcile(t, P){ P=P||_beLinkPass();
+    var chk=[], add=function(seg, what, bom, lk){ chk.push({seg:seg, what:what, bom:bom, links:lk, ok:bom===lk}); };
+    ['rackleaf','leafspine','spinessp'].forEach(function(k){ if(P.cat[k] || t.beCable[k]) add(EQ_SEG[k], 'cables', t.beCable[k]||0, P.cat[k]); });
+    var qHost=(hostOptics && !P.A.rackleaf)?P.cat.rackleaf:0, cpo=beCpo();
+    var q400=(hostNative800()||hostSplit2x400()||hostLaneSplit())?0:qHost;
+    var qh=hostSplit2x400()?Math.ceil(qHost/2):hostPortPerPlane()?qHost:(hostLaneSplit()?Math.ceil(qHost/Math.max(1,PLANES())):(hostNative800()?qHost:0));
+    add('be', 'switch transceivers', t.beOptic['switch'], cpo?0:P.sw); if(cpo) add('be', 'co-packaged switch ports in use', t.cpo, P.sw);
+    add('be', 'host transceivers', t.beOptic.host, qh); if(q400 || t.beOptic.host400) add('be', 'host 400G transceivers', t.beOptic.host400, q400);
+    var r=t.raw||{}, fe=0; Object.keys(r).forEach(function(k){ if(!/^(be|power|eoob|oob|oob-drop)$/.test(k)) fe+=r[k]; });
+    if(fe || t.cov.fe) add('fe', 'links carried by cable lines', t.cov.fe||0, fe);
+    add('oob', 'links carried by cable lines', t.cov.oob||0, (r.oob||0)+(r['oob-drop']||0));
+    add('oob', 'console runs', t.cov.eoob||0, r.eoob||0);
+    add('power', 'power cords', t.cov.power||0, r.power||0);
+    return {checks:chk, mismatches:chk.filter(function(c){ return !c.ok; })}; }
+
+  // ---- D8: the health verdict. Errors: hard stops, integrity-tagged high items, the cabling-BoM reconciliation, port
+  // over-allocation. Open inputs: the provenance placeholders (never errors). Advisories: the other high items and med items.
+  // o.recon: 'run' builds the BoM tally when it is missing; otherwise the reconciliation uses the tally of the last BoM, if current.
+  // the facility load against the stated site feed, as the Fabric health panel computes it (renderHealth)
+  function facilityOverMsg(head){ return 'Facility load exceeds the stated feed by '+Math.abs(head).toFixed(2)+' MW. This build does not fit the site.'; }
+  function siteFeedLoad(){ var n=byType('rack').length, feedEl=document.getElementById('sitefeed'), pueEl=document.getElementById('sitepue');
+    var feedMW=feedEl&&feedEl.value!=='' ? parseFloat(feedEl.value) : null, pue=pueEl&&pueEl.value ? parseFloat(pueEl.value) : 1.35;
+    if(!feedMW || !n) return null;
+    var b=rackHostBudget(), computeKW=+(b.kwUsed*n).toFixed(1), beKW=0;
+    try{ var np=netRackPlan(); (np.mors||[]).forEach(function(m){ beKW+=m.kw||0; }); (np.eors||[]).forEach(function(e){ beKW+=e.kw||0; }); }catch(e){}
+    var netKW=+(beKW+planeInfraKW().totalKW).toFixed(1), facMW=(computeKW+netKW)/1000*pue;
+    return {feedMW:feedMW, pue:pue, facMW:facMW, head:feedMW-facMW, pct:facMW/feedMW*100}; }
+  function healthVerdict(o){ o=o||{};
+    return _memoRun(function(){
+      var E=[], A=[], O=[], racks=byType('rack').length, hs=designHardStops();
+      hs.forEach(function(m){ E.push({src:'Hard stop', msg:m}); });
+      var L=[];
+      if(FE && FE.on && racks){ try{ L.push(['Front end', fePlan().warn]); }catch(e){ E.push({src:'Front end', msg:'the front-end plan failed: '+e.message}); }
+        try{ L.push(['Front-end racks', feRackPlan().warn]); }catch(e){} }
+      try{ L.push(['Compute racks', computeRackWarnings()]); }catch(e){}
+      try{ var sf=siteFeedLoad(); if(sf && sf.head<0) L.push(['Site feed', [{sev:'high', tag:'integrity', msg:facilityOverMsg(sf.head)}]]); }catch(e){}   // the "N% of the feed" messages stay informational
+      L.forEach(function(x){ (x[1]||[]).forEach(function(w){
+        if(w.sev==='high' && w.tag!=='advisory'){ if(hs.length && /^FE super-spine tier does not close/.test(w.msg)) return; E.push({src:x[0], msg:w.msg}); }
+        else if(w.sev==='high' || w.sev==='med') A.push({src:x[0], sev:w.sev, msg:w.msg}); }); });
+      try{ provenance().blockers.forEach(function(b){ O.push({item:b.item, status:b.status, src:b.src}); }); }catch(e){}
+      var P=null, R=null, t=null;
+      if(racks){ P=_beLinkPass(); t=(o.recon==='run')?_bomTallyGet():(o.tally||_bomTallyFresh()); }
+      if(P){ if(P.dup) E.push({src:'Port allocation', msg:P.dup+' back-end switch port'+(P.dup>1?'s':'')+' used by more than one link ('+P.dupEx.join(', ')+')'});
+        if(P.over.length) E.push({src:'Port allocation', msg:P.over.length+' back-end link end'+(P.over.length>1?'s':'')+' past the switch\'s ports ('+P.over.slice(0,5).join(', ')+')'}); }
+      if(t){ R=cablingReconcile(t, P);
+        R.mismatches.forEach(function(c){ E.push({src:'Cabling-BoM', seg:c.seg, msg:c.seg.replace('_','-')+' '+c.what+': BoM '+c.bom.toLocaleString('en-US')+', links '+c.links.toLocaleString('en-US')}); });
+        if(t.dup && t.dup.n) E.push({src:'Port allocation', msg:t.dup.n+' front-end, out-of-band or power port'+(t.dup.n>1?'s':'')+' used by more than one link ('+t.dup.ex.join(', ')+')'}); }
+      return {errors:E, open:O, advisories:A, recon:R, reconRun:!!R, counts:{errors:E.length, open:O.length, advisories:A.length},
+        text:'Errors ('+E.length+') / Open inputs ('+O.length+') / Advisories ('+A.length+')'+(R||!racks?'':' (cabling-BoM check not run)')}; }); }
+  function verdictHtml(v, panel){
+    var c=function(n, col){ return '<b style="color:'+(n?col:'var(--green,#1a7f37)')+'">'+n+'</b>'; };
+    var li=function(a, f){ return a.length?'<ul style="margin:2px 0 4px 16px;padding:0">'+a.slice(0,40).map(function(x){ return '<li>'+escHtml(f(x))+'</li>'; }).join('')+(a.length>40?'<li>... '+(a.length-40)+' more</li>':'')+'</ul>':''; };
+    var h='<div style="font-size:'+(panel?'12':'13.5')+'px;font-weight:600;margin:'+(panel?'2px 0 6px':'4px 0 8px')+'">Health verdict: Errors ('+c(v.counts.errors,'var(--red,#B00020)')+') / Open inputs ('+c(v.counts.open,'#B26B00')+') / Advisories ('+c(v.counts.advisories,'#7A5A0B')+')</div>';
+    if(!v.reconRun) h+='<div style="font-size:11px;color:var(--muted);margin:-3px 0 5px">Cabling-BoM check not run for this design yet'+(panel?' <a href="#" id="m-verdict-run">Run it</a>':'')+'.</div>';
+    var d='';
+    if(v.errors.length) d+='<div style="font-weight:600;color:var(--red,#B00020)">Errors</div>'+li(v.errors, function(x){ return x.src+': '+x.msg; });
+    if(v.open.length) d+='<div style="font-weight:600;color:#B26B00">Open inputs</div>'+li(v.open, function(x){ return x.item+' ('+x.status+')'; });
+    if(v.advisories.length) d+='<div style="font-weight:600;color:#7A5A0B">Advisories</div>'+li(v.advisories, function(x){ return x.src+': '+x.msg; });
+    if(v.recon) d+='<div style="font-weight:600">Cabling-BoM reconciliation</div><div>'+v.recon.checks.length+' checks, '+v.recon.mismatches.length+' mismatches</div>';
+    if(d) h+='<details style="font-size:11.5px;line-height:1.45;margin:0 0 6px"'+(panel?'':' open')+'><summary style="cursor:pointer;color:var(--muted)">Details</summary>'+d+'</details>';
+    return h; }
+  var _hvT=null;
+  function verdictSchedule(){ var el=document.getElementById('m-verdict'); if(!el) return;
+    if(_hvT) clearTimeout(_hvT);
+    _hvT=setTimeout(function(){ _hvT=null; if(RESTORING){ verdictSchedule(); return; } verdictPanel(false); }, 500); }
+  function verdictPanel(run){ var el=document.getElementById('m-verdict'); if(!el) return;
+    if(!byType('rack').length){ el.innerHTML=''; return; }
+    if(window.aidcDesktop && byType('rack').length>((+window.aidcDesktop.big)||512)){ el.innerHTML='<div style="font-size:11px;color:var(--muted);margin:2px 0 6px">Health verdict: in the Release check (the design service builds it at this size).</div>'; return; }
+    try{ el.innerHTML=verdictHtml(healthVerdict({recon:run?'run':'cached'}), true);
+      var a=document.getElementById('m-verdict-run'); if(a) a.onclick=function(e){ e.preventDefault(); el.innerHTML='<div style="font-size:11px;color:var(--muted)">Checking the cabling against the BoM\u2026</div>'; setTimeout(function(){ verdictPanel(true); }, 30); }; }
+    catch(e){ el.textContent='Health verdict not available: '+(e&&e.message||e); } }
+
+  // ---- the key catalog: section, key, label, unit, kind (param: exact; count: within floor(2%); text: same model), group
+  function eqCatalog(){
+    var T='Topology', B='BoM device counts', C='Cable summary', P='Platform specs', R=[];
+    var a=function(sec, key, label, unit, kind, grp){ R.push({sec:sec, key:key, label:label, unit:unit, kind:kind, grp:grp}); };
+    a(T,'topo.gpus','GPUs','GPUs','param','site'); a(T,'topo.racks','Compute racks','racks','param','site'); a(T,'topo.trays','Compute trays (hosts)','trays','param','site');
+    a(T,'topo.be.planes','Back-end planes','planes','param','be'); a(T,'topo.be.rails_per_plane','Back-end rails per plane','rails','param','be');
+    a(T,'topo.be.gpu_gbps_per_plane','Back-end bandwidth per GPU per plane','Gb/s','param','be');
+    a(T,'topo.be.leaf_per_plane','Back-end leaves per plane','devices','count','be'); a(T,'topo.be.spine_per_plane','Back-end spines per plane','devices','count','be');
+    a(T,'topo.be.superspine_per_plane','Back-end super-spines per plane','devices','count','be');
+    a(T,'topo.be.oversub_leaf','Back-end oversubscription, leaf tier','ratio','param','be'); a(T,'topo.be.oversub_spine','Back-end oversubscription, spine tier','ratio','param','be');
+    a(T,'topo.fe.leaf','Front-end leaves','devices','count','fe'); a(T,'topo.fe.spine','Front-end spines','devices','count','fe'); a(T,'topo.fe.superspine','Front-end super-spines','devices','count','fe');
+    a(T,'topo.fe.border_leaf','Front-end border leaves','devices','count','fe'); a(T,'topo.fe.oversub','Front-end oversubscription, leaf to spine','ratio','param','fe');
+    a(T,'topo.oob.access','Out-of-band access switches','devices','count','oob'); a(T,'topo.oob.spine','Out-of-band spines','devices','count','oob');
+    a(T,'topo.edge.router','Edge routers','devices','count','edge'); a(T,'topo.edge.border_gateway','Border gateways','devices','count','edge'); a(T,'topo.edge.firewall','Edge firewalls','devices','count','edge');
+    var RL={be_leaf:'Back-end leaf',be_spine:'Back-end spine',be_superspine:'Back-end super-spine',fe_leaf:'Front-end leaf',fe_spine:'Front-end spine',fe_border_leaf:'Front-end border leaf',
+      edge_router:'Edge router',border_gateway:'Border gateway',load_balancer:'Load balancer / ingress node',edge_firewall:'Edge firewall',storage_node:'Storage node',storage_chassis:'Storage chassis',
+      storage_enclosure:'Storage enclosure or fabric module',storage_switch:'Storage internal switch',oob_access:'Out-of-band access switch',oob_spine:'Out-of-band spine',oob_agg:'Out-of-band aggregation switch',
+      oob_core:'Out-of-band core switch',oob_edge_router:'Out-of-band edge router',oob_firewall:'Out-of-band firewall',console_server:'Console server',mgmt_host:'Management services host',ns_dpu:'North-south DPU (one per compute tray)'};
+    var RG=function(k){ return /^be_/.test(k)?'be':/^(edge_router|border_gateway|edge_firewall)$/.test(k)?'edge':/^(oob_|console|mgmt)/.test(k)?'oob':'fe'; };
+    Object.keys(RL).forEach(function(k){ a(B,'bom.role.'+k, RL[k]+(EQ_NONNET[k]||k==='ns_dpu'?' (not in the network total)':''), 'devices','count', RG(k)); });
+    a(B,'bom.network_total','Network devices, total (switches, routers, firewalls, load balancers, console servers)','devices','count','all');
+    var SL={host_leaf:'Host to leaf',leaf_spine:'Leaf to spine',spine_super:'Spine to super-spine',fe:'Front end and Edge PoP',oob:'Out of band and console'};
+    var ML={dac:'DAC',acc:'ACC / AEC',aoc:'AOC',mmf:'multimode fiber',smf:'single-mode fiber',copper:'copper (RJ45)',other:'other (carrier handoff, control links)'};
+    var SG=function(s){ return /^(host_leaf|leaf_spine|spine_super)$/.test(s)?'be':s==='fe'?'fe':'oob'; };
+    EQ_SEGS.forEach(function(s){ EQ_MEDIA.forEach(function(m){ a(C,'cable.'+s+'.'+m, SL[s]+' cables, '+ML[m],'cables','count',SG(s)); }); a(C,'cable.'+s+'.total', SL[s]+' cables, total','cables','count',SG(s)); });
+    a(C,'cable.total','Network cables, total (power cords excluded)','cables','count','all');
+    [['be','Back-end'],['fe','Front-end and Edge PoP'],['oob','Out-of-band']].forEach(function(x){ a(C,'optic.'+x[0], x[1]+' transceivers (AOC and DAC ends excluded)','transceivers','count',x[0]); });
+    a(C,'optic.total','Transceivers, total','transceivers','count','all');
+    [['be_leaf','Back-end leaf','be'],['be_spine','Back-end spine','be'],['be_superspine','Back-end super-spine','be'],['fe_leaf','Front-end leaf','fe'],['fe_spine','Front-end spine','fe'],
+     ['fe_border_leaf','Front-end border leaf','fe'],['edge_router','Edge router','edge'],['border_gateway','Border gateway','edge']].forEach(function(x){
+      a(P,'spec.'+x[0]+'.model', x[1]+' model','','text',x[2]); a(P,'spec.'+x[0]+'.ports', x[1]+' ports (physical)','ports','param',x[2]); a(P,'spec.'+x[0]+'.port_gbps', x[1]+' port speed','Gb/s','param',x[2]); });
+    a(P,'spec.edge_firewall.model','Edge firewall model','','text','edge'); a(P,'spec.oob_access.model','Out-of-band access switch model(s)','','text','oob'); a(P,'spec.oob_spine.model','Out-of-band spine model','','text','oob');
+    a(P,'spec.be_nic.model','Back-end NIC model','','text','be'); a(P,'spec.be_nic.gbps','Back-end bandwidth per GPU, all planes','Gb/s','param','be');
+    a(P,'spec.ns_dpu.model','North-south DPU model','','text','fe'); a(P,'spec.ns_dpu.ports','North-south DPU ports used per tray','ports','param','fe'); a(P,'spec.ns_dpu.port_gbps','North-south DPU port speed','Gb/s','param','fe');
+    return R; }
+  var _eqCat=null;
+  function eqSpecFor(key){ if(!_eqCat){ _eqCat={}; eqCatalog().forEach(function(c){ _eqCat[c.key]=c; }); }
+    var k=String(key||'').trim(); if(_eqCat[k.toLowerCase()]) return _eqCat[k.toLowerCase()];
+    var m=/^bom\.model\.(.+)$/i.exec(k); if(m && m[1].trim()) return {sec:'BoM device counts', key:'bom.model.'+m[1].trim(), label:'Devices of model '+m[1].trim(), unit:'devices', kind:'count', grp:'all', fam:true};
+    return null; }
+  function eqCanon(s){ var a=String(s==null?'':s).toUpperCase().replace(/[^A-Z0-9+]/g,'');
+    a=a.replace(/^(NVIDIA|NV|ARISTA|AR|CISCO|CS|NOKIA|NK|JUNIPER|JN|OPENGEAR)(?=[A-Z0-9])/,'');
+    Object.keys(BE_SHOWN).forEach(function(k){ var x=eqCanon0(k), y=eqCanon0(BE_SHOWN[k]); if(a===x) a=y; });
+    return a; }
+  function eqCanon0(s){ return String(s).toUpperCase().replace(/[^A-Z0-9+]/g,'').replace(/^(NVIDIA|NV|ARISTA|AR|CISCO|CS|NOKIA|NK|JUNIPER|JN|OPENGEAR)(?=[A-Z0-9])/,''); }
+  function eqModelKey(m){ return String(m).replace(/\s+\u2014.*$/,'').replace(/\([^)]*\)/g,'').trim().replace(/[^A-Za-z0-9.+-]+/g,'_').replace(/^_+|_+$/g,''); }
+  function eqNames(k){ var n=[k]; if(BE_SHOWN[k]) n.push(BE_SHOWN[k]); [BE_MODELS, FE_SW, FE_EDGE_SW].forEach(function(T){ try{ if(T && T[k] && T[k].label) n.push(T[k].label); }catch(e){} }); return n; }
+  function eqSameText(b, p, syn){ var set=function(s){ return String(s||'').split(/\s*\+\s*/).map(eqCanon).filter(Boolean).sort().join('+'); };
+    if(set(b)===set(p)) return true; var cb=eqCanon(b); return (syn||[]).some(function(n){ return eqCanon(n)===cb || eqCanon(String(n).replace(/\s*\(.*\)\s*$/,''))===cb; }); }
+
+  // ---- the Product side
+  function equivalenceSummary(t){
+    return _memoRun(function(){
+      t=t||_bomTallyGet(); if(!t) throw new Error('the BoM could not be built');
+      var V={}, syn={}, put=function(k, v){ V[k]=v; };
+      eqCatalog().forEach(function(c){ V[c.key]=(c.kind==='text')?'':0; });
+      var racks=byType('rack'), gpus=0, trays=0; racks.forEach(function(r){ trays+=r.hosts||0; gpus+=(r.hosts||0)*ACC_PER_HOST; });
+      put('topo.racks', racks.length); put('topo.trays', trays); put('topo.gpus', gpus);
+      var np=Math.max(1, PLANES()), lv=byType('leaf'), sp=byType('spine'), ss=byType('ssp'), rails={}, pp=function(n){ return n%np===0?n/np:+(n/np).toFixed(2); };
+      lv.forEach(function(d){ if(d.rail!=null) rails[d.rail]=1; }); var nr=Object.keys(rails).length;
+      put('topo.be.planes', np); put('topo.be.rails_per_plane', pp(nr)); put('topo.be.gpu_gbps_per_plane', laneG());
+      put('topo.be.leaf_per_plane', pp(lv.length)); put('topo.be.spine_per_plane', pp(sp.length)); put('topo.be.superspine_per_plane', pp(ss.length));
+      var w=null; lv.forEach(function(d){ var s=subFor(d); if(s!==null && s<99 && (w===null || s>w)) w=s; }); put('topo.be.oversub_leaf', w===null?0:+w.toFixed(2));
+      if(ss.length){ var w2=null; sp.forEach(function(d){ var s=spineSubFor(d); if(s!==null && s<99 && (w2===null || s>w2)) w2=s; }); put('topo.be.oversub_spine', w2===null?0:+w2.toFixed(2)); }
+      var R={}, MD={}; Object.keys(t.dev).forEach(function(role){ var k=EQ_ROLE[role]||role.replace(/[^a-z0-9]+/g,'_');
+        Object.keys(t.dev[role]).forEach(function(m){ var q=t.dev[role][m]; R[k]=(R[k]||0)+q; if(m && !/^\(/.test(m)){ (MD[k]=MD[k]||{})[m]=1; var mk='bom.model.'+eqModelKey(BE_SHOWN[m]||m); V[mk]=(V[mk]||0)+q; } }); });
+      var tot=0; Object.keys(R).forEach(function(k){ put('bom.role.'+k, R[k]); if(!EQ_NONNET[k]) tot+=R[k]; }); put('bom.network_total', tot);
+      put('topo.oob.access', R.oob_access||0); put('topo.oob.spine', R.oob_spine||0);
+      put('topo.edge.router', R.edge_router||0); put('topo.edge.border_gateway', R.border_gateway||0); put('topo.edge.firewall', R.edge_firewall||0);
+      var ct=0; EQ_SEGS.forEach(function(sg){ var c=t.cable[sg]||{}, s=0; EQ_MEDIA.forEach(function(m){ put('cable.'+sg+'.'+m, c[m]||0); s+=c[m]||0; }); put('cable.'+sg+'.total', s); ct+=s; });
+      put('cable.total', ct); var ot=0; ['be','fe','oob'].forEach(function(sg){ put('optic.'+sg, t.optic[sg]||0); ot+=t.optic[sg]||0; }); put('optic.total', ot);
+      var bm=BE_SHOWN[beModel]||beModel, bp=(BE_MODELS[beModel]||{}).cages||RADIX, bg=beCageG();
+      [['be_leaf',lv.length],['be_spine',sp.length],['be_superspine',ss.length]].forEach(function(x){ if(!x[1]) return;
+        put('spec.'+x[0]+'.model', bm); put('spec.'+x[0]+'.ports', bp); put('spec.'+x[0]+'.port_gbps', bg); syn['spec.'+x[0]+'.model']=eqNames(beModel); });
+      var nc=nicOf(); if(nc) put('spec.be_nic.model', nc.label); put('spec.be_nic.gbps', np*laneG());
+      if(FE && FE.on && racks.length){ var p=fePlan(), t3=p.tier3;
+        put('topo.fe.leaf', p.leaves); put('topo.fe.spine', t3?t3.spinesPerPod*t3.pods:p.spines); put('topo.fe.superspine', t3?t3.ssps:0);
+        put('topo.fe.border_leaf', feBlCount()); put('topo.fe.oversub', +(+p.oversub||0).toFixed(2)); put('bom.role.ns_dpu', t.dpu||t.hosts||p.hosts||0);
+        var fs=function(role, m){ if(!m) return; var sw=FE_SW[m]||null; put('spec.'+role+'.model', m); syn['spec.'+role+'.model']=eqNames(m);
+          if(sw && sw.access){ put('spec.'+role+'.ports', (sw.access.n||0)+((sw.uplink&&sw.uplink.n)||0)); put('spec.'+role+'.port_gbps', sw.access.gbps||0); } };
+        if(R.fe_leaf) fs('fe_leaf', FE.leafModel); if(R.fe_spine) fs('fe_spine', FE.spineModel); if(R.fe_border_leaf) fs('fe_border_leaf', FE.borderModel);
+        var es=function(role, m){ if(!m) return; var sw=FE_EDGE_SW[m]||FE_SW[m]||null; put('spec.'+role+'.model', m); syn['spec.'+role+'.model']=eqNames(m);
+          if(sw && sw.ports && typeof sw.ports==='object'){ var ks=Object.keys(sw.ports).sort(function(x,y){ return parseInt(y,10)-parseInt(x,10); }); if(ks.length){ put('spec.'+role+'.ports', sw.ports[ks[0]]); put('spec.'+role+'.port_gbps', parseInt(ks[0],10)); } }
+          else if(sw && sw.access){ put('spec.'+role+'.ports', sw.access.n||0); put('spec.'+role+'.port_gbps', sw.access.gbps||0); } };
+        if(R.edge_router) es('edge_router', FE.edgeModel); if(R.border_gateway) es('border_gateway', FE.bgModel);
+        if(R.edge_firewall){ put('spec.edge_firewall.model', FE.fwModel); syn['spec.edge_firewall.model']=eqNames(FE.fwModel); }
+        put('spec.ns_dpu.model', nsDpuBf4()?((NS_DPU_OPTS[profileKey]||{}).bf4||{}).label||'BlueField-4':FE.nicModel); put('spec.ns_dpu.ports', FE.nicsPerHost||0); put('spec.ns_dpu.port_gbps', FE.nicGbps||0); }
+      ['oob_access','oob_spine'].forEach(function(k){ if(MD[k]) put('spec.'+k+'.model', Object.keys(MD[k]).sort().join(' + ')); });
+      return {format:'aidc-dbd-equivalence-summary/1', builder:BUILDER_VER, builderSha256:builderSha256()||null, build:identBuild(), fingerprint:designFingerprint(),
+        gpusPerTray:ACC_PER_HOST, traysPerRack:racks.length?Math.round(trays/racks.length):0, values:V, syn:syn}; }); }
+
+  // ---- the Baseline: template (from the same catalog), parser, per-row report
+  function baselineWorkbook(S){
+    var wb=new ExcelJS.Workbook(); wb.creator=APP_NAME; wb.title='AIDC DBD Baseline'; wb.keywords=BASELINE_FORMAT; wb.description='Generated by '+APP_NAME+' '+BUILDER_VER;
+    var hdr={font:{bold:true, color:{argb:'FFFFFFFF'}}, fill:{type:'pattern', pattern:'solid', fgColor:{argb:'FF1E4F6E'}}};
+    var rm=wb.addWorksheet('Read me'); rm.getColumn(1).width=26; rm.getColumn(2).width=110;
+    [['Format', BASELINE_FORMAT], ['Generated by', APP_NAME+' '+BUILDER_VER+(builderSha256()?' (SHA-256 '+builderSha256()+')':'')],
+     ['Filled from', S?'the design open when it was generated (build '+S.build+', fingerprint '+S.fingerprint+')':'blank template'],
+     ['What it is', 'The customer\'s reference design, stated as the metrics the equivalence report compares. Keep this file separate from the input sheet, so it can be hash-committed on its own.'],
+     ['How to fill', 'One row per metric. Enter the Value; keep the Key as it is. Leave a row blank when the Baseline does not state it: a blank row is not compared.'],
+     ['Rules', 'exact: topology parameters (planes, rails, oversubscription, speeds, port counts) and models must match. count: device, cable and transceiver counts may differ by up to floor(2% of the Baseline value), per role and in total.'],
+     ['Ratios', 'Oversubscription as N:1 (1:1 is non-blocking).'],
+     ['Counts by model', 'Add rows with the key bom.model.<model> (for example bom.model.SN5610) for device counts by model.'],
+     ['Customer source', 'Name the document and revision each value comes from.'],
+     ['CSV', 'The parser also takes a CSV with the columns key,value,unit,source (one row per key).']].forEach(function(r,i){
+      var row=rm.getRow(i+1); row.getCell(1).value=r[0]; row.getCell(2).value=r[1]; row.getCell(1).font={bold:true}; row.getCell(2).alignment={wrapText:true, vertical:'top'}; });
+    var C=eqCatalog(), fam=S?Object.keys(S.values).filter(function(k){ return /^bom\.model\./.test(k) && S.values[k]; }).sort():[];
+    ['Topology','BoM device counts','Cable summary','Platform specs'].forEach(function(sec){
+      var ws=wb.addWorksheet(sec); ws.columns=[{header:'Key', key:'k', width:34},{header:'Value', key:'v', width:24},{header:'Unit', key:'u', width:12},{header:'Rule', key:'a', width:30},{header:'Customer source (document, revision)', key:'s', width:34},{header:'Notes', key:'n', width:60}];
+      ws.getRow(1).eachCell(function(c){ c.font=hdr.font; c.fill=hdr.fill; }); ws.views=[{state:'frozen', ySplit:1}];
+      var rows=C.filter(function(c){ return c.sec===sec; }); if(sec==='BoM device counts') fam.forEach(function(k){ rows.push(eqSpecFor(k)); });
+      rows.forEach(function(c){ var v=S?S.values[c.key]:null; if(v==='' || v==null) v=null; if(v!=null && c.unit==='ratio') v=(v?v+':1':null); if(v===0) v=null;
+        var r=ws.addRow({k:c.key, v:v, u:c.unit, a:c.kind==='count'?'count, within floor(2%)':'exact', s:S?('AIDC DBD build '+S.build):'', n:c.label});
+        r.getCell('k').font={name:'Consolas'}; r.getCell('n').alignment={wrapText:true};
+        if(c.kind==='count') r.getCell('v').dataValidation={type:'whole', operator:'greaterThanOrEqual', formulae:[0], allowBlank:true, showErrorMessage:true, errorStyle:'warning', errorTitle:'Not a count', error:'A count is a whole number, 0 or more.'}; }); });
+    return wb; }
+  function baselineBytes(filled){ var S=filled?equivalenceSummary():null; return baselineWorkbook(S).xlsx.writeBuffer().then(function(b){ return new Uint8Array(b); }); }
+  function baselineCsv(S){ S=S||equivalenceSummary(); var q=function(v){ v=String(v==null?'':v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+    var keys=eqCatalog().map(function(c){ return c.key; }).concat(Object.keys(S.values).filter(function(k){ return /^bom\.model\./.test(k); }).sort());
+    return ['key,value,unit,source'].concat(keys.filter(function(k){ var v=S.values[k]; return !(v==='' || v==null || v===0); }).map(function(k){ var c=eqSpecFor(k), v=S.values[k];
+      return [k, c.unit==='ratio'?(v?v+':1':'0'):v, c.unit, 'AIDC DBD build '+S.build].map(q).join(','); })).join('\n')+'\n'; }
+  function baselineDownload(filled){
+    if(!window.ExcelJS){ setStatus('ExcelJS unavailable'); return Promise.resolve(); }
+    if(filled && !byType('rack').length){ setStatus('Build a fabric first'); return Promise.resolve(); }
+    var fn=filled?((custCodeVal()?identFilePrefix()+'-':'')+'baseline-filled.xlsx'):BASELINE_NAME;
+    setStatus(filled?'Filling the Baseline from this design\u2026':'Writing the Baseline template\u2026');
+    return new Promise(function(r){ setTimeout(r, 30); }).then(function(){ return baselineBytes(filled); }).then(function(u){ insheetSaveFile(fn, u, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      setStatus((filled?'Baseline filled from this design':'Blank Baseline template')+' saved as '+fn); }, function(e){ setStatus('\u26a0 Baseline template not written: '+(e&&e.message||e)); }); }
+  function eqNum(v, ratio){ var s=String(v==null?'':v).trim().replace(/,/g,''); if(ratio){ var m=/^(\d+(?:\.\d+)?)\s*(?::\s*1)?$/.exec(s); return m?+m[1]:null; }
+    return /^-?\d+(\.\d+)?$/.test(s)?+s:null; }
+  function baselineCheck(p){
+    var rep=[], vals={}, byKey={}, n={accepted:0, unknown:0, bad:0, duplicate:0, blank:0};
+    var nu=function(u){ return String(u||'').toLowerCase().replace(/[^a-z0-9]/g,'').replace(/s$/,''); };
+    p.rows.forEach(function(x){ var raw=(x.value==null)?'':String(x.value).trim(), c=eqSpecFor(x.key), r={row:x.row, key:String(x.key).trim(), value:raw, unit:x.unit||'', source:x.source||'', status:'', note:''};
+      if(!c){ r.status='unknown key'; r.note='not a key of '+BASELINE_FORMAT; n.unknown++; rep.push(r); return; }
+      if(raw===''){ n.blank++; return; }
+      var v=null;
+      if(c.kind==='text') v=raw;
+      else { v=eqNum(raw, c.unit==='ratio'); if(v===null || v<0){ r.status='bad value'; r.note=c.unit==='ratio'?'not a ratio N:1':'not a number of 0 or more'; n.bad++; rep.push(r); return; }
+        if(c.kind==='count' && Math.floor(v)!==v){ r.status='bad value'; r.note='a count is a whole number'; n.bad++; rep.push(r); return; } }
+      if(r.unit && c.unit && nu(r.unit)!==nu(c.unit) && !(c.unit==='Gb/s' && /^gbp?s?$/.test(nu(r.unit)))) r.note='unit '+r.unit+' read as '+c.unit;
+      var k=c.key; if(byKey[k]){ byKey[k].status='duplicate'; byKey[k].note='the key appears again at '+x.row+'; that row is used'; n.duplicate++; n.accepted--; }
+      r.status='accepted'; r.key=k; byKey[k]=r; vals[k]={v:v, row:x.row, unit:r.unit, source:r.source}; n.accepted++; rep.push(r); });
+    return {format:BASELINE_FORMAT, name:p.name, sha256:p.sha256, kind:p.kind, rows:p.rows.length, values:vals, report:rep, counts:n}; }
+  function baselineParse(bytes, name){ return inputSheetParse(bytes, name||'Baseline').then(baselineCheck, function(e){
+    throw new Error(String(e&&e.message||e).replace('is neither an input sheet (.xlsx) nor a CSV', 'is neither a Baseline (.xlsx) nor a CSV')); }); }
+
+  // ---- D5: the Baseline's internal consistency (Error (Baseline))
+  function baselineChecks(bv, S){
+    var out=[], has=function(k){ return bv[k]!==undefined && isFinite(+bv[k].v); }, v=function(k){ return +bv[k].v; }, f=function(x){ return (+x).toLocaleString('en-US'); };
+    var ck=function(id, keys, ok, msg){ out.push({id:id, keys:keys, ok:!!ok, msg:msg}); };
+    var g=S.gpusPerTray, tr=S.traysPerRack;
+    if(has('topo.gpus') && has('topo.trays') && g) ck('B1', ['topo.gpus','topo.trays'], v('topo.gpus')===v('topo.trays')*g, 'GPUs '+f(v('topo.gpus'))+' against trays '+f(v('topo.trays'))+' x '+g+' GPUs per tray = '+f(v('topo.trays')*g));
+    if(has('topo.trays') && has('topo.racks') && tr) ck('B2', ['topo.trays','topo.racks'], v('topo.trays')===v('topo.racks')*tr, 'trays '+f(v('topo.trays'))+' against racks '+f(v('topo.racks'))+' x '+tr+' trays per rack = '+f(v('topo.racks')*tr));
+    [['be_leaf','leaf'],['be_spine','spine'],['be_superspine','superspine']].forEach(function(x){ var a='bom.role.'+x[0], b='topo.be.'+x[1]+'_per_plane';
+      if(has(a) && has(b) && has('topo.be.planes')) ck('B3', [a,b,'topo.be.planes'], v(a)===v(b)*v('topo.be.planes'), x[1]+' count '+f(v(a))+' against '+f(v(b))+' per plane x '+f(v('topo.be.planes'))+' planes = '+f(v(b)*v('topo.be.planes'))); });
+    if(has('topo.be.leaf_per_plane') && has('topo.be.rails_per_plane') && v('topo.be.rails_per_plane')>0){ var lp=v('topo.be.leaf_per_plane'), rp=v('topo.be.rails_per_plane');
+      ck('B4', ['topo.be.leaf_per_plane','topo.be.rails_per_plane','bom.role.be_leaf'], lp>=rp && lp%rp===0, f(lp)+' leaves per plane are '+(lp<rp?'fewer than':'not a multiple of')+' the '+f(rp)+' rails per plane (every rail needs the same number of its own leaves)'); }
+    var lanes=function(role){ var pg='spec.'+role+'.port_gbps'; return (has(pg) && has('topo.be.gpu_gbps_per_plane') && v('topo.be.gpu_gbps_per_plane')>0)?Math.max(1, Math.floor(v(pg)/v('topo.be.gpu_gbps_per_plane'))):1; };
+    var os=has('topo.be.oversub_leaf') && v('topo.be.oversub_leaf')>0 ? v('topo.be.oversub_leaf') : 1;
+    if(has('topo.be.leaf_per_plane') && has('topo.gpus') && has('spec.be_leaf.ports')){ var down=Math.floor(v('spec.be_leaf.ports')*lanes('be_leaf')*os/(1+os)), cap=v('topo.be.leaf_per_plane')*down;
+      ck('B5', ['topo.be.leaf_per_plane','topo.gpus','spec.be_leaf.ports','bom.role.be_leaf'], cap>=v('topo.gpus'), f(v('topo.be.leaf_per_plane'))+' leaves per plane x '+f(down)+' GPU-facing lanes = '+f(cap)+' against '+f(v('topo.gpus'))+' GPUs (one leg per GPU per plane)'); }
+    if(has('topo.be.spine_per_plane') && has('spec.be_spine.ports') && !(has('topo.be.superspine_per_plane') && v('topo.be.superspine_per_plane')>0)){
+      var up=has('topo.gpus')?Math.ceil(v('topo.gpus')/os):0, scap=v('topo.be.spine_per_plane')*v('spec.be_spine.ports')*lanes('be_spine');
+      if(up) ck('B6', ['topo.be.spine_per_plane','spec.be_spine.ports','bom.role.be_spine'], scap>=up, f(v('topo.be.spine_per_plane'))+' spines per plane carry '+f(scap)+' lanes against '+f(up)+' leaf uplink lanes per plane (GPUs / oversubscription)'); }
+    var roles=Object.keys(bv).filter(function(k){ var m=/^bom\.role\.(.+)$/.exec(k); return m && !EQ_NONNET[m[1]] && m[1]!=='ns_dpu'; });
+    if(has('bom.network_total') && roles.length){ var sm=roles.reduce(function(a,k){ return a+v(k); },0); ck('B7', ['bom.network_total'].concat(roles), v('bom.network_total')>=sm, 'network total '+f(v('bom.network_total'))+' against '+f(sm)+' in the roles stated'); }
+    EQ_SEGS.forEach(function(sg){ var t='cable.'+sg+'.total', ms=EQ_MEDIA.map(function(m){ return 'cable.'+sg+'.'+m; }).filter(has); if(has(t) && ms.length){ var sm=ms.reduce(function(a,k){ return a+v(k); },0); ck('B8', [t].concat(ms), v(t)>=sm, sg.replace('_','-')+' cable total '+f(v(t))+' against '+f(sm)+' by media'); } });
+    var segT=EQ_SEGS.map(function(sg){ return 'cable.'+sg+'.total'; }).filter(has); if(has('cable.total') && segT.length){ var s2=segT.reduce(function(a,k){ return a+v(k); },0); ck('B8', ['cable.total'].concat(segT), v('cable.total')>=s2, 'cable total '+f(v('cable.total'))+' against '+f(s2)+' by segment'); }
+    var oT=['optic.be','optic.fe','optic.oob'].filter(has); if(has('optic.total') && oT.length){ var s3=oT.reduce(function(a,k){ return a+v(k); },0); ck('B8', ['optic.total'].concat(oT), v('optic.total')>=s3, 'transceiver total '+f(v('optic.total'))+' against '+f(s3)+' by segment'); }
+    [['topo.fe.leaf','bom.role.fe_leaf'],['topo.fe.border_leaf','bom.role.fe_border_leaf'],['topo.oob.access','bom.role.oob_access'],['topo.oob.spine','bom.role.oob_spine'],
+     ['topo.edge.router','bom.role.edge_router'],['topo.edge.border_gateway','bom.role.border_gateway'],['topo.edge.firewall','bom.role.edge_firewall']].forEach(function(x){
+      if(has(x[0]) && has(x[1])) ck('B9', x, v(x[0])===v(x[1]), x[0]+' '+f(v(x[0]))+' against '+x[1]+' '+f(v(x[1]))); });
+    return out; }
+  // ---- P2b hook: NVIDIA public reference rules (none yet). Returns findings [{key, side:'baseline'|'product', rule, text}].
+  function eqRefRules(values, side){ return []; }
+
+  // ---- D4 and D5: the diff and the proposed class of every row
+  var EQ_INPUT={'topo.racks':['site.racks','rackcount'], 'topo.be.planes':['fabric.be.planes','planesel'],
+    'spec.be_leaf.model':['platform.be_switch','be-model'], 'spec.be_spine.model':['platform.be_switch','be-model'], 'spec.be_superspine.model':['platform.be_switch','be-model'],
+    'spec.fe_leaf.model':['platform.fe_leaf','fe-leaf-model'], 'spec.fe_spine.model':['platform.fe_spine','fe-spine-model'], 'spec.fe_border_leaf.model':['platform.fe_border','fe-bl-model'],
+    'spec.edge_router.model':['platform.fe_edge','fe-edge-model'], 'spec.border_gateway.model':['platform.fe_gateway','fe-bg-model'], 'spec.edge_firewall.model':['platform.fe_firewall','fe-fw-model']};
+  // parameters the builder has no option for (D3, finding F6): a difference is a design choice, with the reason
+  var EQ_DERIVED={'topo.be.rails_per_plane':'rails per plane follow the platform, NIC and plane count; the builder has no rails option',
+    'topo.be.gpu_gbps_per_plane':'set by the NIC and the plane count; no separate option', 'spec.be_nic.gbps':'set by the NIC and the plane count; no separate option',
+    'topo.be.oversub_leaf':'the back end is non-blocking by construction; no oversubscription option', 'topo.be.oversub_spine':'the back end is non-blocking by construction; no oversubscription option',
+    'topo.fe.oversub':'set by the front-end spine count (sized automatically, or a 2:1 to 6:1 target); no other option'};
+  function eqInputGrp(k){ return /^(site\.|power\.|fabric\.platform|fabric\.cooling|fabric\.rack_oem)/.test(k)?'site':/^(fabric\.nic|fabric\.be\.|platform\.be_)/.test(k)?'be':
+    /^(fabric\.fe\.|fe\.|platform\.fe_(leaf|spine|border))/.test(k)?'fe':/^platform\.(fe_edge|fe_gateway|fe_firewall|dci_hub)/.test(k)?'edge':/^platform\.oob_/.test(k)?'oob':''; }
+  function eqGrpHit(rowGrp, g){ if(!g) return false; if(g==='site' || rowGrp==='all') return true; if(rowGrp===g) return true; return (rowGrp==='fe' && g==='edge') || (rowGrp==='edge' && g==='fe'); }
+  function eqDiff(B, S, si, H){
+    var C=eqCatalog(), keys=[], seen={}, bv={};
+    var famP=Object.keys(S.values).filter(function(k){ return /^bom\.model\./.test(k); });
+    Object.keys(B.values).forEach(function(k){ var ck=k; if(/^bom\.model\./.test(k)){ var cb=eqCanon(k.slice(10)); famP.forEach(function(pk){ if(eqCanon(pk.slice(10))===cb) ck=pk; }); } bv[ck]=B.values[k]; });
+    C.forEach(function(c){ keys.push(c.key); seen[c.key]=1; }); famP.concat(Object.keys(bv)).forEach(function(k){ if(!seen[k]){ seen[k]=1; keys.push(k); } });
+    var checks=baselineChecks(bv, S), bad={}; checks.forEach(function(c){ if(!c.ok) c.keys.forEach(function(k){ (bad[k]=bad[k]||[]).push(c); }); });
+    var srep=(si && si.report)||[], dc=srep.filter(function(r){ return r.class==='design choice'; }), byIn={}; srep.forEach(function(r){ byIn[String(r.key).toLowerCase()]=r; });
+    var ref=eqRefRules(bv, 'baseline').concat(eqRefRules(S.values, 'product')), refBy={}; ref.forEach(function(f){ (refBy[f.key]=refBy[f.key]||[]).push(f); });
+    var herr=(H&&H.errors)||[];
+    var fmt=function(c, v){ if(v==='' || v==null) return ''; if(c.unit==='ratio') return v?v+':1':'0'; return (typeof v==='number')?v.toLocaleString('en-US'):String(v); };
+    var rows=[];
+    keys.forEach(function(k){ var c=eqSpecFor(k), b=bv[k], p=S.values[k];
+      if(b===undefined && (p===undefined || p===0 || p==='')) return;
+      var r={key:k, sec:c.sec, label:c.label, unit:c.unit, kind:c.kind, grp:c.grp, stated:b!==undefined, baseline:b?b.v:'', product:(p===undefined?(c.kind==='text'?'':0):p), delta:'', deltaPct:'', tol:'', within:'', cls:'', reason:''};
+      r.baselineText=fmt(c, r.baseline); r.productText=fmt(c, r.product)||(c.kind==='text'?'(none)':'');
+      if(!r.stated){ r.reason='not stated in the Baseline'; rows.push(r); return; }
+      if(c.kind==='text') r.within=eqSameText(r.baseline, r.product, S.syn[k])?'yes':'no';
+      else { var bn=+r.baseline, pn=+r.product||0, d=+(pn-bn).toFixed(2); r.delta=d; r.deltaPct=bn?+(100*d/bn).toFixed(2):(d?'':0);
+        if(c.kind==='count'){ r.tol=Math.floor(0.02*bn); r.within=Math.abs(d)<=r.tol?'yes':'no'; } else { r.tol=0; r.within=Math.abs(d)<0.005?'yes':'no'; } }
+      // the Product against an input it accepted
+      var im=EQ_INPUT[k], ir=im&&byIn[im[0]], contra='';
+      if(ir && (ir.status==='applied') && ir.applied!=='' && ir.applied!=null){ var same=(c.kind==='text')?eqSameText(ir.applied, r.product, S.syn[k]):(+String(ir.applied).replace(/[^0-9.]/g,'')===+r.product);
+        if(!same) contra='the input sheet set '+im[0]+' to '+ir.applied+' ('+ir.row+'); the Product built '+r.productText; }
+      if(contra){ r.cls='Error (Product)'; r.reason=contra; rows.push(r); return; }
+      if(r.within==='yes'){ rows.push(r); return; }
+      if(bad[k]){ r.cls='Error (Baseline)'; r.reason='the Baseline is inconsistent: '+bad[k].map(function(x){ return x.msg; }).join('; '); rows.push(r); return; }
+      var ns=dc.filter(function(x){ return eqGrpHit(c.grp, eqInputGrp(String(x.key).toLowerCase())); });
+      if(ns.length){ r.cls='Design choice'; r.reason=ns.slice(0,3).map(function(x){ return x.key+' '+x.status+' (requested '+x.requested+', built '+x.applied+')'; }).join('; '); rows.push(r); return; }
+      if(c.kind!=='count' && im){ r.cls='Design choice'; r.reason='an input that differs from the Baseline: the Product was configured with '+r.productText+'; the Baseline states '+r.baselineText; rows.push(r); return; }
+      if(EQ_DERIVED[k]){ r.cls='Design choice'; r.reason='outside the Product\'s supported options: '+EQ_DERIVED[k]+'; built at '+r.productText; rows.push(r); return; }
+      r.pending=true; rows.push(r); });
+    // derived parameters and counts: explained by a parameter of the same group that differs from the Baseline
+    var dp=rows.filter(function(r){ return r.stated && r.kind!=='count' && r.within==='no' && r.cls==='Design choice'; });
+    rows.forEach(function(r){ if(!r.pending) return; delete r.pending;
+      var by=dp.filter(function(x){ return x.key!==r.key && eqGrpHit(r.grp, x.grp==='site'?'site':x.grp); });
+      if(by.length){ r.cls='Design choice'; r.reason='follows from '+by.slice(0,3).map(function(x){ return x.key+' (Baseline '+x.baselineText+', Product '+x.productText+')'; }).join('; '); return; }
+      var he=herr.filter(function(e){ return r.grp==='all' || (e.src==='Cabling-BoM' && /^cable\.|^optic\./.test(r.key)) || (/^Front/.test(e.src) && /fe|edge/.test(r.grp)) || (e.src==='Compute racks' && /site|be/.test(r.grp)) || (e.src==='Port allocation' && r.grp==='be'); });
+      if(he.length){ r.cls='Error (Product)'; r.reason='the Product\'s health verdict reports: '+he[0].src+': '+he[0].msg; return; }
+      r.cls='Error (Product)'; r.reason=(r.kind==='count')?'same parameters as the Baseline; outside the tolerance (floor(2%) = '+r.tol+')':'derived from the same inputs; differs from the Baseline'; });
+    rows.forEach(function(r){ if(refBy[r.key] && !r.cls){ r.cls='Differs from NVIDIA public reference'; r.reason=refBy[r.key].map(function(f){ return f.text; }).join('; '); } });
+    return {rows:rows, checks:checks}; }
+  function eqFinal(rep){ var ov=EQ.overrides||{};
+    rep.rows.forEach(function(r){ var o=ov[r.key]; r.proposedCls=r.cls; r.proposedReason=r.reason; r.overridden=false;
+      if(o && o.cls!==undefined && o.cls!==r.cls){ r.finalCls=o.cls; r.finalReason=o.reason||''; r.overridden=true; } else { r.finalCls=r.cls; r.finalReason=r.reason; } });
+    var n={rows:rep.rows.length, stated:0, within:0, out:0}; EQ_CLASSES.forEach(function(c){ n[c]=0; });
+    rep.rows.forEach(function(r){ if(!r.stated) return; n.stated++; if(r.within==='yes') n.within++; else n.out++; if(r.finalCls) n[r.finalCls]=(n[r.finalCls]||0)+1; });
+    rep.counts=n; rep.missingReasons=rep.rows.filter(function(r){ return r.overridden && !String(r.finalReason||'').trim(); }).map(function(r){ return r.key; }); return rep; }
+  // the report: one bomSections() for the summary and the health verdict's reconciliation
+  function eqReport(){ if(!EQ.baseline) throw new Error('load a Baseline first'); if(!byType('rack').length) throw new Error('build a fabric first');
+    return _memoRun(function(){
+      var t=_bomTallyGet(), S=equivalenceSummary(t), H=healthVerdict({tally:t}), si=EQ.session||INSHEET_LAST||null, d=eqDiff(EQ.baseline, S, si, H);
+      var rep={format:EQ_FORMAT, created:new Date().toISOString(), app:APP_NAME, builder:BUILDER_VER, builderSha256:builderSha256()||null, build:S.build, fingerprint:S.fingerprint,
+        baseline:{name:EQ.baseline.name, sha256:EQ.baseline.sha256, kind:EQ.baseline.kind, rows:EQ.baseline.rows, counts:EQ.baseline.counts},
+        session:si?{name:(si.sheet||{}).name||'', sha256:(si.sheet||{}).sha256||'', fingerprint:(si.build||{}).fingerprint||''}:null,
+        health:{text:H.text, counts:H.counts, errors:H.errors.slice(0,50), recon:H.recon?{checks:H.recon.checks.length, mismatches:H.recon.mismatches}:null},
+        checks:d.checks, rows:d.rows, summary:S};
+      EQ.report=eqFinal(rep); return EQ.report; }); }
+
+  // ---- output: <designID>-equivalence.csv and .pdf (plain ASCII), SHA-256 of each; the P3 package step calls equivalenceReportFiles()
+  function eqAscii(s){ return asciiFold(String(s==null?'':s).replace(/\u0394/g,'Delta')).replace(/[\u2013\u2014]/g,'-').replace(/\u00d7/g,'x').replace(/[\u2018\u2019]/g,"'").replace(/[\u201c\u201d]/g,'"').replace(/\u2026/g,'...').replace(/[^\x09\x0a\x0d\x20-\x7e]/g,'?'); }
+  function eqCsv(rep){ var q=function(v){ v=eqAscii(v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+    var L=[['# format',EQ_FORMAT],['# build',rep.build],['# design fingerprint',rep.fingerprint],['# builder',rep.builder+(rep.builderSha256?' SHA-256 '+rep.builderSha256:'')],
+      ['# baseline',rep.baseline.name+' SHA-256 '+rep.baseline.sha256],['# session input',rep.session?(rep.session.name+' SHA-256 '+rep.session.sha256):'none'],
+      ['# health verdict',rep.health.text],['# created',rep.created]].map(function(r){ return r.map(q).join(','); });
+    L.push(['section','metric','key','baseline','product','unit','delta','delta_pct','tolerance','within_tolerance','class','reason','proposed_class','proposed_reason','overridden'].join(','));
+    rep.rows.forEach(function(r){ L.push([r.sec, r.label, r.key, r.baselineText, r.productText, r.unit, r.delta, r.deltaPct, r.tol, r.within, r.finalCls, r.finalReason, r.proposedCls, r.proposedReason, r.overridden?'yes':''].map(q).join(',')); });
+    rep.checks.forEach(function(c){ L.push(['Baseline check', c.id, c.keys.join(' '), '', '', '', '', '', '', c.ok?'yes':'no', c.ok?'':'Error (Baseline)', c.msg, '', '', ''].map(q).join(',')); });
+    return L.join('\n')+'\n'; }
+  function eqPdf(rep, csvSha){
+    var pdf=new window.jspdf.jsPDF({orientation:'landscape', unit:'pt', format:'letter'}), A=eqAscii;
+    var PW=pdf.internal.pageSize.getWidth(), PH=pdf.internal.pageSize.getHeight(), M=36, W=PW-2*M, page=0, y=0;
+    var head=['Metric','Baseline','Product','Delta (Delta %)','Within tolerance','Class','Reason'], fr=[0.24,0.09,0.09,0.09,0.10,0.12,0.27], cw=fr.map(function(f){ return f*W; });
+    var foot=function(){ pdf.setFont('helvetica','normal'); pdf.setFontSize(8); pdf.setTextColor(120); pdf.text(A(APP_NAME+'  -  equivalence report  -  build '+rep.build), M, PH-18); pdf.text('Page '+page, PW-M, PH-18, {align:'right'}); };
+    var top=function(){ if(page) { foot(); pdf.addPage(); } page++; y=M;
+      pdf.setFont('helvetica','bold'); pdf.setFontSize(8.5); pdf.setFillColor(31,59,92); pdf.rect(M, y, W, 17, 'F'); pdf.setTextColor(255);
+      var x=M; head.forEach(function(h,i){ pdf.text(h, x+3, y+11.5); x+=cw[i]; }); y+=17; pdf.setTextColor(25); };
+    pdf.setFont('helvetica','bold'); pdf.setFontSize(15); pdf.setTextColor(20); pdf.text(A('Equivalence report - build '+rep.build), M, M+6); page=1;
+    pdf.setFont('helvetica','normal'); pdf.setFontSize(8.5); pdf.setTextColor(60); y=M+22;
+    var n=rep.counts, meta=['Prepared by '+DWR_ID.name+'  -  generated '+rep.created+'  -  '+APP_NAME+' '+rep.builder,
+      'Builder SHA-256 '+(rep.builderSha256||'(not available: browser file)'), 'Design fingerprint '+rep.fingerprint,
+      'Baseline '+rep.baseline.name+'  SHA-256 '+rep.baseline.sha256+'  ('+rep.baseline.counts.accepted+' values accepted, '+rep.baseline.counts.unknown+' unknown keys, '+rep.baseline.counts.bad+' bad values)',
+      'Session input '+(rep.session?rep.session.name+'  SHA-256 '+rep.session.sha256:'none (classes from the design\'s own inputs)'),
+      'Equivalence CSV SHA-256 '+csvSha,
+      'Health verdict: '+rep.health.text,
+      'Rows '+n.rows+'; stated in the Baseline '+n.stated+'; within tolerance '+n.within+'; outside '+n.out+'.  '+EQ_CLASSES.map(function(c){ return c+' '+(n[c]||0); }).join('; ')+'.',
+      'Tolerance: topology parameters and models exact; device, cable and transceiver counts within floor(2% of the Baseline), per role and in total. Classes are proposals; an override carries its reason.'];
+    meta.forEach(function(s){ pdf.splitTextToSize(A(s), W).forEach(function(l){ pdf.text(l, M, y); y+=11; }); });
+    var fc=rep.checks.filter(function(c){ return !c.ok; }); if(rep.checks.length){ y+=2; pdf.setFont('helvetica','bold'); pdf.text(A('Baseline consistency: '+rep.checks.length+' checks, '+fc.length+' failed'), M, y); y+=11; pdf.setFont('helvetica','normal');
+      fc.slice(0,12).forEach(function(c){ pdf.splitTextToSize(A(c.id+': '+c.msg), W).forEach(function(l){ pdf.text(l, M+8, y); y+=10; }); }); }
+    y+=6; pdf.setFont('helvetica','bold'); pdf.setFontSize(8.5); pdf.setFillColor(31,59,92); pdf.rect(M, y, W, 17, 'F'); pdf.setTextColor(255);
+    var x0=M; head.forEach(function(h,i){ pdf.text(h, x0+3, y+11.5); x0+=cw[i]; }); y+=17; pdf.setTextColor(25);
+    var sec='', shade=false;
+    rep.rows.forEach(function(r){
+      if(r.sec!==sec){ sec=r.sec; if(y+40>PH-M-14) top(); y+=4; pdf.setFillColor(46,94,140); pdf.rect(M, y, W, 15, 'F'); pdf.setFont('helvetica','bold'); pdf.setFontSize(8.5); pdf.setTextColor(255); pdf.text(A(sec), M+5, y+10.5); pdf.setTextColor(25); y+=15; shade=false; }
+      var dl=(r.delta===''?'':(r.delta>0?'+':'')+r.delta+(r.deltaPct===''?'':' ('+(r.deltaPct>0?'+':'')+r.deltaPct+'%)'));
+      var cells=[r.label+'\n'+r.key, r.baselineText, r.productText, dl, r.within, r.finalCls+(r.overridden?' (override)':''), r.finalReason].map(function(v,i){ pdf.setFontSize(7.5); return pdf.splitTextToSize(A(v), cw[i]-6); });
+      var h=Math.max.apply(null, cells.map(function(c){ return c.length; }))*8.6+5; if(y+h>PH-M-14) top();
+      shade=!shade; if(r.within==='no'){ pdf.setFillColor(252,238,232); pdf.rect(M, y, W, h, 'F'); } else if(shade){ pdf.setFillColor(243,246,249); pdf.rect(M, y, W, h, 'F'); }
+      var x=M; cells.forEach(function(c,i){ pdf.setFont('helvetica', (i===5&&r.finalCls)?'bold':'normal'); pdf.setFontSize(7.5); pdf.text(c, x+3, y+9); x+=cw[i]; }); y+=h; });
+    foot(); return new Uint8Array(pdf.output('arraybuffer')); }
+  function equivalenceReportFiles(prefix){   // P3: the package step names the files with the evaluation ID
+    return Promise.resolve().then(function(){ var rep=EQ.report?eqFinal(EQ.report):eqReport(); if(!window.jspdf || !window.jspdf.jsPDF) throw new Error('PDF library unavailable');
+      if(rep.missingReasons.length) throw new Error('an override without a reason: '+rep.missingReasons.join(', '));
+      var pre=prefix||rep.build, enc=new TextEncoder(), csv=enc.encode(eqCsv(rep)), cs=sha256Hex(csv), pdf=eqPdf(rep, cs);
+      return [{name:pre+'-equivalence.csv', bytes:csv, sha256:cs}, {name:pre+'-equivalence.pdf', bytes:pdf, sha256:sha256Hex(pdf)}]; }); }
+  function eqSaveReport(kind){ equivalenceReportFiles(custCodeVal()?identFilePrefix():'design').then(function(F){ F.forEach(function(f){ if(kind && f.name.slice(-3)!==kind) return; insheetSaveFile(f.name, f.bytes, /csv$/.test(f.name)?'text/csv':'application/pdf'); });
+      setStatus('Equivalence report saved: '+F.map(function(f){ return f.name+' (SHA-256 '+f.sha256+')'; }).join('; ')); }, function(e){ setStatus('\u26a0 Equivalence report not written: '+(e&&e.message||e)); }); }
+
+  // ---- the screen: load a Baseline (and a session input file), see the diff, override a class with a reason
+  function baselineImportBytes(name, bytes){ setStatus('Reading the Baseline '+name+'\u2026');
+    return baselineParse(bytes, name).then(function(B){ EQ.baseline=B; EQ.overrides={}; EQ.report=null; setStatus('Baseline '+name+': '+B.counts.accepted+' values accepted, '+B.counts.unknown+' unknown keys, '+B.counts.bad+' bad values. Building the report\u2026');
+      setTimeout(function(){ eqShow(); }, 40); }, function(e){ setStatus('\u26a0 Baseline not read: '+(e&&e.message||e)); }); }
+  function eqPickFile(accept, fn){ var inp=document.createElement('input'); inp.type='file'; inp.accept=accept;
+    inp.onchange=function(){ var f=inp.files&&inp.files[0]; if(!f) return; var rd=new FileReader(); rd.onerror=function(){ setStatus('\u26a0 '+f.name+' could not be read'); }; rd.onload=function(){ fn(f.name, new Uint8Array(rd.result)); }; rd.readAsArrayBuffer(f); }; inp.click(); }
+  function eqLoadSession(name, bytes){ try{ var o=JSON.parse(new TextDecoder('utf-8').decode(bytes)); if(!o || o.format!==SESSION_INPUT_FORMAT) throw new Error('not a session input file ('+SESSION_INPUT_FORMAT+')');
+      EQ.session=o; EQ.report=null; setStatus('Session input '+name+' loaded: its nearest-supported rows are design choices.'); eqShow(); }catch(e){ setStatus('\u26a0 Session input not read: '+(e&&e.message||e)); } }
+  function eqShow(){
+    var old=document.getElementById('eqReport'); if(old) old.remove();
+    var b=document.createElement('div'); b.id='eqReport'; b.style.cssText='position:fixed;inset:0;z-index:2147482500;background:rgba(20,30,40,.28);display:flex;align-items:center;justify-content:center';
+    var rep=null, err=''; if(EQ.baseline && byType('rack').length){ try{ rep=EQ.report?eqFinal(EQ.report):eqReport(); }catch(e){ err=String(e&&e.message||e); } }
+    var col={'Design choice':'#9A6700','Error (Product)':'#B42318','Error (Baseline)':'#6941C6','Differs from NVIDIA public reference':'#4B5A63'}, si=EQ.session||INSHEET_LAST;
+    var h='<div style="width:1240px;max-width:calc(100vw - 32px);max-height:88vh;display:flex;flex-direction:column;background:#fff;border-radius:10px;box-shadow:0 10px 40px rgba(0,0,0,.25);padding:14px 16px;font:13px/1.45 system-ui,Segoe UI,sans-serif;color:#1E2A33">'
+      +'<div style="font-weight:600;font-size:15px">Equivalence report'+(rep?': build '+escHtml(rep.build):'')+'</div>';
+    if(!EQ.baseline) h+='<div style="margin:6px 0;color:#4B5A63">Load the customer\'s Baseline (.xlsx from the Baseline template, or CSV with key,value,unit,source). Each metric is compared with this design: topology parameters and models exact, counts within floor(2%) per role and in total.</div>';
+    else h+='<div style="margin:4px 0;color:#4B5A63">Baseline <b>'+escHtml(EQ.baseline.name)+'</b> (SHA-256 '+escHtml(EQ.baseline.sha256.slice(0,16))+'...): '+EQ.baseline.counts.accepted+' accepted, '+EQ.baseline.counts.unknown+' unknown keys, '+EQ.baseline.counts.bad+' bad values, '+EQ.baseline.counts.duplicate+' duplicates.'
+      +' Session input: '+(si?escHtml((si.sheet||{}).name||'')+(EQ.session?'':' (last import on this page)'):'none')+'.</div>';
+    if(EQ.baseline && EQ.baseline.report.some(function(r){ return r.status!=='accepted'; })) h+='<details style="margin:0 0 6px"><summary style="cursor:pointer;color:#B42318">Baseline rows not used</summary><div style="font-size:12px">'+EQ.baseline.report.filter(function(r){ return r.status!=='accepted'; }).map(function(r){ return escHtml(r.row+' '+r.key+' "'+r.value+'": '+r.status+(r.note?' ('+r.note+')':'')); }).join('<br>')+'</div></details>';
+    if(err) h+='<div style="color:#B42318;margin:6px 0">Report not built: '+escHtml(err)+'</div>';
+    if(rep){ var n=rep.counts;
+      h+='<div style="margin:2px 0 6px">'+n.stated+' metrics stated, <b style="color:#0F6E56">'+n.within+' within tolerance</b>, <b style="color:'+(n.out?'#B42318':'#0F6E56')+'">'+n.out+' outside</b>. '+EQ_CLASSES.map(function(c){ return escHtml(c)+' '+(n[c]||0); }).join(' &middot; ')+'. Health verdict: '+escHtml(rep.health.text)+'.'
+        +(rep.checks.some(function(c){ return !c.ok; })?' <span style="color:#6941C6">Baseline checks failed: '+rep.checks.filter(function(c){ return !c.ok; }).map(function(c){ return escHtml(c.id); }).join(', ')+'.</span>':'')+'</div>'
+        +'<label style="font-size:12px;margin-bottom:4px"><input type="checkbox" id="eqOnlyOut"'+(eqShow._out?' checked':'')+'> Only rows outside the tolerance or with a class</label>'
+        +'<div style="overflow:auto;flex:1;border:1px solid #DDE5E4;border-radius:6px"><table style="border-collapse:collapse;width:100%;font-size:12px"><thead><tr style="background:#EEF2F1;position:sticky;top:0">'
+        +['Metric','Baseline','Product','Delta (Delta %)','Within tolerance','Class','Reason'].map(function(x){ return '<th style="text-align:left;padding:4px 6px">'+x+'</th>'; }).join('')+'</tr></thead><tbody>';
+      var sec=''; rep.rows.forEach(function(r){ if(eqShow._out && r.within!=='no' && !r.finalCls) return;
+        if(r.sec!==sec){ sec=r.sec; h+='<tr><td colspan="7" style="background:#DCE6EE;font-weight:600;padding:3px 6px">'+escHtml(sec)+'</td></tr>'; }
+        var dl=(r.delta===''?'':(r.delta>0?'+':'')+r.delta.toLocaleString('en-US')+(r.deltaPct===''?'':' ('+(r.deltaPct>0?'+':'')+r.deltaPct+'%)'));
+        h+='<tr style="border-top:1px solid #EEF2F1'+(r.within==='no'?';background:#FCEEE8':'')+'"><td style="padding:3px 6px">'+escHtml(r.label)+'<div style="font-family:var(--mono);font-size:10.5px;color:#4B5A63">'+escHtml(r.key)+'</div></td>'
+          +'<td style="padding:3px 6px">'+escHtml(r.baselineText)+'</td><td style="padding:3px 6px">'+escHtml(r.productText)+'</td><td style="padding:3px 6px;white-space:nowrap">'+escHtml(dl)+'</td><td style="padding:3px 6px">'+escHtml(r.within)+'</td>'
+          +'<td style="padding:3px 6px"><select data-eqk="'+escHtml(r.key)+'" style="font-size:11.5px;color:'+(col[r.finalCls]||'#1E2A33')+'"><option value=""'+(r.finalCls?'':' selected')+'>(none)</option>'+EQ_CLASSES.map(function(c){ return '<option'+(r.finalCls===c?' selected':'')+'>'+escHtml(c)+'</option>'; }).join('')+'</select>'+(r.overridden?'<div style="font-size:10.5px;color:#4B5A63">proposed: '+escHtml(r.proposedCls||'(none)')+'</div>':'')+'</td>'
+          +'<td style="padding:3px 6px">'+(r.overridden?'<input data-eqr="'+escHtml(r.key)+'" value="'+escHtml(r.finalReason)+'" placeholder="reason for the override (required)" style="width:100%;font-size:11.5px'+(String(r.finalReason||'').trim()?'':';border:1px solid #B42318')+'">':escHtml(r.finalReason))+'</td></tr>'; });
+      h+='</tbody></table></div>'; }
+    h+='<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px"><button class="btn" id="eqLoad">Load Baseline\u2026</button><button class="btn" id="eqSess">Load session input file\u2026</button><button class="btn" id="eqBlank">Baseline template (.xlsx)</button><button class="btn" id="eqFill">Baseline filled from this design</button>'
+      +(rep?'<button class="btn" id="eqPdf">Download report (PDF)</button><button class="btn" id="eqCsv">Download report (CSV)</button>':'')+'<button class="btn alt" id="eqClose">Close</button></div></div>';
+    b.innerHTML=h; document.body.appendChild(b);
+    var $=function(i){ return document.getElementById(i); };
+    $('eqClose').onclick=function(){ b.remove(); };
+    $('eqLoad').onclick=function(){ eqPickFile('.xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', baselineImportBytes); };
+    $('eqSess').onclick=function(){ eqPickFile('.json,application/json', eqLoadSession); };
+    $('eqBlank').onclick=function(){ baselineDownload(false); }; $('eqFill').onclick=function(){ baselineDownload(true); };
+    if($('eqPdf')) $('eqPdf').onclick=function(){ eqSaveReport('pdf'); }; if($('eqCsv')) $('eqCsv').onclick=function(){ eqSaveReport('csv'); };
+    if($('eqOnlyOut')) $('eqOnlyOut').onchange=function(){ eqShow._out=this.checked; eqShow(); };
+    Array.prototype.forEach.call(b.querySelectorAll('select[data-eqk]'), function(s){ s.onchange=function(){ var k=s.getAttribute('data-eqk'), o=EQ.overrides[k]||{}; o.cls=s.value; EQ.overrides[k]=o; eqShow(); }; });
+    Array.prototype.forEach.call(b.querySelectorAll('input[data-eqr]'), function(s){ s.onchange=function(){ var k=s.getAttribute('data-eqr'); (EQ.overrides[k]=EQ.overrides[k]||{}).reason=s.value; eqFinal(EQ.report); s.style.border=s.value.trim()?'':'1px solid #B42318'; }; }); }
+  (function(){ var bt=document.getElementById('eqbtn'); if(bt) bt.onclick=function(){ eqShow(); }; })();
+  window.__aidcRunner.health=function(o){ return healthVerdict(o||{recon:'run'}); };
+  window.__aidcRunner.summary=function(){ return equivalenceSummary(); };
+  window.__aidcRunner.baselineTemplate=function(filled){ return baselineBytes(!!filled); };
+  window.__aidcRunner.baselineCsv=function(){ return baselineCsv(); };
+  window.__aidcRunner.equivalence=function(bytes, name, session, overrides){ return baselineParse(bytes, name).then(function(B){ EQ.baseline=B; EQ.session=session||null; EQ.overrides=overrides||{}; EQ.report=null; return eqReport(); }); };
+  window.__aidcRunner.equivalenceFiles=function(prefix){ return equivalenceReportFiles(prefix); };
   // the site runner's entry points
   window.__aidcRunner.inputs=function(bytes, name){ return inputSheetParse(bytes, name||'input sheet').then(function(p){ return inputSheetApply(p); }); };
   window.__aidcRunner.inputTemplate=function(filled){ return inputSheetBytes(!!filled); };
