@@ -1,3 +1,15 @@
+# AIDC DBD Desktop 2.0.54 (builder HS-v1.60, site runner 1.11.0)
+
+BlueField-4 Health: one item instead of two.
+
+- **One medium Health item for a BlueField-4 north-south DPU** (Vera Rubin NVL72). It replaces the "software target pending" item and the "reference-architecture assumption" item: "BlueField-4 B4240V north-south DPU (reference-architecture assumption, 2 x 400G per host): DPU configuration files (HBN NVUE, bf.cfg) and the DPU image install step held until a DOCA release names BlueField-4 (hbn/README.md). OPN (B4240V is the RA's part name), physical port count and cage CONFIRM; power not published. Cabling, port map, addressing, front-end leaf configs and the 1GbE OOB drop are built as for BlueField-3."
+- The same wording in `hbn/README.md`, the provisioning notes, the BoM line, the device inventory and the deployment wave labels.
+- BlueField-3 (default) unchanged: every configuration file byte-identical to 2.0.53, same fingerprints. The Vera Rubin source note is unchanged.
+- **Proved before shipping:**
+  - BlueField-3 (default), every configuration file byte-identical to 2.0.53, same fingerprints and parity: Vera Rubin 364 racks SN6800 at 8 planes (14,959 files, 10407090a45b80e9) and SN6600 at 4 planes (18,322, 190bb91cd2582856); GB300 NVL72 256 racks SN5610 (11,636, b98ba38d0e5f6230).
+  - BlueField-4, Vera Rubin 364 racks SN6600 at 4 planes (418d99e85b269587): one BlueField-4 Health item (medium), no hard stops; every switch configuration byte-identical to 2.0.53; no DPU configuration files; only `hbn/README.md` changed; parity 5,217 of 5,217; neutrality 0 hits on the outputs.
+  - `go test ./...` passes; the engine comparison on a 16-rack Vera Rubin BlueField-4 .run: 129 comparisons, 0 mismatches. Input sheet round trip keeps the fingerprint. The input sheet rows are unchanged. Neutrality gate 0 hits.
+
 # AIDC DBD Desktop 2.0.53 (builder HS-v1.59, site runner 1.11.0)
 
 Vera Rubin NVL72 at 2 planes x 800G, NVIDIA's public reference layout (Owner decision D11). Also a spine-sizing fix for the NVL72 lane fabrics, a **Keep plane count** setting and a **BlueField-4** north-south DPU option (r2).

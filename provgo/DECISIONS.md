@@ -480,3 +480,15 @@ Resolves the two Owner decisions D11 left open (D11-4, D11-6) as options; the de
 - BlueField-4, Vera Rubin 364 racks SN6600 4 planes (418d99e85b269587): 13,104 DPU files not generated, every switch configuration byte-identical to BlueField-3, parity 5,217 of 5,217; no hard stops or high warnings; neutrality 0 hits on the outputs.
 - Input sheet round trip: fingerprint kept with both settings set and at their defaults; profiles digest unchanged.
 - `go test ./...` passes; difftest on a 16-rack Vera Rubin .run with both settings set: 129 comparisons, 0 mismatches.
+
+# BlueField-4 Health item merged (HS v1.60, desktop 2.0.54)
+
+| # | Decision | Why |
+|---|---|---|
+| BF4-1 | **One medium Health item for BlueField-4.** `fePlan` skips the FE NIC "reference-architecture assumption" item when `nsDpuBf4()`, and the BlueField-4 item carries both: configuration files held until a DOCA release names BlueField-4; OPN B4240V, port count and cage CONFIRM; power not published. `BF4_PENDING` is the one wording, used by `hbn/README.md`, the provisioning notes, the BoM line and the status line; the inventory and wave labels say "DPU config held". Supersedes the R2-4 wording. | Two items said the same thing. BlueField-3 paths are untouched, so default output is unchanged. |
+
+## Verification (BF4-1)
+
+- BlueField-3 (default): every package configuration file byte-identical to 2.0.53, same fingerprints: Vera Rubin 364 racks SN6800 8 planes (10407090a45b80e9), SN6600 4 planes (190bb91cd2582856); GB300 NVL72 256 racks SN5610 (b98ba38d0e5f6230). Parity full.
+- BlueField-4, Vera Rubin 364 racks SN6600 4 planes (418d99e85b269587): one BlueField-4 Health item (medium), no hard stops; switch configurations byte-identical; no DPU configuration files; parity 5,217 of 5,217.
+- `go test ./...` passes; difftest on a 16-rack Vera Rubin BlueField-4 .run: 129 comparisons, 0 mismatches. Input sheet round trip keeps the fingerprint.

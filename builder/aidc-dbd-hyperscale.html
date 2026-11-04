@@ -649,7 +649,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   <button id="btnCircuits" title="Carrier-assigned public addressing for the FE and management edges" style="height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 10px;background:#fff;font-family:var(--body);font-size:12px;font-weight:600;color:var(--ink-soft);cursor:pointer">Public IPs <span id="circuitsBadge" style="font-family:var(--mono);font-size:10px;color:#b45309">&bull;</span></button>
   <span style="width:1px;height:24px;background:var(--line-strong);margin:0 3px"></span>
   <label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600">Fabric:
-    <select id="profile" style="height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--body);margin:0 4px" autocomplete="off"></select><select id="vroem" title="Vera Rubin NVL72 rack vendor: the rack, power shelves and CDU integration follow the OEM (CONFIRM each)" style="display:none;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;margin:0 4px" autocomplete="off"><option value="reference">OEM: NVIDIA reference</option><option value="supermicro">OEM: Supermicro</option><option value="dell">OEM: Dell</option></select><select id="planesel" title="Back-end planes: every GPU has one leg in each plane; the lane speed is the NIC speed divided by the planes. The builder raises the count when two tiers no longer reach every GPU in a plane, unless Keep plane count is on." style="display:none;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;margin:0 4px" autocomplete="off"></select><select id="nicsel" title="Vera Rubin east-west NIC (one per GPU)" style="display:none;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;margin:0 4px" autocomplete="off"></select><select id="coolsel" title="NVL72 cooling: direct liquid (cold plate) or single-phase immersion tanks (16 per container; leaf and spine switches in the tanks)" style="display:none;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;margin:0 4px" autocomplete="off"></select><label id="keepplanes-w" style="display:none;margin:0 4px;font-family:var(--mono);font-size:11px;white-space:nowrap" title="Keep plane count: when the requested plane count does not stay on two tiers on this switch, keep it and add super-spines instead of raising the plane count. A plane count the switch cannot run at all (no lane at that speed) still falls back, with the reason. Off: the builder raises the count."><input type="checkbox" id="keepplanes" autocomplete="off"> Keep plane count</label><select id="nsdpu" title="North-south DPU, one per compute tray (Vera Rubin NVL72). BlueField-3 B3240 is the default; BlueField-4 B4240V is NVIDIA&#39;s reference part, built as 2 x 400G with its software target pending." style="display:none;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;margin:0 4px" autocomplete="off"><option value="bf3">N-S DPU: BlueField-3 B3240</option><option value="bf4">N-S DPU: BlueField-4 B4240V</option></select>
+    <select id="profile" style="height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--body);margin:0 4px" autocomplete="off"></select><select id="vroem" title="Vera Rubin NVL72 rack vendor: the rack, power shelves and CDU integration follow the OEM (CONFIRM each)" style="display:none;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;margin:0 4px" autocomplete="off"><option value="reference">OEM: NVIDIA reference</option><option value="supermicro">OEM: Supermicro</option><option value="dell">OEM: Dell</option></select><select id="planesel" title="Back-end planes: every GPU has one leg in each plane; the lane speed is the NIC speed divided by the planes. The builder raises the count when two tiers no longer reach every GPU in a plane, unless Keep plane count is on." style="display:none;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;margin:0 4px" autocomplete="off"></select><select id="nicsel" title="Vera Rubin east-west NIC (one per GPU)" style="display:none;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;margin:0 4px" autocomplete="off"></select><select id="coolsel" title="NVL72 cooling: direct liquid (cold plate) or single-phase immersion tanks (16 per container; leaf and spine switches in the tanks)" style="display:none;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;margin:0 4px" autocomplete="off"></select><label id="keepplanes-w" style="display:none;margin:0 4px;font-family:var(--mono);font-size:11px;white-space:nowrap" title="Keep plane count: when the requested plane count does not stay on two tiers on this switch, keep it and add super-spines instead of raising the plane count. A plane count the switch cannot run at all (no lane at that speed) still falls back, with the reason. Off: the builder raises the count."><input type="checkbox" id="keepplanes" autocomplete="off"> Keep plane count</label><select id="nsdpu" title="North-south DPU, one per compute tray (Vera Rubin NVL72). BlueField-3 B3240 is the default; BlueField-4 B4240V is NVIDIA&#39;s reference part, built as 2 x 400G; its DPU configuration files are held until a DOCA release names BlueField-4." style="display:none;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;margin:0 4px" autocomplete="off"><option value="bf3">N-S DPU: BlueField-3 B3240</option><option value="bf4">N-S DPU: BlueField-4 B4240V</option></select>
   </label>
   <label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600" title="How many racks make one pod. This does NOT set the size of the build — that is 'Total racks' to the right.">Pod size:
     <select id="podsize" style="height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--body);margin:0 4px" autocomplete="off"></select>
@@ -947,7 +947,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.59';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.60';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   // HS v1.59: Vera Rubin NVL72 at 2 planes x 800G, NVIDIA's public reference layout (Owner decision D11); see the VR profile.
   // HS v1.58: the customer input sheet and importer (inputSheetImport, the SESSION_IN overlay); see the input sheet block.
   // HS v1.57 (release identity): the release is identified by the SHA-256 of this file, not by the string above (HS-v1.56 r1, r2
@@ -2502,10 +2502,10 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     // --- speed match: the endpoint decides, not the switch ---------------------------
     // A 400G DPU port landing on a 100G SFP-DD access port RUNS AT 100G. That may be the right
     // call for north/south, but it must be a decision, not a side effect of SKU selection.
-    if(FE.nicModel && FE.nicConfirmed===false){
+    if(FE.nicModel && FE.nicConfirmed===false && !nsDpuBf4()){   // HS v1.60 (2.0.54): BlueField-4 has its own single item below
       warn.push({sev:'med', msg:'Host FE NIC '+FE.nicModel+' ('+FE.nicsPerHost+' links @ '+FE.nicGbps+'G per host) is a reference-architecture assumption, not confirmed for this build: '+(FE.nicSrc||'')});
     }
-    if(nsDpuBf4()) warn.push({sev:'med', msg:'BlueField-4 B4240V north-south DPU: '+BF4_PENDING+'. The DPU configuration files (HBN NVUE, bf.cfg) and the DPU image install step are not generated; hbn/README.md says so. Cabling, port map, addressing, the front-end leaf configs and the 1GbE OOB management drop are built as for BlueField-3 (2 x 400G). Pin a DOCA release that lists BlueField-4 to generate them.'});   // HS v1.59 (2.0.53)
+    if(nsDpuBf4()) warn.push({sev:'med', msg:'BlueField-4 B4240V north-south DPU (reference-architecture assumption, 2 x 400G per host): '+BF4_PENDING+' (hbn/README.md). OPN (B4240V is the RA\u2019s part name), physical port count and cage CONFIRM; power not published. Cabling, port map, addressing, front-end leaf configs and the 1GbE OOB drop are built as for BlueField-3.'});   // HS v1.59 (2.0.53); HS v1.60 (2.0.54): one item, merged with the reference-architecture assumption
     if(FE.nicGbps > LSW.access.gbps){
       warn.push({sev:'high', msg:'Host FE NIC is '+FE.nicGbps+'G but '+LSW.label+' access ports are '
         +LSW.access.gbps+'G ('+LSW.access.ff+'). Endpoints will run below rated speed \u2014 confirm this is intentional.'});
@@ -3300,11 +3300,11 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   // Built as 2 x 400G (a 2-way split of the 800G port; physical port count and cage CONFIRM), so the link count and speed
   // that size the front end are the BlueField-3's: topology and front-end sizing do not change. Host PCIe Gen6 x16; the same
   // 1GbE OOB management cabling (Arm OS + DPU BMC on one drop). No published DOCA release names BlueField-4, so its DPU
-  // software (HBN NVUE, bf.cfg) is not generated: hbn/README.md and a Health item say so (software target pending).
+  // software (HBN NVUE, bf.cfg) is not generated: hbn/README.md and one Health item say so (held until a DOCA release names BlueField-4).
   var NS_DPU='bf3';
   var NS_DPU_OPTS={gpu_vr_nvl72:{bf3:{label:'BlueField-3 B3240'}, bf4:{label:'BlueField-4 B4240V', model:'BlueField-4 B4240V', kind:'DPU', mode:'DPU', perHost:1, ports:2, gbps:400, confirmed:false,
     src:'NVIDIA DGX SuperPOD Spectrum-X RA with DGX Vera Rubin NVL72: one BlueField-4 B4240V dual-port 400G per compute tray (north-south); NVIDIA BlueField-4 datasheet 5193854 (JUN26): 800G per port, up to 8 split ports, PCIe Gen6 x16 -- built as 2 x 400G (a 2-way split of the 800G port); OPN, physical port count, cage and power CONFIRM; software target pending (no published DOCA release names BlueField-4)'}}};
-  var BF4_PENDING='software target pending: no published DOCA release names BlueField-4';
+  var BF4_PENDING='DPU configuration files (HBN NVUE, bf.cfg) and the DPU image install step held until a DOCA release names BlueField-4';   // HS v1.60 (2.0.54): the one wording
   function nsDpuBf4(){ return NS_DPU==='bf4' && !!(NS_DPU_OPTS[profileKey]||{}).bf4; }
   function applyFeNic(p){
     var n=(p&&p.feNic)||null; if(!n) return;
@@ -5692,7 +5692,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     if(CZ){   // v510: one host group per drawn leaf pair; markers carry the rest
       var _sto={}; try{ storagePlan().all.forEach(function(nd){ var p0=nd.ports[0]; if(p0) _sto[p0.leaf]=(_sto[p0.leaf]||0)+1; }); }catch(e){}
       var _nic=(((PROFILES[profileKey]||{}).feNic||{}).model||'DPU').replace(/^BlueField-3 /,'BF3 ');
-      var _nicSw=' \u00b7 HBN'; if(nsDpuBf4()){ _nic='BF4 B4240V'; _nicSw=' \u00b7 software pending'; }   // HS v1.59 (2.0.53)
+      var _nicSw=' \u00b7 HBN'; if(nsDpuBf4()){ _nic='BF4 B4240V'; _nicSw=' \u00b7 config held'; }   // HS v1.59 (2.0.53); HS v1.60 wording
       for(var i=0;i<lfs.length;){ var d=lfs[i];
         if(d.mk){ if(!d.pods){ var hh=perPair*Math.floor(d.n/2);
             s+='<rect x="'+(xLf[i]-80)+'" y="'+(Y.hs-24)+'" width="160" height="50" rx="8" fill="#EEF0F1" stroke="#9AA1A6" stroke-dasharray="5 4"/>'+T(xLf[i],Y.hs-3,'+'+hh+' GPU hosts',{fs:12})+T(xLf[i],Y.hs+14,'on '+d.sub,{fs:10,fw:400,c:'#4A5056'}); }
@@ -5713,7 +5713,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     xHs.forEach(function(xh,k){
       var ns=_stoN[k]||0, hx=ns?xh-100:xh, hw=ns?190:240, sx=xh+90;   // side by side within the pair's 380 px span
       [xLf[2*k],xLf[2*k+1]].forEach(function(xf){ if(xf==null) return; s+=ln(xf,Y.lf+BH/2,hx,Y.hs-24); if(ns) s+=ln(xf,Y.lf+BH/2,sx,Y.hs-24,'#7F9CC4'); });
-      s+='<rect x="'+(hx-hw/2)+'" y="'+(Y.hs-24)+'" width="'+hw+'" height="50" rx="8" fill="#D6DADD" stroke="#9AA1A6"/>'+T(hx,Y.hs-3,perPair+' GPU hosts',{fs:12.5})+T(hx,Y.hs+14,'dual-homed '+(nsDpuBf4()?'BF4 B4240V \u00b7 software pending':((((PROFILES[profileKey]||{}).feNic||{}).model||'DPU').replace(/^BlueField-3 /,'BF3 ')+' \u00b7 HBN')),{fs:10,fw:400,c:'#4A5056'});
+      s+='<rect x="'+(hx-hw/2)+'" y="'+(Y.hs-24)+'" width="'+hw+'" height="50" rx="8" fill="#D6DADD" stroke="#9AA1A6"/>'+T(hx,Y.hs-3,perPair+' GPU hosts',{fs:12.5})+T(hx,Y.hs+14,'dual-homed '+(nsDpuBf4()?'BF4 B4240V \u00b7 config held':((((PROFILES[profileKey]||{}).feNic||{}).model||'DPU').replace(/^BlueField-3 /,'BF3 ')+' \u00b7 HBN')),{fs:10,fw:400,c:'#4A5056'});
       if(ns) s+='<rect x="'+(sx-75)+'" y="'+(Y.hs-24)+'" width="150" height="50" rx="8" fill="#E3ECF7" stroke="#7F9CC4"/>'+T(sx,Y.hs-3,STORAGE_PLATFORM.vendorLabel+' \u00b7 '+ns+' node'+(ns>1?'s':''),{fs:12.5})+T(sx,Y.hs+14,(STORAGE_PLATFORM.nics||2)+' \u00d7 '+STORAGE_PLATFORM.nicGbps+'G \u00b7 '+stoTransportShort(),{fs:10,fw:400,c:'#4A5056'});
     });
     // device boxes last (drawn over lines)
@@ -20432,14 +20432,14 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     var D=allDpus(), F=[], MG=dpuMgmtByHost();
     if(nsDpuBf4()){   // HS v1.59 (2.0.53): no BlueField-4 DPU configuration files until a software release can be pinned
       F.push(['hbn/README.md',[
-        '# DPU configuration -- BlueField-4 B4240V: software target pending',
-        '','**Software target pending: no published DOCA release names BlueField-4.** The DPU configuration files (one HBN NVUE file and one bf.cfg per DPU) are not generated for this design, and the deployment bundle has no DPU image install step. Pin a DOCA release that lists BlueField-4, then generate them.',
+        '# DPU configuration -- BlueField-4 B4240V: held until a DOCA release names BlueField-4',
+        '','**DPU configuration files held until a DOCA release names BlueField-4.** The HBN NVUE file and bf.cfg per DPU are not generated for this design, and the deployment bundle has no DPU image install step. OPN, physical port count and cage CONFIRM; power not published.',
         '','| Item | Value |','|---|---|',
         '| DPU | NVIDIA BlueField-4 B4240V, one per compute tray ('+D.length+' DPUs), north-south (NVIDIA DGX SuperPOD Spectrum-X RA with DGX Vera Rubin NVL72) |',
         '| Ports | 2 x 400G, a 2-way split of the 800G port (datasheet 5193854: 800G per port, up to 8 split ports). Physical port count and cage CONFIRM |',
         '| Host | PCIe Gen6 x16 (Socket Direct capable) |',
         '| Management | integrated DPU BMC and 1GbE OOB port (Redfish, PXE/UEFI): cabled to the pod OOB access switch (DPU band), two addresses from MGMT-DPU as for BlueField-3, in `dpu-management.csv` |',
-        '| Software | DOCA; the datasheet states no version. '+BF4_PENDING+' |',
+        '| Software | DOCA; the datasheet states no version, and no published DOCA release names BlueField-4 |',
         '| Power | not published; the rack power keeps the current figure |',
         '| OPN | not published (B4240V is the RA\u2019s part name) -- CONFIRM |',
         '','## Built as for BlueField-3','The front-end leaf configurations, the DPU underlay and VTEP addressing, the cabling and the port map are generated: the link count and speed (2 x 400G per host) are the same.',
@@ -27450,8 +27450,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
         manual_hint:stoIsWeka()?'join the cluster with the weka/ files, then mark configured':('install and join per '+_SPk.vendorLabel+' (storage/ files: addressing'+(_SPk.attach==='bgp'?', BGP':'')+'), then mark configured'), id:null},'fe',2); }
     }); });
     var dpuIps=Object.keys(mp.oob).filter(function(k){ return /\|dpu\d+$/.test(k); }).map(function(k){ return mp.oob[k].ip; }).filter(Boolean);
-    if(FE.on && dpuIps.length) put({name:(clientCode?clientCode+'-':'')+'DPU-ALL', short:'DPUs', role:dpuIps.length+(nsDpuBf4()?' BlueField-4 DPUs (software target pending)':' BlueField-3 DPUs (HBN)'), os:nsDpuBf4()?'bf4-pending':'hbn',
-      os_label:nsDpuBf4()?'software target pending':'DOCA HBN', ip:'', plane:'fe', rack:'all compute racks', files:[], aggregate:dpuIps.length, probe_ips:dpuIps, probe_port:22,
+    if(FE.on && dpuIps.length) put({name:(clientCode?clientCode+'-':'')+'DPU-ALL', short:'DPUs', role:dpuIps.length+(nsDpuBf4()?' BlueField-4 DPUs (DPU config held until a DOCA release names BlueField-4)':' BlueField-3 DPUs (HBN)'), os:nsDpuBf4()?'bf4-pending':'hbn',
+      os_label:nsDpuBf4()?'DPU config held (no DOCA release names BlueField-4)':'DOCA HBN', ip:'', plane:'fe', rack:'all compute racks', files:[], aggregate:dpuIps.length, probe_ips:dpuIps, probe_port:22,
       config_signal:'aggregate', id:null},'fe',3);
     dp.be.forEach(function(d){ var e=entry(d,'be'); put(e,'be',/spine|ssp/.test(String(d.role))?0:1); });
     var hostSet={}; M.cabinets.forEach(function(c){ c.items.forEach(function(i){ if(i.role==='host') hostSet[i.name]=1; }); });
@@ -27474,7 +27474,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
              {key:'fwpair', type:'auto', kind:'mnha', devices:W.edge[3], label:fwMnha()?'Firewall pair formed (MNHA: SRG1 active on node 1, backup on node 2)':'Firewall pair formed (FTD failover: node 1 active, node 2 standby ready)'},   // v515: per FE firewall platform
              {key:'fwbgp', type:'auto', kind:'bgp', devices:W.edge[3], label:'Firewall BGP up to both border leaves in each tenant VRF'},
              {key:'lb', type:'confirm', warn_only:true, label:'Load-balancer sessions (warn only)'}]},
-      {key:'fe', num:3, name:'Front end', waves:[['Spines'],['Leaves'],['Storage'],[nsDpuBf4()?'DPUs (BlueField-4, software target pending)':'DPUs (BlueField-3, HBN)']], w:W.fe,
+      {key:'fe', num:3, name:'Front end', waves:[['Spines'],['Leaves'],['Storage'],[nsDpuBf4()?'DPUs (BlueField-4, DPU config held)':'DPUs (BlueField-3, HBN)']], w:W.fe,
        gate:[{key:'done', type:'devices_done', label:'Every device done, DPUs counted'},
              {key:'reach', type:'reachable', label:'Management reachable'},
              {key:'blspine', type:'auto', kind:'evpn', devices:W.fe[0].concat(W.edge[2]), label:'Border-leaf spine ports (pending FE) up; underlay and EVPN established'},
@@ -28295,7 +28295,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       R.push('  BlueField DPUs: install each DPU\u2019s BFB with hbn/<host>-DPU.bf.cfg, then apply hbn/<host>-DPU.nvue;');
       R.push('  set each DPU BMC address from hbn/dpu-management.csv at first access. Tenant assignment: Tenants panel.'); }
     if(bf4){ R.push('');
-      R.push('  BlueField-4 DPUs: '+BF4_PENDING+'. No DPU configuration files are generated (hbn/README.md);');
+      R.push('  BlueField-4 DPUs: '+BF4_PENDING+' (hbn/README.md);');
       R.push('  set each DPU BMC address from hbn/dpu-management.csv at first access. Tenant assignment: Tenants panel.'); }
     H('NOTES');
     R.push('  - Keep the provisioning host on the OOB network only; it is never in the data path.');
@@ -29761,7 +29761,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       devices('fef').forEach(function(r){ out.push(r); });
       cables('fef').forEach(function(r){ out.push(r); });
       out.push(['Note','Storage platform',STORAGE_PLATFORM.label+': '+STORAGE_PLATFORM.note+' Transport: '+stoTransport()+'.','','','']);
-      if(nsDpuBf4()) out.push(['DPU','NVIDIA BlueField-4 B4240V north-south DPU -- OPN CONFIRM','One per compute tray, ships with the GPU hosts ('+fx.hosts+' hosts): 2 \u00d7 400G (a 2-way split of the 800G port; physical port count and cage CONFIRM), PCIe Gen6 x16, integrated BMC on the 1GbE OOB port. Power not published (BF-4 power not published). '+BF4_PENDING,'','',fx.hosts]);   // HS v1.59 (2.0.53)
+      if(nsDpuBf4()) out.push(['DPU','NVIDIA BlueField-4 B4240V north-south DPU -- OPN CONFIRM','One per compute tray, ships with the GPU hosts ('+fx.hosts+' hosts): 2 \u00d7 400G (a 2-way split of the 800G port; physical port count and cage CONFIRM), PCIe Gen6 x16, integrated BMC on the 1GbE OOB port. Power not published. '+BF4_PENDING+'.','','',fx.hosts]);   // HS v1.59 (2.0.53)
       else out.push(['Note','Host front-end adapters','BlueField DPUs ship with the GPU hosts ('+fx.hosts+' hosts \u00d7 '+(FE.nicsPerHost||2)+' ports); not network BoM','','','']);
     }
     // ---- 3. BACK-END FABRIC ----
@@ -32816,7 +32816,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     if(nc) nc.onchange=function(){ NIC_SEL[profileKey]=this.value; redo(); };
     if(kp){ kp.checked=KEEP_PLANES; kp.onchange=function(){ KEEP_PLANES=!!this.checked; redo(); }; }
     if(nd){ nd.value=NS_DPU; nd.onchange=function(){ NS_DPU=(this.value==='bf4')?'bf4':'bf3'; applyFeNic(PROFILES[profileKey]); redo();
-      if(nsDpuBf4()) setStatus('North-south DPU \u2192 BlueField-4 B4240V (2 x 400G): '+BF4_PENDING+'; no DPU configuration files are generated'); }; }
+      if(nsDpuBf4()) setStatus('North-south DPU \u2192 BlueField-4 B4240V (2 x 400G): '+BF4_PENDING); }; }
     setTimeout(fill,0); })();
   (function(){   // v540: cooling (NVL72 profiles)
     var cs=document.getElementById('coolsel');
