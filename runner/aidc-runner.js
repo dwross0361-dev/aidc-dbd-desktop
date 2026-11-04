@@ -38,11 +38,16 @@ if (!process.env.AIDC_RUNNER_CHILD) {
   process.exit(r.status == null ? 1 : r.status);
 }
 const HTML = arg('html'), DESIGN = arg('design'), OUT = arg('out', '.');
+// 1.11.0 (app 2.0.52, builder HS-v1.58): the customer input sheet. --inputs builds from a filled sheet (.xlsx or long-format CSV)
+// instead of a site-runner file; --input-template writes the template (blank, or filled from --design).
+const INPUTS = arg('inputs', null), TEMPLATE = arg('input-template', null);
 // 1.10.0 (app 2.0.51, builder HS-v1.57): the release is the builder FILE, identified by its SHA-256. The version string
 // alone let two different files pass as one release (HS-v1.56 r1, r2 and r3 all said HS-v1.56).
 let HTML_BYTES = null, HTML_SHA = '';
 const PARITY_ONLY = argv.includes('--parity-only');
-if (!PARITY_ONLY && (!HTML || !DESIGN)) { console.error('usage: node aidc-runner.js --html <builder .html> --design <site-runner .json> --out <folder> [--heap MB] [--package-only|--run-only|--parity-only] [--review] [--settings [--racks N]] [--cable-matrix xlsx|pdf] [--no-sleep-hold]'); process.exit(2); }
+if (!PARITY_ONLY && (!HTML || (!DESIGN && !INPUTS && !TEMPLATE))) { console.error('usage: node aidc-runner.js --html <builder .html> (--design <site-runner .json> | --inputs <input sheet .xlsx|.csv>) --out <folder> [--heap MB] [--package-only|--run-only|--parity-only] [--review] [--settings [--racks N]] [--cable-matrix xlsx|pdf] [--no-sleep-hold]\n       node aidc-runner.js --html <builder .html> --input-template <file.xlsx> [--design <site-runner .json> [--settings]]'); process.exit(2); }
+if (INPUTS && DESIGN) { console.error('--inputs builds the design from the input sheet: give it without --design'); process.exit(2); }
+if (INPUTS && (argv.includes('--settings') || argv.includes('--racks'))) { console.error('--inputs takes the rack count and every setting from the input sheet: give it without --settings or --racks'); process.exit(2); }
 const RACKS = +arg('racks', 0) || 0, SETTINGS = argv.includes('--settings') || RACKS > 0;
 const REVIEW = argv.includes('--review');
 const ONLY = argv.includes('--package-only') ? 'package' : argv.includes('--run-only') ? 'run' : 'both';
@@ -151,9 +156,12 @@ vc.on('error', (e) => pageErr.push(String(e).slice(0, 300)));
     fs.writeFileSync(path.join(OUT, 'site-runner-parity.log'), logLines.join('\n') + '\n'); process.exit(0);
   }
   log('AIDC DBD site runner -- node ' + process.version + ', heap limit ' + HEAP + ' MB');
-  const file = JSON.parse(fs.readFileSync(DESIGN, 'utf8'));
-  if (file.format !== 'aidc-dbd-site-runner/1') die(DESIGN + ' is not a site-runner file (export it with the Site runner button in the builder)');
-  log('design ' + path.basename(DESIGN) + ': build ' + file.build + ', design fingerprint ' + file.fingerprint + ', ' + file.racks + ' racks, ' + Number(file.links).toLocaleString('en-US') + ' links, exported from ' + file.builder);
+  const file = DESIGN ? JSON.parse(fs.readFileSync(DESIGN, 'utf8')) : null;
+  if (file && file.format !== 'aidc-dbd-site-runner/1') die(DESIGN + ' is not a site-runner file (export it with the Site runner button in the builder)');
+  if (file) log('design ' + path.basename(DESIGN) + ': build ' + file.build + ', design fingerprint ' + file.fingerprint + ', ' + file.racks + ' racks, ' + Number(file.links).toLocaleString('en-US') + ' links, exported from ' + file.builder);
+  let SHEET = null;
+  if (INPUTS) { try { SHEET = fs.readFileSync(INPUTS); } catch (e) { die('the input sheet ' + INPUTS + ' could not be read: ' + e.message); }
+    log('input sheet ' + path.basename(INPUTS) + ': ' + SHEET.length.toLocaleString('en-US') + ' bytes, SHA-256 ' + require('crypto').createHash('sha256').update(SHEET).digest('hex')); }
   startWatchdog();
   HTML_BYTES = fs.readFileSync(HTML); HTML_SHA = require('crypto').createHash('sha256').update(HTML_BYTES).digest('hex');
   const dom = new JSDOM(HTML_BYTES.toString('utf8'), { runScripts: 'dangerously', pretendToBeVisual: true, url: 'file:///aidc-runner/builder.html', virtualConsole: vc, beforeParse: shim });
@@ -162,8 +170,15 @@ vc.on('error', (e) => pageErr.push(String(e).slice(0, 300)));
   const R = w.__aidcRunner;
   if (!R) die(path.basename(HTML) + ' has no site-runner entry points (a builder release before HS-v1.05)' + (pageErr.length ? ': ' + pageErr[0] : ''));
   log('builder ' + R.app() + ' ' + R.version() + ' loaded, SHA-256 ' + HTML_SHA);
-  const FSHA = typeof file.builderSha256 === 'string' ? file.builderSha256.toLowerCase() : '';
-  if (SETTINGS) {   // built from the settings alone: there is no approved fingerprint to hold it to
+  const needIn = (what) => { if (typeof R.inputs !== 'function') die(path.basename(HTML) + ' has no input sheet entry points (' + what + ' needs HS-v1.58 or later)'); };
+  if (TEMPLATE && !file) {   // the blank template: generated from this builder's catalog
+    needIn('--input-template');
+    const u = await R.inputTemplate(false); fs.mkdirSync(path.dirname(path.resolve(TEMPLATE)), { recursive: true }); fs.writeFileSync(TEMPLATE, Buffer.from(u));
+    log('input sheet template (blank): ' + TEMPLATE + ', ' + u.length.toLocaleString('en-US') + ' bytes'); process.exit(0); }
+  const FSHA = file && typeof file.builderSha256 === 'string' ? file.builderSha256.toLowerCase() : '';
+  if (INPUTS) {   // built from the input sheet: the design is made here, by this builder file, so there is no exported fingerprint to hold it to
+    log('input sheet: the design is built from the sheet by this builder file (SHA-256 ' + HTML_SHA + ')');
+  } else if (SETTINGS) {   // built from the settings alone: there is no approved fingerprint to hold it to
     if (RACKS) { file.design.ctrls = Object.assign({}, file.design.ctrls, { rackcount: String(RACKS) }); log('settings: rack count set to ' + RACKS + ' (the file was ' + file.racks + ')'); }
     if (R.version() !== file.builder || (FSHA && FSHA !== HTML_SHA)) log('settings: the file is from ' + file.builder + (FSHA ? ' (SHA-256 ' + FSHA + ')' : '') + ', building it in ' + R.version() + ' (SHA-256 ' + HTML_SHA + ')');
   } else if (!FSHA) die('release check: the design file names builder ' + file.builder + ' but carries no builder SHA-256, so the release cannot be checked. Export the site-runner file from the AIDC DBD app (HS-v1.57 or later), or use --settings for a test build. Nothing was built.');
@@ -171,11 +186,33 @@ vc.on('error', (e) => pageErr.push(String(e).slice(0, 300)));
   else log('release check: the builder file is the one the design was exported from (SHA-256 ' + HTML_SHA + ')');
 
   // ---- rebuild and the digest gate
-  let L; try { L = R.load(file, { settings: SETTINGS }); } catch (e) { die('the design did not load: ' + e.message); }
+  let L, SI = null;
+  if (INPUTS) {
+    needIn('--inputs');
+    try { SI = await R.inputs(new Uint8Array(SHEET), path.basename(INPUTS)); } catch (e) { die('the input sheet was not applied: ' + (e && e.message || e)); }
+    L = { racks: SI.build.racks, devices: SI.build.devices, links: SI.build.links, fingerprint: SI.build.fingerprint, build: SI.build.build, match: true };
+  } else { try { L = R.load(file, { settings: SETTINGS }); } catch (e) { die('the design did not load: ' + e.message); } }
   log('rebuilt: ' + L.racks + ' racks, ' + L.devices.toLocaleString('en-US') + ' devices, ' + L.links.toLocaleString('en-US') + ' links (' + mem() + ')');
+  if (TEMPLATE) {   // filled from the design just rebuilt (the importer's round trip)
+    needIn('--input-template');
+    const u = await R.inputTemplate(true); fs.mkdirSync(path.dirname(path.resolve(TEMPLATE)), { recursive: true }); fs.writeFileSync(TEMPLATE, Buffer.from(u));
+    log('input sheet filled from the design (fingerprint ' + L.fingerprint + '): ' + TEMPLATE); process.exit(0); }
+  if (SI) {   // the record: the session input file (customer data, never in the delivery), the import report and the site-runner file
+    const cnt = (st) => SI.report.filter((r) => r.status === st).length;
+    log('input sheet applied: ' + cnt('applied') + ' applied, ' + cnt('derived') + ' derived, ' + cnt('nearest supported') + ' nearest supported (design choices), ' + cnt('not supported') + ' not supported, ' + cnt('not modeled') + ' not modeled; design fingerprint ' + L.fingerprint);
+    for (const r of SI.report) if (r.status !== 'applied' && r.status !== 'derived') log('  ' + r.status + ': ' + r.row + ' ' + r.key + ' ' + JSON.stringify(r.requested) + (r.applied !== '' ? ' -> ' + JSON.stringify(r.applied) : '') + (r.reason ? ' (' + r.reason + ')' : ''));
+    const cd = path.join(OUT, 'customer-data'); fs.mkdirSync(cd, { recursive: true });
+    const pre = String(L.build || 'design').replace(/[^A-Za-z0-9._-]/g, '_');
+    fs.writeFileSync(path.join(cd, pre + '-session-input.json'), JSON.stringify(SI, null, 1));
+    const q = (v) => { v = String(v == null ? '' : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+    fs.writeFileSync(path.join(cd, pre + '-import-report.csv'), ['row,key,requested,unit,applied,status,reason,class,source'].concat(SI.report.map((r) => [r.row, r.key, r.requested, r.unit, r.applied, r.status, r.reason, r.class, r.source].map(q).join(','))).join('\n') + '\n');
+    fs.writeFileSync(path.join(OUT, pre + '-site-runner.json'), JSON.stringify(R.siteRunner(), null, 1));
+    log('session input file, import report: ' + path.join('customer-data', pre + '-session-input.json') + ', ' + pre + '-import-report.csv; site-runner file ' + pre + '-site-runner.json');
+  }
   if (SETTINGS) log('BUILT FROM SETTINGS: design fingerprint ' + L.fingerprint + '. No approved design is behind this build; for testing only, never for delivery.');
   else if (!L.match) die('design fingerprint ' + L.fingerprint + ' does not match the exported ' + L.expected + '. The runner rebuilds a design from its settings; hand edits on the canvas are not carried. Nothing was built.');
-  if (!SETTINGS) log('design fingerprint ' + L.fingerprint + ' matches the exported design: building build ' + L.build);
+  if (!SETTINGS && !SI) log('design fingerprint ' + L.fingerprint + ' matches the exported design: building build ' + L.build);
+  if (SI) log('building build ' + L.build + ' from the input sheet');
   fs.mkdirSync(OUT, { recursive: true });
 
   // ---- a status line every 15 s (the page reports its steps on its status line)

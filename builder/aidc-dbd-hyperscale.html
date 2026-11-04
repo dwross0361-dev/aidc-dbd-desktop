@@ -754,6 +754,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   <button class="btn" id="save">Save</button>
   <button class="btn" id="runnerexp" title="Export this design for the DWR site runner: the settings it is rebuilt from, this release and the design fingerprint. The runner builds the Final package and the .run off the browser (mega sites).">Site runner</button>
   <button class="btn" id="load">Load</button>
+  <button class="btn" id="insheetbtn" title="Customer input sheet: load a filled sheet (.xlsx or CSV) to set the design in one step, or get the template">Input sheet</button>
   <button class="btn" id="reset">Reset</button>
 </div>
 
@@ -946,7 +947,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.57';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.58';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  // HS v1.58: the customer input sheet and importer (inputSheetImport, the SESSION_IN overlay); see the input sheet block.
   // HS v1.57 (release identity): the release is identified by the SHA-256 of this file, not by the string above (HS-v1.56 r1, r2
   // and r3 shared one string). The desktop app and the site runner read the file and supply its SHA-256; a builder opened
   // in a browser from disk cannot read itself, so there it is empty and the site-runner file carries none.
@@ -3724,7 +3726,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   var RACK_KW_OVERRIDE = null;  // set from the UI to override the profile's feed
   var RACK_USABLE_U    = 38;    // 42U cabinet less ~4U of cable management and blanking
   function rackKWBudget(p){
-    return RACK_KW_OVERRIDE || (p && p.rackKW) || 60;
+    return RACK_KW_OVERRIDE || sessionRackKw() || (p && p.rackKW) || 60;   // HS v1.58: the input sheet's rack feed
   }
 
   // CONFIRMED 2026-08-02: 8U per HGX host, against the platform specification. The check is
@@ -3903,7 +3905,10 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   // the design. Each one, once entered WITH a source, replaces the analog or missing figure and its row
   // turns confirmed. Nothing here has a default -- an empty field stays a blocker.
   var VENDOR_IN={hostMaxKw:null, hostPeakKw:null, hostSrc:'', bbPeakA:null, bbSrc:'', shelfPulseKw:null, shelfSrc:'', cduKw:null, cduModel:'', cduSrc:'',
-    immTankU:null, immTankLmm:null, immTankWmm:null, immTankHmm:null, immPitchM:null, immOilL:null, immHxPerCube:null, immCubeKw:null, immSrc:'', immVendor:''};   // v540; v554: immVendor = the customer's container vendor / product
+    immTankU:null, immTankLmm:null, immTankWmm:null, immTankHmm:null, immPitchM:null, immOilL:null, immHxPerCube:null, immCubeKw:null, immSrc:'', immVendor:''};
+  // HS v1.58: the session overlay -- customer values with no control (compute rack feed, busbar rating), from the input sheet.
+  // Saved with the design (and so in the site-runner file and the design fingerprint); applied at runtime; PROFILES untouched.
+  var SESSION_IN={};   // v540; v554: immVendor = the customer's container vendor / product
   // v540: immersion. COOL_SEL per profile: 'dlc' (cold plate) or 'imm1p' (single-phase immersion containers).
   var COOL_SEL={};
   var IMM_DEF={tanksPerCube:16,   // stated: immersion vendor engineering (interview, Oct 2026)
@@ -3952,6 +3957,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   // reference four-system load (76 kW peak) on one busbar, so a segment within that loading is inside NVIDIA's design.
   var BUSBAR={segments:2, ampacity:1400, hostsPerSegmentMax:4, shelfRule:'N+1-dual', shelvesToPeak:false, rack:'nvidia-mgx',
               refHosts:4, refPeakKw:19, src:'NVIDIA Data Center Best Practices with DGX B300 v1.0 (Feb 2026): DC busbar system 14.5 kW est. average / 19 kW est. peak; high-density rack of 4 systems 58 kW average / 76 kW peak on four 1U 33 kW power shelves, N+1 (at least 3 active), each shelf with redundant (A+B) inputs'};
+  var BUSBAR_AMP_DEF=BUSBAR.ampacity;   // HS v1.58: the input sheet's busbar rating (SESSION_IN.busbarA) replaces it for a design
   function shelfDual(){ return BUSBAR.shelfRule==='N+1-dual'; }
   function shelfKw(){ return BUSBAR.shelfRule==='N+1@27.5'?SHELF.kwN1:SHELF.kw; }
   function busbarPlan(nHosts){
@@ -4028,7 +4034,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     var perNode   = p.presetNodeHosts || 1;
     var kwPerHost = pr ? +(pr.kwNode/perNode).toFixed(2) : (p.kwPerHost || 0);
     var cooling   = pr ? pr.cooling : (p.cooling || 'air');
-    var feed      = RACK_KW_OVERRIDE || (p.rackKW || 60);
+    var feed      = RACK_KW_OVERRIDE || sessionRackKw() || (p.rackKW || 60);
     var stated    = p.hosts || 0;
     var byPwr     = kwPerHost > 0 ? Math.floor(feed / kwPerHost) : Infinity;
     var byU       = hostsByU(p);
@@ -6791,7 +6797,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     return {skuRev:SKU_REV, ctrls:(CTRL_ORDER?ctrlSnapshot():undefined),   // v513: the controls (profile, FE, vendors...), as autosave keeps them
       fe:{on:!!FE.on, tenants:FE.tenants, classBTenants:FE.classBTenants, hostEnforcement:!!FE.hostEnforcement, leafModel:FE.leafModel, spineModel:FE.spineModel,
         spineAutoScale:!!FE.spineAutoScale, targetOversub:FE.targetOversub, edgeModel:FE.edgeModel, spares:!!FE.spares, spareOptics:FE.spareOptics, lbMode:'ingress-dpu' /* v518: constant, for older builders */, fwMode:FE.fwMode},
-      clientName:clientName,clientCode:clientCode,siteCode:SITE_CODE,devs:devs,links:links,seq:seq,circuits:SITE_CIRCUITS,deviceIds:DEVICE_IDS,siteParams:SITE_PARAMS,hostTenants:HOST_TENANT,labC9kv:LAB_C9KV,netFootprint:NET_FOOTPRINT,netFeed:NET_FEED,cabU:CAB_U,rowNet:ROW_NET,floorCols:FLOOR_COLS,floorPods:FLOOR_PODS,aocReach:AOC_REACH_M,hallMw:HALL_MW,deviations:DEVIATIONS,siteVariances:SITE_VARIANCES,feFw:{secVendor:secVendor,model:FE.fwModel}, storageNodesPerPod:FE.storageNodesPerPod, storageGen:FE.storageGen||'nitro3x2',vastRdma:!!FE.vastRdma,hbnDscpOk:!!FE.hbnDscpOk,ident:JSON.parse(JSON.stringify(IDENT)), oobSpineMode:OOB_SPINE_MODE, computePower:COMPUTE_POWER, busbarSegments:BUSBAR.segments, rowFeed:ROW_FEED, vrOem:VR_OEM, beUnderlay:BE_UNDERLAY, feUnderlay:FE_UNDERLAY, oobTransport:OOB_TRANSPORT, busbarRule:BUSBAR.shelfRule, busbarRack:BUSBAR.rack, provHa:!!PROV_HA, designBasis:DESIGN_BASIS, measuredHostKw:MEASURED_HOST_KW,vendorIn:VENDOR_IN,shelvesToPeak:BUSBAR.shelvesToPeak, mgmtFw:mgmtSecVendorSel, borderModel:FE.borderModel, bgModel:FE.bgModel, dciHubModel:FE.dciHubModel,ops:OPS,siteRegistry:registryAll(),regionCode:REGION_CODE,siteIndex:SITE_INDEX,beModel:beModel,beTuned:(BE_TUNED===false)?false:((beTunedActive()||{}).p)};   // HS v1.44
+      clientName:clientName,clientCode:clientCode,siteCode:SITE_CODE,devs:devs,links:links,seq:seq,circuits:SITE_CIRCUITS,deviceIds:DEVICE_IDS,siteParams:SITE_PARAMS,hostTenants:HOST_TENANT,labC9kv:LAB_C9KV,netFootprint:NET_FOOTPRINT,netFeed:NET_FEED,cabU:CAB_U,rowNet:ROW_NET,floorCols:FLOOR_COLS,floorPods:FLOOR_PODS,aocReach:AOC_REACH_M,hallMw:HALL_MW,deviations:DEVIATIONS,siteVariances:SITE_VARIANCES,feFw:{secVendor:secVendor,model:FE.fwModel}, storageNodesPerPod:FE.storageNodesPerPod, storageGen:FE.storageGen||'nitro3x2',vastRdma:!!FE.vastRdma,hbnDscpOk:!!FE.hbnDscpOk,ident:JSON.parse(JSON.stringify(IDENT)), oobSpineMode:OOB_SPINE_MODE, computePower:COMPUTE_POWER, busbarSegments:BUSBAR.segments, rowFeed:ROW_FEED, vrOem:VR_OEM, beUnderlay:BE_UNDERLAY, feUnderlay:FE_UNDERLAY, oobTransport:OOB_TRANSPORT, busbarRule:BUSBAR.shelfRule, busbarRack:BUSBAR.rack, provHa:!!PROV_HA, designBasis:DESIGN_BASIS, measuredHostKw:MEASURED_HOST_KW,vendorIn:VENDOR_IN,shelvesToPeak:BUSBAR.shelvesToPeak, mgmtFw:mgmtSecVendorSel, borderModel:FE.borderModel, bgModel:FE.bgModel, dciHubModel:FE.dciHubModel,ops:OPS,siteRegistry:registryAll(),regionCode:REGION_CODE,siteIndex:SITE_INDEX,beModel:beModel,beTuned:(BE_TUNED===false)?false:((beTunedActive()||{}).p), sessionIn:sessionInSaved()};   // HS v1.44; HS v1.58: sessionIn only when the input sheet set one
   }
   // v513: what a design file may contain. Names reach markup and configs, so they must match a safe charset;
   // anything else is refused before any state changes. Returns '' when the file is acceptable.
@@ -6820,6 +6826,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       if(['legal','contact','email'].some(function(k){ return I[k]!=null && (typeof I[k]!=='string' || I[k].length>200 || TXT.test(I[k])); })) return 'invalid customer name or contact'; }
     if(b.vendorIn!=null){ if(typeof b.vendorIn!=='object') return 'invalid vendor inputs';
       if(Object.keys(b.vendorIn).some(function(k){ var v=b.vendorIn[k]; return !(num(v) || (typeof v==='string' && v.length<=200 && !TXT.test(v))); })) return 'invalid vendor inputs'; }
+    if(b.sessionIn!=null){ if(typeof b.sessionIn!=='object' || Array.isArray(b.sessionIn) || Object.keys(b.sessionIn).some(function(k){ return !/^(rackFeedKw|busbarA)$/.test(k) || !(typeof b.sessionIn[k]==='number' && isFinite(b.sessionIn[k])); })) return 'invalid session inputs'; }   // HS v1.58
     if(b.deviceIds!=null){ if(typeof b.deviceIds!=='object') return 'invalid device identities';
       if(Object.keys(b.deviceIds).some(function(k){ var v=b.deviceIds[k]; return !NAME.test(k) || !v || !/^[A-Za-z0-9:._-]{1,64}$/.test(String(v.value))
         || ['model','serial','source'].some(function(f){ return v[f]!=null && (typeof v[f]!=='string' || v[f].length>80 || TXT.test(v[f]) || /"/.test(v[f])); }); })) return 'invalid device identities'; }
@@ -6874,7 +6881,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
           if(b.borderModel && FE_EDGE_SW[b.borderModel] && (FE_EDGE_SW[b.borderModel].roles||[]).indexOf('border')>=0) FE.borderModel=b.borderModel;   // a saved PTX border falls back to the default
           if(/^(auto|always|off)$/.test(b.oobSpineMode||'')){ OOB_SPINE_MODE=b.oobSpineMode; var _os=document.getElementById('oobspine'); if(_os) _os.value=OOB_SPINE_MODE; }
           if(b.designBasis==='electrical'||b.designBasis==='planning') DESIGN_BASIS=b.designBasis;
-          MEASURED_HOST_KW=(b.measuredHostKw!=null&&isFinite(+b.measuredHostKw))?+b.measuredHostKw:null; if(b.vendorIn){ Object.keys(VENDOR_IN).forEach(function(k){ if(b.vendorIn[k]!==undefined) VENDOR_IN[k]=b.vendorIn[k]; }); } BUSBAR.shelvesToPeak=!!b.shelvesToPeak; applyHostPower();
+          MEASURED_HOST_KW=(b.measuredHostKw!=null&&isFinite(+b.measuredHostKw))?+b.measuredHostKw:null; if(b.vendorIn){ Object.keys(VENDOR_IN).forEach(function(k){ if(b.vendorIn[k]!==undefined) VENDOR_IN[k]=b.vendorIn[k]; }); } BUSBAR.shelvesToPeak=!!b.shelvesToPeak; sessionInLoad(b.sessionIn); applyHostPower();   // HS v1.58: the session overlay
           PROV_HA=!!b.provHa; var _ph=document.getElementById('provha'); if(_ph) _ph.checked=PROV_HA;
           OOB_TRANSPORT='evpn';   // v529: a saved 'l2' design opens as EVPN-VXLAN
           if(b.feUnderlay==='unnumbered'||b.feUnderlay==='numbered'){ FE_UNDERLAY=b.feUnderlay; var _fu=document.getElementById('feul'); if(_fu) _fu.value=FE_UNDERLAY; }
@@ -7002,7 +7009,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
           function(){ try{ b=JSON.parse(txt); }catch(e){ throw new Error(file.name+' is not valid JSON'); } txt=null; sr=!!(b && b.format===SITE_RUNNER_FORMAT);
             nR=sr?(+b.racks||0):((b&&b.devs)||[]).filter(function(x){ return x.type==='rack'; }).length;
             m.label(2, sr?('Building '+nR.toLocaleString('en-US')+' racks from the settings'):'Checking the design ('+nR.toLocaleString('en-US')+' racks)'); },
-          function(){ if(sr){ d=b.design||{}; RESTORING=true; ctrlApply(d.ctrls||{}); buildFromRacks(); }
+          function(){ if(sr){ d=b.design||{}; RESTORING=true; sessionInLoad(d.sessionIn); ctrlApply(d.ctrls||{}); buildFromRacks(); }
             else { var bad=designFileCheck(b); if(bad) throw new Error(bad+'; the open design is unchanged'); prev={ctrls:ctrlSnapshot(), design:JSON.parse(JSON.stringify(designSaveObject()))}; } },
           function(){ RESTORING=true; if(sr) applySaveObject(Object.assign({}, d, {devs:devs, links:links, seq:seq})); else { if(b.ctrls) ctrlApply(b.ctrls); applySaveObject(b); } },
           function(){ var c=sr?(d.ctrls||{}):b.ctrls; if(c) ctrlApply(c); RESTORING=false; render(); }
@@ -7439,7 +7446,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       R.racks.forEach(function(rk, i){
         // host names as the FE access plan writes them: rack name without the BEF- plane tag, -Hnn
         var hosts=[]; for(var h=0; h<(rk.hosts||HOSTS); h++) hosts.push(item(rk.name.replace('BEF-','')+'-H'+pad(h+1), 'host', P.ruPerHost||8, (P.kwPerHost||0)*1000));
-        C({id:rk.name, cls:'compute', row:rid, uHeight:(P.rackScale&&P.rackScale.rackU)||(P.rack&&P.rack.u)||((P.ruPerHost||8)*(rk.hosts||HOSTS)>42?48:42), kwBudget:P.rackKW||null,
+        C({id:rk.name, cls:'compute', row:rid, uHeight:(P.rackScale&&P.rackScale.rackU)||(P.rack&&P.rack.u)||((P.ruPerHost||8)*(rk.hosts||HOSTS)>42?48:42), kwBudget:sessionRackKw()||P.rackKW||null,
            cooling:P.cooling||'air', items:hosts});
         order.push(rk.name);
         if(_pair && _morRow && i+1===Math.floor(R.racks.length/2)){
@@ -29982,7 +29989,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       if(f.builder!==BUILDER_VER && !(o && o.settings)) throw new Error('the file was exported from '+f.builder+'; the runner loaded '+BUILDER_VER+' -- use the same release');
       var _bs=builderSha256(); if(!(o && o.settings) && f.builderSha256 && _bs && f.builderSha256!==_bs) throw new Error('the file was exported from builder '+f.builder+' with SHA-256 '+f.builderSha256.slice(0,16)+'...; the builder loaded here has SHA-256 '+_bs.slice(0,16)+'... -- use the same builder file');   // HS v1.57: release identity
       var d=f.design||{}; RESTORING=true;
-      try{ ctrlApply(d.ctrls||{}); buildFromRacks();
+      try{ sessionInLoad(d.sessionIn); ctrlApply(d.ctrls||{}); buildFromRacks();   // HS v1.58: the session overlay before the build
         applySaveObject(Object.assign({}, d, {devs:devs, links:links, seq:seq}));
         ctrlApply(d.ctrls||{}); render(); } finally { RESTORING=false; }
       var fp=designFingerprint();
@@ -32570,7 +32577,9 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       if(_sb && d.saveDesign) _sb.onclick=function(){ var o=deskSave(); if(!o){ setStatus('Build a fabric first'); return; }
         setStatus('Saving the design…'); d.saveDesign(o).then(function(p){ setStatus(p?('Saved the design to '+p):'Save canceled'); }, function(e){ setStatus('⚠ Save failed: '+(e&&e.message||e)); }); };
       d.onMenu(function(a){ if(a==='job-both') deskJob('both'); else if(a==='job-package') deskJob('package','final'); else if(a==='job-review') deskJob('package','review'); else if(a==='job-run') deskJob('run');
-        else if(a==='site-runner') document.getElementById('runnerexp').click(); else if(a==='layout') openDct(); });
+        else if(a==='site-runner') document.getElementById('runnerexp').click(); else if(a==='layout') openDct();
+        else if(a==='input-sheet') inputSheetImport(); else if(a==='input-template') inputSheetDownload(false); else if(a==='input-template-filled') inputSheetDownload(true); });   // HS v1.58
+      if(d.onInputSheet) d.onInputSheet(function(name, bytes){ inputSheetImportBytes(name, bytes); });   // HS v1.58: File > Load input sheet
       if(d.design) dsHook(d);   // HS v1.30
       d.ready({builder:BUILDER_VER, app:APP_NAME}); }
     // ---- HS v1.30: the design service -------------------------------------------------------------------------------------
@@ -33380,6 +33389,420 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     document.getElementById('roNo').onclick=function(){ b.remove(); AUTOSAVE_HOLD=false; setStatus('Started fresh. The saved design stays in this browser until you change something here.'); };
     setStatus('Saved design waiting: restore it or start fresh');
   }
+  // ---- HS v1.58: CUSTOMER INPUT SHEET AND IMPORTER (evaluation readiness, Phase 1; Owner decisions D1 to D3) ----------------
+  // D1: the template is generated here, from the catalog this file builds with (profiles, platforms per role, NIC, planes,
+  //     pods, every option list), so its drop-downs cannot drift from the builder. The importer also takes long-format CSV
+  //     (key,value,unit,source).
+  // D2: one step. inputSheetImport() parses the sheet, checks every value against the live option list or range, sets the
+  //     controls, puts the values that have no control into the session overlay SESSION_IN (saved with the design, so inside
+  //     the site-runner file and the design fingerprint), builds, and writes the session input file as the record.
+  //     PROFILES, the catalog defaults and this file are never written: profilesDefaultsDigest() proves it.
+  // D3: a value outside the supported options takes the nearest supported one, is flagged in the import report (row,
+  //     requested, applied, reason) and is pre-classified as a design choice for the equivalence report. A field the
+  //     builder does not model (obstructions, row spacing, per-hall feeds, free-text constraints) is listed as not modeled.
+  var INPUT_SHEET_FORMAT='aidc-dbd-input-sheet/1', SESSION_INPUT_FORMAT='aidc-dbd-session-input/1', INPUT_SHEET_NAME='AIDC-DBD-Input-Sheet-v1.xlsx';
+  var INSHEET_TABS=['Site & footprint','Power','Fabric','Platforms','Front end & storage','Constraints'];
+  // the catalog of keys: tab, key, label, unit, how it applies (c: control id, s: session overlay key, d: derived after the
+  // build, n: recorded, not modeled), the number range for a free number, and notes for the customer
+  function insheetSpec(){
+    var Y='';
+    return [
+      ['Site & footprint','site.customer_code','Customer code (up to 4 letters or digits: the first part of every device name)','',{c:'custcode', text:/^[A-Za-z0-9]{1,4}$/, up:true}],
+      ['Site & footprint','site.customer_name','Customer name (legal), as printed on the deliverables','',{c:'custname', text:/^[^<>`"\u0000-\u001f]{1,80}$/}],
+      ['Site & footprint','site.site_code','Site code (up to 4 letters or digits: the second part of every device name)','',{c:'clientname', text:/^[A-Za-z0-9]{1,4}$/, up:true}],
+      ['Site & footprint','site.region_code','Region code','',{c:'regioncode'}],
+      ['Site & footprint','site.site_index','Site number in the region','',{c:'siteidx', num:[1,8,1]}],
+      ['Site & footprint','site.racks','Compute racks (rack count)','racks',{c:'rackcount', num:[1,4096,1]}],
+      ['Site & footprint','site.pod_size','Racks per pod','racks',{c:'podsize', late:true}],
+      ['Site & footprint','site.rows','Compute rows','rows',{d:'rows'}],
+      ['Site & footprint','site.racks_per_row','Compute racks per row','racks',{d:'rowlen'}],
+      ['Site & footprint','site.row_spacing_m','Row spacing (row pitch, rack front to rack front)','m',{n:'rowpitch', num:[0.5,20,0]}],
+      ['Site & footprint','site.floor_columns','Floor plan columns of pods','',{c:'floorcols'}],
+      ['Site & footprint','site.floor_by_pod','Floor plan grouped by pod',Y,{c:'floorpods', bool:true}],
+      ['Site & footprint','site.network_rack_position','Network racks in the row (one block in the middle, or middle-of-row plus end-of-row)','',{c:'rownet'}],
+      ['Site & footprint','site.network_footprint','Front-end and edge cabinets','',{c:'netfoot'}],
+      ['Site & footprint','site.network_cabinet_u','Network cabinet height','U',{c:'cabu'}],
+      ['Site & footprint','site.aoc_reach_m','Longest active optical cable before optics','m',{c:'aocreach', num:[5,150,5]}],
+      ['Site & footprint','site.obstruction.1','Obstruction (column, door, ramp...): position and size','',{n:'obstruction'}],
+      ['Site & footprint','site.obstruction.2','Obstruction','',{n:'obstruction'}],
+      ['Site & footprint','site.obstruction.3','Obstruction','',{n:'obstruction'}],
+      ['Power','power.hall_mw','Data hall IT capacity','MW',{c:'hallmw', num:[2,60,1]}],
+      ['Power','power.site_feed_mw','Site utility feed','MW',{c:'sitefeed', num:[0,2000,0.1]}],
+      ['Power','power.pue','Design PUE','',{c:'sitepue', num:[1,3,0.01]}],
+      ['Power','power.rack_feed_kw','Compute rack feed (every compute rack)','kW',{s:'rackFeedKw', num:[10,600,0.1]}],
+      ['Power','power.rack_feed_kw.hall1','Compute rack feed, hall 1 (when halls differ)','kW',{n:'hallfeed', num:[10,600,0]}],
+      ['Power','power.rack_feed_kw.hall2','Compute rack feed, hall 2 (when halls differ)','kW',{n:'hallfeed', num:[10,600,0]}],
+      ['Power','power.busbar_rating_a','Compute rack busbar rating per segment (HGX busbar racks)','A',{s:'busbarA', num:[100,6000,1]}],
+      ['Power','power.compute_power','Compute rack power','',{c:'cpower'}],
+      ['Power','power.row_feed','Compute row feed','',{c:'rowfeed'}],
+      ['Power','power.network_feed','Network cabinet feed','',{c:'netfeed'}],
+      ['Power','power.design_basis','Design basis for host power','',{c:'dbasis'}],
+      ['Fabric','fabric.platform','GPU platform','',{c:'profile'}],
+      ['Fabric','fabric.rack_oem','Vera Rubin NVL72 rack OEM','',{c:'vroem'}],
+      ['Fabric','fabric.cooling','Cooling (NVL72 platforms)','',{c:'coolsel', prof:'cool'}],
+      ['Fabric','fabric.nic','Back-end NIC','',{c:'nicsel', prof:'nic'}],
+      ['Fabric','fabric.be.planes','Back-end planes','planes',{c:'planesel', prof:'planes'}],
+      ['Fabric','fabric.be.rails_per_plane','Back-end rails per plane','rails',{d:'rails'}],
+      ['Fabric','fabric.be.oversubscription','Back-end oversubscription','ratio',{d:'beos'}],
+      ['Fabric','fabric.fe.spine_auto','Front-end spines sized automatically to the oversubscription target',Y,{c:'fe-spine-auto', bool:true}],
+      ['Fabric','fabric.fe.oversubscription','Front-end leaf-to-spine oversubscription target','ratio',{c:'fe-spine-target', ratio:true}],
+      ['Fabric','fabric.be.underlay','Back-end underlay addressing','',{c:'beul'}],
+      ['Fabric','fabric.fe.underlay','Front-end underlay addressing','',{c:'feul'}],
+      ['Platforms','platform.be_switch','Back-end leaf and spine switch','',{c:'be-model'}],
+      ['Platforms','platform.fe_leaf','Front-end leaf','',{c:'fe-leaf-model'}],
+      ['Platforms','platform.fe_spine','Front-end spine','',{c:'fe-spine-model'}],
+      ['Platforms','platform.fe_edge','Edge router','',{c:'fe-edge-model'}],
+      ['Platforms','platform.fe_border','Border leaf','',{c:'fe-bl-model'}],
+      ['Platforms','platform.fe_gateway','Border gateway','',{c:'fe-bg-model'}],
+      ['Platforms','platform.dci_hub','Interconnect hub','',{c:'fe-hub-model'}],
+      ['Platforms','platform.fe_firewall','Front-end firewall','',{c:'fe-fw-model'}],
+      ['Platforms','platform.oob_switch','Out-of-band switches','',{c:'mgmtvendor'}],
+      ['Platforms','platform.oob_firewall','Out-of-band firewall','',{c:'mgmtsecvendor'}],
+      ['Platforms','platform.oob_spine','Out-of-band spine','',{c:'oobspine'}],
+      ['Platforms','platform.config_os','Configuration language','',{c:'cfgvendor'}],
+      ['Platforms','platform.provisioning_host_os','Provisioning host operating system','',{c:'deployos'}],
+      ['Front end & storage','fe.enabled','Front end (north-south, storage, tenants) included',Y,{c:'fe-on', bool:true}],
+      ['Front end & storage','fe.tenants','Tenants','tenants',{c:'fe-tenants', num:[1,989,1]}],
+      ['Front end & storage','fe.north_south_gbps','North-south bandwidth','Gb/s',{c:'fe-nsgbps', num:[0,100000,1]}],
+      ['Front end & storage','fe.ingress_gbps','Ingress bandwidth','Gb/s',{c:'fe-inggbps', num:[0,100000,1]}],
+      ['Front end & storage','fe.storage_platform','Storage platform','',{c:'fe-sto-gen'}],
+      ['Front end & storage','fe.storage_nodes_per_pod','Storage nodes per pod','nodes',{c:'fe-sto-pp', num:[0,64,1]}],
+      ['Front end & storage','fe.storage_rdma','Storage over RDMA',Y,{c:'fe-sto-rdma', bool:true}],
+      ['Front end & storage','fe.storage_dscp_ok','Storage traffic marked with DSCP by the hosts',Y,{c:'fe-sto-dscpok', bool:true}],
+      ['Front end & storage','fe.spares','Spare switches',Y,{c:'fe-spares', bool:true}],
+      ['Front end & storage','fe.spare_optics','Spare optics','',{c:'fe-spare-optics'}],
+      ['Constraints','constraint.1','Constraint or requirement (free text)','',{n:'constraint'}],
+      ['Constraints','constraint.2','Constraint or requirement (free text)','',{n:'constraint'}],
+      ['Constraints','constraint.3','Constraint or requirement (free text)','',{n:'constraint'}],
+      ['Constraints','constraint.4','Constraint or requirement (free text)','',{n:'constraint'}],
+      ['Constraints','constraint.5','Constraint or requirement (free text)','',{n:'constraint'}]
+    ].map(function(r){ return {tab:r[0], key:r[1], label:r[2], unit:r[3], m:r[4]}; });
+  }
+  // a key matches its catalog row, or a numbered row of the same family (site.obstruction.7, constraint.12, power.rack_feed_kw.hall3)
+  function insheetSpecFor(key, S){ var k=String(key||'').trim().toLowerCase(); for(var i=0;i<S.length;i++) if(S[i].key===k) return S[i];
+    var fam=k.replace(/\.[a-z]*\d+$/,''); if(fam===k) return null;
+    for(var j=0;j<S.length;j++) if(S[j].m.n && S[j].key.replace(/\.[a-z]*\d+$/,'')===fam) return S[j];
+    return null; }
+  // the option list a control offers now: [{v: control value, t: what the sheet shows}]
+  function insheetPresetName(k){ return String((PROFILES[k]||{}).preset||k); }
+  function insheetOpts(id, all){
+    if(id==='profile') return Object.keys(PROFILES).map(function(k){ return {v:k, t:insheetPresetName(k), a:[PROFILES[k].label]}; });
+    var el=document.getElementById(id); if(!el || el.tagName!=='SELECT') return null;
+    return [].filter.call(el.options, function(o){ return all || !o.disabled; }).map(function(o){
+      var t=String(o.textContent||'').replace(/^(Net cabinets|Floor|Row network|FE\+EDG|OOB spine|Compute|Rows|Net feed|Basis|OEM|NIC|Cooling):\s*/,'').trim();
+      if(id==='fe-hub-model' && o.value==='') t='follow gateway';
+      if(/^(be-model|fe-leaf-model|fe-spine-model|fe-edge-model|fe-bl-model|fe-bg-model|fe-hub-model|fe-fw-model|cabu|floorcols|podsize|planesel|fe-spine-target|regioncode)$/.test(id)) t=(id==='fe-hub-model'&&o.value==='')?t:(id==='fe-spine-target'?o.value+':1':o.value);
+      return {v:o.value, t:t, a:[String(o.textContent||'').trim()], x:o.disabled?String(o.title||''):''}; }); }
+  // the per-platform lists (planes, NIC, cooling) for the template, read from the profiles without switching the open design
+  function insheetProfOpts(kind, k){ var p=PROFILES[k]||{};
+    if(kind==='planes') return p.laneFabric?(p.planeOpts||[p.planes]).map(String):[];
+    if(kind==='nic') return (p.laneFabric&&p.nicOpts)?Object.keys(p.nicOpts).map(function(x){ return p.nicOpts[x].label; }):[];
+    if(kind==='cool') return p.immersionOk?['direct liquid (cold plate)','single-phase immersion (container)']:[];
+    return []; }
+  function insheetProfOptsVal(kind, k){ var p=PROFILES[k]||{};
+    if(kind==='nic') return (p.nicOpts?Object.keys(p.nicOpts):[]).map(function(x){ return {v:x, t:p.nicOpts[x].label, a:[x]}; });
+    if(kind==='planes') return (p.planeOpts||[p.planes]).map(function(n){ return {v:String(n), t:String(n), a:[]}; });
+    if(kind==='cool') return [{v:'dlc', t:'direct liquid (cold plate)', a:['dlc','direct liquid','cold plate']},{v:'imm1p', t:'single-phase immersion (container)', a:['immersion']}];
+    return []; }
+  function insheetNorm(s){ return String(s==null?'':s).toUpperCase().replace(/[^A-Z0-9]/g,''); }
+  // the value read from a cell: number, text, rich text or a formula's result
+  function insheetCell(v){ if(v==null) return ''; if(v instanceof Date) return v.toISOString().slice(0,10);
+    if(typeof v==='object'){ if(v.result!==undefined) return insheetCell(v.result); if(v.richText) return v.richText.map(function(x){ return x.text; }).join(''); if(v.text!==undefined) return String(v.text); return ''; }
+    return v; }
+  // units: the expected unit, blank, or a simple conversion; anything else is read in the expected unit and said so
+  var INSHEET_UNITS={kw:{w:0.001, kw:1, mw:1000}, mw:{kw:0.001, mw:1, w:1e-6}, m:{m:1, mm:0.001, cm:0.01, ft:0.3048}, a:{a:1}};
+  function insheetUnit(val, unit, want){ var u=String(unit||'').trim().toLowerCase(), w=String(want||'').trim().toLowerCase(), T=INSHEET_UNITS[w];
+    if(!u || u===w || !T) return {v:val, note:(u && u!==w && T)?'':''};
+    if(T[u]!=null && isFinite(+val) && String(val).trim()!=='') return {v:+(+val*T[u]).toFixed(6), note:'converted from '+val+' '+unit};
+    return {v:val, note:'unit '+unit+' not recognized; read as '+want}; }
+  function insheetBool(v){ var s=String(v).trim().toLowerCase(); if(/^(yes|y|true|1|on)$/.test(s)) return true; if(/^(no|n|false|0|off)$/.test(s)) return false; return null; }
+  // the nearest supported option of a list (D3): exact value or text, then a unique partial match, then the nearest number
+  function insheetPick(req, opts, numeric){
+    var n=insheetNorm(req), hit=null;
+    opts.some(function(o){ if(insheetNorm(o.v)===n || insheetNorm(o.t)===n || (o.a||[]).some(function(a){ return insheetNorm(a)===n; })){ hit=o; return true; } return false; });
+    if(hit) return {o:hit, exact:true};
+    if(numeric && isFinite(parseFloat(req))){ var x=parseFloat(req), best=null;
+      opts.forEach(function(o){ var y=parseFloat(o.v); if(!isFinite(y)) return; var d=Math.abs(y-x); if(!best || d<best.d-1e-9 || (Math.abs(d-best.d)<1e-9 && y>parseFloat(best.o.v))) best={o:o, d:d}; });
+      if(best) return {o:best.o, exact:false, why:'the nearest of the offered values ('+opts.map(function(o){ return o.t; }).join(', ')+')'}; }
+    if(n.length>=3){ var part=opts.filter(function(o){ var a=insheetNorm(o.v), b=insheetNorm(o.t); return (a&&(a.indexOf(n)>=0||n.indexOf(a)>=0)) || (b&&(b.indexOf(n)>=0||n.indexOf(b)>=0)); });
+      if(part.length===1) return {o:part[0], exact:false, why:'read as '+part[0].t+' (the one offered option that matches)'}; }
+    return null; }
+  function insheetNum(req, r){ var x=parseFloat(String(req).replace(/,/g,'')); if(!isFinite(x)) return null;
+    var y=Math.max(r[0], Math.min(r[1], x)); if(r[2]) y=Math.round((y-r[0])/r[2])*r[2]+r[0]; y=+y.toFixed(6);
+    return {v:y, exact:Math.abs(y-x)<1e-9, why:(x<r[0]||x>r[1])?'outside the supported range '+r[0]+' to '+r[1]:'rounded to a step of '+r[2]}; }
+
+  // ---- the session overlay (D2). Only values that change the build are kept, so a sheet that restates a design leaves the
+  // design (and its fingerprint) as it was. Applied at runtime like applyHostPower(); PROFILES are never written.
+  function sessionInClean(o){ var out={}; if(!o || typeof o!=='object' || Array.isArray(o)) return out;
+    if(o.rackFeedKw!=null && isFinite(+o.rackFeedKw) && +o.rackFeedKw>=10 && +o.rackFeedKw<=600) out.rackFeedKw=+o.rackFeedKw;
+    if(o.busbarA!=null && isFinite(+o.busbarA) && +o.busbarA>=100 && +o.busbarA<=6000) out.busbarA=+o.busbarA;
+    return out; }
+  function sessionInApply(){ BUSBAR.ampacity=SESSION_IN.busbarA||BUSBAR_AMP_DEF; }
+  function sessionInLoad(o){ SESSION_IN=sessionInClean(o); sessionInApply(); }
+  function sessionInSaved(){ return (SESSION_IN && Object.keys(SESSION_IN).length)?JSON.parse(JSON.stringify(SESSION_IN)):undefined; }
+  function sessionRackKw(){ return (SESSION_IN && SESSION_IN.rackFeedKw>0)?+SESSION_IN.rackFeedKw:null; }
+  // 5.2 proof: SHA-256 over the profiles as the source declares them. The builder's own per-build derivations are left out by
+  // name (the planes and host form factor the lane fabric selects, host kW from the design basis, the Vera Rubin OEM's rack).
+  var PROFILE_DERIVED={planes:1, hostFF:1, kwPerHost:1, kwPerHostSpec:1, oem:1, oemSrc:1};
+  function profilesDefaultsDigest(){ var c={};
+    Object.keys(PROFILES).sort().forEach(function(k){ var P=PROFILES[k], o={};
+      Object.keys(P).sort().forEach(function(f){ if(PROFILE_DERIVED[f]) return; if(f==='kwPerHost') return;
+        var v=P[f]; if(f==='rackScale' && v){ v=JSON.parse(JSON.stringify(v)); delete v.model; } o[f]=v; });
+      o.kwPerHost=(P.kwPerHostSpec!=null?P.kwPerHostSpec:P.kwPerHost); c[k]=o; });
+    return sha256Hex(new TextEncoder().encode(JSON.stringify(c))); }
+
+  // ---- the template (D1)
+  function insheetValueNow(s){ var m=s.m, el=m.c?document.getElementById(m.c):null;
+    if(m.c){ if(!el) return ''; if(m.bool) return el.checked?'Yes':'No';
+      if(m.c==='fe-spine-target') return el.value?el.value+':1':'';
+      if(m.c==='profile') return insheetPresetName(el.value);
+      if(m.prof==='nic'){ var p=PROFILES[profileKey]||{}; var k=el.value||p.nicDef; return (p.laneFabric&&p.nicOpts&&p.nicOpts[k])?p.nicOpts[k].label:''; }
+      if(m.prof==='cool'){ var p2=PROFILES[profileKey]||{}; if(!p2.immersionOk) return ''; return (el.value||'dlc')==='imm1p'?'single-phase immersion (container)':'direct liquid (cold plate)'; }
+      if(m.prof==='planes'){ var p3=PROFILES[profileKey]||{}; return p3.laneFabric?(el.value||String(p3.planeDef||'')):''; }
+      if(el.tagName==='SELECT'){ var o=(insheetOpts(m.c)||[]).filter(function(x){ return x.v===el.value; })[0]; return o?o.t:el.value; }
+      return el.value; }
+    if(m.s==='rackFeedKw') return rackKWBudget(PROFILES[profileKey]);
+    if(m.s==='busbarA') return BUSBAR.ampacity;
+    if(m.d){ var dv=insheetDerived(); return dv[m.d]!=null?dv[m.d]:''; }
+    return ''; }
+  function insheetDerived(){ var n=byType('rack').length, L=rowLen(), P=PROFILES[profileKey]||{}, rails={}, np=Math.max(1, +P.planes||1);
+    byType('leaf').forEach(function(d){ if(d.rail!=null) rails[d.rail]=1; });   // rail ids run across the planes
+    var nr=Object.keys(rails).length;
+    return {rows:n?Math.ceil(n/Math.max(1,L)):0, rowlen:L, rails:(nr%np===0)?nr/np:nr, beos:'1:1', planes:np}; }
+  function insheetAllowed(s){ var m=s.m;
+    if(m.bool) return ['Yes','No'];
+    if(m.prof) return Object.keys(PROFILES).map(function(k){ var o=insheetProfOpts(m.prof,k); return o.length?insheetPresetName(k)+': '+o.join(', '):''; }).filter(Boolean);
+    if(m.c==='podsize') return ['2','4','8','16','32','64','128','256'];
+    if(m.c && m.num) return [];
+    if(m.c) return (insheetOpts(m.c, true)||[]).map(function(o){ return o.t; });
+    if(m.d==='beos') return ['1:1'];
+    return []; }
+  function insheetAllowedText(s){ var m=s.m, a=insheetAllowed(s);
+    if(m.prof) return a.join('; ')+(a.length?'; other platforms: blank':'');
+    if(m.c==='podsize') return 'one of '+a.join(', ')+' (the builder offers the sizes that fit the platform and switch; any other takes the nearest)';
+    if(m.num && (m.c||m.s)) return m.num[0]+' to '+m.num[1]+(s.unit?' '+s.unit:'');
+    if(m.text) return m.c==='custname'?'up to 80 characters':'up to 4 letters or digits';
+    if(m.d==='rows') return 'derived: compute racks / racks per row';
+    if(m.d==='rowlen') return 'derived from the platform';
+    if(m.d==='rails') return 'derived from the platform, NIC and planes';
+    if(m.d==='beos') return '1:1 (non-blocking; the only option)';
+    if(m.n) return 'recorded; not modeled by the builder';
+    if(m.c==='be-model'){ var lane=(insheetOpts('be-model', true)||[]).filter(function(o){ return BE_MODELS[o.v] && BE_MODELS[o.v].laneOnly; }).map(function(o){ return o.t; });
+      return a.join(', ')+(lane.length?' ('+lane.join(', ')+': NVL72 platforms only)':''); }
+    return a.join(', '); }
+  function inputSheetWorkbook(filled){
+    var wb=new ExcelJS.Workbook(); wb.creator=APP_NAME; wb.title='AIDC DBD input sheet';
+    wb.keywords=INPUT_SHEET_FORMAT; wb.description='Generated by '+APP_NAME+' '+BUILDER_VER;
+    var S=insheetSpec(), hdr={font:{bold:true, color:{argb:'FFFFFFFF'}}, fill:{type:'pattern', pattern:'solid', fgColor:{argb:'FF1E4F6E'}}};
+    var rm=wb.addWorksheet('Read me'); rm.getColumn(1).width=26; rm.getColumn(2).width=110;
+    [['Format', INPUT_SHEET_FORMAT], ['Generated by', APP_NAME+' '+BUILDER_VER+(builderSha256()?' (SHA-256 '+builderSha256()+')':'')],
+     ['Filled from', filled?'the design open when it was generated (build '+identBuild()+')':'blank template'],
+     ['How to fill', 'One row per input. Enter the Value; keep the Key as it is. Leave a row blank to keep the builder default. The drop-downs list what this release supports.'],
+     ['Units', 'Enter values in the unit shown. A value in kW, MW, W, m, mm, cm or ft with that unit written in the Unit column is converted.'],
+     ['Outside the options', 'A value the builder does not offer is built at the nearest supported option and flagged in the import report (row, requested, applied, reason) as a design choice.'],
+     ['Not modeled', 'Rows marked "recorded; not modeled" (obstructions, row spacing, per-hall feeds, constraints) are kept in the session record and listed in the report; the builder does not use them yet.'],
+     ['Customer source', 'Name the document and revision each value comes from.'],
+     ['CSV', 'The importer also takes a CSV with the columns key,value,unit,source (one row per key).']].forEach(function(r,i){
+      var row=rm.getRow(i+1); row.getCell(1).value=r[0]; row.getCell(2).value=r[1]; row.getCell(1).font={bold:true}; row.getCell(2).alignment={wrapText:true, vertical:'top'}; });
+    var li=wb.addWorksheet('Lists', {state:'hidden'}), col=0, listRef={};
+    var addList=function(name, vals){ if(!vals.length) return null; col++; var L=li.getColumn(col); L.header=name;
+      vals.forEach(function(v,i){ li.getCell(i+2, col).value=v; });
+      var letter=li.getColumn(col).letter; return "'Lists'!$"+letter+'$2:$'+letter+'$'+(vals.length+1); };
+    INSHEET_TABS.forEach(function(tab){
+      var ws=wb.addWorksheet(tab); ws.columns=[{header:'Key', key:'k', width:30},{header:'Value', key:'v', width:28},{header:'Unit', key:'u', width:9},{header:'Allowed', key:'a', width:60},{header:'Customer source (document, revision)', key:'s', width:34},{header:'Notes', key:'n', width:60}];
+      ws.getRow(1).eachCell(function(c){ c.font=hdr.font; c.fill=hdr.fill; }); ws.views=[{state:'frozen', ySplit:1}];
+      S.filter(function(s){ return s.tab===tab; }).forEach(function(s){
+        var v=filled?insheetValueNow(s):'';
+        var r=ws.addRow({k:s.key, v:(v===''||v==null)?null:v, u:s.unit, a:insheetAllowedText(s), s:'', n:s.label});
+        r.getCell('k').font={name:'Consolas'}; r.getCell('a').alignment={wrapText:true}; r.getCell('n').alignment={wrapText:true};
+        var m=s.m, cell=r.getCell('v'), dv=null;
+        if(m.num && (m.c||m.s)) dv={type:'decimal', operator:'between', formulae:[m.num[0], m.num[1]]};
+        else { var A=insheetAllowed(s); if(m.prof){ var u=[]; Object.keys(PROFILES).forEach(function(k){ insheetProfOpts(m.prof,k).forEach(function(x){ if(u.indexOf(x)<0) u.push(x); }); }); A=u; }
+          if(A.length){ var ref=listRef[s.key]||(listRef[s.key]=addList(s.key, A)); if(ref) dv={type:'list', formulae:[ref]}; } }
+        if(dv){ dv.allowBlank=true; dv.showErrorMessage=true; dv.errorStyle='warning'; dv.errorTitle='Not an offered value';
+          dv.error='Not one of the offered values. It will be built at the nearest supported option and flagged in the import report.'; cell.dataValidation=dv; }
+      });
+    });
+    return wb; }
+  function inputSheetBytes(filled){ return inputSheetWorkbook(!!filled).xlsx.writeBuffer().then(function(b){ return new Uint8Array(b); }); }
+  function inputSheetDownload(filled){
+    if(!window.ExcelJS){ setStatus('ExcelJS unavailable'); return Promise.resolve(); }
+    var fn=filled?((custCodeVal()?identFilePrefix()+'-':'')+'input-sheet-filled.xlsx'):INPUT_SHEET_NAME;
+    return inputSheetBytes(filled).then(function(u){ insheetSaveFile(fn, u, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      setStatus((filled?'Input sheet filled from this design':'Blank input sheet')+' saved as '+fn); },
+      function(e){ setStatus('\u26a0 Input sheet not written: '+(e&&e.message||e)); }); }
+  function insheetSaveFile(fn, data, type){ var blob=new Blob([data],{type:type}), url=URL.createObjectURL(blob), a=document.createElement('a');
+    a.href=url; a.download=fn; document.body.appendChild(a); a.click(); setTimeout(function(){ try{ document.body.removeChild(a); URL.revokeObjectURL(url); }catch(e){} },0); }
+
+  // ---- parsing: XLSX (ExcelJS) or long-format CSV, into rows {row, key, value, unit, source}
+  function insheetCsv(text){ var out=[], row=[], f='', q=false, i=0, c; text=String(text).replace(/^\ufeff/,'');
+    for(;i<text.length;i++){ c=text[i];
+      if(q){ if(c==='"'){ if(text[i+1]==='"'){ f+='"'; i++; } else q=false; } else f+=c; }
+      else if(c==='"') q=true; else if(c===','){ row.push(f); f=''; } else if(c==='\n'||c==='\r'){ if(c==='\r'&&text[i+1]==='\n') i++; row.push(f); out.push(row); row=[]; f=''; } else f+=c; }
+    if(f!=='' || row.length){ row.push(f); out.push(row); } return out; }
+  function inputSheetParse(bytes, name){
+    var u=(bytes instanceof Uint8Array)?bytes:new Uint8Array(bytes), sha=sha256Hex(u), isX=u.length>4 && u[0]===0x50 && u[1]===0x4b;
+    if(!isX){ var T=insheetCsv(new TextDecoder('utf-8').decode(u)), H=(T[0]||[]).map(function(x){ return String(x).trim().toLowerCase(); });
+      var ki=H.indexOf('key'), vi=H.indexOf('value'), ui=H.indexOf('unit'), si=H.indexOf('source');
+      if(ki<0 || vi<0) return Promise.reject(new Error(name+' is neither an input sheet (.xlsx) nor a CSV with key and value columns'));
+      var rows=[]; for(var r=1;r<T.length;r++){ var L=T[r]; if(!L || !String(L[ki]||'').trim()) continue;
+        rows.push({row:'CSV line '+(r+1), key:String(L[ki]).trim(), value:String(L[vi]==null?'':L[vi]).trim(), unit:ui>=0?String(L[ui]||'').trim():'', source:si>=0?String(L[si]||'').trim():''}); }
+      return Promise.resolve({name:name, sha256:sha, kind:'csv', rows:rows}); }
+    if(!window.ExcelJS) return Promise.reject(new Error('ExcelJS unavailable'));
+    var wb=new ExcelJS.Workbook();
+    return wb.xlsx.load(u.buffer.slice(u.byteOffset, u.byteOffset+u.byteLength)).then(function(){
+      var rows=[];
+      wb.eachSheet(function(ws){ if(/^(read me|lists)$/i.test(ws.name)) return; var kc=0, vc=0, uc=0, sc=0, h=0;
+        ws.eachRow(function(R, rn){ if(h) return; var m={}; R.eachCell(function(c,ci){ var t=String(insheetCell(c.value)).trim().toLowerCase(); if(t==='key') m.k=ci; else if(t==='value') m.v=ci; else if(t==='unit') m.u=ci; else if(/^customer source|^source$/.test(t)) m.s=ci; });
+          if(m.k && m.v){ h=rn; kc=m.k; vc=m.v; uc=m.u||0; sc=m.s||0; } });
+        if(!h) return;
+        ws.eachRow(function(R, rn){ if(rn<=h) return; var k=String(insheetCell(R.getCell(kc).value)).trim(); if(!k) return;
+          var v=insheetCell(R.getCell(vc).value);
+          rows.push({row:ws.name+'!'+rn, key:k, value:(typeof v==='number')?v:String(v).trim(), unit:uc?String(insheetCell(R.getCell(uc).value)).trim():'', source:sc?String(insheetCell(R.getCell(sc).value)).trim():''}); }); });
+      return {name:name, sha256:sha, kind:'xlsx', rows:rows}; }); }
+
+  // ---- resolve and apply, one step (D2, D3). Returns the session input object; the report is in it.
+  function inputSheetApply(parsed){
+    var S=insheetSpec(), rep=[], byKey={}, order=[], ctrls={}, sess={}, vin={};
+    var add=function(x, s, status, applied, why){ rep.push({ord:x.ord, row:x.row, key:x.key, label:s?s.label:'', requested:x.raw, unit:x.unit||'', source:x.source||'', applied:applied, status:status, reason:why||'',
+      class:(status==='nearest supported'||status==='not supported')?'design choice':''}); };
+    parsed.rows.forEach(function(x, i){ x.ord=i; x.raw=(x.value===''||x.value==null)?'':String(x.value); var k=String(x.key).trim().toLowerCase();
+      if(byKey[k]){ add(byKey[k], insheetSpecFor(k,S), 'not applied', '', 'the key appears again at '+x.row+'; that row is used'); }
+      byKey[k]=x; if(order.indexOf(k)<0) order.push(k); });
+    var hold=[];   // [spec, row] for the controls, applied in the builder's control order
+    order.forEach(function(k){ var x=byKey[k], s=insheetSpecFor(k,S);
+      if(!s){ add(x, null, 'not modeled', '', 'not a key of '+INPUT_SHEET_FORMAT+'; recorded in the session input file'); return; }
+      if(x.raw===''){ return; }
+      var m=s.m, uv=insheetUnit(x.value, x.unit, s.unit); x.v=uv.v; x.unote=uv.note;
+      if(m.n){ add(x, s, 'not modeled', '', ({obstruction:'obstructions are recorded; the floor plan does not model them yet',
+        rowpitch:'the floor plan uses its own row pitch (cabinet depth plus a 2.0 m cold aisle and a 1.2 m hot aisle); recorded',
+        hallfeed:'the builder applies one feed to every compute rack (power.rack_feed_kw); a per-hall feed is recorded', constraint:'free text, recorded for the design review'})[m.n]||'recorded'); return; }
+      if(m.d){ hold.push([s,x]); return; }
+      if(m.s){ var q=insheetNum(x.v, m.num); if(!q){ add(x, s, 'not supported', '', 'not a number'+(uv.note?' ('+uv.note+')':'')); return; }
+        sess[m.s]={v:q.v, x:x, s:s, q:q}; return; }
+      hold.push([s,x]); });
+    // the session overlay: only a value that differs from what the builder would use otherwise
+    var nextSess=JSON.parse(JSON.stringify(SESSION_IN||{}));   // a key the sheet leaves out keeps its overlay
+    var _rb=buildFromRacks, pend=false, done=false;
+    buildFromRacks=function(){ pend=true; };   // one build at the end, not one per control
+    var prevRest=RESTORING; RESTORING=true;
+    try{
+      var idx=function(id){ var i=CTRL_ORDER.indexOf(id); return i<0?999:i; };
+      var cs=hold.filter(function(h){ return h[0].m.c; }).sort(function(a,b){ var la=a[0].m.late?1:0, lb=b[0].m.late?1:0; return (la-lb)||(idx(a[0].m.c)-idx(b[0].m.c)); });
+      var applyOne=function(h){ var s=h[0], x=h[1], m=s.m, el=document.getElementById(m.c), val=null, st='applied', why=x.unote||'', shown='';
+        if(!el){ add(x, s, 'not supported', '', 'this release has no such control'); return; }
+        if(m.bool){ var b=insheetBool(x.v); if(b===null){ add(x, s, 'not supported', el.checked?'Yes':'No', 'not Yes or No; the builder default is kept'); return; } val=b; shown=b?'Yes':'No'; }
+        else if(m.text){ var t=String(x.v).trim(); if(m.up) t=t.toUpperCase();
+          if(!m.text.test(t)){ var t2=m.up?t.replace(/[^A-Z0-9]/g,'').slice(0,4):t.replace(/[<>`"\u0000-\u001f]/g,'').slice(0,80);
+            if(!t2){ add(x, s, 'not supported', '', 'no usable characters'); return; } st='nearest supported'; why=(m.up?'letters and digits only, up to 4':'up to 80 characters, no quotes or angle brackets'); t=t2; }
+          val=t; shown=t; }
+        else if(m.num){ var q=insheetNum(x.v, m.num); if(!q){ add(x, s, 'not supported', el.value, 'not a number; the builder value is kept'); return; }
+          if(!q.exact){ st='nearest supported'; why=q.why+(why?'; '+why:''); } val=String(q.v); shown=q.v; }
+        else {
+          var opts=m.prof?insheetProfOptsVal(m.prof, profileKey):insheetOpts(m.c), req=m.ratio?String(x.v).replace(/\s*:\s*1\s*$/,''):x.v;
+          if(m.prof && !(PROFILES[profileKey]||{})[m.prof==='cool'?'immersionOk':'laneFabric']){ add(x, s, 'not supported', '', 'the '+insheetPresetName(profileKey)+' platform has no such choice; ignored'); return; }
+          if(m.prof==='planes' || m.prof==='nic'){ var live=insheetOpts(m.c)||[]; if(live.length) opts=opts.filter(function(o){ return live.some(function(l){ return l.v===o.v; }); }); }
+          var pk=opts&&opts.length?insheetPick(req, opts, /^(siteidx|podsize|cabu|floorcols|planesel|fe-spine-target)$/.test(m.c)):null;
+          if(!pk){ var cur=(opts||[]).filter(function(o){ return o.v===el.value; })[0]; add(x, s, 'not supported', cur?cur.t:el.value, 'not one of the offered options ('+(opts||[]).map(function(o){ return o.t; }).join(', ')+'); the builder value is kept'); return; }
+          if(!pk.exact){ st='nearest supported'; why=pk.why+(why?'; '+why:''); }
+          val=pk.o.v; shown=m.ratio?pk.o.v+':1':pk.o.t; }
+        if(el.tagName==='SELECT' && ![].some.call(el.options,function(o){ return o.value===String(val); }) && opts && opts.length===1){ add(x, s, st, shown, (why?why+'; ':'')+'the only option for this platform'); return; }
+        var one={}; one[m.c]=val; ctrlApply(one); ctrls[m.c]=val;
+        if(m.c==='custcode'){ try{ IDENT.code=String(val); }catch(e){} }
+        add(x, s, st, shown, why); h.done=true; };
+      cs.filter(function(h){ return !h[0].m.late; }).forEach(applyOne);
+    } finally { buildFromRacks=_rb; RESTORING=prevRest; }
+    // the overlay, against the platform now selected
+    Object.keys(sess).forEach(function(k){ var e=sess[k], dflt=(k==='rackFeedKw')?((PROFILES[profileKey]||{}).rackKW||60):BUSBAR_AMP_DEF, st=e.q.exact?'applied':'nearest supported', why=e.q.exact?(e.x.unote||''):e.q.why;
+      if(Math.abs(e.v-dflt)>1e-9) nextSess[k]=e.v; else { delete nextSess[k]; why=(why?why+'; ':'')+'the builder default for this platform'; }
+      if(k==='busbarA' && (PROFILES[profileKey]||{}).rackScale) why=(why?why+'; ':'')+'recorded: the '+insheetPresetName(profileKey)+' rack busbar is vendor-integrated, so it does not change this build';
+      add(e.x, e.s, st, e.v, why); });
+    var prevSess=JSON.stringify(SESSION_IN||{});
+    SESSION_IN=nextSess; sessionInApply();
+    // the build, the way the site runner rebuilds a design: controls, build, controls again
+    RESTORING=true;
+    // the pod size last: its options follow the switch radix and the rack count, so it is checked against the built design
+    try{ ctrlApply(ctrls); buildFromRacks(); cs.filter(function(h){ return h[0].m.late; }).forEach(applyOne); ctrlApply(ctrls); } finally { RESTORING=prevRest; }
+    try{ render(); }catch(e){}
+    // after the build: what the builder made of each control, and the derived rows
+    var snap=ctrlSnapshot(), dv=insheetDerived(), P=PROFILES[profileKey]||{};
+    rep.forEach(function(r){ var s=insheetSpecFor(r.key,S); if(!s || !s.m.c || r.status==='not supported' || r.status==='not modeled' || r.status==='not applied') return;
+      var c=s.m.c, want=ctrls[c]; if(want===undefined) return; var got=snap[c];
+      if(String(got)!==String(want)){ r.status='nearest supported'; r.class='design choice'; r.applied=s.m.bool?(got?'Yes':'No'):insheetValueNow(s); r.reason=(r.reason?r.reason+'; ':'')+'the builder set it from the other inputs (the option is not available with them)'; } });
+    rep.forEach(function(r){ if(r.key==='fabric.be.planes' && P.laneFabric && r.status==='applied' && +r.applied!==+P.planes){ r.status='nearest supported'; r.class='design choice'; r.reason='built at '+P.planes+' planes: '+(LANE_NOTE||'the plane count the switch and NIC support'); r.applied=P.planes; } });
+    hold.filter(function(h){ return h[0].m.d; }).forEach(function(h){ var s=h[0], x=h[1], m=s.m, got=dv[m.d];
+      var req=(m.d==='beos')?String(x.v).replace(/\s/g,''):x.v, same=(m.d==='beos')?(/^1(:1)?$|^1\.0+(:1)?$/.test(req)):(+req===+got);
+      var why={rows:'compute rows follow the rack count and the platform\u2019s racks per row ('+dv.rowlen+')', rowlen:'racks per row are set by the platform ('+insheetPresetName(profileKey)+': '+dv.rowlen+')',
+        rails:'rails per plane follow the platform, NIC and plane count ('+dv.planes+' planes)', beos:'the back end is non-blocking by construction; no oversubscription option'}[m.d];
+      if(same) add(x, s, 'derived', got, 'matches the builder');
+      else add(x, s, 'nearest supported', got, why); });
+    rep.sort(function(a,b){ return a.ord-b.ord; }); rep.forEach(function(r){ delete r.ord; });   // in sheet order
+    var sess0={format:SESSION_INPUT_FORMAT, created:new Date().toISOString(), evaluationId:null, app:APP_NAME, builder:BUILDER_VER, builderSha256:builderSha256()||null,
+      sheet:{name:parsed.name, sha256:parsed.sha256, kind:parsed.kind, rows:parsed.rows.length},
+      values:parsed.rows.map(function(x){ return {row:x.row, key:x.key, value:x.raw, unit:x.unit, source:x.source}; }),
+      ctrls:ctrls, sessionIn:sessionInSaved()||{}, report:rep,
+      overrides:rep.filter(function(r){ return r.status==='nearest supported'; }).map(function(r){ return {row:r.row, key:r.key, requested:r.requested, applied:r.applied, reason:r.reason, class:'design choice'}; }),
+      unsupported:rep.filter(function(r){ return r.status==='not supported'; }).map(function(r){ return {row:r.row, key:r.key, requested:r.requested, reason:r.reason}; }),
+      notModeled:rep.filter(function(r){ return r.status==='not modeled'; }).map(function(r){ return {row:r.row, key:r.key, requested:r.requested, reason:r.reason}; }),
+      build:{build:identBuild(), racks:byType('rack').length, devices:devs.length, links:links.length, fingerprint:designFingerprint(), profilesDefaultsSha256:profilesDefaultsDigest()},
+      sessionChanged:prevSess!==JSON.stringify(SESSION_IN||{})};
+    try{ autosaveSoon(); }catch(e){}
+    return sess0; }
+  function inputReportCsv(si){ var q=function(v){ v=String(v==null?'':v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+    return ['row,key,requested,unit,applied,status,reason,class,source'].concat(si.report.map(function(r){ return [r.row,r.key,r.requested,r.unit,r.applied,r.status,r.reason,r.class,r.source].map(q).join(','); })).join('\n')+'\n'; }
+  function inputSessionName(si){ return (custCodeVal()?identFilePrefix():'design')+'-session-input.json'; }
+  function inputReportShow(si){
+    var old=document.getElementById('insheetReport'); if(old) old.remove();
+    var n=function(st){ return si.report.filter(function(r){ return r.status===st; }).length; };
+    var b=document.createElement('div'); b.id='insheetReport';
+    b.style.cssText='position:fixed;inset:0;z-index:2147482500;background:rgba(20,30,40,.28);display:flex;align-items:center;justify-content:center';
+    var col={'applied':'#0F6E56','derived':'#0F6E56','nearest supported':'#9A6700','not supported':'#B42318','not modeled':'#4B5A63','not applied':'#4B5A63'};
+    b.innerHTML='<div style="width:1100px;max-width:calc(100vw - 32px);max-height:86vh;display:flex;flex-direction:column;background:#fff;border-radius:10px;box-shadow:0 10px 40px rgba(0,0,0,.25);padding:14px 16px;font:13px/1.45 system-ui,Segoe UI,sans-serif;color:#1E2A33">'
+      +'<div style="font-weight:600;font-size:15px">Input sheet imported: '+escHtml(si.sheet.name)+'</div>'
+      +'<div style="margin:4px 0 8px;color:#4B5A63">'+n('applied')+' applied, '+n('derived')+' derived, <b style="color:#9A6700">'+n('nearest supported')+' nearest supported</b> (design choices), '+n('not supported')+' not supported, '+n('not modeled')+' not modeled. Build '+escHtml(si.build.build)+': '+si.build.racks.toLocaleString('en-US')+' racks, '+si.build.devices.toLocaleString('en-US')+' devices, design fingerprint '+escHtml(si.build.fingerprint)+'.</div>'
+      +'<div style="overflow:auto;flex:1;border:1px solid #DDE5E4;border-radius:6px"><table style="border-collapse:collapse;width:100%;font-size:12px"><thead><tr style="background:#EEF2F1;position:sticky;top:0">'
+      +['Row','Key','Requested','Applied','Status','Reason'].map(function(h){ return '<th style="text-align:left;padding:4px 6px">'+h+'</th>'; }).join('')+'</tr></thead><tbody>'
+      +si.report.map(function(r){ return '<tr style="border-top:1px solid #EEF2F1"><td style="padding:3px 6px;white-space:nowrap">'+escHtml(r.row)+'</td><td style="padding:3px 6px;font-family:var(--mono)">'+escHtml(r.key)+'</td><td style="padding:3px 6px">'+escHtml(r.requested)+(r.unit?' '+escHtml(r.unit):'')+'</td><td style="padding:3px 6px">'+escHtml(r.applied)+'</td><td style="padding:3px 6px;white-space:nowrap;color:'+(col[r.status]||'#1E2A33')+'">'+escHtml(r.status)+(r.class?' &middot; '+escHtml(r.class):'')+'</td><td style="padding:3px 6px">'+escHtml(r.reason)+'</td></tr>'; }).join('')
+      +'</tbody></table></div><div style="margin-top:10px"><button class="btn" id="insheetCsv">Download report (CSV)</button> <button class="btn" id="insheetJson">Download session input file</button> <button class="btn alt" id="insheetClose">Close</button></div></div>';
+    document.body.appendChild(b);
+    document.getElementById('insheetClose').onclick=function(){ b.remove(); };
+    document.getElementById('insheetCsv').onclick=function(){ insheetSaveFile(inputSessionName(si).replace(/-session-input\.json$/,'-import-report.csv'), inputReportCsv(si), 'text/csv'); };
+    document.getElementById('insheetJson').onclick=function(){ insheetSaveFile(inputSessionName(si), JSON.stringify(si,null,1), 'application/json'); };
+  }
+  // the one-step import: parse, check, apply, build, report, and the session input file as the record
+  function inputSheetImportBytes(name, bytes){   // also the entry point of the app's File menu, which reads the file itself
+    setStatus('Reading the input sheet '+name+'\u2026');
+    return inputSheetParse(bytes, name).then(function(p){
+        setStatus('Applying '+p.rows.length+' input rows and building\u2026');
+        setTimeout(function(){ try{ var si=inputSheetApply(p); insheetSaveFile(inputSessionName(si), JSON.stringify(si,null,1), 'application/json'); inputReportShow(si);
+            setStatus('Input sheet imported: '+si.overrides.length+' value(s) built at the nearest supported option, '+si.notModeled.length+' not modeled. Session input file saved.'); }
+          catch(e){ setStatus('\u26a0 Input sheet not applied: '+(e&&e.message||e)); } }, 40); },
+      function(e){ setStatus('\u26a0 Input sheet not read: '+(e&&e.message||e)); }); }
+  function inputSheetImport(file){
+    var go=function(f){ var rd=new FileReader(); rd.onerror=function(){ setStatus('\u26a0 '+f.name+' could not be read'); };
+      rd.onload=function(){ inputSheetImportBytes(f.name, new Uint8Array(rd.result)); }; rd.readAsArrayBuffer(f); };
+    if(file) return go(file);
+    var inp=document.createElement('input'); inp.type='file'; inp.accept='.xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv';
+    inp.onchange=function(){ if(inp.files && inp.files[0]) go(inp.files[0]); }; inp.click(); }
+  function inputSheetMenu(){
+    var old=document.getElementById('insheetMenu'); if(old){ old.remove(); return; }
+    var b=document.createElement('div'); b.id='insheetMenu';
+    b.style.cssText='position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:2147482400;background:#fff;border:1px solid var(--line-strong,#999);border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.18);padding:12px 16px;font-family:var(--body);font-size:13px;max-width:560px';
+    b.innerHTML='<div style="font-weight:600;margin-bottom:6px">Customer input sheet</div><div style="margin-bottom:8px;color:var(--muted,#4B5A63)">Load a filled sheet (.xlsx, or CSV with key,value,unit,source) to set this design in one step. A value outside the offered options is built at the nearest one and flagged in the import report.</div>'
+      +'<button class="btn" id="insLoad">Load input sheet\u2026</button> <button class="btn" id="insBlank">Blank template (.xlsx)</button> <button class="btn" id="insFill">Template filled from this design</button> <button class="btn alt" id="insNo">Close</button>';
+    document.body.appendChild(b);
+    document.getElementById('insLoad').onclick=function(){ b.remove(); inputSheetImport(); };
+    document.getElementById('insBlank').onclick=function(){ b.remove(); inputSheetDownload(false); };
+    document.getElementById('insFill').onclick=function(){ b.remove(); inputSheetDownload(true); };
+    document.getElementById('insNo').onclick=function(){ b.remove(); }; }
+  (function(){ var bt=document.getElementById('insheetbtn'); if(bt) bt.onclick=inputSheetMenu; })();
+  // the site runner's entry points
+  window.__aidcRunner.inputs=function(bytes, name){ return inputSheetParse(bytes, name||'input sheet').then(function(p){ return inputSheetApply(p); }); };
+  window.__aidcRunner.inputTemplate=function(filled){ return inputSheetBytes(!!filled); };
+  window.__aidcRunner.siteRunner=function(){ return siteRunnerFile(); };
+  window.__aidcRunner.profilesDigest=function(){ return profilesDefaultsDigest(); };
+  window.__aidcRunner.ctrls=function(){ return ctrlSnapshot(); };
+  window.__aidcRunner.fingerprint=function(){ return designFingerprint(); };
   try{ DESIGN_DEFAULT=JSON.parse(JSON.stringify(designSaveObject(''))); }catch(e){}   // v513: fresh-page state, for Load's reset
   document.addEventListener('change', autosaveSoon, true);
   document.addEventListener('input', autosaveSoon, true);

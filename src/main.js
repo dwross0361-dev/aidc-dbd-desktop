@@ -297,6 +297,15 @@ function showAirFiles() {
   } catch (err) { dialog.showMessageBox(main, { type: 'error', title: 'AIDC DBD', message: 'No DSX Air files taken from ' + path.basename(r[0]), detail: err.message }); }
 }
 
+// ---- the customer input sheet (2.0.52): the app reads the file and hands its bytes to the builder, which applies it in one step
+function loadInputSheet() {
+  const r = dialog.showOpenDialogSync(main || undefined, { title: 'Choose the filled input sheet', defaultPath: CFG.projectDir || app.getPath('documents'),
+    filters: [{ name: 'Input sheet', extensions: ['xlsx', 'csv'] }], properties: ['openFile'] });
+  if (!r || !r[0]) return;
+  try { send('input-sheet-file', { name: path.basename(r[0]), bytes: fs.readFileSync(r[0]) }); }
+  catch (err) { dialog.showMessageBox(main, { type: 'error', title: 'AIDC DBD', message: 'The input sheet could not be read', detail: err.message }); }
+}
+
 // ---- menu
 function menu() {
   const act = (a) => () => send('menu', a);
@@ -304,6 +313,11 @@ function menu() {
     { label: 'File', submenu: [
       { label: 'Choose project folder…', click: () => chooseProject(main) },
       { label: 'Open project folder', click: () => { const d = projectDir(main); if (d) shell.openPath(d); } },
+      { type: 'separator' },
+      // 2.0.52: the customer input sheet (builder HS-v1.58): one-step load, and the template generated from the builder's catalog
+      { label: 'Load input sheet…', click: () => loadInputSheet() },
+      { label: 'Input sheet template (blank)', click: act('input-template') },
+      { label: 'Input sheet filled from this design', click: act('input-template-filled') },
       { type: 'separator' }, { role: 'quit' } ] },
     { label: 'Site build', submenu: [
       { label: 'Final package and .run (with the parity check)', click: act('job-both') },
