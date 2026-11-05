@@ -404,5 +404,6 @@ function designSvc() {
 ipcMain.handle('design-q', async (e, op, args) => {
   args = args || {};
   if (op === 'open' || op === 'event' || op === 'export') { const dir = projectDir(main); if (!dir) throw new Error('no project folder chosen'); args.out = dir; }
-  return svcCall(designSvc(), op, args);
+  // 2.0.60: a file the design service writes gets the same "Saved" card as a download (it was only named in the status line)
+  return svcCall(designSvc(), op, args).then((r) => { if (r && Array.isArray(r.files)) r.files.forEach((p) => send('saved', { ok: true, name: path.basename(p), path: p })); return r; });
 });

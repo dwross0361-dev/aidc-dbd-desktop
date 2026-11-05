@@ -1,3 +1,7 @@
+# AIDC DBD Desktop 2.0.60 (builder HS-v1.65, site runner 1.11.0)
+
+- **Saved cards for design-service files.** Past 512 racks the BoM, Infra, Facility, physical model and Day-2 SoT exports are written by the design service straight into the project folder. Each file now gets the same **Saved** card as a download, with **Show in folder**; before, only the status line named them. The builder is unchanged (HS-v1.65).
+
 # AIDC DBD Desktop 2.0.59 (builder HS-v1.65, site runner 1.11.0)
 
 The DC Layout hall outlines after a refresh, and a storage block that scales with the nodes.
