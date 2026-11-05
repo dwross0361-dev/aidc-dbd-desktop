@@ -38,8 +38,31 @@ function loadCfg() { try { CFG = JSON.parse(fs.readFileSync(CFG_FILE(), 'utf8'))
 function saveCfg() { try { fs.mkdirSync(path.dirname(CFG_FILE()), { recursive: true }); fs.writeFileSync(CFG_FILE(), JSON.stringify(CFG, null, 1)); } catch (e) {} }
 function chooseProject(win) {
   const r = dialog.showOpenDialogSync(win || undefined, { title: 'Choose the project folder (packages, .run files and exports are saved here)', properties: ['openDirectory', 'createDirectory'], defaultPath: CFG.projectDir || app.getPath('documents') });
-  if (r && r[0]) { CFG.projectDir = r[0]; saveCfg(); send('project', CFG.projectDir); }
+  if (r && r[0]) { CFG.projectDir = r[0]; saveCfg(); send('project', CFG.projectDir); menu(); }
   return CFG.projectDir || null;
+}
+// 2.0.57: File > New project folder: a new or empty folder, one per customer, named from the open design's build ID and the date
+const PROJECTS_HOME = () => path.join(app.getPath('documents'), 'AIDC DBD Projects');
+async function newProject(win) {
+  let hint = '';
+  try { hint = await win.webContents.executeJavaScript("(window.__aidcRunner && window.__aidcRunner.buildId) ? window.__aidcRunner.buildId() : ''", true); } catch (e) {}
+  const name = (String(hint || '').replace(/[^A-Za-z0-9._-]/g, '') || 'project') + '-' + stamp().slice(0, 8);
+  try { fs.mkdirSync(PROJECTS_HOME(), { recursive: true }); } catch (e) {}
+  const r = dialog.showSaveDialogSync(win || undefined, { title: 'New project folder (one per customer)', buttonLabel: 'Create folder', nameFieldLabel: 'Folder name',
+    defaultPath: path.join(PROJECTS_HOME(), name), properties: ['createDirectory'] });
+  if (!r) return null;
+  let st = null; try { st = fs.statSync(r); } catch (e) {}
+  if (st && (!st.isDirectory() || fs.readdirSync(r).length)) {
+    dialog.showMessageBoxSync(win, { type: 'warning', title: 'AIDC DBD', message: 'Choose a new folder name',
+      detail: r + (st.isDirectory() ? ' already has files in it.' : ' is a file.') + ' A new project starts in a new or empty folder, so one customer\'s files never mix with another\'s.' });
+    return null;
+  }
+  if (!st) { try { fs.mkdirSync(r, { recursive: true }); } catch (err) { dialog.showMessageBoxSync(win, { type: 'error', title: 'AIDC DBD', message: 'The folder could not be created', detail: err.message }); return null; } }
+  CFG.projectDir = r; saveCfg(); send('project', CFG.projectDir); menu();
+  const a = dialog.showMessageBoxSync(win, { type: 'question', buttons: ['Load input sheet…', 'Not now'], defaultId: 0, cancelId: 1, title: 'AIDC DBD',
+    message: 'Project folder created', detail: r + '\n\nPackages, .run files and exports for this customer are saved here. Load the customer\'s input sheet now?' });
+  if (a === 0) loadInputSheet();
+  return r;
 }
 function projectDir(win) { if (CFG.projectDir && fs.existsSync(CFG.projectDir)) return CFG.projectDir; return chooseProject(win); }
 function uniquePath(dir, name) {   // every version kept: name, name (2), name (3) ...
@@ -320,8 +343,11 @@ function menu() {
   const act = (a) => () => send('menu', a);
   const tpl = [
     { label: 'File', submenu: [
-      { label: 'Choose project folder…', click: () => chooseProject(main) },
-      { label: 'Open project folder', click: () => { const d = projectDir(main); if (d) shell.openPath(d); } },
+      // 2.0.57: a new project folder per customer; the active project shown
+      { label: 'New project folder…', click: () => newProject(main) },
+      { label: 'Open existing project folder…', click: () => chooseProject(main) },
+      { label: 'Show project folder in File Explorer', click: () => { const d = projectDir(main); if (d) shell.openPath(d); } },
+      { label: 'Project: ' + (CFG.projectDir ? path.basename(CFG.projectDir) : 'none chosen'), enabled: false },
       { type: 'separator' },
       // 2.0.52: the customer input sheet (builder HS-v1.58): one-step load, and the template generated from the builder's catalog
       { label: 'Load input sheet…', click: () => loadInputSheet() },

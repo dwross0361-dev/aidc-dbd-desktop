@@ -1,3 +1,52 @@
+# AIDC DBD Desktop 2.0.57 (builder HS-v1.63, site runner 1.11.0)
+
+Storage sized by the scalable unit, so it no longer depends on the back-end switch. Switch BMC drops for the NVIDIA SN6000 switches. SN6600-LD faceplate redrawn. File > New project folder, an input sheet load meter, a Reset that starts a new design, and a fix for Deploy freezing on large designs.
+
+- **Storage by scalable unit.** On a rack-scale platform storage is now nodes per scalable unit, the platform's unit (NVL72: 8 racks). It was nodes per back-end pod, and above 64 ports the back-end pod is fit to the switch, so storage followed the switch: at 364 Vera Rubin racks, 184 WEKA nodes on SN6600-LD and 12 on SN6800-LD. Both now give 184 nodes in 92 chassis (8 in 4 at 16 racks).
+  - Host platforms (HGX, Supermicro) keep the back-end pod, as before.
+  - A back-end pod that holds several units places each unit's nodes in its own row's end-of-row cabinets, within the U and kW limits.
+  - The control and the input sheet row read "Storage nodes per scalable unit (N racks)". The key stays `fe.storage_nodes_per_pod`, so saved designs and sheets load unchanged.
+- **Other counts that followed the back-end pod** (364 racks, SN6600-LD 4 planes and SN6800-LD 8 planes, before and after):
+  | 364 racks | SN6600-LD 4 planes | SN6800-LD 8 planes |
+  |---|---|---|
+  | Storage nodes (WEKA) | 184, unchanged | 12 to 184 |
+  | Front-end pods (spine rule) | 46, unchanged | 3 to 46 |
+  | CDU and leak-detection sets | 46, unchanged | 3 to 46 |
+  | Console servers (zoned by row) | 145, unchanged | 40 to 54 |
+  | Switch BMC drops | 0 to 3,520 | 0 to 416 |
+  | OOB access switches | 187 to 234 | 35 to 52 |
+  | OOB spine switches | 28 to 30 | 26, unchanged |
+
+  Front-end spines (272) and leaves (274) are unchanged on both. GB300 256 racks SN5610: 128 storage nodes and no BMC drops (the SN5610 has no BMC port).
+- **Switch BMC drops (Owner decision, option A).** A switch is cabled where its vendor's manual documents a BMC port. The NVIDIA SN6000 manual lists one on the SN6600, SN6600-LD, SN6810-LD and SN6800-LD.
+  - Each such switch, back end or front end, gets a BMC drop to an OOB access switch and an MGMT-COMPUTE address after the existing BMCs, so no existing address moves.
+  - The SN6810-LD and SN6800-LD have two OOB ports: eth0 is cabled, the second is a spare.
+  - The drops are in `cabling-expected.csv`, the BoM copper count, the OOB access sizing and port bands, DNS and the physical model. BMCs get no DHCP or Kea entry, as before for host and storage BMCs.
+  - The SN5600 and SN5610 have no BMC port (SN5000 manual). Other vendors' switches are not cabled.
+  - **Default designs change.** The SN6600-LD and SN6600 designs gain a BMC drop per back-end switch and with it OOB access switches. The OOB fabric loopbacks and links renumber, the console server and OOB switch files change, and the SNMP location of some back-end switches moves one cabinet. Data-plane configuration is unchanged.
+- **Faceplates (DC Layout).** The SN6600-LD is drawn as the unit: four rows of 16 OSFP cages in two blocks of eight, the port LEDs between rows 2 and 3, and a management column (BMC and OOB RJ45, USB-A, console RJ45, status LEDs and reset, QSFP112 at the bottom right). Cage numbering follows the faceplate LED legend, swp1-4 down the first column; the manual does not state it, so CONFIRM. BMC added on the SN6600, SN6810-LD and SN6800-LD, console on the SN5600 and SN5610. Interface names in configurations are unchanged.
+- **OPNs and platform facts in the BoM notes:** SN6600-LD 920-9N62F-00LI-GC1, SN6810-LD 920-9N64K-00LI-GC0, SN6800-LD 920-9N67K-00LA-GC0, with CPU, memory, storage, power, coolant flow, weight and rail kits. All are in the NVIDIA SN6000 manual and the router-switch.com datasheet (reseller). NVIDIA's figures are used over the PNY listing.
+- **File > New project folder... (app).** Creates a new or empty folder for one customer, named from the open design's build ID and the date (for example `ACME-SITE-18K-001-20261105`), under `Documents\AIDC DBD Projects`. It refuses a folder that already holds files, makes the new folder the active project and offers to load the input sheet.
+  - **Choose project folder...** is renamed **Open existing project folder...**, and **Open project folder** is renamed **Show project folder in File Explorer**. A grayed line under them names the active project.
+- **Input sheet load meter.** Loading a sheet shows the stepped meter that opening a design uses: reading the file, reading the sheet (N rows), applying the settings, building N racks, drawing, checking the result, each with its time. If a step fails, the status line names the step and the open design is put back.
+- **Input sheet report: values that match are no longer flagged.**
+  - A model named without its vendor (`SN5610`, `SN-5610`, `NVIDIA SN5610`) is applied as `NV-SN5610`, with the note "read as NV-SN5610", when it names one option only. This applies to every switch, NIC and DPU row. A partial name such as `5610` is still "nearest supported".
+  - `fe.ns_dpu` and `fabric.cooling` on a platform with one DPU or one cooling: a matching value is "derived" ("matches the builder: the GB300 NVL72 platform builds with BlueField-3 B3240"). A different value is "not supported", with the value the build uses. The rows read "North-south DPU" and "Cooling", since they now apply to every platform.
+  - `fabric.nic` names the NIC on the HGX B300 (ConnectX-8). The HGX B300 4U and the Supermicro profile do not name theirs, so the row still reads "no such choice" there.
+- **Fix: Reset now starts a new design.** Reset cleared only the customer name and code and the canvas. Every control, the locked build ID, Device IDs, Public IPs, tenants, site parameters, imported values and the per-platform choices stayed, and the browser's saved copy brought them back on the next launch.
+  - Reset now asks first (**Save first**, **Reset**, **Cancel**), then puts every control and design record back to the state of a fresh launch, clears the page's input sheet and Baseline records, and drops the saved copy.
+  - Kept: the tuned-profile library, so measured tuning still applies to later designs (a design that pinned a profile goes back to the library's match), and the app's project folder.
+- **Fix: Deploy froze the window on large designs.** The ZTP bootstrap and DHCP server tabs ran outside the builder's working cache, so every device recomputed the out-of-band plan. GB300 256 racks: ZTP bootstrap 291 s to 0.3 s, DHCP server 95 s to 0.4 s. The text is unchanged. The preview stops at 2 MB with a note; Copy and Download shown give the whole file. FE Render runs in the same cache (about 10 s to 7 s at 256 racks).
+- **Proved before shipping:**
+  - Design fingerprints unchanged: GB300 256 SN5610 (b98ba38d0e5f6230), Vera Rubin 364 SN6800-LD 8 planes (10407090a45b80e9), SN6600-LD 4 planes (190bb91cd2582856). Full parity on all three.
+  - GB300 256: every configuration identical to 2.0.56; the other text changes are timestamps and the builder SHA-256.
+  - Vera Rubin 364 SN6600-LD: back-end configuration changes are the SNMP location only; no front-end change.
+  - Nine 16-rack designs: health verdict Errors (0), 0 cabling-BoM mismatches, equivalence self-test 0 outside tolerance.
+  - Old input sheets, including the HS-v1.61 template, load to the same fingerprints as in 2.0.56.
+  - Reset: after an import and edits, every control, the saved design and the fingerprint equal a fresh launch's.
+  - Deploy: the text of every tab is byte-identical to 2.0.56 on a 16-rack design.
+  - `go test ./...` passes; Python against Go difftest: 129 comparisons, 0 mismatches. Neutrality gate: 0 hits.
+
 # AIDC DBD Desktop 2.0.56 (builder HS-v1.62, site runner 1.11.0)
 
 Evaluation readiness Phase 2: the equivalence report against a customer Baseline, and one health verdict. Two fixes found by the new checks.
