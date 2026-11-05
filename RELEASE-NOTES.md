@@ -1,3 +1,7 @@
+# AIDC DBD Desktop 2.0.61 (builder HS-v1.66, site runner 1.11.0)
+
+- **Faceplates: auxiliary ports labeled by type.** The QSFP112 and SFP28 ports on the SN6600, SN6600-LD, SN6810-LD and SN6800-LD read "QSFP112 (aux)", "1 x QSFP112", "4 x QSFP112" and "2 x 25G SFP28", without a name to confirm: the data sheets give the port type, not an interface name, and the design does not cable these ports. Their tooltip reads "labeled by type; not cabled by this design". Still to confirm on the SN6600-LD: which top RJ45 is BMC and which OOB, and the cage numbering.
+
 # AIDC DBD Desktop 2.0.60 (builder HS-v1.65, site runner 1.11.0)
 
 - **Saved cards for design-service files.** Past 512 racks the BoM, Infra, Facility, physical model and Day-2 SoT exports are written by the design service straight into the project folder. Each file now gets the same **Saved** card as a download, with **Show in folder**; before, only the status line named them. The builder is unchanged (HS-v1.65).
