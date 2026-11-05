@@ -2,7 +2,7 @@
 
 DWR Networking internal. The AIDC DBD Hyperscale builder as a Windows app, with the site runner built in.
 
-- **The builder** runs unchanged in the main window (builder `HS-v1.63`).
+- **The builder** runs unchanged in the main window (builder `HS-v1.64`).
 - **Saves:** every download lands in your project folder. Nothing is overwritten: a second copy is saved as `name (2)`.
 - **Past 512 racks**, the Final package, the Review package and the .run are built by the built-in site runner.
   - The runner is a separate process with the workstation's memory, so a window's 4 GB limit does not apply to it.
@@ -47,6 +47,7 @@ DWR Networking internal. The AIDC DBD Hyperscale builder as a Windows app, with 
   - 2.0.53 r2 adds two rows: `fabric.be.keep_planes` (Keep plane count, NVL72 platforms) and `fe.ns_dpu` (north-south DPU, Vera Rubin NVL72: BlueField-3 B3240 or BlueField-4 B4240V).
 - **Storage by scalable unit (2.0.57):** on rack-scale platforms (NVL72) storage is sized per scalable unit, the platform's 8-rack unit, so it no longer changes with the back-end switch. The control and the input sheet row (`fe.storage_nodes_per_pod`, key unchanged) read "Storage nodes per scalable unit (N racks)". Saved designs and sheets load unchanged.
 - **Switch BMC drops (2.0.57):** every NVIDIA SN6000 switch (SN6600, SN6600-LD, SN6810-LD, SN6800-LD), back end or front end, gets a BMC drop to an OOB access switch, with an MGMT-COMPUTE address. On the SN6800-LD and SN6810-LD the second OOB port is a spare, not cabled.
+- **Out-of-date canvas past 512 racks (2.0.58):** BoM, Release check, Infra, Facility and Count links are built by the design service from the settings. If the canvas was built before a setting changed, the app offers **Rebuild and continue**.
 - **Output folders:** each job writes to its own folder in the project folder, `{BUILD}-{job}-{date-time}/`. The folder holds the package and/or .run, the site-runner file it was built from, and `site-runner.log`.
 - **The release gate (2.0.51):** the site runner refuses a design unless it was exported from the same builder file (same SHA-256). Site-runner files exported before 2.0.51 carry no SHA-256: export them again.
 - **The fingerprint gate:** the runner and the Layout service rebuild the design from its settings and refuse unless the design fingerprint matches the window's. "Does not match" means the canvas has hand edits the settings don't carry.

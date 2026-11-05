@@ -1,3 +1,17 @@
+# AIDC DBD Desktop 2.0.58 (builder HS-v1.64, site runner 1.11.0)
+
+Three fixes found in use: the DC Layout hall outlines, Count links in the Fabric health panel, and the BoM and Release check past 512 racks.
+
+- **Fix: hall outlines follow the layout (DC Layout Builder).** Each dashed hall outline was drawn from the builder's floor plan and did not move when the cabinets did, so it could cut through rows. The outline is now the extent of the hall's rows as laid out now, and follows every move. Cable routing between halls and the drop targets use the same outline. Cable lengths are unchanged on a layout nobody has moved (GB300 256 racks: identical).
+- **Fix: Count links did not update the health panel.** Building the physical model places the super-spines (pod and spread), which the model's cache key reads, so the key taken before the build never matched again and the OOB links stayed "not counted". The key is now taken after the build; the model itself is the same. GB300 1,625 racks: the panel fills in OOB worst leaf oversubscription, spine ports and SSP ports.
+- **Fix: BoM and Release check past 512 racks opened nothing when the canvas was out of date.** The design service builds the design from its settings. A canvas built before a setting changed (or with hand edits) differs, so the service refused and only the status line said so. A prompt now explains it and offers **Rebuild and continue**, which rebuilds the canvas from its settings and opens the view. The same applies to Infra, Facility, Count links and the physical model and Day-2 SoT exports.
+- **Proved before shipping:**
+  - Design fingerprints and configurations unchanged: the builder changes are in the layout page, the physical-model cache key and the design-service prompt.
+  - GB300 256 racks: every hall outline encloses its cabinets, with the builder's row positions and with rows laid out by the page; run lengths identical to HS-v1.63.
+  - GB300 1,625 racks (SN6600-LD, 2 planes): Count links fills the panel; through the design service the BoM opens and exports to Excel and PDF, and the Release check opens.
+  - The prompt: a refused view rebuilds the canvas and opens on the second request.
+  - `go test ./...` passes. Neutrality gate: 0 hits.
+
 # AIDC DBD Desktop 2.0.57 (builder HS-v1.63, site runner 1.11.0)
 
 Storage sized by the scalable unit, so it no longer depends on the back-end switch. Switch BMC drops for the NVIDIA SN6000 switches. SN6600-LD faceplate redrawn. File > New project folder, an input sheet load meter, a Reset that starts a new design, and a fix for Deploy freezing on large designs.

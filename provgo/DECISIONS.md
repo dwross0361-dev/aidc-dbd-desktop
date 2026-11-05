@@ -566,3 +566,11 @@ Implements D4, D5 and D8 (design Section 4, finding F5), with D3 for the classes
 ## Verification (HS v1.63)
 
 See RELEASE-NOTES.md 2.0.57, Proved before shipping.
+
+# Hall outlines, the physical-model key, the stale-canvas prompt (HS v1.64, desktop 2.0.58)
+
+| # | Decision | Why |
+|---|---|---|
+| HL-1 | **Hall boxes from the layout.** The layout page's `hallBoxes()` sets `HALLR` from each hall's rows as laid out (cabinet x and width, row y and depth) at the end of every `recompute`; the outline, the per-hall row band, cable routing between halls and `dropCabinet` read it. The builder's `pm.halls` figures are the start only. | The outline stayed where the builder put it while rows moved. |
+| PK-1 | **The physical model is keyed after it runs.** `physModel` sets `pod` and `spread` on the super-spines on its first run, and `_physKey()` hashes the devices, so the key taken before the run never matched; `_phWarm()` reported not counted and the design service returned `fab:false`. The key is taken after the run. A second derivation is identical apart from `meta.generated`, so no second run. | Count links never filled the OOB rows. |
+| DS-1 | **Stale canvas past 512 racks: ask, then rebuild.** When the design service refuses because its rebuild differs from the window, the window offers Rebuild and continue (`buildFromRacks`, then the same request again). Cancel leaves the canvas and says what to do. | Rebuilding discards hand edits, so it is the Owner's click, never automatic. |
