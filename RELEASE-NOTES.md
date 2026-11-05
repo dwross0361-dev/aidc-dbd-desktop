@@ -1,3 +1,16 @@
+# AIDC DBD Desktop 2.0.59 (builder HS-v1.65, site runner 1.11.0)
+
+The DC Layout hall outlines after a refresh, and a storage block that scales with the nodes.
+
+- **Fix: hall outlines after the floor columns change (DC Layout Builder).** A refresh that keeps your edits rebuilt the rows without the builder's placement and hall, so the rows were laid out by the page while the outlines stayed where the builder put them. The rows now keep the new model's place and hall, so the rows and the outlines follow the new floor columns. This also applies to a saved large-site layout opened again.
+- **Storage block scales with the nodes.** Up to 256 nodes (64 on a standard site) the block is unchanged. Past 256 on a hyperscale or mega site, storage moves to the region's storage range in the unused 10.176.0.0/12, 10.(176+2r).0.0/15 for region r, sized to the nodes: /17 up to 512, /16 up to 1,024, /15 up to 2,048. A /26 per node, as before.
+  - Fix: past the /18, the old block ran the third octet past 255 (addresses such as 10.240.395.192). GB300 1,625 racks: 816 WEKA nodes now in 10.176.0.0/16, from 10.176.0.0/26 to 10.176.203.192/26, no duplicates.
+  - The ACLs, prefix lists, host routes, NetBox prefixes and the IP plan summary all take the block from one place, so they follow it.
+- **Proved before shipping:**
+  - Unchanged where storage fits the template: 16-rack fingerprints and the plan digest (759 of 759 configurations identical in the package and the .run).
+  - DC Layout: after a 3-to-4-column refresh with edits kept, every row keeps its place and every hall outline encloses its cabinets (before: no row kept its place).
+  - `go test ./...` passes. Neutrality gate: 0 hits.
+
 # AIDC DBD Desktop 2.0.58 (builder HS-v1.64, site runner 1.11.0)
 
 Three fixes found in use: the DC Layout hall outlines, Count links in the Fabric health panel, and the BoM and Release check past 512 racks.
