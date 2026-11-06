@@ -86,33 +86,29 @@ mark{ background:var(--mark); color:inherit; }
 
 <section id="install">
 <h2>Install and update</h2>
-<p>AIDC DBD is a portable Windows app. It runs from its folder; nothing is installed into Windows. It needs Windows 10 or 11, 64-bit.</p>
-<h3>First install</h3>
+<p>AIDC DBD installs with <code>AIDC-DBD-Setup-&lt;version&gt;.exe</code>. It needs Windows 10 or 11, 64-bit.</p>
+<h3>Install</h3>
 <ol>
-  <li>Unzip <code>AIDC-DBD-&lt;version&gt;-win-x64-portable.zip</code> into a folder of its own, for example <code>C:\AIDCDBD\</code>.</li>
-  <li>Open the folder and run <code>AIDC DBD.exe</code>. The app is unsigned, so Windows SmartScreen may show "Windows protected your PC": click <span class="ui">More info</span>, then <span class="ui">Run anyway</span>.</li>
-  <li>For a desktop shortcut: right-click <code>AIDC DBD.exe</code> &gt; <span class="ui">Send to &gt; Desktop (create shortcut)</span> (on Windows 11, <span class="ui">Show more options</span> first).</li>
+  <li>Check the download against the release's SHA-256 (optional, recommended):
+<pre><code>Get-FileHash "$env:USERPROFILE\Downloads\AIDC-DBD-Setup-&lt;version&gt;.exe" -Algorithm SHA256</code></pre></li>
+  <li>Run <code>AIDC-DBD-Setup-&lt;version&gt;.exe</code>. The installer is unsigned, so Windows SmartScreen may show "Windows protected your PC": click <span class="ui">More info</span>, then <span class="ui">Run anyway</span>.</li>
+  <li>Choose <span class="ui">Only for me</span>: it needs no administrator rights. (<span class="ui">Anyone who uses this computer</span> installs for every user and asks for administrator rights.)</li>
+  <li>Keep the suggested folder (for <span class="ui">Only for me</span>, <code>%LOCALAPPDATA%\Programs\AIDC DBD</code>) or choose another, then <span class="ui">Install</span>.</li>
+  <li>The installer adds an <span class="ui">AIDC DBD</span> shortcut on the desktop and in the Start menu. Start the app from either.</li>
   <li>Check <span class="ui">Help &gt; About AIDC DBD</span>: it shows the app version, the builder version and the builder's SHA-256.</li>
 </ol>
-<div class="note">Do not copy <code>AIDC DBD.exe</code> on its own: it needs the <code>resources</code> folder, the DLLs and the other files beside it. Use a shortcut.</div>
-<h3>Updating</h3>
-<p>Save your design and close the app, including any DC Layout Builder windows, before you update. A running window keeps the version it was started with.</p>
-<p>To keep one folder (so the shortcut never changes), replace the folder's contents with the new release. Clear the folder first, so no file from an older release stays behind. This PowerShell script does it; save it as <code>C:\AIDCDBD\update.ps1</code>:</p>
-<pre><code>param([Parameter(Mandatory)][string]$Zip)
-$dst = 'C:\AIDCDBD\AIDC-DBD'
-if (Get-Process 'AIDC DBD' -ErrorAction SilentlyContinue) { Write-Host 'Close AIDC DBD first (save your design).'; exit 1 }
-Get-FileHash $Zip -Algorithm SHA256 | Format-List
-$tmp = Join-Path $env:TEMP 'aidc-dbd-update'
-Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue
-Expand-Archive -Path $Zip -DestinationPath $tmp
-$new = Get-ChildItem $tmp -Directory | Select-Object -First 1
-if (Test-Path $dst) { Remove-Item $dst -Recurse -Force }
-Move-Item $new.FullName $dst
-Remove-Item $tmp -Recurse -Force
-Write-Host "Installed $($new.Name) in $dst"</code></pre>
-<p>Run it with the downloaded zip:</p>
-<pre><code>powershell -ExecutionPolicy Bypass -File C:\AIDCDBD\update.ps1 -Zip "$env:USERPROFILE\Downloads\AIDC-DBD-&lt;version&gt;-win-x64-portable.zip"</code></pre>
-<div class="tip">Keep the release zips: they are your copy of every version. To go back, run the script with the older zip.</div>
+<h3>Update</h3>
+<ol>
+  <li>Save your design and close AIDC DBD, including any DC Layout Builder windows. A running window keeps the version it was started with.</li>
+  <li>Run the new <code>AIDC-DBD-Setup-&lt;version&gt;.exe</code>. It replaces the installed version in the same folder; the shortcuts keep working.</li>
+  <li>Check <span class="ui">Help &gt; About AIDC DBD</span>.</li>
+</ol>
+<div class="tip">Keep each release's Setup file: it is your copy of that version. To go back, close the app and run the older Setup file.</div>
+<h3>Uninstall</h3>
+<p>Windows <span class="ui">Settings &gt; Apps &gt; Installed apps &gt; AIDC DBD &gt; Uninstall</span>. Your project folders are not touched.</p>
+<h3>Portable zip (where installing is not allowed)</h3>
+<p>Each release also has <code>AIDC-DBD-&lt;version&gt;-win-x64-portable.zip</code>. Unzip it into a folder of its own and run <code>AIDC DBD.exe</code> from that folder; for a shortcut, right-click the .exe &gt; <span class="ui">Send to &gt; Desktop (create shortcut)</span>.</p>
+<div class="note">Do not copy <code>AIDC DBD.exe</code> out of its folder: it needs the <code>resources</code> folder, the DLLs and the other files beside it.</div>
 </section>
 
 <section id="project">
@@ -308,6 +304,7 @@ platform.be_switch,NV-SN5610,,dry run</code></pre></li>
 <tr><td>CONFIRM on a faceplate</td><td>The source does not state that detail.</td><td>Confirm against the vendor manual or a unit.</td></tr>
 <tr><td>Storage block warning on a standard site</td><td>A standard site's storage block holds 64 nodes.</td><td>Reduce the storage nodes, or design the site at hyperscale. Hyperscale and mega sites scale the block with the nodes.</td></tr>
 <tr><td>A copied <code>AIDC DBD.exe</code> does not start</td><td>The .exe needs its folder.</td><td>Use a shortcut to the .exe in its folder.</td></tr>
+<tr><td>"Windows protected your PC" when running Setup</td><td>The installer is not yet signed.</td><td><span class="ui">More info</span>, then <span class="ui">Run anyway</span>.</td></tr>
 <tr><td>A window closes or reports memory</td><td>A window has about 4 GB.</td><td>Past 512 racks use the Site build menu, which runs in the site runner.</td></tr>
 </table>
 </section>

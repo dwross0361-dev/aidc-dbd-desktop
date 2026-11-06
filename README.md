@@ -13,12 +13,13 @@ DWR Networking internal. The AIDC DBD Hyperscale builder as a Windows app, with 
 
 ## Install
 
-1. Download `AIDC-DBD-Setup-<version>.exe`:
-   - from the latest **Build Windows installer** run (Actions tab, artifact **AIDC-DBD-Windows**, a zip holding the .exe), or
-   - from **Releases**, for a tagged version.
+1. Get `AIDC-DBD-Setup-<version>.exe`: from the release, from the latest **Build Windows installer** run (Actions tab, artifact **AIDC-DBD-Windows**), or from **Releases** for a tagged version. Check it with `Get-FileHash <file> -Algorithm SHA256`.
 2. Run it. It is **unsigned**, so Windows SmartScreen shows "Windows protected your PC". Click **More info**, then **Run anyway**.
-3. Choose the install folder. The installer adds a desktop shortcut, **AIDC DBD**.
-4. Start each customer with **File > New project folder…** (2.0.57): a new or empty folder, named from the build ID and the date, under `Documents\AIDC DBD Projects`. It becomes the active project, and the app offers to load the input sheet. **File > Open existing project folder…** switches to a folder you already have; **Show project folder in File Explorer** opens it. The grayed **Project:** line in the File menu names the active project. If none is set, the app asks on the first save. **Reset** (2.0.57) returns every setting to its default and clears the customer's details; tuned profiles stay in the library.
+3. Choose **Only for me** (no administrator rights; installs in `%LOCALAPPDATA%\Programs\AIDC DBD` by default) or **Anyone who uses this computer** (asks for administrator rights). It adds **AIDC DBD** shortcuts on the desktop and in the Start menu.
+4. **Update:** save, close the app (and any DC Layout Builder windows), run the new Setup. It replaces the installed version in place; the shortcuts keep working. Keep each Setup file to go back to that version.
+5. **Uninstall:** Settings > Apps > Installed apps > AIDC DBD. Project folders are not touched.
+6. **Portable zip** (`AIDC-DBD-<version>-win-x64-portable.zip`), for a machine where installing is not allowed: unzip into its own folder and run `AIDC DBD.exe` there.
+7. Start each customer with **File > New project folder…** (2.0.57): a new or empty folder, named from the build ID and the date, under `Documents\AIDC DBD Projects`. It becomes the active project, and the app offers to load the input sheet. **File > Open existing project folder…** switches to a folder you already have; **Show project folder in File Explorer** opens it. The grayed **Project:** line in the File menu names the active project. If none is set, the app asks on the first save. **Reset** (2.0.57) returns every setting to its default and clears the customer's details; tuned profiles stay in the library.
 
 ## Use
 
@@ -91,6 +92,8 @@ npx electron-builder --win nsis --x64 --publish never
 **Neutrality gate** (`tools/neutrality-check.js`, also the first step of the GitHub build): it fails on an internal standards, deviation, tenancy or Edge PoP clause id, a person's title, or an organization name on the banned list, in the builder (and the pages and binaries it embeds), the runner, the app and `provgo`. Before a release, run it on the outputs of a test build too: `node tools/neutrality-check.js <job folder>` reads into the package zip, the .run payload, workbooks and PDFs.
 
 **Release identity:** a builder release is its file, identified by SHA-256. The app hands the SHA-256 to the window, the site-runner file carries it, and the site runner refuses a design exported from a different builder file.
+
+On Linux (2.0.67): the Setup can be built from an unpacked Windows tree with Wine (32- and 64-bit) installed: `npx electron-builder --win nsis --x64 --prepackaged <AIDC-DBD-<version>-win-x64> --publish never -c.win.signAndEditExecutable=false`.
 
 Run from source: `npm start`. Without a bundled Node it uses the `node` on PATH, or `AIDC_NODE`.
 

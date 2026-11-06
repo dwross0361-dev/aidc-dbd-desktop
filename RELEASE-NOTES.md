@@ -1,3 +1,9 @@
+# AIDC DBD Desktop 2.0.67 (builder HS-v1.71, site runner 1.11.0)
+
+- **Windows installer.** Each release now comes as `AIDC-DBD-Setup-<version>.exe`: **Only for me** (no administrator rights, in `%LOCALAPPDATA%\Programs\AIDC DBD` by default) or **Anyone who uses this computer** (administrator rights), with desktop and Start menu shortcuts and an entry in Settings > Apps for uninstalling. Running a newer Setup replaces the installed version in place. Still unsigned: SmartScreen asks once (More info, Run anyway). The portable zip stays, for machines where installing is not allowed.
+- **User guide: Install and update rewritten** for the installer (install, update, uninstall, the portable zip as the fallback), with a troubleshooting row for the SmartScreen prompt. README Install rewritten to match.
+- The builder is unchanged (HS-v1.71).
+
 # AIDC DBD Desktop 2.0.66 (builder HS-v1.71, site runner 1.11.0)
 
 - **User guide, pass 2: the reference, generated from the builder.** Three new sections, read from the builder file the guide ships with, so they cannot drift from it:
