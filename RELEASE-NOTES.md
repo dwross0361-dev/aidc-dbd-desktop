@@ -1,3 +1,7 @@
+# AIDC DBD Desktop 2.0.79 (builder HS-v1.80, site runner 1.11.0)
+
+- **User guide: System requirements** is now the first Getting started section, above Install and update: operating system, memory by site size, CPU, disk, display and graphics. Large sites links to it.
+
 # AIDC DBD Desktop 2.0.78 (builder HS-v1.80, site runner 1.11.0)
 
 - **BE switch (leaf · spine · super-spine)** replaces the "BE platform" label: one switch model covers every back-end tier, and the tooltip says why (same radix and lane speed, 1:1 non-blocking, uniform planes, breakouts, optics and spares).

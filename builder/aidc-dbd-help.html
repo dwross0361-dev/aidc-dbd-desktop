@@ -57,6 +57,7 @@ mark{ background:var(--mark); color:inherit; }
 <div class="wrap">
 <nav id="toc">
   <h4>Getting started</h4>
+  <a href="#requirements">System requirements</a>
   <a href="#install">Install and update</a>
   <a href="#project">Start a customer project</a>
   <a href="#inputsheet">Load the input sheet</a>
@@ -90,9 +91,28 @@ mark{ background:var(--mark); color:inherit; }
 <main id="body">
 <div class="empty" id="empty">No section matches that search.</div>
 
+<section id="requirements">
+<h2>System requirements</h2>
+<table>
+<tr><th>Item</th><th>Requirement</th></tr>
+<tr><td>Operating system</td><td>Windows 10 or 11, 64-bit</td></tr>
+<tr><td>Memory</td><td>By site size (below). The site runner and the Layout service use up to 75% of RAM, leaving at least 8 GB.</td></tr>
+<tr><td>CPU</td><td>A build runs on one core per process, so single-core speed decides the time: a current desktop Core i7/i9 or Ryzen 7/9, 6 to 8 cores. Low-power (T, U) and low-clock server parts are slow.</td></tr>
+<tr><td>Disk</td><td>NVMe SSD with 50 GB or more free for packages and .run files</td></tr>
+<tr><td>Display</td><td>1920 &times; 1080 minimum; 2560 wide or more for the floor plan, the Cable Matrix and the toolbar on one line per group</td></tr>
+<tr><td>Graphics</td><td>Any; the graphics card does not matter</td></tr>
+</table>
+<table>
+<tr><th>Site</th><th>Workstation memory</th></tr>
+<tr><td>Up to 512 racks</td><td>16 GB</td></tr>
+<tr><td>512 to 2,048 racks</td><td>32 GB</td></tr>
+<tr><td>2,048 to 4,096 racks</td><td>64 GB recommended, 32 GB minimum (close other programs; no rebuild while a runner job runs)</td></tr>
+</table>
+</section>
+
 <section id="install">
 <h2>Install and update</h2>
-<p>AIDC DBD installs with <code>AIDC-DBD-Setup-&lt;version&gt;.exe</code>. It needs Windows 10 or 11, 64-bit.</p>
+<p>AIDC DBD installs with <code>AIDC-DBD-Setup-&lt;version&gt;.exe</code>. It needs Windows 10 or 11, 64-bit (see <a href="#requirements">System requirements</a>).</p>
 <h3>Install</h3>
 <ol>
   <li>Check the download against the release's SHA-256 (optional, recommended):
@@ -362,13 +382,7 @@ platform.be_switch,NV-SN5610,,dry run</code></pre></li>
   <li>Files the services write go <b>straight into the project folder</b>, each with a <span class="ui">Saved</span> card and <span class="ui">Show in folder</span>; they are not browser downloads.</li>
   <li>If the canvas is out of date with its settings, the app asks <span class="ui">Rebuild and continue</span>. Rebuilding drops hand edits on the canvas.</li>
 </ul>
-<table>
-<tr><th>Site</th><th>Workstation memory</th></tr>
-<tr><td>Up to 512 racks</td><td>16 GB</td></tr>
-<tr><td>512 to 2,048 racks</td><td>32 GB</td></tr>
-<tr><td>2,048 to 4,096 racks</td><td>64 GB recommended, 32 GB minimum</td></tr>
-</table>
-<p>A build runs on one core per process, so single-core speed decides the time. Use an NVMe SSD with 50 GB or more free.</p>
+<p>Workstation memory, CPU and disk for large sites: see <a href="#requirements">System requirements</a>.</p>
 </section>
 
 <section id="console">
