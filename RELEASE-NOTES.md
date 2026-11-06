@@ -1,3 +1,7 @@
+# AIDC DBD Desktop 2.0.64 (builder HS-v1.69, site runner 1.11.0)
+
+- **SN6600-LD faceplate: the "BMC · OOB" label is centered over its two ports.**
+
 # AIDC DBD Desktop 2.0.63 (builder HS-v1.68, site runner 1.11.0)
 
 - **SN6600-LD faceplate: BMC and OOB positions confirmed.** The top RJ45 pair, BMC on the left and OOB (eth0) on the right, is confirmed from the NVIDIA and router-switch.com data sheets, so the label reads "BMC · OOB" without CONFIRM. Still to confirm on the SN6600-LD: the cage numbering. The SN6600, SN6810-LD and SN6800-LD keep their BMC and OOB CONFIRM, since their positions come from other panels.
