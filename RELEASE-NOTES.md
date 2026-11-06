@@ -1,3 +1,7 @@
+# AIDC DBD Desktop 2.0.87 (builder HS-v1.88, site runner 1.11.0)
+
+- **SRX4700 interfaces are FPC 1** (Juniper port checker): et-1/<pic>/<port>, was et-0. The MNHA configs (border-leaf legs et-1/0/1-4 in ae1/ae2, the ICL et-1/1/1-2 in ae0, the SRG monitors), the physical model, the Cable Matrix and the faceplate (labels 1/0/0 ... 1/1/13) all use the new names. The legs stay on the QSFP28 ports at 100G; port 0 (400G) is unused, so the 400G pairing rule (port N+1 unused) is never hit.
+
 # AIDC DBD Desktop 2.0.86 (builder HS-v1.87, site runner 1.11.0)
 
 - **SRX4700 faceplate matches the front panel** (Juniper SRX4700 chassis and interfaces pages): per PIC, left to right, port 0 QSFP56-DD (400G) over port 1 (100G), ports 2-5 QSFP28, then 6-9 and 10-13 SFP56 (50G), each block numbered down its columns (0/2 over 0/3, 0/4 over 0/5); PIC 0 then PIC 1; the two 1G SFP HA (CTL) ports; MGMT (fxp0) over CON. Was one row per port type. MGMT and CON now light when cabled.
