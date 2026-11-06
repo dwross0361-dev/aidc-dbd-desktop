@@ -1,3 +1,7 @@
+# AIDC DBD Desktop 2.0.84 (builder HS-v1.85, site runner 1.11.0)
+
+- **7250 IXR-6e spine at line rate:** 72 x 800G (18 per IMM slot, 14.4 Tb/s FD each; 2 x 400G breakout gives 144 x 400G), was 144 x 800G (twice what the slots carry). Port names ethernet-<slot>/1-18; the faceplate shows four IMM slots of 18 x 800G QSFP-DD. IMM type to confirm. Designs with an IXR-6e spine get more spines for the same fabric.
+
 # AIDC DBD Desktop 2.0.83 (builder HS-v1.84, site runner 1.11.0)
 
 - **Nokia profiles from the data sheets.** 7750 SR-1se: 3RU with an integrated power shelf (was 4RU, to confirm), 9.6 to 19.2 Tb/s FD, 24 x 800G / 48 x 400G / 192 x 100G; power draw still to confirm (the sheet gives feed ratings only). 7750 SR-1x-48D: 6.0 Tb/s FD at line rate (12 x 400G), 19.2 with intelligent aggregation (was 38.4). 7750 SR-1-48D: 2.8 Tb/s FD at line rate (6 x 400G), 19.2 with intelligent aggregation (was 19.2).
