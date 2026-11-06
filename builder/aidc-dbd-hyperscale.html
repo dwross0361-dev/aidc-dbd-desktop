@@ -687,10 +687,10 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   <label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600">Tenants:
     <input id="fe-tenants" type="number" min="1" max="989" value="1" style="width:56px;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--mono);margin:0 4px" autocomplete="off">
   </label>
-  <label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600" title="North-south rate through the Edge PoP, Gbps (blank: not sized). Sizes circuits, edge routers and firewall pairs">N-S Gbps:
+  <label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600" title="North-south rate: the busy-hour traffic between the site and the internet through the Edge PoP, in Gbps, in the busier direction. Each of the two diverse internet circuits must carry it alone (circuits of 10, 100 or 400G); the edge routers are checked against it; and it sets the firewall pairs, one per 1,400G on Junos SRX or per 145G on Cisco FTD (at least one per tenant ceiling). Blank: not sized (two circuits, firewall pairs by tenant count). Example: 400.">N-S Gbps:
     <input id="fe-nsgbps" type="number" min="0" max="100000" value="" placeholder="-" style="width:64px;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--mono);margin:0 4px" autocomplete="off">
   </label>
-  <label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600" title="Ingress rate through the F5 BNK nodes, Gbps (blank: two nodes). Sizes the ingress nodes N+1">Ingress Gbps:
+  <label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600" title="Ingress rate: the busy-hour traffic arriving from outside to the tenants' published services (their VIPs) through the F5 BNK ingress nodes, in Gbps. It sizes the ingress nodes N+1 at 200G per node: rate / 200, rounded up, plus one spare; at least 2, at most 4. Blank: two nodes. Example: 300 gives 3 nodes.">Ingress Gbps:
     <input id="fe-inggbps" type="number" min="0" max="100000" value="" placeholder="-" style="width:64px;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--mono);margin:0 4px" autocomplete="off">
   </label>
   <div class="lbl" id="fe-sku-wrap" style="display:none;font-size:12px;color:var(--ink-soft);font-weight:600"><span class="nw"><label for="fe-leaf-model">FE leaf:</label>
@@ -949,7 +949,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.71';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.72';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   // HS v1.59: Vera Rubin NVL72 at 2 planes x 800G, NVIDIA's public reference layout (Owner decision D11); see the VR profile.
   // HS v1.58: the customer input sheet and importer (inputSheetImport, the SESSION_IN overlay); see the input sheet block.
   // HS v1.57 (release identity): the release is identified by the SHA-256 of this file, not by the string above (HS-v1.56 r1, r2
@@ -30181,7 +30181,9 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
   // a release whose guide differs from its builder.
   function helpRefData(){
     var T=function(x){ return String(x==null?'':x).replace(/\s+/g,' ').trim(); };
-    var sheet=insheetSpec().map(function(r){ var al=''; try{ al=insheetAllowedText(r); }catch(e){} return {tab:r.tab, key:r.key, label:r.label, unit:r.unit||'', allowed:T(al)}; });
+    var tipOf=function(id){ var el=id && document.getElementById(id); if(!el) return ''; var t=el.getAttribute('title')||(el.closest('label') && el.closest('label').getAttribute('title'))||'';
+      if(!t && el.tagName==='SELECT' && (el.getAttribute('aria-label')||'').length>40) t=el.getAttribute('aria-label'); return /^this site /.test(t)||id==='profile'?'':T(t); };   // HS v1.72: what the row is, from its control
+    var sheet=insheetSpec().map(function(r){ var al=''; try{ al=insheetAllowedText(r); }catch(e){} return {tab:r.tab, key:r.key, label:r.label, unit:r.unit||'', allowed:T(al), about:tipOf(r.m && r.m.c)}; });
     var controls=[];
     [].forEach.call(document.querySelectorAll('.bar'), function(bar, bi){
       [].forEach.call(bar.querySelectorAll('input,select,button'), function(el){
@@ -30195,7 +30197,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
             name=T(t); }
           if(!name){ var wl=el.closest('label'); if(wl){ var c=wl.cloneNode(true); [].forEach.call(c.querySelectorAll('select,option,input'), function(o){ o.remove(); }); name=T(c.textContent); } }
           if(!name) name=T(el.placeholder||el.getAttribute('title')||el.id); }
-        var title=T(el.getAttribute('title')||'');
+        var title=T(el.getAttribute('title')||(el.closest('label') && el.closest('label').getAttribute('title'))||'');   // HS v1.72: or its label's
         if(el.tagName==='SELECT' && name.length>40){ if(!title) title=name; var o0=el.options[0]; var pre=o0?T(o0.textContent).split(':')[0]:''; name=(o0 && /:/.test(o0.textContent) && pre.length<=24)?pre:name.split(/[.:(]/)[0]; if(name.length>40) name=name.split(' ').slice(0,3).join(' '); }
         name=name.replace(/[\u25cf\u25cb\u25be]\s*\d*/g,'').replace(/[:@\s]+$/,'').replace(/^[^A-Za-z0-9]+/,'').trim();
         if(!name) return;

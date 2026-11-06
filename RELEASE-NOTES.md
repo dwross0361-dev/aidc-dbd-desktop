@@ -1,3 +1,10 @@
+# AIDC DBD Desktop 2.0.68 (builder HS-v1.72, site runner 1.11.0)
+
+- **N-S Gbps and Ingress Gbps explained.** Their tooltips now say what to enter and what each sizes:
+  - **N-S Gbps:** the busy-hour traffic between the site and the internet through the Edge PoP, in the busier direction. Each of the two diverse circuits must carry it alone (10, 100 or 400G); the edge routers are checked against it; it sets the firewall pairs (one per 1,400G on Junos SRX, per 145G on Cisco FTD). Blank: not sized.
+  - **Ingress Gbps:** the busy-hour traffic arriving at the tenants' published services through the F5 BNK ingress nodes. It sizes the nodes N+1 at 200G each (at least 2, at most 4). Blank: two nodes.
+- **User guide reference: more context.** A control whose tooltip sits on its label now shows it, so every toolbar control has a description. The input sheet table gains a "What it is" column, taken from the row's control (41 of 71 rows).
+
 # AIDC DBD Desktop 2.0.67 (builder HS-v1.71, site runner 1.11.0)
 
 - **Windows installer.** Each release now comes as `AIDC-DBD-Setup-<version>.exe`: **Only for me** (no administrator rights, in `%LOCALAPPDATA%\Programs\AIDC DBD` by default) or **Anyone who uses this computer** (administrator rights), with desktop and Start menu shortcuts and an entry in Settings > Apps for uninstalling. Running a newer Setup replaces the installed version in place. Still unsigned: SmartScreen asks once (More info, Run anyway). The portable zip stays, for machines where installing is not allowed.
