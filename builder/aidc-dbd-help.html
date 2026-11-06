@@ -63,6 +63,7 @@ mark{ background:var(--mark); color:inherit; }
   <a href="#build">Build the design</a>
   <a href="#health">Read the health verdict</a>
   <h4>Workflows</h4>
+  <a href="#howto">How to deploy, start to finish</a>
   <a href="#delivery">Release check and delivery build</a>
   <a href="#equivalence">Equivalence and the Baseline</a>
   <a href="#layout">DC Layout Builder</a>
@@ -166,6 +167,109 @@ mark{ background:var(--mark); color:inherit; }
 <tr><td>Advisories</td><td>The design is consistent, but a choice or a vendor figure needs confirming (oversubscription, an unconfirmed optic, margin).</td><td>Review, and record the decision.</td></tr>
 </table>
 <p>On large designs the out-of-band rows wait until the links are counted: click <span class="ui">count links</span> in the panel. Past 512 racks the design service counts them.</p>
+</section>
+
+<section id="howto">
+<h2>How to deploy, start to finish</h2>
+<p>The whole path from the customer's inputs to handover, in seven stages. A step marked <b>Gate</b> must pass before you go on. Replace every <code>&lt;PLACEHOLDER&gt;</code> with the site's value.</p>
+
+<h3>1. Design freeze (workstation)</h3>
+<ol>
+  <li>Install the release frozen for this deployment (see <a href="#install">Install and update</a>) and check <span class="ui">Help &gt; About</span>.</li>
+  <li><span class="ui">File &gt; New project folder&hellip;</span> for this customer.</li>
+  <li><span class="ui">File &gt; Load input sheet&hellip;</span> with the customer's filled sheet. Walk the import report with the customer and agree every "nearest supported" row as a design choice.</li>
+  <li>If the customer has a Baseline: <span class="ui">File &gt; Load Baseline&hellip;</span>, walk the equivalence report, agree or override each class with a reason, and <span class="ui">Download report</span>.</li>
+  <li>Open Fabric health. Fix every Error; close, or get written acceptance for, every Open input.</li>
+  <li>Optional, when the customer has sent serials or MACs: <span class="ui">Device IDs</span>, load the list (<code>hostname,serial</code>, <code>hostname,MAC</code> or <code>serial,model</code>). NVL72 racks: import the rack inventory (<code>type,ru,bmc_mac,serial</code>). Without a list, devices are bound as they call in (stage 5).</li>
+  <li>Set the customer code and run <span class="ui">Release check</span>. <b>Gate:</b> Errors (0).</li>
+  <li><span class="ui">Site build &gt; Final package and .run (with the parity check)</span>. On another machine: <span class="ui">Site build &gt; Export site-runner file</span>, then in the site runner folder:
+<pre><code>node aidc-runner.js --html &lt;builder&gt;.html --design &lt;site-runner&gt;.json --out ./&lt;SITE&gt;</code></pre>
+  To check again without rebuilding, add <code>--parity-only</code>. <b>Gate:</b> <code>site-runner.log</code> shows parity passed and no failed exports.</li>
+  <li>Record the design fingerprint, plan digest and builder SHA-256 (all in <code>site-runner.log</code>) in the design register.</li>
+</ol>
+
+<h3>2. Procure</h3>
+<ol>
+  <li>Send the bill of materials (<code>03-bill-of-materials</code>) to the customer.</li>
+  <li>Confirm every part number marked CONFIRM with the vendor before purchase orders go out.</li>
+  <li>Order back-end spines and co-packaged-optics switches first, with delivery dates per wave.</li>
+  <li>As units ship, collect serials and MACs for the Device IDs panel.</li>
+</ol>
+
+<h3>3. Site readiness</h3>
+<ol>
+  <li>Walk the floor plan and elevations against the room: cabinet positions, rows, clearances.</li>
+  <li>Confirm each cabinet feed. For liquid-cooled (-LD) switches, confirm the 48 V DC busbar and the coolant flow (13.5 L/min per SN6800-LD, 5.7 L/min per SN6600-LD).</li>
+  <li>Confirm fiber pathways, carrier circuits and cellular coverage for the console servers.</li>
+  <li>Rehearse in DSX Air while hardware ships: <span class="ui">Site build &gt; Show DSX Air test files&hellip;</span>, or by hand:
+<pre><code>bash &lt;SITE&gt;-deploy-&lt;VER&gt;.run --extract-only --dir ~/t
+cd ~/t/&lt;SITE&gt;-deploy
+bash air/run-tests.sh
+sudo bash air/ztp-host.sh [--engine go|python] [interface]</code></pre></li>
+  <li><b>Gate:</b> the customer signs off site readiness for the first wave.</li>
+</ol>
+
+<h3>4. Install and cable (each wave)</h3>
+<ol>
+  <li>Give the crews the elevations, the cable matrix and the labels for the wave.</li>
+  <li>Order: OOB drops and console ports first, then power, then back-end, front-end and storage links.</li>
+  <li>No device is powered before its OOB drop is live.</li>
+</ol>
+
+<h3>5. Provision (provisioning host)</h3>
+<ol>
+  <li>Copy the .run to the provisioning host on the OOB network and run it. It checks its SHA-256, unpacks to <code>&lt;SITE&gt;-deploy/</code> and starts <code>setup.sh</code>:
+<pre><code>sudo bash &lt;SITE&gt;-deploy-&lt;VER&gt;.run</code></pre></li>
+  <li>The first run copies <code>secrets.env.template</code> to <code>/etc/fabric/secrets.env</code> (mode 600) and stops. Fill every value: password hashes with <code>openssl passwd -6</code>; <code>TARGET_BUSBW</code> from the platform's all-reduce target.</li>
+  <li>Run it again with the admin password and the first plane (bonded uplinks: add <code>--bond NIC1,NIC2</code>). It exits with code 4 while any placeholder is left:
+<pre><code>sudo ./setup.sh --admin-pass '&lt;P&gt;' --plane oob</code></pre></li>
+  <li>Check the services:
+<pre><code>sudo ./setup.sh --status
+sudo journalctl -u estate-build -f
+sudo journalctl -u kea-dhcp4-server -f     # RHEL: kea-dhcp4</code></pre></li>
+  <li>Open the Deployment Console at <code>https://&lt;prov IP&gt;:8443</code>. Change the admin password at first sign-in and enter the push credential. Add operator logins under <span class="ui">Logins</span>, or:
+<pre><code>python3 /opt/estate-build/estate_build.py user add &lt;NAME&gt; --role operator --planes oob,edge</code></pre></li>
+  <li>Console servers: enroll each unit in Lighthouse, apply one Script template per unit from <code>console/&lt;NAME&gt;.sh</code>, and set SNMPv3 and syslog.</li>
+  <li>Prove the OOB: a serial session to every port in <code>console-ports.csv</code>, one TACACS+ and one break-glass login, and one unit reached over cellular. <b>Gate:</b> the OOB gate passes in the Console.</li>
+  <li>Power on the wave's devices; bind any under <span class="ui">Unclaimed</span> in the Console. Watch ZTP: Cumulus <code>/var/log/ztp-&lt;device&gt;.log</code> (<code>sudo ztp -s</code>); EOS <code>show ip bgp summary</code>; NX-OS <code>show vpc</code>.</li>
+  <li>Software floor:
+<pre><code>pip3 install netmiko
+./os/check_os_release.py</code></pre>
+  <b>Gate:</b> every device at or above its baseline.</li>
+  <li>Start each plane in order (or <span class="ui">Start build</span> in the Console):
+<pre><code>sudo python3 /opt/estate-build/estate_build.py start --plane edge
+sudo python3 /opt/estate-build/estate_build.py start --plane fe
+sudo python3 /opt/estate-build/estate_build.py start --plane be</code></pre></li>
+  <li>Junos devices pushed by hand: <code>export FABRIC_USER=&lt;user&gt; FABRIC_PASSWORD=&lt;pw&gt;</code>, then <code>python3 push_configs.py --dry-run</code>, then <code>--plane mgmt</code>, <code>--plane fe</code>, <code>--plane be</code>.</li>
+  <li>Firewalls and ingress, where the design has them: <code>python3 ftd_deploy.py --fmc &lt;address&gt; --dry-run</code>, then without <code>--dry-run</code>; F5 BNK: <code>kubectl apply</code> of <code>bnk/02-vlans</code>, <code>03-bgp</code>, <code>06-vxlan</code>, <code>07-static-routes</code>, <code>04-snatpools</code>, <code>08-fw-policies</code>, <code>05-gateways</code>, in that order.</li>
+  <li>Front-end DPUs: confirm DPU mode on every BlueField-3 (<code>mlxconfig -d /dev/mst/mt41692_pciconf0 q INTERNAL_CPU_OFFLOAD_ENGINE</code> must be 0); install with the Console's DPU runner or <code>bfb-install</code>; apply <code>hbn/&lt;host&gt;-DPU.nvue</code> in the DPU's HBN container with <code>nv</code>.</li>
+</ol>
+
+<h3>6. Validate (test pod first, then each wave)</h3>
+<ol>
+  <li>From <code>acceptance/</code>: <code>python3 ../os/check_os_release.py</code>, and the DPU-mode check on every host.</li>
+  <li>Cabling: save each switch's LLDP table as <code>lldp/&lt;device&gt;.csv</code>, then <code>python3 check_cabling.py</code>. <b>Gate:</b> 0 mismatches.</li>
+  <li>Optics for 15 minutes per link: no growing CRC or uncorrectable FEC errors, receive power in range.</li>
+  <li>MTU: <code>ping -M do -s 8972 &lt;loopback&gt;</code> between leaf loopbacks; 9000-byte frames from each host's storage interface to a storage node.</li>
+  <li>Control plane: every BGP session Established and every DPU VTEP reachable.</li>
+  <li>Tenant isolation: <code>CLIENT_SSH=&lt;user&gt;@&lt;outside host&gt; acceptance/ingress_isolation.sh</code>.</li>
+  <li>Lossless (test pod): <code>HOSTFILE=pod&lt;N&gt;.hosts acceptance/lossless.sh T1</code>, then T2, T3, T4; upload each result in the Console's back-end gate. T5 and T6 are run by hand. If a test fails, tune in the Console: Propose, Apply to the test pod, run again, Approve.</li>
+  <li>NCCL: <code>HOSTFILE=pod&lt;N&gt;.hosts TARGET_BUSBW=&lt;GB/s&gt; acceptance/nccl.sh</code>, per rail then all rails; record it with <code>estate_build.py result &lt;BUSBW&gt; &lt;TARGET&gt;</code> or <span class="ui">Enter result</span>. <b>Gate:</b> bus bandwidth at or above the target.</li>
+  <li>Storage: <code>weka/03-checks.sh</code>, then a read test from one host per pod, recorded as the baseline.</li>
+  <li>Ingress: from outside, <code>curl https://&lt;VIP&gt;</code> for each tenant.</li>
+  <li>After the test pod passes, roll the approved tuning out pod by pod, then repeat stages 4 to 6 for each wave.</li>
+</ol>
+
+<h3>7. Handover</h3>
+<ol>
+  <li>Export the records from <code>https://&lt;prov IP&gt;:8443/api/export/</code>: <code>asbuilt.csv</code>, <code>readiness.csv</code>, <code>sot-status.csv</code>, <code>audit.csv</code>, <code>events.csv</code>.</li>
+  <li>Console &gt; Hand-over, step 1: take the final backup.</li>
+  <li>Step 2: the customer's admin downloads the hand-over export and checks its SHA-256 (<code>sha256sum export.zip</code>; Windows: <code>Get-FileHash -Algorithm SHA256 export.zip</code>).</li>
+  <li>Optional, for the customer's source of truth: <code>python3 apply_asbuilt.py netbox &lt;URL&gt; &lt;TOKEN&gt; --dry-run</code>, then without <code>--dry-run</code> (or <code>nautobot</code>).</li>
+  <li>The customer rotates every credential. Step 3: release vendor access (<code>sudo ./setup.sh --release-vendor</code>), and remove your Lighthouse login.</li>
+  <li>Retire the provisioning host: <code>sudo ./setup.sh --decommission</code>. It writes the hand-over export first, asks you to type <code>DECOMMISSION &lt;SITE&gt;</code>, then removes the service, the DHCP configuration, the secrets and the served files.</li>
+  <li>On your workstation, delete the customer's project folder, job folders and every <code>customer-data/</code> folder. <b>Gate:</b> deletion record signed.</li>
+</ol>
 </section>
 
 <section id="delivery">

@@ -1,3 +1,7 @@
+# AIDC DBD Desktop 2.0.69 (builder HS-v1.72, site runner 1.11.0)
+
+- **User guide: How to deploy, start to finish.** The whole path in seven stages (Workflows > How to deploy, start to finish), with every command and gate: design freeze, procure, site readiness, install and cable, provision, validate, handover.
+
 # AIDC DBD Desktop 2.0.68 (builder HS-v1.72, site runner 1.11.0)
 
 - **N-S Gbps and Ingress Gbps explained.** Their tooltips now say what to enter and what each sizes:
