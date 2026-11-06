@@ -1,3 +1,10 @@
+# AIDC DBD Desktop 2.0.74 (builder HS-v1.76, site runner 1.11.0)
+
+- **Toolbar row 1 by group.** Blue tags, as on row 2: **Site** (Customer, Code, Site code, Region, Site #, Device IDs, Site params, Public IPs), **Back end** (Fabric, Pod size, Total racks, BE platform) and **Front end** (On, Tenants, Assign tenants, N-S Gbps, Ingress Gbps, Cold spares). With the front end off its tag is gray and only On shows. The front-end platforms have their own strip, shown only when the front end is on. The status line ends with the green **Build from rack count**.
+- **FE+EDG cabinets** moved from Layout settings to the front-end platforms strip: it applies only with a front end.
+- **Renames:** row 2 tags Designer and Builder are now **Design** and **Build**; the Tenants button is **Assign tenants**; Site # in region is **Site #**; Frontend plane is the Front end group's **On**.
+- **User guide:** row 1 table, the new names; the toolbar reference lists row 1 by group. Fingerprints, plan digests and parity unchanged.
+
 # AIDC DBD Desktop 2.0.73 (builder HS-v1.75, site runner 1.11.0)
 
 - **Toolbar spacing restored.** Wider gaps between buttons and between the tool groups, full-size buttons and settings. On a wide screen each row fits on one line; at 1920 the Deploy group and the last settings wrap neatly.

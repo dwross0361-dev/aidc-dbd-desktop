@@ -31,7 +31,8 @@ function render(R) {
   const ctlTab = (L) => tab(['Control', 'What it does', 'Input sheet key'], L.map(ctlRow));
   const ctl = [1, 2].map((r) => { const L = R.controls.filter((c) => c.row === r), G = []; L.forEach((c) => { if (c.group && G.indexOf(c.group) < 0) G.push(c.group); });   // 2.0.71: row 2 by tool group
     if (!G.length) return '<h3>Toolbar row ' + r + '</h3>\n' + ctlTab(L);
-    return G.map((g) => '<h3>Toolbar row ' + r + ': ' + E(g) + '</h3>\n' + ctlTab(L.filter((c) => c.group === g))).join('\n'); }).join('\n');
+    const U = L.filter((c) => !c.group);   // a control outside every group is still listed
+    return G.map((g) => '<h3>Toolbar row ' + r + ': ' + E(g) + '</h3>\n' + ctlTab(L.filter((c) => c.group === g))).join('\n') + (U.length ? '\n<h3>Toolbar row ' + r + ': other</h3>\n' + ctlTab(U) : ''); }).join('\n');
   // condensed: a few wide columns, related facts grouped in a cell
   const J = (a) => a.filter((x) => x !== '' && x != null).join(' \u00b7 ');
   const prof = tab(['Platform', 'Per rack', 'Back end and DPU', 'Notes'], R.profiles.map((p) => [p.name + ' \u2014 ' + p.label,

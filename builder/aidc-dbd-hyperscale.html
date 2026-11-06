@@ -478,8 +478,13 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   .bar>*{flex-shrink:0}
   .bar .lbl,.bar .btn{white-space:nowrap}
   .bar #profile{max-width:260px}
-  .bar #buildfab,.bar #status{order:1}
-  .bar #fe-sku-wrap{order:2;flex:1 1 100%;display:flex;flex-wrap:wrap;align-items:center;gap:4px 0;padding-top:4px;border-top:1px dashed var(--line)}
+  .bar-1{column-gap:22px;row-gap:10px}   /* HS v1.76 */
+  .bar-1 .r1g{gap:7px}
+  .bar #fe-sku-wrap{flex:1 0 100%;display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:8px 12px;background:#F4F6F8;border-radius:8px}
+  .bar #fe-sku-wrap .nw,.bar #fe-sku-wrap>label{margin-left:0 !important}
+  #fe-grp.off .tbt{background:#9FB3C8}
+  .r1st{flex:1 0 100%;display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+  .r1st #status{margin-left:auto}
   .bar #fe-sku-wrap>*{white-space:nowrap}
   .bar .nw{white-space:nowrap;display:inline-flex;align-items:center}
   .bar-1{margin:11px 0 6px}
@@ -656,69 +661,69 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   <div class="sub">Paint leaf cages &middot; 800G=1x800up / 2x400dn &middot; auto-wire from paint &middot; span out, scale up</div>
 </header>
 
-<div class="bar bar-1">
-  <label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600">Customer:
-    <input id="custname" type="text" maxlength="80" value="" placeholder="e.g. American Express" title="Customer full (legal) name: on every deliverable" style="width:170px;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 8px;font-family:var(--body);margin:0 4px" autocomplete="off">
-  </label>
-  <label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600">Code:
-    <input id="custcode" type="text" maxlength="4" value="" placeholder="AMEX" title="Customer code, up to 4 letters or digits: the first part of every device name and of the build number" style="width:62px;text-transform:uppercase;font-family:var(--mono);height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 8px;margin:0 4px" autocomplete="off">
-  </label>
-  <label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600">Site code:
-    <input id="clientname" type="text" maxlength="40" value="" placeholder="e.g. SFO" title="Site code (up to 4 letters or digits are used): the second part of every device name" style="width:72px;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 8px;font-family:var(--body);margin:0 4px" autocomplete="off">
-  </label>
-  <span class="lbl" style="font-size:11px;color:var(--muted);font-family:var(--mono)" title="Device names start with this prefix; the build number identifies the design">names: <b id="clientcode" style="color:var(--teal)">&mdash;</b> &middot; build: <b id="buildno" style="color:var(--teal)">&mdash;</b></span>
-  <button id="btnDevIds" title="Load hostname,serial-or-MAC so dhcpd.conf generates complete" style="height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 10px;background:#fff;font-family:var(--body);font-size:12px;font-weight:600;color:var(--ink-soft);cursor:pointer">Device IDs <span id="devIdBadge" style="font-family:var(--mono);font-size:10px;color:#b45309">&bull;</span></button>
-  <button id="btnTenants" title="Assign each host to one of the tenants counted in the Tenants box. The assignment writes each host's DPU (HBN) configuration and the spines' per-DPU route-target filters, so a host reaches only its own tenant's network." style="height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 10px;background:#fff;font-family:var(--body);font-size:12px;font-weight:600;color:var(--ink-soft);cursor:pointer">Tenants</button>
-  <button id="btnCircuits" title="Carrier-assigned public addressing for the FE and management edges" style="height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 10px;background:#fff;font-family:var(--body);font-size:12px;font-weight:600;color:var(--ink-soft);cursor:pointer">Public IPs <span id="circuitsBadge" style="font-family:var(--mono);font-size:10px;color:#b45309">&bull;</span></button>
-  <span style="width:1px;height:24px;background:var(--line-strong);margin:0 3px"></span>
-  <label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600">Fabric:
-    <select id="profile" style="height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--body);margin:0 4px" autocomplete="off"></select><select id="vroem" title="Vera Rubin NVL72 rack vendor: the rack, power shelves and CDU integration follow the OEM (CONFIRM each)" style="display:none;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;margin:0 4px" autocomplete="off"><option value="reference">OEM: NVIDIA reference</option><option value="supermicro">OEM: Supermicro</option><option value="dell">OEM: Dell</option></select><select id="planesel" title="Back-end planes: every GPU has one leg in each plane; the lane speed is the NIC speed divided by the planes. The builder raises the count when two tiers no longer reach every GPU in a plane, unless Keep plane count is on." style="display:none;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;margin:0 4px" autocomplete="off"></select><select id="nicsel" title="Vera Rubin east-west NIC (one per GPU)" style="display:none;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;margin:0 4px" autocomplete="off"></select><select id="coolsel" title="NVL72 cooling: direct liquid (cold plate) or single-phase immersion tanks (16 per container; leaf and spine switches in the tanks)" style="display:none;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;margin:0 4px" autocomplete="off"></select><label id="keepplanes-w" style="display:none;margin:0 4px;font-family:var(--mono);font-size:11px;white-space:nowrap" title="Keep plane count: when the requested plane count does not stay on two tiers on this switch, keep it and add super-spines instead of raising the plane count. A plane count the switch cannot run at all (no lane at that speed) still falls back, with the reason. Off: the builder raises the count."><input type="checkbox" id="keepplanes" autocomplete="off"> Keep plane count</label><select id="nsdpu" title="North-south DPU, one per compute tray (Vera Rubin NVL72). BlueField-3 B3240 is the default; BlueField-4 B4240V is NVIDIA&#39;s reference part, built as 2 x 400G; its DPU configuration files are held until a DOCA release names BlueField-4." style="display:none;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;margin:0 4px" autocomplete="off"><option value="bf3">N-S DPU: BlueField-3 B3240</option><option value="bf4">N-S DPU: BlueField-4 B4240V</option></select>
-  </label>
-  <label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600" title="How many racks make one pod. This does NOT set the size of the build — that is 'Total racks' to the right.">Pod size:
-    <select id="podsize" style="height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--body);margin:0 4px" autocomplete="off"></select>
-  </label>
-
-  <span style="width:1px;height:24px;background:var(--line-strong);margin:0 3px"></span>
-  <label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600" title="How many compute racks the site has. This is what sizes the build.">Total racks:
-    <input id="rackcount" type="number" min="1" max="4096" value="8" style="width:80px;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 8px;font-family:var(--mono);margin:0 4px" autocomplete="off"> racks
-  </label>
-  <label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600" title="Backend leaf, spine and super-spine platform. Sets the vendor for backend port naming and configs.">BE platform:
-    <select id="be-model" style="height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--mono);font-size:11px;margin:0 4px" autocomplete="off"></select>
-  </label>
-  <span id="tracewarn" style="display:none;font-family:var(--mono);font-size:11px;color:#7A5A0B;background:#FBF3E0;border:1px solid #E7CE9E;border-radius:6px;padding:3px 8px;cursor:pointer" title="Click to clear all traces"></span>
-  <span id="stalewarn" style="display:none;font-family:var(--mono);font-size:11px;color:#8A2E2E;background:#FBEAEA;border:1px solid #E9C4C4;border-radius:6px;padding:3px 8px"></span>
-  <label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600;cursor:pointer">
-    <input type="checkbox" id="fe-on" style="vertical-align:-1px" autocomplete="off"> Frontend plane
-  </label>
-  <label class="lbl" id="fe-spare-wrap" style="display:none;font-size:12px;color:var(--ink-soft);font-weight:600;cursor:pointer" title="One spare per platform model per site, leaves scaled to count">
-    <input type="checkbox" id="fe-spares" style="vertical-align:-1px" autocomplete="off"> Cold spares
-    <select id="fe-spare-optics" aria-label="Cold spare optics" style="height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--mono);font-size:11px;margin:0 4px" autocomplete="off">
-      <option value="none">chassis only</option>
-      <option value="swap">+ spare AOC allowance</option>
-      <option value="full">+ full AOC bank</option>
-    </select>
-  </label>
-  <label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600">Region:
-    <select id="regioncode" style="height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--mono);margin:0 4px" autocomplete="off">
-      <option value="NAMW">NAMW</option><option value="NAMC">NAMC</option><option value="NAME">NAME</option>
-      <option value="EURO">EURO</option><option value="MEAI">MEAI</option><option value="APAC">APAC</option>
-    </select>
-  </label>
-  <label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600" title="This site's number within its region (1-8): drives its addressing and ASNs">Site # in region:
-    <input id="siteidx" type="number" min="1" max="8" value="1" style="width:44px;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--mono);margin:0 4px" autocomplete="off">
-  </label>
-  <label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600" title="Tenants: how many isolated customers or workloads share the site's front end (1 = a single-tenant site). Each tenant gets its own VRF and VXLAN VNI on the front-end fabric, its own routing instance on the firewalls, its own DPU (HBN) configuration on its hosts, and its own VIPs and SNAT pool on the F5 BNK ingress. One edge block (a firewall pair) holds 120 tenants; past 120 the builder adds edge blocks, up to 989 tenants. Assign hosts to tenants with the Tenants button.">Tenants:
-    <input id="fe-tenants" type="number" min="1" max="989" value="1" style="width:56px;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--mono);margin:0 4px" autocomplete="off">
-  </label>
-  <label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600" title="North-south rate: the busy-hour traffic between the site and the internet through the Edge PoP, in Gbps, in the busier direction. Each of the two diverse internet circuits must carry it alone (circuits of 10, 100 or 400G); the edge routers are checked against it; and it sets the firewall pairs, one per 1,400G on Junos SRX or per 145G on Cisco FTD (at least one per tenant ceiling). Blank: not sized (two circuits, firewall pairs by tenant count). Example: 400.">N-S Gbps:
-    <input id="fe-nsgbps" type="number" min="0" max="100000" value="" placeholder="-" style="width:64px;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--mono);margin:0 4px" autocomplete="off">
-  </label>
-  <label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600" title="Ingress rate: the busy-hour traffic arriving from outside to the tenants' published services (their VIPs) through the F5 BNK ingress nodes, in Gbps. It sizes the ingress nodes N+1 at 200G per node: rate / 200, rounded up, plus one spare; at least 2, at most 4. Blank: two nodes. Example: 300 gives 3 nodes.">Ingress Gbps:
-    <input id="fe-inggbps" type="number" min="0" max="100000" value="" placeholder="-" style="width:64px;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--mono);margin:0 4px" autocomplete="off">
-  </label>
-  <div class="lbl" id="fe-sku-wrap" style="display:none;font-size:12px;color:var(--ink-soft);font-weight:600"><span class="nw"><label for="fe-leaf-model">FE leaf:</label>
+<div class="bar bar-1">   <!-- HS v1.76: Site, Back end and Front end tags; the front-end platforms in their own strip; the status line ends with Build -->
+  <span class="tg2 r1g" data-tg="Site"><span class="tbt">Site</span>
+    <label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600">Customer
+      <input id="custname" type="text" maxlength="80" value="" placeholder="e.g. American Express" title="Customer full (legal) name: on every deliverable" style="width:170px;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 8px;font-family:var(--body);margin:0 4px" autocomplete="off">
+    </label>
+    <label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600">Code
+      <input id="custcode" type="text" maxlength="4" value="" placeholder="AMEX" title="Customer code, up to 4 letters or digits: the first part of every device name and of the build number" style="width:62px;text-transform:uppercase;font-family:var(--mono);height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 8px;margin:0 4px" autocomplete="off">
+    </label>
+    <label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600">Site code
+      <input id="clientname" type="text" maxlength="40" value="" placeholder="e.g. SFO" title="Site code (up to 4 letters or digits are used): the second part of every device name" style="width:72px;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 8px;font-family:var(--body);margin:0 4px" autocomplete="off">
+    </label>
+    <label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600">Region
+      <select id="regioncode" style="height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--mono);margin:0 4px" autocomplete="off">
+        <option value="NAMW">NAMW</option><option value="NAMC">NAMC</option><option value="NAME">NAME</option>
+        <option value="EURO">EURO</option><option value="MEAI">MEAI</option><option value="APAC">APAC</option>
+      </select>
+    </label>
+    <label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600" title="This site's number within its region (1-8): drives its addressing and ASNs">Site #
+      <input id="siteidx" type="number" min="1" max="8" value="1" style="width:44px;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--mono);margin:0 4px" autocomplete="off">
+    </label>
+    <button id="btnDevIds" title="Load hostname,serial-or-MAC so dhcpd.conf generates complete" style="height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 10px;background:#fff;font-family:var(--body);font-size:12px;font-weight:600;color:var(--ink-soft);cursor:pointer">Device IDs <span id="devIdBadge" style="font-family:var(--mono);font-size:10px;color:#b45309">&bull;</span></button>
+    <button id="btnCircuits" title="Carrier-assigned public addressing for the FE and management edges" style="height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 10px;background:#fff;font-family:var(--body);font-size:12px;font-weight:600;color:var(--ink-soft);cursor:pointer">Public IPs <span id="circuitsBadge" style="font-family:var(--mono);font-size:10px;color:#b45309">&bull;</span></button>
+  </span>
+  <span class="tg2 r1g" data-tg="Back end"><span class="tbt">Back end</span>
+    <label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600">Fabric
+      <select id="profile" style="height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--body);margin:0 4px" autocomplete="off"></select><select id="vroem" title="Vera Rubin NVL72 rack vendor: the rack, power shelves and CDU integration follow the OEM (CONFIRM each)" style="display:none;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;margin:0 4px" autocomplete="off"><option value="reference">OEM: NVIDIA reference</option><option value="supermicro">OEM: Supermicro</option><option value="dell">OEM: Dell</option></select><select id="planesel" title="Back-end planes: every GPU has one leg in each plane; the lane speed is the NIC speed divided by the planes. The builder raises the count when two tiers no longer reach every GPU in a plane, unless Keep plane count is on." style="display:none;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;margin:0 4px" autocomplete="off"></select><select id="nicsel" title="Vera Rubin east-west NIC (one per GPU)" style="display:none;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;margin:0 4px" autocomplete="off"></select><select id="coolsel" title="NVL72 cooling: direct liquid (cold plate) or single-phase immersion tanks (16 per container; leaf and spine switches in the tanks)" style="display:none;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;margin:0 4px" autocomplete="off"></select><label id="keepplanes-w" style="display:none;margin:0 4px;font-family:var(--mono);font-size:11px;white-space:nowrap" title="Keep plane count: when the requested plane count does not stay on two tiers on this switch, keep it and add super-spines instead of raising the plane count. A plane count the switch cannot run at all (no lane at that speed) still falls back, with the reason. Off: the builder raises the count."><input type="checkbox" id="keepplanes" autocomplete="off"> Keep plane count</label><select id="nsdpu" title="North-south DPU, one per compute tray (Vera Rubin NVL72). BlueField-3 B3240 is the default; BlueField-4 B4240V is NVIDIA&#39;s reference part, built as 2 x 400G; its DPU configuration files are held until a DOCA release names BlueField-4." style="display:none;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;margin:0 4px" autocomplete="off"><option value="bf3">N-S DPU: BlueField-3 B3240</option><option value="bf4">N-S DPU: BlueField-4 B4240V</option></select>
+    </label>
+    <label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600" title="How many racks make one pod. This does NOT set the size of the build — that is 'Total racks' to the right.">Pod size
+      <select id="podsize" style="height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--body);margin:0 4px" autocomplete="off"></select>
+    </label>
+    <label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600" title="How many compute racks the site has. This is what sizes the build.">Total racks
+      <input id="rackcount" type="number" min="1" max="4096" value="8" style="width:80px;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 8px;font-family:var(--mono);margin:0 4px" autocomplete="off"> racks
+    </label>
+    <label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600" title="Backend leaf, spine and super-spine platform. Sets the vendor for backend port naming and configs.">BE platform
+      <select id="be-model" style="height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--mono);font-size:11px;margin:0 4px" autocomplete="off"></select>
+    </label>
+  </span>
+  <span class="tg2 r1g" data-tg="Front end" id="fe-grp"><span class="tbt">Front end</span>
+    <label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600;cursor:pointer">
+      <input type="checkbox" id="fe-on" aria-label="Front end on" style="vertical-align:-1px" autocomplete="off"> On
+    </label>
+    <label class="lbl fe-dep" style="font-size:12px;color:var(--ink-soft);font-weight:600" title="Tenants: how many isolated customers or workloads share the site's front end (1 = a single-tenant site). Each tenant gets its own VRF and VXLAN VNI on the front-end fabric, its own routing instance on the firewalls, its own DPU (HBN) configuration on its hosts, and its own VIPs and SNAT pool on the F5 BNK ingress. One edge block (a firewall pair) holds 120 tenants; past 120 the builder adds edge blocks, up to 989 tenants. Assign hosts to tenants with the Assign tenants button.">Tenants
+      <input id="fe-tenants" type="number" min="1" max="989" value="1" style="width:56px;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--mono);margin:0 4px" autocomplete="off">
+    </label>
+    <button id="btnTenants" class="fe-dep" title="Assign each host to one of the tenants counted in the Tenants box. The assignment writes each host's DPU (HBN) configuration and the spines' per-DPU route-target filters, so a host reaches only its own tenant's network." style="height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 10px;background:#fff;font-family:var(--body);font-size:12px;font-weight:600;color:var(--ink-soft);cursor:pointer">Assign tenants</button>
+    <label class="lbl fe-dep" style="font-size:12px;color:var(--ink-soft);font-weight:600" title="North-south rate: the busy-hour traffic between the site and the internet through the Edge PoP, in Gbps, in the busier direction. Each of the two diverse internet circuits must carry it alone (circuits of 10, 100 or 400G); the edge routers are checked against it; and it sets the firewall pairs, one per 1,400G on Junos SRX or per 145G on Cisco FTD (at least one per tenant ceiling). Blank: not sized (two circuits, firewall pairs by tenant count). Example: 400.">N-S Gbps
+      <input id="fe-nsgbps" type="number" min="0" max="100000" value="" placeholder="-" style="width:64px;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--mono);margin:0 4px" autocomplete="off">
+    </label>
+    <label class="lbl fe-dep" style="font-size:12px;color:var(--ink-soft);font-weight:600" title="Ingress rate: the busy-hour traffic arriving from outside to the tenants' published services (their VIPs) through the F5 BNK ingress nodes, in Gbps. It sizes the ingress nodes N+1 at 200G per node: rate / 200, rounded up, plus one spare; at least 2, at most 4. Blank: two nodes. Example: 300 gives 3 nodes.">Ingress Gbps
+      <input id="fe-inggbps" type="number" min="0" max="100000" value="" placeholder="-" style="width:64px;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--mono);margin:0 4px" autocomplete="off">
+    </label>
+    <label class="lbl" id="fe-spare-wrap" style="display:none;font-size:12px;color:var(--ink-soft);font-weight:600;cursor:pointer" title="One spare per platform model per site, leaves scaled to count">
+      <input type="checkbox" id="fe-spares" style="vertical-align:-1px" autocomplete="off"> Cold spares
+      <select id="fe-spare-optics" aria-label="Cold spare optics" style="height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--mono);font-size:11px;margin:0 4px" autocomplete="off">
+        <option value="none">chassis only</option>
+        <option value="swap">+ spare AOC allowance</option>
+        <option value="full">+ full AOC bank</option>
+      </select>
+    </label>
+  </span>
+  <div class="lbl lset" id="fe-sku-wrap" data-tg="Front-end platforms" style="display:none;font-size:12px;color:var(--ink-soft);font-weight:600"><span class="lsetl">Front-end platforms</span><span class="nw"><label for="fe-leaf-model">FE leaf</label>
     <select id="fe-leaf-model" style="height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--mono);font-size:11px;margin:0 4px" autocomplete="off"></select></span>
-    <span class="nw"><label for="fe-spine-model">spine:</label>
+    <span class="nw"><label for="fe-spine-model">spine</label>
     <select id="fe-spine-model" style="height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--mono);font-size:11px;margin:0 4px" autocomplete="off"></select></span>
     <label style="cursor:pointer;margin-left:6px" title="Size the spine tier to hold a target oversubscription instead of pinning it at 2">
       <input type="checkbox" id="fe-spine-auto" style="vertical-align:-1px" autocomplete="off"> auto @
@@ -727,37 +732,44 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         <option value="4" selected>4:1</option><option value="3">3:1</option><option value="2">2:1</option>
       </select>
     </label>
-    <span class="nw" style="margin-left:10px"><label for="fe-edge-model">edge router:</label>
+    <span class="nw" style="margin-left:10px"><label for="fe-edge-model">edge router</label>
     <select id="fe-edge-model" title="FE-EDG edge router platform" style="height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--mono);font-size:11px;margin:0 4px" autocomplete="off"></select>
     <span id="fe-edge-lock" style="font-size:11px;color:var(--ink-soft);font-weight:400"></span></span>
-    <span class="nw" style="margin-left:10px"><label for="fe-bl-model">border leaf:</label>
+    <span class="nw" style="margin-left:10px"><label for="fe-bl-model">border leaf</label>
     <select id="fe-bl-model" title="Border-leaf platform" style="height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--mono);font-size:11px;margin:0 4px" autocomplete="off"></select></span>
-    <span class="nw" style="margin-left:10px"><label for="fe-bg-model">border gateway:</label>
+    <span class="nw" style="margin-left:10px"><label for="fe-bg-model">border gateway</label>
     <select id="fe-bg-model" title="Border-gateway platform" style="height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--mono);font-size:11px;margin:0 4px" autocomplete="off"></select></span>
-    <span class="nw" style="margin-left:10px"><label for="fe-hub-model">DCI hub:</label>
+    <span class="nw" style="margin-left:10px"><label for="fe-hub-model">DCI hub</label>
     <select id="fe-hub-model" title="DCI hub router platform (hub-and-spoke; follows the gateway family unless chosen)" style="height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--mono);font-size:11px;margin:0 4px" autocomplete="off"></select></span>
-    <span class="nw" style="margin-left:10px"><label for="fe-fw-model">firewall:</label>
+    <span class="nw" style="margin-left:10px"><label for="fe-fw-model">firewall</label>
     <select id="fe-fw-model" title="FE security firewall platform" style="height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--mono);font-size:11px;margin:0 4px" autocomplete="off">
       <option value="SRX4700-700">SRX4700</option><option value="FPR4245">FTD 4245</option>
     </select></span>
-    <span class="nw" style="margin-left:10px"><label for="fe-sto-gen">storage:</label>
+    <span class="nw" style="margin-left:10px"><label for="fe-sto-gen">storage</label>
     <select id="fe-sto-gen" title="Storage platform (WEKA, DDN, VAST, Pure): changes rack footprint, node ports, cabling, addressing and the leaf storage ports" style="height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--mono);font-size:11px;margin:0 4px" autocomplete="off">
       <optgroup label="WEKA"><option value="nitro3x2">WEKApod 3 Nitro (2U, 2 nodes)</option><option value="nitro3">WEKApod 3 Nitro (2U, 4 nodes)</option><option value="nitro2">WEKApod Nitro gen 2 (1U)</option></optgroup>
       <optgroup label="DDN"><option value="ddn_ai400x3">DDN AI400X3 (2U)</option></optgroup>
       <optgroup label="VAST"><option value="vast_ceres">VAST CNode + DBox</option></optgroup>
       <optgroup label="Pure Storage"><option value="pure_exa">FlashBlade//EXA</option></optgroup>
     </select></span>
-    <span class="nw"><label for="fe-sto-pp" id="fe-sto-pp-l">Storage nodes per scalable unit:</label>
+    <span class="nw"><label for="netfoot">FE+EDG cabinets</label>
+    <select id="netfoot" title="FE and Edge PoP cabinets in the physical model: one A/B pair holds the edge routers, gateways, border leaves, firewalls and FE spines, or the Edge PoP gets its own pair (EDG-NR01A/B) apart from the front-end core (FE-NR01A/B)" style="height:30px;margin-left:4px" autocomplete="off"><option value="consolidated">1 cabinet pair</option><option value="separate">separate pairs</option></select></span>
+    <span class="nw"><label for="fe-sto-pp" id="fe-sto-pp-l">Storage nodes per scalable unit</label>
     <input id="fe-sto-pp" type="number" min="0" max="64" step="1" title="Storage nodes per scalable unit (the profile's pod: 8 racks on NVL72; the back-end pod on a host profile): WEKApod nodes (cluster minimum 8), DDN appliances, VAST CNodes (DBoxes follow at one per two) or Pure data nodes" style="width:56px;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--mono);font-size:11px;margin:0 4px" autocomplete="off"></span>
     <label id="fe-sto-rdma-w" style="display:none;margin-left:4px;font-family:var(--mono);font-size:11px" title="VAST: serve clients NFS over RDMA (RoCEv2). Turns on the front-end lossless storage class (leaves, spines, DPUs)."><input type="checkbox" id="fe-sto-rdma" autocomplete="off"> RDMA</label>
     <label id="fe-sto-dscpok-w" style="display:none;margin-left:4px;font-family:var(--mono);font-size:11px" title="Record that the DPU DSCP test (hbn/README.md) passed: tenant VXLAN outer DSCP is 0. Clears the SR Linux warning and the design-register item."><input type="checkbox" id="fe-sto-dscpok" autocomplete="off"> DPU DSCP test passed</label>
   </div>
-  <button class="btn alt" id="buildfab" title="Build the design at the rack count in Total racks">&#9889; Build from rack count</button>
-  <span class="status" id="status">Set rack count, then build</span>
+  <div class="r1st" data-tg="Status line">
+    <span id="tracewarn" style="display:none;font-family:var(--mono);font-size:11px;color:#7A5A0B;background:#FBF3E0;border:1px solid #E7CE9E;border-radius:6px;padding:3px 8px;cursor:pointer" title="Click to clear all traces"></span>
+    <span id="stalewarn" style="display:none;font-family:var(--mono);font-size:11px;color:#8A2E2E;background:#FBEAEA;border:1px solid #E9C4C4;border-radius:6px;padding:3px 8px"></span>
+    <span class="lbl" style="font-size:11px;color:var(--muted);font-family:var(--mono)" title="Device names start with this prefix; the build number identifies the design">names: <b id="clientcode" style="color:var(--teal)">&mdash;</b> &middot; build: <b id="buildno" style="color:var(--teal)">&mdash;</b></span>
+    <span class="status" id="status">Set rack count, then build</span>
+    <button class="btn alt" id="buildfab" title="Build the design at the rack count in Total racks">&#9889; Build from rack count</button>
+  </div>
 </div>
 
 <div class="bar bar-2">   <!-- HS v1.74: a blue tag per tool (not a button), its operations in green; Save, Load and File in amber; the layout settings in their own strip -->
-  <span class="tg2" data-tg="Designer"><span class="tbt">Designer</span>
+  <span class="tg2" data-tg="Design"><span class="tbt">Design</span>
     <button class="btn" id="renderbtn" title="Draw the back-end fabric">BE Render</button>
     <button class="btn" id="febtn" title="Draw the front end: leaves, spines, edge, border and storage">FE Render</button>
     <button class="btn" id="cfgbtn" title="Device configurations, switch by switch">Configs</button>
@@ -767,7 +779,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     <button class="btn" id="relbtn" title="Design basis, provenance of every load-bearing input, and the release-for-construction gate">Release check</button>
     <button class="btn gold" id="pkgbtn" title="Blueprint package for the customer: Review (watermarked) or Final">Blueprint package</button>
   </span>
-  <span class="tg2" data-tg="Builder"><span class="tbt">Builder</span>
+  <span class="tg2" data-tg="Build"><span class="tbt">Build</span>
     <button class="btn" id="opendct" title="Open the DC Layout Builder in a new tab with this build loaded">DC Layout</button>
     <button class="btn" id="physjson" title="Physical model for the DC Layout Builder: cabinets, contents and every link">Physical model</button>
     <span style="position:relative;display:inline-block"><button class="btn" id="xlsx" aria-haspopup="true" aria-expanded="false" title="Cable matrix: every cable by device -- back end, front end and out-of-band -- with the port mapping">Cable Matrix &#9662;</button><span id="cmmenu" role="menu" hidden style="position:absolute;left:0;top:calc(100% + 4px);z-index:60;background:#fff;border:1px solid var(--line-strong);border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.16);padding:4px;min-width:160px"><button class="btn" id="cmxlsx" role="menuitem" style="display:block;width:100%;margin:2px 0;text-align:left">&#8681; Excel (.xlsx)</button><button class="btn" id="cmpdf" role="menuitem" style="display:block;width:100%;margin:2px 0;text-align:left">&#8681; PDF</button></span></span>
@@ -784,7 +796,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     <span style="position:relative;display:inline-block"><button class="btn" id="filemenubtn" aria-haspopup="true" aria-expanded="false" title="Input sheet, Equivalence, Share link, Site registry and Reset">File &#9662;</button><span id="filemenu" role="menu" hidden data-ref="1"><button class="btn" role="menuitem" id="insheetbtn" title="Customer input sheet: load a filled sheet (.xlsx or CSV) to set the design in one step, or get the template">Input sheet</button><button class="btn" role="menuitem" id="eqbtn" title="Equivalence report: load the customer's Baseline and compare it with this design, or get the Baseline template">Equivalence</button><button class="btn" role="menuitem" id="sharelink" title="Copy a link that reproduces this exact design &mdash; paste it to a teammate">&#128279; Share link</button><button class="btn" role="menuitem" id="registerbtn" title="Click: register this site and download the registry &#183; Shift-click: import a registry &#183; Alt-click: copy the source snippet">Register site</button><button class="btn" role="menuitem" id="reset" title="Start a new design: every setting back to its default (asks first; tuned profiles are kept)">Reset</button></span></span>
   </span>
   <div class="lset" data-tg="Layout settings"><span class="lsetl">Layout settings</span>
-    <select id="cabu" title="Network cabinet height for every MoR, EoR, FE/edge and OOB cabinet. 2U at the top is kept for cable entry; each device takes a cable manager and each cabinet a patch field sized to its cross-row links" style="height:30px;margin-left:4px" autocomplete="off"><option value="42">Net cabinets 42U</option><option value="45">Net cabinets 45U</option><option value="48" selected>Net cabinets 48U</option><option value="52">Net cabinets 52U</option></select><select id="rownet" title="Row network: one block of cabinets in the middle of the row (leaves, spines, OOB access, consoles and storage together), or a middle-of-row pair for the leaves plus end-of-row cabinets for the spines" style="height:30px;margin-left:4px" autocomplete="off"><option value="block" selected>Row network: one block</option><option value="split">Row network: MoR + EoR</option></select><select id="floorcols" title="Floor columns: the rows are laid out in 1 to 4 side-by-side columns (vertical stacks of rows), a 3 m aisle between columns. Sets the floor plan and every cable run length." style="height:30px;margin-left:4px" autocomplete="off"><option value="1" selected>Floor: 1 column</option><option value="2">Floor: 2 columns</option><option value="3">Floor: 3 columns</option><option value="4">Floor: 4 columns</option></select><label style="font-size:12px;margin-left:6px;display:inline-flex;align-items:center;gap:4px" title="Break columns at pod boundaries where the row counts allow, so a pod's leaf-to-spine cables stay off the cross tray"><input type="checkbox" id="floorpods"> keep pods in one column</label><label style="font-size:12px;margin-left:8px;display:inline-flex;align-items:center;gap:4px" title="AOC reach: a run longer than this becomes structured cabling (transceivers, MPO patch cords and trunks through column-head patch panels)">AOC reach <input id="aocreach" type="number" min="5" max="150" step="5" value="30" style="width:56px;height:28px" autocomplete="off"> m</label><label style="font-size:12px;margin-left:8px;display:inline-flex;align-items:center;gap:4px" title="Data hall size (IT MW). A site with more than one hall is laid out as a grid of halls, each with its own network rows; the core network sits in a CORE block.">Hall <input id="hallmw" type="number" min="2" max="60" step="1" value="10" style="width:52px;height:28px" autocomplete="off"> MW</label><select id="netfeed" title="Network-cabinet feed per side: sets the MoR/EoR/FE/OOB power budget" style="height:30px;margin-left:4px" autocomplete="off"><option value="208/30">Net feed 208V 30A</option><option value="208/50" selected>Net feed 208V 50A</option><option value="415/16">Net feed 415V 16A</option><option value="415/32">Net feed 415V 32A</option><option value="415/60">Net feed 415V 60A</option></select><select id="oobspine" title="OOB spine layer for rack-scale (NVL72) in-rack SN2201s: Auto adds it only when the OOB core runs out of ports" style="height:30px;margin-left:4px" autocomplete="off"><option value="auto">OOB spine: auto</option><option value="always">OOB spine: always</option><option value="off">OOB spine: off</option></select><select id="cpower" title="Compute-rack power: ORv3 HPR busbar with power shelves (split = two 1,400 A segments of four hosts, vendor-certified), or AC rack PDUs" style="height:30px;margin-left:4px" autocomplete="off"><option value="busbar-split">Compute: split busbar 2x1400A</option><option value="busbar-single">Compute: single busbar 1400A</option><option value="ac">Compute: AC PDUs</option></select><select id="rowfeed" title="How compute rows are fed: overhead busway A/B (half-row runs, 480 V in North America, 415 V elsewhere) or home-run circuits per power shelf / PDU" style="height:30px;margin-left:4px" autocomplete="off"><option value="busway">Rows: busway A/B</option><option value="circuits">Rows: home-run circuits</option></select><select id="netfoot" title="FE / Edge PoP cabinet footprint in the physical model" style="height:30px;margin-left:4px" autocomplete="off"><option value="consolidated">FE+EDG: 1 cabinet pair</option><option value="separate">FE+EDG: separate pairs</option></select>
+    <select id="cabu" title="Network cabinet height for every MoR, EoR, FE/edge and OOB cabinet. 2U at the top is kept for cable entry; each device takes a cable manager and each cabinet a patch field sized to its cross-row links" style="height:30px;margin-left:4px" autocomplete="off"><option value="42">Net cabinets 42U</option><option value="45">Net cabinets 45U</option><option value="48" selected>Net cabinets 48U</option><option value="52">Net cabinets 52U</option></select><select id="rownet" title="Row network: one block of cabinets in the middle of the row (leaves, spines, OOB access, consoles and storage together), or a middle-of-row pair for the leaves plus end-of-row cabinets for the spines" style="height:30px;margin-left:4px" autocomplete="off"><option value="block" selected>Row network: one block</option><option value="split">Row network: MoR + EoR</option></select><select id="floorcols" title="Floor columns: the rows are laid out in 1 to 4 side-by-side columns (vertical stacks of rows), a 3 m aisle between columns. Sets the floor plan and every cable run length." style="height:30px;margin-left:4px" autocomplete="off"><option value="1" selected>Floor: 1 column</option><option value="2">Floor: 2 columns</option><option value="3">Floor: 3 columns</option><option value="4">Floor: 4 columns</option></select><label style="font-size:12px;margin-left:6px;display:inline-flex;align-items:center;gap:4px" title="Break columns at pod boundaries where the row counts allow, so a pod's leaf-to-spine cables stay off the cross tray"><input type="checkbox" id="floorpods"> keep pods in one column</label><label style="font-size:12px;margin-left:8px;display:inline-flex;align-items:center;gap:4px" title="AOC reach: a run longer than this becomes structured cabling (transceivers, MPO patch cords and trunks through column-head patch panels)">AOC reach <input id="aocreach" type="number" min="5" max="150" step="5" value="30" style="width:56px;height:28px" autocomplete="off"> m</label><label style="font-size:12px;margin-left:8px;display:inline-flex;align-items:center;gap:4px" title="Data hall size (IT MW). A site with more than one hall is laid out as a grid of halls, each with its own network rows; the core network sits in a CORE block.">Hall <input id="hallmw" type="number" min="2" max="60" step="1" value="10" style="width:52px;height:28px" autocomplete="off"> MW</label><select id="netfeed" title="Network-cabinet feed per side: sets the MoR/EoR/FE/OOB power budget" style="height:30px;margin-left:4px" autocomplete="off"><option value="208/30">Net feed 208V 30A</option><option value="208/50" selected>Net feed 208V 50A</option><option value="415/16">Net feed 415V 16A</option><option value="415/32">Net feed 415V 32A</option><option value="415/60">Net feed 415V 60A</option></select><select id="oobspine" title="OOB spine layer for rack-scale (NVL72) in-rack SN2201s: Auto adds it only when the OOB core runs out of ports" style="height:30px;margin-left:4px" autocomplete="off"><option value="auto">OOB spine: auto</option><option value="always">OOB spine: always</option><option value="off">OOB spine: off</option></select><select id="cpower" title="Compute-rack power: ORv3 HPR busbar with power shelves (split = two 1,400 A segments of four hosts, vendor-certified), or AC rack PDUs" style="height:30px;margin-left:4px" autocomplete="off"><option value="busbar-split">Compute: split busbar 2x1400A</option><option value="busbar-single">Compute: single busbar 1400A</option><option value="ac">Compute: AC PDUs</option></select><select id="rowfeed" title="How compute rows are fed: overhead busway A/B (half-row runs, 480 V in North America, 415 V elsewhere) or home-run circuits per power shelf / PDU" style="height:30px;margin-left:4px" autocomplete="off"><option value="busway">Rows: busway A/B</option><option value="circuits">Rows: home-run circuits</option></select>
   </div>
 </div>
 
@@ -978,7 +990,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.75';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.76';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   // HS v1.59: Vera Rubin NVL72 at 2 planes x 800G, NVIDIA's public reference layout (Owner decision D11); see the VR profile.
   // HS v1.58: the customer input sheet and importer (inputSheetImport, the SESSION_IN overlay); see the input sheet block.
   // HS v1.57 (release identity): the release is identified by the SHA-256 of this file, not by the string above (HS-v1.56 r1, r2
@@ -30216,7 +30228,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     var controls=[];
     [].forEach.call(document.querySelectorAll('.bar'), function(bar, bi){
       [].forEach.call(bar.querySelectorAll('input,select,button'), function(el){
-        if(el.type==='hidden' || el.closest('[hidden]:not([data-ref])') || (el.style && el.style.display==='none')) return;
+        if(el.type==='hidden' || el.closest('[hidden]:not([data-ref])') || (el.style && el.style.display==='none' && !el.classList.contains('fe-dep'))) return;   // HS v1.76: front-end controls are listed while the front end is off
         var name='';
         if(el.tagName==='BUTTON') name=T(el.textContent);
         else { name=T(el.getAttribute('aria-label')||'');
@@ -33238,6 +33250,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     function syncSkuVis(){
       if(skuWrap)skuWrap.style.display=FE.on?'':'none';
       if(spWrap)spWrap.style.display=FE.on?'':'none';
+      [].forEach.call(document.querySelectorAll('.fe-dep'), function(e){ e.style.display=FE.on?'':'none'; });   // HS v1.76
+      var _fg=document.getElementById('fe-grp'); if(_fg) _fg.classList.toggle('off', !FE.on);
     }
     var spAuto=document.getElementById('fe-spine-auto');
     if(spAuto)spAuto.onchange=function(){

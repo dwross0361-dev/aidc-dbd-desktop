@@ -51,7 +51,7 @@ mark{ background:var(--mark); color:inherit; }
 <body>
 <header>
   <h1>AIDC DBD User Guide</h1>
-  <span class="ver">Builder HS-v1.75 &middot; DWR Networking</span>
+  <span class="ver">Builder HS-v1.76 &middot; DWR Networking</span>
   <input id="q" type="search" placeholder="Search the guide" aria-label="Search the guide">
 </header>
 <div class="wrap">
@@ -175,7 +175,7 @@ mark{ background:var(--mark); color:inherit; }
 <div class="note">After you change a setting that changes the design (platform, planes, switches, pod size), click <span class="ui">Build from rack count</span> again. When the rack box and the canvas disagree, the status line says "box says N, model has M &mdash; click Build".</div>
 <p>Storage on rack-scale platforms (NVL72) is sized per scalable unit, the platform's 8-rack unit.</p>
 <h3>Tenants</h3>
-<p>A tenant is one isolated customer or workload on the site's front end. Enter the count in the <span class="ui">Tenants</span> box (1 for a single-tenant site), then assign hosts with the <span class="ui">Tenants</span> button.</p>
+<p>A tenant is one isolated customer or workload on the site's front end. Turn on the front end (<span class="ui">Front end &#9656; On</span>), enter the count in the <span class="ui">Tenants</span> box (1 for a single-tenant site), then assign hosts with <span class="ui">Assign tenants</span>.</p>
 <table>
 <tr><th>Each tenant gets</th><th>Where</th></tr>
 <tr><td>Its own VRF and VXLAN VNI</td><td>Front-end leaves and spines</td></tr>
@@ -189,14 +189,23 @@ mark{ background:var(--mark); color:inherit; }
   <li>The input sheet row is <code>fe.tenants</code>.</li>
 </ul>
 <h3>The toolbar, by tool</h3>
+<p>The first toolbar row sets the site, with a blue tag per group:</p>
+<table>
+<tr><th>Tag</th><th>Controls</th></tr>
+<tr><td><b>Site</b></td><td>Customer &middot; Code &middot; Site code &middot; Region &middot; Site # (in region) &middot; <span class="ui">Device IDs</span> &middot; <span class="ui">Site params</span> &middot; <span class="ui">Public IPs</span></td></tr>
+<tr><td><b>Back end</b></td><td>Fabric (with planes, cooling and NIC where the platform offers them) &middot; Pod size &middot; Total racks &middot; BE platform</td></tr>
+<tr><td><b>Front end</b></td><td><span class="ui">On</span> &middot; Tenants &middot; <span class="ui">Assign tenants</span> &middot; N-S Gbps &middot; Ingress Gbps &middot; Cold spares. Off: the tag is gray and only <span class="ui">On</span> shows.</td></tr>
+<tr><td>Front-end platforms (strip)</td><td>FE leaf, spine (auto @ target), edge router, border leaf, border gateway, DCI hub, firewall, storage, FE+EDG cabinets (one A/B pair, or the Edge PoP in its own pair), storage nodes per scalable unit. Shown only when the front end is on.</td></tr>
+<tr><td>Status line</td><td>Warnings, the device-name preview, the status message and the green <span class="ui">Build from rack count</span> at the right end.</td></tr>
+</table>
 <p>The second toolbar row has a blue tag for each tool (a label, not a button) followed by that tool's operations in green. <span class="ui">Save</span>, <span class="ui">Load</span> and <span class="ui">File &#9662;</span> are amber, on the right. The layout settings have their own strip below.</p>
 <table>
 <tr><th>Tag (tool)</th><th>Green buttons</th><th>What they give</th></tr>
-<tr><td><b>Designer</b> (Fabric Designer)</td><td><span class="ui">BE Render</span> &middot; <span class="ui">FE Render</span> &middot; <span class="ui">Configs</span> &middot; <span class="ui">Infra</span> &middot; <span class="ui">Facility</span> &middot; <span class="ui">BoM</span> &middot; <span class="ui">Release check</span> &middot; <span class="ui">Blueprint package</span> (gold)</td><td>The back-end and front-end drawings; device configurations; out-of-band management; campus, halls, power and CDUs; the bill of materials (Excel, PDF); the release gate; the customer package, Review (watermarked) or Final.</td></tr>
-<tr><td><b>Builder</b> (DC Layout Builder)</td><td><span class="ui">DC Layout</span> &middot; <span class="ui">Physical model</span> &middot; <span class="ui">Cable Matrix &#9662;</span></td><td>Opens the DC Layout Builder with this build loaded; the cabinets, contents and links it reads; every cable with its measured length, Excel or PDF (see <a href="#cablematrix">Cable Matrix</a>).</td></tr>
+<tr><td><b>Design</b> (Fabric Designer)</td><td><span class="ui">BE Render</span> &middot; <span class="ui">FE Render</span> &middot; <span class="ui">Configs</span> &middot; <span class="ui">Infra</span> &middot; <span class="ui">Facility</span> &middot; <span class="ui">BoM</span> &middot; <span class="ui">Release check</span> &middot; <span class="ui">Blueprint package</span> (gold)</td><td>The back-end and front-end drawings; device configurations; out-of-band management; campus, halls, power and CDUs; the bill of materials (Excel, PDF); the release gate; the customer package, Review (watermarked) or Final.</td></tr>
+<tr><td><b>Build</b> (DC Layout Builder)</td><td><span class="ui">DC Layout</span> &middot; <span class="ui">Physical model</span> &middot; <span class="ui">Cable Matrix &#9662;</span></td><td>Opens the DC Layout Builder with this build loaded; the cabinets, contents and links it reads; every cable with its measured length, Excel or PDF (see <a href="#cablematrix">Cable Matrix</a>).</td></tr>
 <tr><td><b>Deploy</b> (Deployment Console)</td><td><span class="ui">Deploy panel</span> &middot; <span class="ui">Site runner</span> &middot; <span class="ui">Day-2 SoT</span> &middot; <span class="ui">Tuned profiles</span></td><td>What the provisioning host runs, the full package and the .run (see <a href="#deploy">Deploy panel</a>); the site-runner file; NetBox, Ansible and JSON source of truth; the tuning measured by past sites (see <a href="#tuned">Tuned profiles</a>).</td></tr>
 <tr><td>Amber, right</td><td><span class="ui">Save</span> &middot; <span class="ui">Load</span> &middot; <span class="ui">File &#9662;</span>: <span class="ui">Input sheet</span>, <span class="ui">Equivalence</span>, <span class="ui">Share link</span>, <span class="ui">Site registry</span>, <span class="ui">Reset</span></td><td>The design file; load or get the customer sheet; the Baseline comparison; a link that reproduces the design; the region's sites; a new design.</td></tr>
-<tr><td>Layout settings (strip)</td><td>Network cabinet height, row network, floor columns, keep pods in one column, AOC reach, hall MW, network feed, OOB spine, compute power, row feed, FE+EDG footprint</td><td>The physical layout and every cable length (see <a href="#layout">DC Layout Builder</a>).</td></tr>
+<tr><td>Layout settings (strip)</td><td>Network cabinet height, row network, floor columns, keep pods in one column, AOC reach, hall MW, network feed, OOB spine, compute power, row feed</td><td>The physical layout and every cable length (see <a href="#layout">DC Layout Builder</a>).</td></tr>
 </table>
 <p>Every control with its tooltip and input sheet key: <a href="#ref-controls">Reference: toolbar controls</a>.</p>
 </section>
@@ -291,7 +300,7 @@ platform.be_switch,NV-SN5610,,dry run</code></pre></li>
 <section id="layout">
 <h2>DC Layout Builder</h2>
 <p>The physical site: cabinets in rows and halls, the devices in each cabinet, and every cable run measured along the trays. The cable lengths in the Cable Matrix and the BoM come from here.</p>
-<p><b>Opens from:</b> the <span class="ui">DC Layout</span> button (Builder group) or <span class="ui">Site build &gt; DC Layout Builder</span>, with the open build loaded. Past 512 racks it opens in its own window in large-site mode (see <a href="#large">Large sites</a>).</p>
+<p><b>Opens from:</b> the <span class="ui">DC Layout</span> button (Build group) or <span class="ui">Site build &gt; DC Layout Builder</span>, with the open build loaded. Past 512 racks it opens in its own window in large-site mode (see <a href="#large">Large sites</a>).</p>
 <h3>What it shows</h3>
 <table>
 <tr><th>View</th><th>What it holds</th></tr>
@@ -301,7 +310,7 @@ platform.be_switch,NV-SN5610,,dry run</code></pre></li>
 <tr><td>Links and length schedule</td><td>A device's links, a cabinet's power cords, the site-wide checks and the length schedule by cable type.</td></tr>
 </table>
 <h3>Settings that drive it</h3>
-<p>Set in the Fabric Designer, in the <b>Layout settings</b> strip: network cabinet height, row network, <span class="ui">Floor</span> columns (whole halls side by side; a site with three halls or fewer looks the same at 3 and 4 columns), keep pods in one column, AOC reach (a longer run becomes structured cabling), hall MW, feeds, compute power, row feed and FE+EDG footprint.</p>
+<p>Set in the Fabric Designer, in the <b>Layout settings</b> strip: network cabinet height, row network, <span class="ui">Floor</span> columns (whole halls side by side; a site with three halls or fewer looks the same at 3 and 4 columns), keep pods in one column, AOC reach (a longer run becomes structured cabling), hall MW, feeds, compute power and row feed. The FE+EDG cabinet choice is in the front-end platforms strip.</p>
 <h3>Working in it</h3>
 <ul>
   <li><b>Refresh from Fabric Designer</b> takes the design as the Designer has it now and keeps your physical edits. Change a setting in the Designer, then refresh here.</li>
@@ -561,7 +570,7 @@ sudo python3 /opt/estate-build/estate_build.py start --plane be</code></pre></li
 <!-- REF:BEGIN (generated by tools/gen-help-ref.js; do not edit) -->
 <section id="ref-sheet">
 <h2>Reference: input sheet keys</h2>
-<p>Every row the input sheet takes, as builder HS-v1.75 reads it. A numbered row (<code>constraint.6</code>, <code>site.obstruction.4</code>) is read like its family.</p>
+<p>Every row the input sheet takes, as builder HS-v1.76 reads it. A numbered row (<code>constraint.6</code>, <code>site.obstruction.4</code>) is read like its family.</p>
 <h3>Site &amp; footprint</h3>
 <table>
 <tr><th>Key</th><th>Row</th><th>What it is</th><th>Takes</th></tr>
@@ -578,7 +587,7 @@ sudo python3 /opt/estate-build/estate_build.py start --plane be</code></pre></li
 <tr><td><code>site.floor_columns</code></td><td>Floor plan columns of pods</td><td>Floor columns: the rows are laid out in 1 to 4 side-by-side columns (vertical stacks of rows), a 3 m aisle between columns. Sets the floor plan and every cable run length.</td><td>1, 2, 3, 4</td></tr>
 <tr><td><code>site.floor_by_pod</code></td><td>Floor plan grouped by pod</td><td>Break columns at pod boundaries where the row counts allow, so a pod's leaf-to-spine cables stay off the cross tray</td><td>Yes, No</td></tr>
 <tr><td><code>site.network_rack_position</code></td><td>Network racks in the row (one block in the middle, or middle-of-row plus end-of-row)</td><td>Row network: one block of cabinets in the middle of the row (leaves, spines, OOB access, consoles and storage together), or a middle-of-row pair for the leaves plus end-of-row cabinets for the spines</td><td>one block, MoR + EoR</td></tr>
-<tr><td><code>site.network_footprint</code></td><td>Front-end and edge cabinets</td><td>FE / Edge PoP cabinet footprint in the physical model</td><td>1 cabinet pair, separate pairs</td></tr>
+<tr><td><code>site.network_footprint</code></td><td>Front-end and edge cabinets</td><td>FE and Edge PoP cabinets in the physical model: one A/B pair holds the edge routers, gateways, border leaves, firewalls and FE spines, or the Edge PoP gets its own pair (EDG-NR01A/B) apart from the front-end core (FE-NR01A/B)</td><td>1 cabinet pair, separate pairs</td></tr>
 <tr><td><code>site.network_cabinet_u</code></td><td>Network cabinet height (U)</td><td>Network cabinet height for every MoR, EoR, FE/edge and OOB cabinet. 2U at the top is kept for cable entry; each device takes a cable manager and each cabinet a patch field sized to its cross-row links</td><td>42, 45, 48, 52</td></tr>
 <tr><td><code>site.aoc_reach_m</code></td><td>Longest active optical cable before optics (m)</td><td>AOC reach: a run longer than this becomes structured cabling (transceivers, MPO patch cords and trunks through column-head patch panels)</td><td>5 to 150 m</td></tr>
 <tr><td><code>site.obstruction.1</code></td><td>Obstruction (column, door, ramp...): position and size</td><td></td><td>recorded; not modeled by the builder</td></tr>
@@ -637,7 +646,7 @@ sudo python3 /opt/estate-build/estate_build.py start --plane be</code></pre></li
 <table>
 <tr><th>Key</th><th>Row</th><th>What it is</th><th>Takes</th></tr>
 <tr><td><code>fe.enabled</code></td><td>Front end (north-south, storage, tenants) included</td><td></td><td>Yes, No</td></tr>
-<tr><td><code>fe.tenants</code></td><td>Tenants (tenants)</td><td>Tenants: how many isolated customers or workloads share the site's front end (1 = a single-tenant site). Each tenant gets its own VRF and VXLAN VNI on the front-end fabric, its own routing instance on the firewalls, its own DPU (HBN) configuration on its hosts, and its own VIPs and SNAT pool on the F5 BNK ingress. One edge block (a firewall pair) holds 120 tenants; past 120 the builder adds edge blocks, up to 989 tenants. Assign hosts to tenants with the Tenants button.</td><td>1 to 989 tenants</td></tr>
+<tr><td><code>fe.tenants</code></td><td>Tenants (tenants)</td><td>Tenants: how many isolated customers or workloads share the site's front end (1 = a single-tenant site). Each tenant gets its own VRF and VXLAN VNI on the front-end fabric, its own routing instance on the firewalls, its own DPU (HBN) configuration on its hosts, and its own VIPs and SNAT pool on the F5 BNK ingress. One edge block (a firewall pair) holds 120 tenants; past 120 the builder adds edge blocks, up to 989 tenants. Assign hosts to tenants with the Assign tenants button.</td><td>1 to 989 tenants</td></tr>
 <tr><td><code>fe.north_south_gbps</code></td><td>North-south bandwidth (Gb/s)</td><td>North-south rate: the busy-hour traffic between the site and the internet through the Edge PoP, in Gbps, in the busier direction. Each of the two diverse internet circuits must carry it alone (circuits of 10, 100 or 400G); the edge routers are checked against it; and it sets the firewall pairs, one per 1,400G on Junos SRX or per 145G on Cisco FTD (at least one per tenant ceiling). Blank: not sized (two circuits, firewall pairs by tenant count). Example: 400.</td><td>0 to 100000 Gb/s</td></tr>
 <tr><td><code>fe.ingress_gbps</code></td><td>Ingress bandwidth (Gb/s)</td><td>Ingress rate: the busy-hour traffic arriving from outside to the tenants' published services (their VIPs) through the F5 BNK ingress nodes, in Gbps. It sizes the ingress nodes N+1 at 200G per node: rate / 200, rounded up, plus one spare; at least 2, at most 4. Blank: two nodes. Example: 300 gives 3 nodes.</td><td>0 to 100000 Gb/s</td></tr>
 <tr><td><code>fe.ns_dpu</code></td><td>North-south DPU</td><td>North-south DPU, one per compute tray (Vera Rubin NVL72). BlueField-3 B3240 is the default; BlueField-4 B4240V is NVIDIA's reference part, built as 2 x 400G; its DPU configuration files are held until a DOCA release names BlueField-4.</td><td>Vera Rubin NVL72: BlueField-3 B3240, BlueField-4 B4240V; other platforms: blank</td></tr>
@@ -661,29 +670,41 @@ sudo python3 /opt/estate-build/estate_build.py start --plane be</code></pre></li
 <section id="ref-controls">
 <h2>Reference: toolbar controls</h2>
 <p>The controls on the builder's two toolbar rows, with their tooltips. Lists offer what fits the open design.</p>
-<h3>Toolbar row 1</h3>
+<h3>Toolbar row 1: Site</h3>
 <table>
 <tr><th>Control</th><th>What it does</th><th>Input sheet key</th></tr>
 <tr><td>Customer (box)</td><td>Customer full (legal) name: on every deliverable</td><td>site.customer_name</td></tr>
 <tr><td>Code (box)</td><td>Customer code, up to 4 letters or digits: the first part of every device name and of the build number</td><td>site.customer_code</td></tr>
 <tr><td>Site code (box)</td><td>Site code (up to 4 letters or digits are used): the second part of every device name</td><td>site.site_code</td></tr>
+<tr><td>Region (list)</td><td>Region code</td><td>site.region_code</td></tr>
+<tr><td>Site # (box)</td><td>This site's number within its region (1-8): drives its addressing and ASNs</td><td>site.site_index</td></tr>
 <tr><td>Device IDs (button)</td><td>Load hostname,serial-or-MAC so dhcpd.conf generates complete</td><td></td></tr>
 <tr><td>Site params (button)</td><td>Site parameters (domain, time zone, SNMP, carrier ASNs): written into every bootstrap file</td><td></td></tr>
-<tr><td>Tenants (button)</td><td>Assign each host to one of the tenants counted in the Tenants box. The assignment writes each host's DPU (HBN) configuration and the spines' per-DPU route-target filters, so a host reaches only its own tenant's network.</td><td></td></tr>
 <tr><td>Public IPs (button)</td><td>Carrier-assigned public addressing for the FE and management edges</td><td></td></tr>
+</table>
+<h3>Toolbar row 1: Back end</h3>
+<table>
+<tr><th>Control</th><th>What it does</th><th>Input sheet key</th></tr>
 <tr><td>Fabric (list)</td><td>GPU platform</td><td>fabric.platform</td></tr>
 <tr><td>Keep plane count (check box)</td><td>Keep plane count: when the requested plane count does not stay on two tiers on this switch, keep it and add super-spines instead of raising the plane count. A plane count the switch cannot run at all (no lane at that speed) still falls back, with the reason. Off: the builder raises the count.</td><td>fabric.be.keep_planes</td></tr>
 <tr><td>Pod size (list)</td><td>How many racks make one pod. This does NOT set the size of the build — that is 'Total racks' to the right.</td><td>site.pod_size</td></tr>
 <tr><td>Total racks (box)</td><td>How many compute racks the site has. This is what sizes the build.</td><td>site.racks</td></tr>
 <tr><td>BE platform (list)</td><td>Backend leaf, spine and super-spine platform. Sets the vendor for backend port naming and configs.</td><td>platform.be_switch</td></tr>
-<tr><td>Frontend plane (check box)</td><td>Front end (north-south, storage, tenants) included</td><td>fe.enabled</td></tr>
-<tr><td>Cold spares (check box)</td><td>One spare per platform model per site, leaves scaled to count</td><td>fe.spares</td></tr>
-<tr><td>Cold spare optics (list)</td><td>One spare per platform model per site, leaves scaled to count</td><td>fe.spare_optics</td></tr>
-<tr><td>Region (list)</td><td>Region code</td><td>site.region_code</td></tr>
-<tr><td>Site # in region (box)</td><td>This site's number within its region (1-8): drives its addressing and ASNs</td><td>site.site_index</td></tr>
-<tr><td>Tenants (box)</td><td>Tenants: how many isolated customers or workloads share the site's front end (1 = a single-tenant site). Each tenant gets its own VRF and VXLAN VNI on the front-end fabric, its own routing instance on the firewalls, its own DPU (HBN) configuration on its hosts, and its own VIPs and SNAT pool on the F5 BNK ingress. One edge block (a firewall pair) holds 120 tenants; past 120 the builder adds edge blocks, up to 989 tenants. Assign hosts to tenants with the Tenants button.</td><td>fe.tenants</td></tr>
+</table>
+<h3>Toolbar row 1: Front end</h3>
+<table>
+<tr><th>Control</th><th>What it does</th><th>Input sheet key</th></tr>
+<tr><td>Front end on (check box)</td><td>Front end (north-south, storage, tenants) included</td><td>fe.enabled</td></tr>
+<tr><td>Tenants (box)</td><td>Tenants: how many isolated customers or workloads share the site's front end (1 = a single-tenant site). Each tenant gets its own VRF and VXLAN VNI on the front-end fabric, its own routing instance on the firewalls, its own DPU (HBN) configuration on its hosts, and its own VIPs and SNAT pool on the F5 BNK ingress. One edge block (a firewall pair) holds 120 tenants; past 120 the builder adds edge blocks, up to 989 tenants. Assign hosts to tenants with the Assign tenants button.</td><td>fe.tenants</td></tr>
+<tr><td>Assign tenants (button)</td><td>Assign each host to one of the tenants counted in the Tenants box. The assignment writes each host's DPU (HBN) configuration and the spines' per-DPU route-target filters, so a host reaches only its own tenant's network.</td><td></td></tr>
 <tr><td>N-S Gbps (box)</td><td>North-south rate: the busy-hour traffic between the site and the internet through the Edge PoP, in Gbps, in the busier direction. Each of the two diverse internet circuits must carry it alone (circuits of 10, 100 or 400G); the edge routers are checked against it; and it sets the firewall pairs, one per 1,400G on Junos SRX or per 145G on Cisco FTD (at least one per tenant ceiling). Blank: not sized (two circuits, firewall pairs by tenant count). Example: 400.</td><td>fe.north_south_gbps</td></tr>
 <tr><td>Ingress Gbps (box)</td><td>Ingress rate: the busy-hour traffic arriving from outside to the tenants' published services (their VIPs) through the F5 BNK ingress nodes, in Gbps. It sizes the ingress nodes N+1 at 200G per node: rate / 200, rounded up, plus one spare; at least 2, at most 4. Blank: two nodes. Example: 300 gives 3 nodes.</td><td>fe.ingress_gbps</td></tr>
+<tr><td>Cold spares (check box)</td><td>One spare per platform model per site, leaves scaled to count</td><td>fe.spares</td></tr>
+<tr><td>Cold spare optics (list)</td><td>One spare per platform model per site, leaves scaled to count</td><td>fe.spare_optics</td></tr>
+</table>
+<h3>Toolbar row 1: Front-end platforms</h3>
+<table>
+<tr><th>Control</th><th>What it does</th><th>Input sheet key</th></tr>
 <tr><td>FE leaf (list)</td><td>Front-end leaf</td><td>platform.fe_leaf</td></tr>
 <tr><td>spine (list)</td><td>Front-end spine</td><td>platform.fe_spine</td></tr>
 <tr><td>auto (check box)</td><td>Size the spine tier to hold a target oversubscription instead of pinning it at 2</td><td>fabric.fe.spine_auto</td></tr>
@@ -694,12 +715,17 @@ sudo python3 /opt/estate-build/estate_build.py start --plane be</code></pre></li
 <tr><td>DCI hub (list)</td><td>DCI hub router platform (hub-and-spoke; follows the gateway family unless chosen)</td><td>platform.dci_hub</td></tr>
 <tr><td>firewall (list)</td><td>FE security firewall platform</td><td>platform.fe_firewall</td></tr>
 <tr><td>storage (list)</td><td>Storage platform (WEKA, DDN, VAST, Pure): changes rack footprint, node ports, cabling, addressing and the leaf storage ports</td><td>fe.storage_platform</td></tr>
+<tr><td>FE+EDG cabinets (list)</td><td>FE and Edge PoP cabinets in the physical model: one A/B pair holds the edge routers, gateways, border leaves, firewalls and FE spines, or the Edge PoP gets its own pair (EDG-NR01A/B) apart from the front-end core (FE-NR01A/B)</td><td>site.network_footprint</td></tr>
 <tr><td>Storage nodes per scalable unit (8 racks) (box)</td><td>Storage nodes per scalable unit (the profile's pod: 8 racks on NVL72; the back-end pod on a host profile): WEKApod nodes (cluster minimum 8), DDN appliances, VAST CNodes (DBoxes follow at one per two) or Pure data nodes</td><td>fe.storage_nodes_per_pod</td></tr>
 <tr><td>RDMA (check box)</td><td>VAST: serve clients NFS over RDMA (RoCEv2). Turns on the front-end lossless storage class (leaves, spines, DPUs).</td><td>fe.storage_rdma</td></tr>
 <tr><td>DPU DSCP test passed (check box)</td><td>Record that the DPU DSCP test (hbn/README.md) passed: tenant VXLAN outer DSCP is 0. Clears the SR Linux warning and the design-register item.</td><td>fe.storage_dscp_ok</td></tr>
+</table>
+<h3>Toolbar row 1: Status line</h3>
+<table>
+<tr><th>Control</th><th>What it does</th><th>Input sheet key</th></tr>
 <tr><td>Build from rack count (button)</td><td>Build the design at the rack count in Total racks</td><td></td></tr>
 </table>
-<h3>Toolbar row 2: Designer</h3>
+<h3>Toolbar row 2: Design</h3>
 <table>
 <tr><th>Control</th><th>What it does</th><th>Input sheet key</th></tr>
 <tr><td>BE Render (button)</td><td>Draw the back-end fabric</td><td></td></tr>
@@ -711,7 +737,7 @@ sudo python3 /opt/estate-build/estate_build.py start --plane be</code></pre></li
 <tr><td>Release check (button)</td><td>Design basis, provenance of every load-bearing input, and the release-for-construction gate</td><td></td></tr>
 <tr><td>Blueprint package (button)</td><td>Blueprint package for the customer: Review (watermarked) or Final</td><td></td></tr>
 </table>
-<h3>Toolbar row 2: Builder</h3>
+<h3>Toolbar row 2: Build</h3>
 <table>
 <tr><th>Control</th><th>What it does</th><th>Input sheet key</th></tr>
 <tr><td>DC Layout (button)</td><td>Open the DC Layout Builder in a new tab with this build loaded</td><td></td></tr>
@@ -751,12 +777,11 @@ sudo python3 /opt/estate-build/estate_build.py start --plane be</code></pre></li
 <tr><td>OOB spine (list)</td><td>OOB spine layer for rack-scale (NVL72) in-rack SN2201s: Auto adds it only when the OOB core runs out of ports</td><td>platform.oob_spine</td></tr>
 <tr><td>Compute (list)</td><td>Compute-rack power: ORv3 HPR busbar with power shelves (split = two 1,400 A segments of four hosts, vendor-certified), or AC rack PDUs</td><td>power.compute_power</td></tr>
 <tr><td>Rows (list)</td><td>How compute rows are fed: overhead busway A/B (half-row runs, 480 V in North America, 415 V elsewhere) or home-run circuits per power shelf / PDU</td><td>power.row_feed</td></tr>
-<tr><td>FE+EDG (list)</td><td>FE / Edge PoP cabinet footprint in the physical model</td><td>site.network_footprint</td></tr>
 </table>
 </section>
 <section id="ref-platforms">
 <h2>Reference: platforms</h2>
-<p>The catalogs in builder HS-v1.75. A figure marked CONFIRM is still to confirm with the vendor.</p>
+<p>The catalogs in builder HS-v1.76. A figure marked CONFIRM is still to confirm with the vendor.</p>
 <h3>Compute platforms</h3>
 <table>
 <tr><th>Platform</th><th>Per rack</th><th>Back end and DPU</th><th>Notes</th></tr>
