@@ -696,7 +696,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     <label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600" title="How many compute racks the site has. This is what sizes the build.">Total racks
       <input id="rackcount" type="number" min="1" max="4096" value="8" style="width:80px;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 8px;font-family:var(--mono);margin:0 4px" autocomplete="off"> racks
     </label>
-    <label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600" title="One switch model for every back-end tier: leaf, spine and super-spine. The same radix and lane speed throughout keep the fabric 1:1 non-blocking and the plane count, breakouts, optics and spares uniform. Sets the vendor for back-end port naming and configs.">BE switch (leaf &middot; spine &middot; super-spine)
+    <label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600;margin-left:22px" title="One switch model for every back-end tier: leaf, spine and super-spine. The same radix and lane speed throughout keep the fabric 1:1 non-blocking and the plane count, breakouts, optics and spares uniform. Sets the vendor for back-end port naming and configs.">BE switch (leaf &middot; spine &middot; super-spine)
       <select id="be-model" style="height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--mono);font-size:11px;margin:0 4px" autocomplete="off"></select>
     </label>
   </span>
@@ -993,7 +993,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.80';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.81';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   // HS v1.59: Vera Rubin NVL72 at 2 planes x 800G, NVIDIA's public reference layout (Owner decision D11); see the VR profile.
   // HS v1.58: the customer input sheet and importer (inputSheetImport, the SESSION_IN overlay); see the input sheet block.
   // HS v1.57 (release identity): the release is identified by the SHA-256 of this file, not by the string above (HS-v1.56 r1, r2

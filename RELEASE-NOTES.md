@@ -1,3 +1,11 @@
+# AIDC DBD Desktop 2.0.80 (builder HS-v1.81, site runner 1.11.0)
+
+- **Back end group:** more space between Total racks and BE switch.
+
+# AIDC DBD Desktop 2.0.80 (builder HS-v1.81, site runner 1.11.0)
+
+- **Back end group:** more space between "Total racks … racks" and "BE switch (leaf · spine · super-spine)".
+
 # AIDC DBD Desktop 2.0.79 (builder HS-v1.80, site runner 1.11.0)
 
 - **User guide: System requirements** is now the first Getting started section, above Install and update: operating system, memory by site size, CPU, disk, display and graphics. Large sites links to it.
