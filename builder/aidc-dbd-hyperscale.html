@@ -778,7 +778,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   </div>
   <div class="side">
     <div class="panel">
-      <h3>Fabric health</h3>
+      <h3>Fabric health<a href="#" class="helpq" title="User guide" style="display:inline-block;margin-left:6px;width:17px;height:17px;line-height:17px;text-align:center;border-radius:50%;border:1px solid currentColor;font-size:11px;font-weight:600;text-decoration:none;color:var(--muted,#667);vertical-align:1px" onclick="return aidcHelp('health')">?</a></h3>
       <div id="m-verdict"></div>
       <div class="metric"><span title="Leaves, spines and super-spines of the GPU (back-end) network. The front end and OOB are counted on their own lines below.">Back-end switches</span><b id="m-dev">0</b></div>
       <div id="m-planes" style="font-size:11px;line-height:1.5;margin:2px 0 6px;color:var(--ink-soft)"></div>
@@ -913,7 +913,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <style>#deploy-light{display:none}#deploy-modal.xl #deploy-light{display:block}#deploy-modal.xl #deploycopy,#deploy-modal.xl #deploydownload,#deploy-modal.xl #deploybundle,#deploy-modal.xl #deployrunq,#deploy-modal.xl .deploy-tab,#deploy-modal.xl #deploy-osrow,#deploy-modal.xl #deploy-out,#deploy-modal.xl #deploy-warn{display:none!important}#deploy-modal.xl .modal-box{width:560px;max-width:94vw;padding:16px 18px}#deploy-modal.xl h3{flex-wrap:wrap;gap:8px}#deploy-modal.xl h3>span:first-child>span{display:none}#deploy-light p{margin:0 0 6px}#deploy-light code{font-size:11px;white-space:nowrap}</style>
 <div id="deploy-modal" class="rmodal"><div class="modal-box">
-  <h3><span>Deploy <span style="font-family:var(--mono);font-size:11px;color:var(--muted)">&middot; ZTP bootstrap + PyEZ push</span></span>
+  <h3><span>Deploy <span style="font-family:var(--mono);font-size:11px;color:var(--muted)">&middot; ZTP bootstrap + PyEZ push</span><a href="#" class="helpq" title="User guide" style="display:inline-block;margin-left:6px;width:17px;height:17px;line-height:17px;text-align:center;border-radius:50%;border:1px solid currentColor;font-size:11px;font-weight:600;text-decoration:none;color:var(--muted,#667);vertical-align:1px" onclick="return aidcHelp('deploy')">?</a></span>
     <span>
       <button class="btn" id="deploycopy">&#128203; Copy</button>
       <button class="btn" id="deploydownload">&#8681; Download shown</button>
@@ -949,7 +949,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.69';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.70';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   // HS v1.59: Vera Rubin NVL72 at 2 planes x 800G, NVIDIA's public reference layout (Owner decision D11); see the VR profile.
   // HS v1.58: the customer input sheet and importer (inputSheetImport, the SESSION_IN overlay); see the input sheet block.
   // HS v1.57 (release identity): the release is identified by the SHA-256 of this file, not by the string above (HS-v1.56 r1, r2
@@ -30176,6 +30176,9 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     catch(e){ setStatus('Site runner export failed: '+e.message); } }
   (function(){ var b=document.getElementById('runnerexp'); if(b) b.onclick=exportSiteRunner; })();
   // the runner's entry points (the runner drives the page; nothing here reaches the network)
+  // HS v1.70 (2.0.65): the user guide, shipped beside the builder; the app opens it in its own window (F1, Help > User guide)
+  window.aidcHelp=function(sec){ sec=String(sec||'').replace(/[^a-z0-9-]/gi,''); var d=window.aidcDesktop;
+    if(d && d.openHelp) d.openHelp(sec); else window.open('aidc-dbd-help.html'+(sec?'#'+sec:''), 'aidc-dbd-help'); return false; };
   window.__aidcRunner={ version:function(){ return BUILDER_VER; }, app:function(){ return APP_NAME; },
     buildId:function(){ try{ return byType('rack').length?identBuild():''; }catch(e){ return ''; } },   // HS v1.63 (2.0.57): File > New project folder
     load:function(f, o){ if(!f || f.format!==SITE_RUNNER_FORMAT) throw new Error('not a site-runner file');   // HS v1.06: o.settings -- built from the settings alone
@@ -34062,7 +34065,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     b.style.cssText='position:fixed;inset:0;z-index:2147482500;background:rgba(20,30,40,.28);display:flex;align-items:center;justify-content:center';
     var col={'applied':'#0F6E56','derived':'#0F6E56','nearest supported':'#9A6700','not supported':'#B42318','not modeled':'#4B5A63','not applied':'#4B5A63'};
     b.innerHTML='<div style="width:1100px;max-width:calc(100vw - 32px);max-height:86vh;display:flex;flex-direction:column;background:#fff;border-radius:10px;box-shadow:0 10px 40px rgba(0,0,0,.25);padding:14px 16px;font:13px/1.45 system-ui,Segoe UI,sans-serif;color:#1E2A33">'
-      +'<div style="font-weight:600;font-size:15px">Input sheet imported: '+escHtml(si.sheet.name)+'</div>'
+      +'<div style="font-weight:600;font-size:15px">Input sheet imported: '+escHtml(si.sheet.name)+'<a href="#" class="helpq" title="User guide" style="display:inline-block;margin-left:6px;width:17px;height:17px;line-height:17px;text-align:center;border-radius:50%;border:1px solid currentColor;font-size:11px;font-weight:600;text-decoration:none;color:var(--muted,#667);vertical-align:1px" onclick="return aidcHelp(\'inputsheet\')">?</a></div>'
       +'<div style="margin:4px 0 8px;color:#4B5A63">'+n('applied')+' applied, '+n('derived')+' derived, <b style="color:#9A6700">'+n('nearest supported')+' nearest supported</b> (design choices), '+n('not supported')+' not supported, '+n('not modeled')+' not modeled. Build '+escHtml(si.build.build)+': '+si.build.racks.toLocaleString('en-US')+' racks, '+si.build.devices.toLocaleString('en-US')+' devices, design fingerprint '+escHtml(si.build.fingerprint)+'.</div>'
       +'<div style="overflow:auto;flex:1;border:1px solid #DDE5E4;border-radius:6px"><table style="border-collapse:collapse;width:100%;font-size:12px"><thead><tr style="background:#EEF2F1;position:sticky;top:0">'
       +['Row','Key','Requested','Applied','Status','Reason'].map(function(h){ return '<th style="text-align:left;padding:4px 6px">'+h+'</th>'; }).join('')+'</tr></thead><tbody>'

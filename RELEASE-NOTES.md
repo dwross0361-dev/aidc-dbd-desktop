@@ -1,3 +1,9 @@
+# AIDC DBD Desktop 2.0.65 (builder HS-v1.70, site runner 1.11.0)
+
+- **User guide, pass 1.** **Help > User guide** (or **F1**) opens the guide in its own window, offline. It covers getting started (install and update, a customer project, the input sheet, the build, the health verdict), the workflows (Release check and the delivery build, equivalence and the Baseline, DC Layout Builder, large sites, Deploy, Reset, tuned profiles, a dry run), troubleshooting by the message you see, and terms. A search box filters and highlights the sections.
+  - A **?** beside the Fabric health panel, the input sheet report and the Deploy panel opens the matching section. In a browser, the same **?** opens `aidc-dbd-help.html` beside the builder.
+  - The guide is `builder/aidc-dbd-help.html`, shipped beside the builder file and read by the neutrality gate. Pass 2 adds a reference generated from the builder (input sheet keys, controls, platforms).
+
 # AIDC DBD Desktop 2.0.64 (builder HS-v1.69, site runner 1.11.0)
 
 - **SN6600-LD faceplate: the "BMC · OOB" label is centered over its two ports.**

@@ -274,6 +274,19 @@ function builderFile() {   // the design as it stands in the builder window now 
     const id = ++fileSeq; fileWait.set(id, (r) => { if (r.error || !r.file) reject(new Error(r.error || 'the builder window sent no design')); else resolve(r.file); });
     main.webContents.send('layout-file-request', id); });
 }
+// 2.0.65: the user guide, beside the builder; one window, reused
+const HELP = path.join(RES, 'builder', 'aidc-dbd-help.html');
+let helpWin = null;
+function openHelp(sec) {
+  sec = String(sec || '').replace(/[^a-z0-9-]/gi, '');
+  if (helpWin && !helpWin.isDestroyed()) { helpWin.loadFile(HELP, sec ? { hash: sec } : {}); helpWin.show(); helpWin.focus(); return; }
+  helpWin = new BrowserWindow({ width: 1180, height: 900, title: 'AIDC DBD User Guide', webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true } });
+  helpWin.setMenuBarVisibility(false);
+  helpWin.webContents.setWindowOpenHandler(({ url }) => { if (/^https?:/i.test(url)) shell.openExternal(url); return { action: 'deny' }; });
+  helpWin.on('closed', () => { helpWin = null; });
+  helpWin.loadFile(HELP, sec ? { hash: sec } : {});
+}
+ipcMain.on('open-help', (e, sec) => openHelp(sec));
 ipcMain.on('open-layout', (e, req) => {
   const n = ++layoutSeq, file = path.join(app.getPath('temp'), 'aidc-dbd-layout-' + process.pid + '-' + n + '.html');
   fs.writeFileSync(file, req.html);
@@ -371,7 +384,7 @@ function menu() {
       { type: 'separator' },
       { label: 'Show DSX Air test files…', click: () => showAirFiles() } ] },
     { label: 'View', submenu: [ { role: 'reload' }, { role: 'toggleDevTools' }, { type: 'separator' }, { role: 'resetZoom' }, { role: 'zoomIn' }, { role: 'zoomOut' }, { type: 'separator' }, { role: 'togglefullscreen' } ] },
-    { label: 'Help', submenu: [ { label: 'About AIDC DBD', click: () => dialog.showMessageBox(main, { type: 'info', title: 'AIDC DBD',
+    { label: 'Help', submenu: [ { label: 'User guide', accelerator: 'F1', click: () => openHelp('') }, { type: 'separator' }, { label: 'About AIDC DBD', click: () => dialog.showMessageBox(main, { type: 'info', title: 'AIDC DBD',
       message: 'AIDC DBD ' + app.getVersion() + ' — DWR Networking',
       detail: 'Builder ' + (BUILDER_INFO.builder || '?') + (BUILDER_SHA256 ? ' (SHA-256 ' + BUILDER_SHA256.slice(0, 16) + '…)' : '') + '\nSite runner built in (Node ' + NODE_VER() + ')\nBuilder window memory ' + (HEAPS.get('builder window') || RENDER_HEAP).toLocaleString('en-US') + ' MB (a window\'s limit), site runner and Layout service ' + RUNNER_HEAP.toLocaleString('en-US') + ' MB\nProject folder: ' + (CFG.projectDir || 'not chosen yet') }) } ] } ];
   Menu.setApplicationMenu(Menu.buildFromTemplate(tpl));

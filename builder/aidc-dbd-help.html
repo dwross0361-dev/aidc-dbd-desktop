@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AIDC DBD User Guide</title>
+<style>
+:root{
+  --bg:#F6F7F5; --panel:#FFFFFF; --ink:#1E2A33; --ink2:#4B5A63; --line:#DDE2DF; --accent:#1F6F5C; --accent2:#E7F2EE;
+  --warn:#9A5B00; --warnbg:#FDF3E1; --code:#EEF1EF; --mark:#FFF1A8;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#14191D; --panel:#1B2227; --ink:#E4EAEC; --ink2:#A6B3B9; --line:#2D373D; --accent:#5CC4A6; --accent2:#1E3530;
+  --warn:#F2B866; --warnbg:#3A2C14; --code:#232C32; --mark:#5A4C10; } }
+:root[data-theme="dark"]{
+  --bg:#14191D; --panel:#1B2227; --ink:#E4EAEC; --ink2:#A6B3B9; --line:#2D373D; --accent:#5CC4A6; --accent2:#1E3530;
+  --warn:#F2B866; --warnbg:#3A2C14; --code:#232C32; --mark:#5A4C10; }
+*{ box-sizing:border-box; }
+html,body{ margin:0; background:var(--bg); color:var(--ink); font:15px/1.55 "Segoe UI",system-ui,-apple-system,sans-serif; }
+a{ color:var(--accent); }
+header{ position:sticky; top:0; z-index:5; background:var(--panel); border-bottom:1px solid var(--line); padding:10px 16px; display:flex; gap:14px; align-items:center; flex-wrap:wrap; }
+header h1{ font-size:17px; margin:0; font-weight:650; }
+header .ver{ color:var(--ink2); font-size:13px; }
+header input{ margin-left:auto; min-width:220px; flex:0 1 320px; padding:7px 10px; border:1px solid var(--line); border-radius:7px; background:var(--bg); color:var(--ink); font:inherit; }
+.wrap{ display:grid; grid-template-columns:250px 1fr; max-width:1200px; margin:0 auto; }
+nav{ position:sticky; top:53px; align-self:start; max-height:calc(100vh - 53px); overflow:auto; padding:14px 10px 30px 16px; border-right:1px solid var(--line); }
+nav h4{ margin:14px 0 4px; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink2); }
+nav a{ display:block; padding:3px 8px; border-radius:6px; text-decoration:none; color:var(--ink); font-size:14px; }
+nav a:hover, nav a.on{ background:var(--accent2); color:var(--accent); }
+main{ padding:10px 28px 80px; min-width:0; }
+section{ scroll-margin-top:64px; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:4px 22px 16px; margin:16px 0; }
+section.hide{ display:none; }
+h2{ font-size:21px; margin:16px 0 8px; }
+h3{ font-size:16px; margin:16px 0 6px; }
+p,li{ max-width:78ch; }
+code,kbd{ font-family:Consolas,"Cascadia Mono",monospace; font-size:13px; background:var(--code); padding:1px 5px; border-radius:4px; }
+pre{ background:var(--code); padding:10px 12px; border-radius:7px; overflow:auto; font-size:13px; }
+pre code{ background:none; padding:0; }
+table{ border-collapse:collapse; width:100%; margin:8px 0; font-size:14px; }
+th,td{ border:1px solid var(--line); padding:6px 9px; text-align:left; vertical-align:top; }
+th{ background:var(--accent2); }
+.note{ background:var(--warnbg); border-left:3px solid var(--warn); padding:8px 12px; border-radius:6px; margin:10px 0; }
+.tip{ background:var(--accent2); border-left:3px solid var(--accent); padding:8px 12px; border-radius:6px; margin:10px 0; }
+.ui{ font-weight:600; }
+mark{ background:var(--mark); color:inherit; }
+.empty{ color:var(--ink2); padding:20px; display:none; }
+@media (max-width:820px){ .wrap{ grid-template-columns:1fr; } nav{ position:static; max-height:none; border-right:0; border-bottom:1px solid var(--line); } main{ padding:8px 16px 60px; } header input{ margin-left:0; flex:1 1 100%; } }
+@media print{ header, nav{ display:none; } .wrap{ display:block; } section{ break-inside:avoid; border:0; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>AIDC DBD User Guide</h1>
+  <span class="ver">Builder HS-v1.70 &middot; DWR Networking</span>
+  <input id="q" type="search" placeholder="Search the guide" aria-label="Search the guide">
+</header>
+<div class="wrap">
+<nav id="toc">
+  <h4>Getting started</h4>
+  <a href="#install">Install and update</a>
+  <a href="#project">Start a customer project</a>
+  <a href="#inputsheet">Load the input sheet</a>
+  <a href="#build">Build the design</a>
+  <a href="#health">Read the health verdict</a>
+  <h4>Workflows</h4>
+  <a href="#delivery">Release check and delivery build</a>
+  <a href="#equivalence">Equivalence and the Baseline</a>
+  <a href="#layout">DC Layout Builder</a>
+  <a href="#large">Large sites (past 512 racks)</a>
+  <a href="#deploy">Deploy panel</a>
+  <a href="#reset">Reset and save</a>
+  <a href="#tuned">Tuned profiles</a>
+  <a href="#dryrun">Dry run without the customer's sheet</a>
+  <h4>Help</h4>
+  <a href="#trouble">Troubleshooting</a>
+  <a href="#terms">Terms</a>
+</nav>
+<main id="body">
+<div class="empty" id="empty">No section matches that search.</div>
+
+<section id="install">
+<h2>Install and update</h2>
+<p>AIDC DBD is a portable Windows app. It runs from its folder; nothing is installed into Windows. It needs Windows 10 or 11, 64-bit.</p>
+<h3>First install</h3>
+<ol>
+  <li>Unzip <code>AIDC-DBD-&lt;version&gt;-win-x64-portable.zip</code> into a folder of its own, for example <code>C:\AIDCDBD\</code>.</li>
+  <li>Open the folder and run <code>AIDC DBD.exe</code>. The app is unsigned, so Windows SmartScreen may show "Windows protected your PC": click <span class="ui">More info</span>, then <span class="ui">Run anyway</span>.</li>
+  <li>For a desktop shortcut: right-click <code>AIDC DBD.exe</code> &gt; <span class="ui">Send to &gt; Desktop (create shortcut)</span> (on Windows 11, <span class="ui">Show more options</span> first).</li>
+  <li>Check <span class="ui">Help &gt; About AIDC DBD</span>: it shows the app version, the builder version and the builder's SHA-256.</li>
+</ol>
+<div class="note">Do not copy <code>AIDC DBD.exe</code> on its own: it needs the <code>resources</code> folder, the DLLs and the other files beside it. Use a shortcut.</div>
+<h3>Updating</h3>
+<p>Save your design and close the app, including any DC Layout Builder windows, before you update. A running window keeps the version it was started with.</p>
+<p>To keep one folder (so the shortcut never changes), replace the folder's contents with the new release. Clear the folder first, so no file from an older release stays behind. This PowerShell script does it; save it as <code>C:\AIDCDBD\update.ps1</code>:</p>
+<pre><code>param([Parameter(Mandatory)][string]$Zip)
+$dst = 'C:\AIDCDBD\AIDC-DBD'
+if (Get-Process 'AIDC DBD' -ErrorAction SilentlyContinue) { Write-Host 'Close AIDC DBD first (save your design).'; exit 1 }
+Get-FileHash $Zip -Algorithm SHA256 | Format-List
+$tmp = Join-Path $env:TEMP 'aidc-dbd-update'
+Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue
+Expand-Archive -Path $Zip -DestinationPath $tmp
+$new = Get-ChildItem $tmp -Directory | Select-Object -First 1
+if (Test-Path $dst) { Remove-Item $dst -Recurse -Force }
+Move-Item $new.FullName $dst
+Remove-Item $tmp -Recurse -Force
+Write-Host "Installed $($new.Name) in $dst"</code></pre>
+<p>Run it with the downloaded zip:</p>
+<pre><code>powershell -ExecutionPolicy Bypass -File C:\AIDCDBD\update.ps1 -Zip "$env:USERPROFILE\Downloads\AIDC-DBD-&lt;version&gt;-win-x64-portable.zip"</code></pre>
+<div class="tip">Keep the release zips: they are your copy of every version. To go back, run the script with the older zip.</div>
+</section>
+
+<section id="project">
+<h2>Start a customer project</h2>
+<p>Every customer gets a folder of their own. Packages, .run files, reports, the input sheet record and every download for that site are saved there, so one customer's files never mix with another's.</p>
+<table>
+<tr><th>File menu</th><th>What it does</th></tr>
+<tr><td class="ui">New project folder&hellip;</td><td>Creates a new folder under <code>Documents\AIDC DBD Projects</code>, named from the open design's build ID and the date (you can type another name). It refuses a folder that already holds files, makes the new folder the active project and offers to load the input sheet.</td></tr>
+<tr><td class="ui">Open existing project folder&hellip;</td><td>Switches to a folder you already have.</td></tr>
+<tr><td class="ui">Show project folder in File Explorer</td><td>Opens the active project folder.</td></tr>
+<tr><td class="ui">Project: &hellip;</td><td>The grayed line names the active project. If none is set, the app asks on the first save.</td></tr>
+</table>
+<p>Nothing is overwritten: a second copy of a file is saved as <code>name (2)</code>.</p>
+</section>
+
+<section id="inputsheet">
+<h2>Load the input sheet</h2>
+<p>The input sheet sets the design in one step from the customer's values.</p>
+<ol>
+  <li><span class="ui">File &gt; Input sheet template (blank)</span> saves the template, generated from the builder's catalog. <span class="ui">Input sheet filled from this design</span> saves one filled from the open design. In a browser, the toolbar's <span class="ui">Input sheet</span> button does the same.</li>
+  <li>The customer fills it in. The app reads <code>.xlsx</code> or a CSV with the columns <code>key,value,unit,source</code>. It does not read <code>.txt</code>.</li>
+  <li><span class="ui">File &gt; Load input sheet&hellip;</span> reads it. A meter shows each step: reading the file, reading the sheet, applying the settings, building the design, drawing, checking the result. If a step fails, the status line names it and the open design is put back.</li>
+  <li>The import report lists every row. <span class="ui">Download session input file</span> saves the record; it is also saved to the project folder.</li>
+</ol>
+<h3>Import report statuses</h3>
+<table>
+<tr><th>Status</th><th>Meaning</th></tr>
+<tr><td>applied</td><td>The value was set as given. A model named without its vendor (for example <code>SN5610</code> for <code>NV-SN5610</code>) is applied with the note "read as".</td></tr>
+<tr><td>derived</td><td>The platform has one value for this row and the sheet matches it (for example the GB300 NVL72's BlueField-3 B3240).</td></tr>
+<tr><td>nearest supported</td><td>The value is not an offered option, so the design is built at the nearest one. Listed as a design choice.</td></tr>
+<tr><td>not supported</td><td>The platform has no such choice, or builds with a different fixed value; the reason column says which.</td></tr>
+<tr><td>not modeled</td><td>The builder does not model this row. It is recorded, not built.</td></tr>
+</table>
+</section>
+
+<section id="build">
+<h2>Build the design</h2>
+<ol>
+  <li>Set <span class="ui">Customer</span> and <span class="ui">Code</span>, the <span class="ui">Fabric</span> platform, the back-end planes and platform, and the front end, or load the input sheet.</li>
+  <li>Enter <span class="ui">Total racks</span> and click <span class="ui">Build from rack count</span>.</li>
+  <li><span class="ui">Render</span> and <span class="ui">FE Render</span> draw the back end and the front end; <span class="ui">BoM</span>, <span class="ui">Config</span>, <span class="ui">Infra</span>, <span class="ui">Facility</span>, <span class="ui">Cable Matrix</span>, <span class="ui">Day-2 SoT</span> and <span class="ui">Physical model</span> give the views and exports.</li>
+  <li><span class="ui">Save</span> writes the design file; <span class="ui">Load</span> opens one.</li>
+</ol>
+<div class="note">After you change a setting that changes the design (platform, planes, switches, pod size), click <span class="ui">Build from rack count</span> again. When the rack box and the canvas disagree, the status line says "box says N, model has M &mdash; click Build".</div>
+<p>Storage on rack-scale platforms (NVL72) is sized per scalable unit, the platform's 8-rack unit. <span class="ui">Floor</span> columns arrange whole halls side by side; they do not split the rows inside a hall.</p>
+</section>
+
+<section id="health">
+<h2>Read the health verdict</h2>
+<p>The Fabric health panel and the Release check show one line: <b>Errors (N) / Open inputs (N) / Advisories (N)</b>.</p>
+<table>
+<tr><th>Count</th><th>Meaning</th><th>What to do</th></tr>
+<tr><td>Errors</td><td>The design as built is not consistent: a port over-allocation, a rack over its feed, addresses outside their block, a facility load over the stated feed.</td><td>Fix before delivery.</td></tr>
+<tr><td>Open inputs</td><td>A value is still a placeholder.</td><td>Get the value from the customer. Never counted as an error.</td></tr>
+<tr><td>Advisories</td><td>The design is consistent, but a choice or a vendor figure needs confirming (oversubscription, an unconfirmed optic, margin).</td><td>Review, and record the decision.</td></tr>
+</table>
+<p>On large designs the out-of-band rows wait until the links are counted: click <span class="ui">count links</span> in the panel. Past 512 racks the design service counts them.</p>
+</section>
+
+<section id="delivery">
+<h2>Release check and delivery build</h2>
+<ol>
+  <li>Open <span class="ui">Release check</span>. Clear every error and record the open inputs and advisories.</li>
+  <li>Use the <span class="ui">Site build</span> menu:</li>
+</ol>
+<table>
+<tr><th>Site build menu</th><th>What it does</th></tr>
+<tr><td class="ui">Final package and .run (with the parity check)</td><td>Builds both, then checks that every device configuration in the package is byte-identical to the .run's. This is the delivery build.</td></tr>
+<tr><td class="ui">Final package / Review package (watermarked) / .run only</td><td>One output.</td></tr>
+<tr><td class="ui">DC Layout Builder</td><td>The layout tool.</td></tr>
+<tr><td class="ui">Export site-runner file</td><td>The file for the command-line site runner on another machine.</td></tr>
+<tr><td class="ui">Show DSX Air test files&hellip;</td><td>Takes <code>air/</code> out of a .run (checksum verified) into <code>&lt;run name&gt;-air/</code>, for the DSX Air import.</td></tr>
+</table>
+<p>Each job writes to its own folder in the project folder, <code>{BUILD}-{job}-{date-time}/</code>, with the package or .run, the site-runner file it was built from and <code>site-runner.log</code>.</p>
+<div class="note">The .run is the installer for the provisioning host. It is not a customer deliverable.</div>
+<h3>Gates</h3>
+<ul>
+  <li><b>Release gate:</b> the site runner refuses a design exported from a different builder file (its SHA-256 differs). Export the site-runner file again from this release.</li>
+  <li><b>Fingerprint gate:</b> the site runner and the Layout service rebuild the design from its settings and refuse unless it matches the window's. A mismatch means the canvas was built before a setting changed, or has hand edits.</li>
+</ul>
+</section>
+
+<section id="equivalence">
+<h2>Equivalence and the Baseline</h2>
+<p>The equivalence report compares the customer's own design (their Baseline) with the Product's.</p>
+<ol>
+  <li><span class="ui">File &gt; Baseline template (blank)</span> or <span class="ui">Baseline filled from this design</span> saves <code>AIDC-DBD-Baseline-v1.xlsx</code>.</li>
+  <li><span class="ui">File &gt; Load Baseline&hellip;</span> reads the filled Baseline (<code>.xlsx</code> or CSV <code>key,value,unit,source</code>), lists rows it cannot use, and opens the report.</li>
+  <li>The report shows one row per metric: Baseline, Product, delta, within tolerance, class and reason. A class can be overridden with a reason.</li>
+  <li><span class="ui">Download report</span> saves <code>&lt;build&gt;-equivalence.pdf</code> and <code>.csv</code>; the status line gives each file's SHA-256.</li>
+</ol>
+<p>Topology metrics must match exactly; counts are within tolerance when they differ by no more than 2%.</p>
+</section>
+
+<section id="layout">
+<h2>DC Layout Builder</h2>
+<p>The layout tool places cabinets in rows and halls, measures every cable run and gives the length schedule and floor drawings.</p>
+<ul>
+  <li><b>Halls:</b> the dashed outline around a group of rows is a data hall, sized by the <span class="ui">Hall</span> MW setting. The outline follows the rows when you move cabinets or change the floor columns.</li>
+  <li><b>Floor columns</b> (Designer toolbar) arrange whole halls side by side. A site with three halls or fewer looks the same at 3 and 4 columns.</li>
+  <li><b>Refresh from Fabric Designer</b> takes the design as the builder window has it now and keeps your edits. Change a setting in the Designer, then refresh the layout window.</li>
+  <li><b>Faceplates:</b> each switch's front panel shows its ports, with the breakout this design uses. A label marked CONFIRM is drawn from a source that does not state it (for example cage numbering read from an LED legend); ports labeled by type only are not cabled by the design.</li>
+  <li><b>Save layout</b> writes the cabinets, devices and your edits. On a large site the file holds no links; they come from the design when the layout is opened again.</li>
+</ul>
+</section>
+
+<section id="large">
+<h2>Large sites (past 512 racks)</h2>
+<p>A window has about 4 GB of JavaScript memory whatever the workstation has, so large designs use separate processes with the workstation's memory:</p>
+<table>
+<tr><th>Process</th><th>Does</th></tr>
+<tr><td>Site runner</td><td>Final package, Review package, .run and the Cable Matrix. A panel shows progress, with Cancel and <span class="ui">Open folder</span>.</td></tr>
+<tr><td>Design service</td><td>BoM, Release check, Infra, Facility, Count links, and the physical model and Day-2 SoT exports.</td></tr>
+<tr><td>Layout service</td><td>The DC Layout Builder in large-site mode: it holds every link and measures every run.</td></tr>
+</table>
+<ul>
+  <li>Files the services write go <b>straight into the project folder</b>, each with a <span class="ui">Saved</span> card and <span class="ui">Show in folder</span>; they are not browser downloads.</li>
+  <li>If the canvas is out of date with its settings, the app asks <span class="ui">Rebuild and continue</span>. Rebuilding drops hand edits on the canvas.</li>
+</ul>
+<table>
+<tr><th>Site</th><th>Workstation memory</th></tr>
+<tr><td>Up to 512 racks</td><td>16 GB</td></tr>
+<tr><td>512 to 2,048 racks</td><td>32 GB</td></tr>
+<tr><td>2,048 to 4,096 racks</td><td>64 GB recommended, 32 GB minimum</td></tr>
+</table>
+<p>A build runs on one core per process, so single-core speed decides the time. Use an NVMe SSD with 50 GB or more free.</p>
+</section>
+
+<section id="deploy">
+<h2>Deploy panel</h2>
+<p><span class="ui">Deploy</span> shows what the provisioning host runs, per tab:</p>
+<table>
+<tr><th>Tab</th><th>Shows</th></tr>
+<tr><td>0 &middot; installer</td><td>The installer for the selected switch OS.</td></tr>
+<tr><td>1 &middot; ZTP bootstrap</td><td>Every device's zero-touch bootstrap.</td></tr>
+<tr><td>2 &middot; DHCP server</td><td>The DHCP server configuration.</td></tr>
+<tr><td>3 &middot; PyEZ push script</td><td>The push script.</td></tr>
+<tr><td>README</td><td>The deployment README.</td></tr>
+</table>
+<table>
+<tr><th>Button</th><th>Does</th></tr>
+<tr><td class="ui">Copy / Download shown</td><td>The text of the tab shown, in full. The preview stops at 2 MB with a note.</td></tr>
+<tr><td class="ui">Download full package (.zip)</td><td>Every file, one per device.</td></tr>
+<tr><td class="ui">Download installer (.run)</td><td>One file for the provisioning host: <code>sudo bash SITE-deploy-VERSION.run</code>. It checks itself, keeps the old package folder, unpacks and runs <code>setup.sh</code>.</td></tr>
+</table>
+<p>Past 512 racks, the package and .run are built by the site runner.</p>
+</section>
+
+<section id="reset">
+<h2>Reset and save</h2>
+<p><span class="ui">Reset</span> starts a new design. It asks first: <span class="ui">Save first</span>, <span class="ui">Reset</span> or <span class="ui">Cancel</span>.</p>
+<ul>
+  <li><b>Cleared:</b> every setting, the customer, code and build ID, Device IDs, Public IPs, tenants, site parameters, imported values, deviations you added, layout edits, the input sheet and Baseline records, and the saved copy in this window.</li>
+  <li><b>Kept:</b> the tuned-profile library and the project folder.</li>
+</ul>
+<p>Save the design before you Reset or close the app.</p>
+</section>
+
+<section id="tuned">
+<h2>Tuned profiles</h2>
+<p>A tuned profile is the back-end lossless tuning measured on a site after it passed acceptance, exported by the Deployment Console for one switch model and OS release. Import it with <span class="ui">Tuned profiles</span>; later designs on the same switch model and release ship with the measured values instead of the starting defaults. A design can follow the library, pin one profile or use none.</p>
+<p>A profile holds the switch model, OS, release, the numeric tuning values and a test summary, with a checksum. It holds no hostnames, addresses or counters. Reset keeps the library.</p>
+</section>
+
+<section id="dryrun">
+<h2>Dry run without the customer's sheet</h2>
+<ol>
+  <li>Make a stand-in CSV with the columns <code>key,value,unit,source</code>, for example:
+<pre><code>key,value,unit,source
+site.racks,256,racks,dry run
+fabric.platform,GB300 NVL72,,dry run
+fabric.be.planes,4,planes,dry run
+platform.be_switch,NV-SN5610,,dry run</code></pre></li>
+  <li><span class="ui">File &gt; New project folder&hellip;</span>, then <span class="ui">Load input sheet&hellip;</span> with the CSV.</li>
+  <li>Release check, then <span class="ui">Site build &gt; Final package and .run</span>.</li>
+  <li>For a lab rehearsal, <span class="ui">Site build &gt; Show DSX Air test files&hellip;</span> gives the files for the DSX Air import.</li>
+  <li>Finish with the deletion drill: delete the dry-run folders as you would a customer's.</li>
+</ol>
+</section>
+
+<section id="trouble">
+<h2>Troubleshooting</h2>
+<table>
+<tr><th>You see</th><th>Cause</th><th>Fix</th></tr>
+<tr><td>"The canvas is out of date with its settings"</td><td>Past 512 racks, the design service builds from the settings; the canvas was built before a setting changed, or has hand edits.</td><td><span class="ui">Rebuild and continue</span>, or <span class="ui">Build from rack count</span>.</td></tr>
+<tr><td>"box says N, model has M &mdash; click Build"</td><td>The rack box and the canvas disagree.</td><td>Click <span class="ui">Build from rack count</span>.</td></tr>
+<tr><td>The site runner or Layout service says the design does not match</td><td>The fingerprint gate: the canvas differs from what its settings build.</td><td>Build from rack count, then try again.</td></tr>
+<tr><td>The site runner refuses the file as from a different builder</td><td>The release gate: the site-runner file came from another release.</td><td>Export the site-runner file again from this release.</td></tr>
+<tr><td>BoM or another export past 512 racks: no download</td><td>The design service saves straight into the project folder.</td><td>Look for the <span class="ui">Saved</span> card, or <span class="ui">File &gt; Show project folder in File Explorer</span>.</td></tr>
+<tr><td>The health panel still says "count links"</td><td>Large designs count the out-of-band links on request.</td><td>Click <span class="ui">count links</span>.</td></tr>
+<tr><td>A layout change does not show</td><td>The layout window keeps its model until refreshed.</td><td><span class="ui">Refresh from Fabric Designer</span>. If the window was opened by an older release, close it and open DC Layout Builder again.</td></tr>
+<tr><td>"nearest supported" in the import report</td><td>The value is not an offered option.</td><td>Check the value; the design is built at the option named.</td></tr>
+<tr><td>CONFIRM on a faceplate</td><td>The source does not state that detail.</td><td>Confirm against the vendor manual or a unit.</td></tr>
+<tr><td>Storage block warning on a standard site</td><td>A standard site's storage block holds 64 nodes.</td><td>Reduce the storage nodes, or design the site at hyperscale. Hyperscale and mega sites scale the block with the nodes.</td></tr>
+<tr><td>A copied <code>AIDC DBD.exe</code> does not start</td><td>The .exe needs its folder.</td><td>Use a shortcut to the .exe in its folder.</td></tr>
+<tr><td>A window closes or reports memory</td><td>A window has about 4 GB.</td><td>Past 512 racks use the Site build menu, which runs in the site runner.</td></tr>
+</table>
+</section>
+
+<section id="terms">
+<h2>Terms</h2>
+<table>
+<tr><th>Term</th><th>Meaning</th></tr>
+<tr><td>Back end (BE)</td><td>The GPU fabric: leaves and spines in planes.</td></tr>
+<tr><td>Front end (FE)</td><td>The host, storage and tenant network, with the edge and border.</td></tr>
+<tr><td>OOB</td><td>Out-of-band management: switch management ports, BMCs and console.</td></tr>
+<tr><td>Plane</td><td>One independent back-end fabric; each GPU NIC port joins one plane.</td></tr>
+<tr><td>Scalable unit</td><td>The platform's reference block of racks (8 for NVL72) that storage and facilities are sized by.</td></tr>
+<tr><td>Design fingerprint</td><td>The design's identity hash. The site runner and the Layout service rebuild the design and compare it.</td></tr>
+<tr><td>Builder SHA-256</td><td>The release identity of the builder file.</td></tr>
+<tr><td>Parity check</td><td>Every device configuration in the package must be byte-identical to the .run's.</td></tr>
+<tr><td>Site-runner file</td><td>The design's settings, exported for the site runner.</td></tr>
+<tr><td>Health verdict</td><td>Errors / Open inputs / Advisories, in the health panel and the Release check.</td></tr>
+</table>
+</section>
+
+</main>
+</div>
+<script>
+(function(){
+  var q=document.getElementById('q'), secs=[].slice.call(document.querySelectorAll('main section')), links=[].slice.call(document.querySelectorAll('nav a')), empty=document.getElementById('empty');
+  var orig=secs.map(function(s){ return s.innerHTML; });
+  function esc(t){ return t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+  function mark(html, re){ return html.replace(/(>)([^<]+)/g, function(m, a, t){ return a+t.replace(re, '<mark>$&</mark>'); }); }
+  q.addEventListener('input', function(){
+    var t=q.value.trim(), re=t?new RegExp(esc(t),'gi'):null, n=0;
+    secs.forEach(function(s,i){ s.innerHTML=orig[i]; var hit=!re || re.test(s.textContent); if(re) re.lastIndex=0; s.classList.toggle('hide', !hit);
+      if(hit){ n++; if(re) s.innerHTML=mark(orig[i], re); } });
+    links.forEach(function(a){ var s=document.getElementById(a.getAttribute('href').slice(1)); a.style.display=s && s.classList.contains('hide')?'none':''; });
+    empty.style.display=n?'none':'block'; });
+  function onHash(){ links.forEach(function(a){ a.classList.toggle('on', a.getAttribute('href')===location.hash); }); }
+  window.addEventListener('hashchange', onHash); onHash();
+})();
+</script>
+</body>
+</html>

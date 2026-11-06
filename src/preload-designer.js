@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld('aidcDesktop', {
   builderSha256: (process.argv.find((a) => a.indexOf('--aidc-builder-sha256=') === 0) || '').slice(22) || '',   // 2.0.51: release identity
   job: (req) => ipcRenderer.invoke('job', req).then((r) => { if (r && r.error) note('⚠ ' + r.error); return r; }),
   openLayout: (req) => ipcRenderer.send('open-layout', req),
+  openHelp: (sec) => ipcRenderer.send('open-help', sec),   // 2.0.65: the user guide
   onLayoutFileRequest: (fn) => { fileFn = fn; },   // 2.0.20: the Layout service rebuilds the design from this
   onMenu: (fn) => { menuFn = fn; },
   onInputSheet: (fn) => { ipcRenderer.on('input-sheet-file', (e, m) => { try { fn(m.name, new Uint8Array(m.bytes)); } catch (err) { note('⚠ Input sheet: ' + (err && err.message || err)); } }); },   // 2.0.52
