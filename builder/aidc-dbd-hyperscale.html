@@ -993,7 +993,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.81';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.82';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   // HS v1.59: Vera Rubin NVL72 at 2 planes x 800G, NVIDIA's public reference layout (Owner decision D11); see the VR profile.
   // HS v1.58: the customer input sheet and importer (inputSheetImport, the SESSION_IN overlay); see the input sheet block.
   // HS v1.57 (release identity): the release is identified by the SHA-256 of this file, not by the string above (HS-v1.56 r1, r2
@@ -5638,9 +5638,15 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     var row=function(n,cx0,gap){ var a=[]; for(var i=0;i<n;i++) a.push(cx0-(n-1)*gap/2+i*gap); return a; };
     var Y={car:70, er:200, bg:340, bl:480, sp:640, lf:780, hs:910}, H=980;
     if(ssps.length){ Y.ssp=640; Y.sp=800; Y.lf=960; Y.hs=1090; H=1150; }
+    // HS v1.82: the firewalls as HA pairs side by side, one row per pair, the last row level with the border leaves;
+    // the rows above take extra space between the gateways and the border leaves, and the links run in lanes just
+    // under the border leaves, so nothing reaches into the tier below
+    var nFw=fws.length, nPr=Math.ceil(nFw/2), FWRG=80, fwExtra=nFw?(nPr-1)*FWRG:0;
+    var _laneBot=480+fwExtra+BH/2+14+nFw*7, _ySepB=Math.max(570+fwExtra, _laneBot+16), _below=Math.max(0, _ySepB+45-(640+fwExtra-BH/2));
+    ['bl','ssp','sp','lf','hs'].forEach(function(k){ if(Y[k]!=null) Y[k]+=fwExtra+(k==='bl'?0:_below); }); H+=fwExtra+_below;
     // scales with the build (Owner decision, 8 Oct 2026): the fabric rows set the width; the edge column centers over
     // the fabric, and the backbone zone and firewalls sit to its right
-    var _nRow=CZ?Math.max(1,_czSlots):Math.max(sps.length, lfs.length, 1), xMain=Math.max(500, (_nRow-1)*95+BW/2+40);
+    var _nRow=CZ?Math.max(1,_czSlots):Math.max(sps.length, lfs.length, 1), xMain=Math.max(500, (_nRow-1)*95+BW/2+40, (Math.max(bls.length,bgs.length,ers.length)-1)*130+BW/2+140);   // HS v1.82: every edge row fits (12 border leaves at 6 firewall pairs ran off the left edge)
     var xEr=row(ers.length,xMain,260), xBg=row(bgs.length,xMain,260), xBl=row(bls.length,xMain,260);
     var xSp=row(sps.length,xMain,190), xLf=row(lfs.length,xMain,190), xSsp=row(ssps.length,xMain,190);
     if(ssps.length){   // each pod's spines centered over that pod's leaves
@@ -5657,10 +5663,13 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     // zones
     var zoneX=hubs?xMain+450:null;
     var _xFw0=(row(bls.length,xMain,260).slice(-1)[0]||xMain)+300;
-    W=Math.max(1370, xMain+(_nRow-1)*95+BW/2+40, _xFw0+BW/2+40, hubs?zoneX+430:0);
+    // HS v1.82: the firewall block sits right of the widest tier (and of the backbone zone), clear of every tier at any scale
+    var FWCH=24+nPr*8, FWGAP=Math.max(56, 24+nPr*8), _tierR=Math.max.apply(null,[xMain].concat(xEr,xBg,xBl,xSp,xLf,xSsp))+BW/2;
+    var xFw1=nFw?Math.max((xBl[xBl.length-1]||xMain)+BW+50+FWCH, _tierR+50+FWCH+BW/2, hubs?zoneX+430+FWCH+BW/2:0):_xFw0   /* no DCI hub: tucked beside the border leaves */, xFw2=xFw1+BW+FWGAP;
+    W=Math.max(1370, xMain+(_nRow-1)*95+BW/2+40, (nFw>1?xFw2:xFw1)+BW/2+40, hubs?zoneX+430:0);
     var _k=1, _Ht=Math.min(W/2, PDF_MAX_AREA/Math.max(W,1), PDF_MAX_SIDE);   // v534: 2:1, one PDF page
     if(_Ht>H){ _k=(_Ht-70-Y.car)/(Y.hs-Y.car); for(var _yk in Y) Y[_yk]=Math.round(Y.car+(Y[_yk]-Y.car)*_k); H=Y.hs+70; }
-    var ySep=Math.round(Y.car+(570-Y.car)*_k);
+    var ySep=Math.round(Y.car+(_ySepB-Y.car)*_k);
     s+='<defs><marker id="fwArr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#B5524F"/></marker></defs>';
     s+='<rect width="'+W+'" height="'+H+'" fill="#FAFBFB"/>';
     s+=T(30,28,spoke?'No internet edge \u2014 spoke site '+(+SITE_INDEX||2)+' of the region':'Internet side \u2014 supplier-operated',{a:'start',fs:13,c:'#4A5056'});
@@ -5695,26 +5704,19 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       for(var i=0;i<nLb;i++){ var ly=ly0+i*64; s+=box(xl0,ly,feName('FE-LB'+pad(i+1)),lbSub);
         xBg.forEach(function(xg){ s+=ln(xl0+BW/2,ly,xg,Y.bg-BH/2,'#C98E6E',true); }); } }   // both LBs' links converge at the gateway's top center, where the edge-router links land
     // firewalls: per-tenant routed bump in the wire off both border leaves (inside + outside legs)
-    var xFw=(xBl[xBl.length-1]||xMain)+300;
-    // ONE link per border leaf per firewall, orthogonal, arrowheads at both ends (traffic both ways), as
-    // in the reference drawing: the near leaf goes straight across (FW01) or across-and-down (FW02);
-    // farther leaves drop below the leaf row, run under the near leaf, and rise/fall into the firewall.
+    // HS v1.82: HA pairs side by side (odd units left, even right), one row per pair. Each border leaf gives every
+    // firewall one link, orthogonal, arrowheads at both ends: down from the leaf's bottom edge to that firewall's lane,
+    // across under the leaf row and under the firewall block, up a channel (left of the left column, or between the
+    // columns) and into the firewall's left edge.
     var AR=' marker-start="url(#fwArr)" marker-end="url(#fwArr)"';
-    var fwY=fws.map(function(f,i){ return Y.bl-40+i*80; }), fwL=xFw-BW/2;
-    fws.forEach(function(f,i){ s+=box(xFw,fwY[i],sh(f.name),mdl(FE.fwModel)+' \u00b7 per-tenant routed',{f:'#F7E3E3',s:'#C98A8A'}); });
-    xBl.forEach(function(xl,li){ var near=(li===xBl.length-1);
-      fws.forEach(function(f,i){ var pts;
-        if(near){
-          var ey=fwY[i]+(i===0?22:-10);                      // entry height on the firewall's left edge
-          if(i===0) pts=[[xl+BW/2,Y.bl-18],[fwL,Y.bl-18]];   // straight across into FW01
-          else { var xc=fwL-40; pts=[[xl+BW/2,Y.bl+10],[xc,Y.bl+10],[xc,ey],[fwL,ey]]; }
-        } else {
-          var bx=xl+24+i*22, ey2=fwY[i]+(i===0?-12:14), yy=(fwY[i]>Y.bl)?ey2:Y.bl+BH/2+16+i*12, xc2=fwL-70-i*14;   // a firewall below the leaf row: run straight in at its entry height (no jog)
-          pts=[[bx,Y.bl+BH/2],[bx,yy],[xc2,yy],[xc2,ey2],[fwL,ey2]];
-        }
+    var fwX=fws.map(function(f,i){ return i%2?xFw2:xFw1; }), fwY=fws.map(function(f,i){ return Y.bl-(nPr-1-Math.floor(i/2))*FWRG*_k; });
+    fws.forEach(function(f,i){ s+=box(fwX[i],fwY[i],sh(f.name),mdl(FE.fwModel)+' \u00b7 per-tenant routed',{f:'#F7E3E3',s:'#C98A8A'}); });
+    xBl.forEach(function(xl){
+      fws.forEach(function(f,i){ var r=Math.floor(i/2), L=fwX[i]-BW/2, ch=L-(i%2?12:14)-r*8, yl=Y.bl+BH/2+14+i*7,
+          bx=nFw>1?xl-BW/2+16+i*((BW-32)/(nFw-1)):xl, pts=[[bx,Y.bl+BH/2],[bx,yl],[ch,yl],[ch,fwY[i]],[L,fwY[i]]];
         s+='<path d="M'+pts.map(function(q){return q[0]+' '+q[1];}).join(' L')+'" fill="none" stroke="#B5524F" stroke-width="1.3"'+AR+'/>';
       }); });
-    if(fws.length) s+=T(xFw,Y.bl-84,'bump in the wire: each link carries the inside and outside legs',{fs:10,fw:400,c:'#8A2E2E'});
+    if(nFw) s+=T((nFw>1?(xFw1+xFw2)/2:xFw1),fwY[0]-44,'bump in the wire: each link carries the inside and outside legs \u00b7 HA pairs side by side',{fs:10,fw:400,c:'#8A2E2E'});
     // BL -> spines, spines -> leaves (full mesh)
     if(CZ && !ssps.length){   // v510: two tiers -- full mesh among the drawn devices
       xBl.forEach(function(xl){ xSp.forEach(function(xs,i){ if(!sps[i].mk) s+=ln(xl,Y.bl+BH/2,xs,Y.sp-BH/2); }); });

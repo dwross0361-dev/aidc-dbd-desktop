@@ -1,3 +1,8 @@
+# AIDC DBD Desktop 2.0.81 (builder HS-v1.82, site runner 1.11.0)
+
+- **FE Render, firewalls:** HA pairs side by side (odd units left, even right), one row per pair, the last row level with the border leaves. The rows above take extra space between the gateways and the border leaves, so the firewalls never reach the tier below. Each border-leaf link runs in its own lane under the leaf row and up a channel into the firewall; no link crosses a box or the Edge PoP line. The block sits right of the widest tier, past the DCI backbone zone when there is one, tucked beside the border leaves when there is not.
+- **FE Render, edge rows:** the drawing widens to fit the border-leaf, gateway and edge-router rows (12 border leaves at 6 FTD pairs ran off the left edge).
+
 # AIDC DBD Desktop 2.0.80 (builder HS-v1.81, site runner 1.11.0)
 
 - **Back end group:** more space between Total racks and BE switch.
