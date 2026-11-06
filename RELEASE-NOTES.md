@@ -1,3 +1,7 @@
+# AIDC DBD Desktop 2.0.63 (builder HS-v1.68, site runner 1.11.0)
+
+- **SN6600-LD faceplate: BMC and OOB positions confirmed.** The top RJ45 pair, BMC on the left and OOB (eth0) on the right, is confirmed from the NVIDIA and router-switch.com data sheets, so the label reads "BMC · OOB" without CONFIRM. Still to confirm on the SN6600-LD: the cage numbering. The SN6600, SN6810-LD and SN6800-LD keep their BMC and OOB CONFIRM, since their positions come from other panels.
+
 # AIDC DBD Desktop 2.0.62 (builder HS-v1.67, site runner 1.11.0)
 
 - **Fix: SN6600 and SN6600-LD faceplates show the breakout the build uses.** The OSFP header was fixed text: "8 x 200G" on the SN6600-LD and "2 x 800G" on the SN6600, whatever the design. It now reads the speed of the links on the switch's cages: 2 x 800G (swpNs0-s1), 4 x 400G (swpNs0-s3) or 8 x 200G (swpNs0-s7), and lists each where a switch carries more than one. With no links it lists the three options. GB300 256 racks on SN6600-LD: 2 planes show 4 x 400G, 4 planes show 8 x 200G.
