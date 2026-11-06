@@ -1,3 +1,9 @@
+# AIDC DBD Desktop 2.0.71 (builder HS-v1.73, site runner 1.11.0)
+
+- **Toolbar grouped by tool.** The second toolbar row is now four labeled groups: **Fabric Designer** (Render, FE Render, Config, Infra, Facility, BoM, Release check, Blueprint package), **DC Layout Builder** (DC Layout Builder, Physical model, Cable Matrix, and the physical settings), **Deployment Console** (Deploy, Site runner, Day-2 SoT, Tuned profiles) and **File** (Input sheet, Equivalence, Save, Load, Share link, Site registry, Reset). Every button keeps its id and behavior; design fingerprints and plan digests are unchanged.
+- **Tenants explained.** The Tenants box and button tooltips say what a tenant is, what each gets (VRF and VNI, firewall routing instance, DPU configuration, VIPs and SNAT pool) and the limits (120 per edge block, up to 989).
+- **User guide restructured by tool.** New sections: **Fabric Designer** (build, tenants, the button groups), **DC Layout Builder** (views, the settings that drive it, refresh and save) and **Deployment Console** (sign-in and roles, header buttons, device stages and actions, Unclaimed, gates, tuning, backups, hand-over). The navigation panel follows the same groups; How to deploy links into each. The toolbar reference lists row 2 by group.
+
 # AIDC DBD Desktop 2.0.70 (builder HS-v1.72, site runner 1.11.0)
 
 - **User guide: Cable Matrix, steps 0 to 4.** What each step holds and the order inside it, why a large step splits into numbered sheets (4a, 4b: sheet 1, sheet 2, one step and one gate), the columns, lengths and PDF files, and the deployment path: each step's Deployment Console gate opens the next. How to deploy, stage 4, now follows the same order.

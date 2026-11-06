@@ -27,7 +27,11 @@ function render(R) {
   const tabs = []; R.sheet.forEach((s) => { if (tabs.indexOf(s.tab) < 0) tabs.push(s.tab); });
   const sheet = tabs.map((t) => '<h3>' + E(t) + '</h3>\n' + tab(['Key', 'Row', 'What it is', 'Takes'], R.sheet.filter((s) => s.tab === t).map((s) => [{ code: s.key }, s.label + (s.unit ? ' (' + s.unit + ')' : ''), s.about, s.allowed]))).join('\n');
   const kinds = { button: 'button', list: 'list', box: 'box', checkbox: 'check box' };
-  const ctl = [1, 2].map((r) => '<h3>Toolbar row ' + r + '</h3>\n' + tab(['Control', 'What it does', 'Input sheet key'], R.controls.filter((c) => c.row === r).map((c) => [c.name + ' (' + (kinds[c.kind] || c.kind) + ')', c.title || c.sets || (c.id === 'registerbtn' ? 'The site registry: the sites of each region and their numbering' : ''), c.key]))).join('\n');
+  const ctlRow = (c) => [c.name + ' (' + (kinds[c.kind] || c.kind) + ')', c.title || c.sets || (c.id === 'registerbtn' ? 'The site registry: the sites of each region and their numbering' : ''), c.key];
+  const ctlTab = (L) => tab(['Control', 'What it does', 'Input sheet key'], L.map(ctlRow));
+  const ctl = [1, 2].map((r) => { const L = R.controls.filter((c) => c.row === r), G = []; L.forEach((c) => { if (c.group && G.indexOf(c.group) < 0) G.push(c.group); });   // 2.0.71: row 2 by tool group
+    if (!G.length) return '<h3>Toolbar row ' + r + '</h3>\n' + ctlTab(L);
+    return G.map((g) => '<h3>Toolbar row ' + r + ': ' + E(g) + '</h3>\n' + ctlTab(L.filter((c) => c.group === g))).join('\n'); }).join('\n');
   // condensed: a few wide columns, related facts grouped in a cell
   const J = (a) => a.filter((x) => x !== '' && x != null).join(' \u00b7 ');
   const prof = tab(['Platform', 'Per rack', 'Back end and DPU', 'Notes'], R.profiles.map((p) => [p.name + ' \u2014 ' + p.label,
