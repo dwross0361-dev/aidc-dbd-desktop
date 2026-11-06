@@ -1,3 +1,12 @@
+# AIDC DBD Desktop 2.0.66 (builder HS-v1.71, site runner 1.11.0)
+
+- **User guide, pass 2: the reference, generated from the builder.** Three new sections, read from the builder file the guide ships with, so they cannot drift from it:
+  - **Input sheet keys:** all 71 rows, by tab, with the label, the unit and what each takes (the options, the range, the platforms that offer it).
+  - **Toolbar controls:** the 67 controls on the two toolbar rows, what each does (its tooltip or its input sheet row) and its input sheet key.
+  - **Platforms:** the compute platforms (GPUs and kW per rack, cooling, planes, north-south DPU), the back-end switches (rack units, cooling, ports, logical ports, notes) and the front-end, edge, border, gateway and hub switches.
+  - `tools/gen-help-ref.js` writes them into the guide; `tools/help-ref-check.js` fails a release whose guide differs from its builder (run with the neutrality gate). The builder gives the data through `__aidcRunner.helpRef()`.
+- **Tooltips** on the toolbar buttons that had none: Build from rack count, Render, FE Render, BoM, Config, Infra, Deploy, Save, Load, Reset.
+
 # AIDC DBD Desktop 2.0.65 (builder HS-v1.70, site runner 1.11.0)
 
 - **User guide, pass 1.** **Help > User guide** (or **F1**) opens the guide in its own window, offline. It covers getting started (install and update, a customer project, the input sheet, the build, the health verdict), the workflows (Release check and the delivery build, equivalence and the Baseline, DC Layout Builder, large sites, Deploy, Reset, tuned profiles, a dry run), troubleshooting by the message you see, and terms. A search box filters and highlights the sections.

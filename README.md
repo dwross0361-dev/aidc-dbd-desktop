@@ -2,7 +2,7 @@
 
 DWR Networking internal. The AIDC DBD Hyperscale builder as a Windows app, with the site runner built in.
 
-- **The builder** runs unchanged in the main window (builder `HS-v1.70`).
+- **The builder** runs unchanged in the main window (builder `HS-v1.71`).
 - **Saves:** every download lands in your project folder. Nothing is overwritten: a second copy is saved as `name (2)`.
 - **Past 512 racks**, the Final package, the Review package and the .run are built by the built-in site runner.
   - The runner is a separate process with the workstation's memory, so a window's 4 GB limit does not apply to it.
@@ -22,7 +22,7 @@ DWR Networking internal. The AIDC DBD Hyperscale builder as a Windows app, with 
 
 ## Use
 
-- **User guide (2.0.65):** **Help > User guide** or **F1** opens `builder/aidc-dbd-help.html` in its own window: getting started, workflows, troubleshooting and terms. The **?** beside the Fabric health panel, the input sheet report and the Deploy panel opens the matching section. It ships beside the builder and passes the neutrality gate.
+- **User guide (2.0.65):** **Help > User guide** or **F1** opens `builder/aidc-dbd-help.html` in its own window: getting started, workflows, troubleshooting and terms. The **?** beside the Fabric health panel, the input sheet report and the Deploy panel opens the matching section. It ships beside the builder and passes the neutrality gate. The reference half (input sheet keys, toolbar controls, platforms) is generated from the builder (2.0.66): after a builder change run `node tools/gen-help-ref.js`; `node tools/help-ref-check.js` fails a release whose guide differs from its builder.
 
 - **Design** as in the browser.
 - **Site build menu:**
@@ -81,6 +81,7 @@ Locally on Windows (Node 22):
 
 ```
 node tools/neutrality-check.js
+node tools/help-ref-check.js
 npm ci
 npm ci --prefix runner --omit=dev
 # put node.exe (Node 22 x64) in vendor\node\

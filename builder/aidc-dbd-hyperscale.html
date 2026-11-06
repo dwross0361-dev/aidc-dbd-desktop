@@ -729,17 +729,17 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     <label id="fe-sto-rdma-w" style="display:none;margin-left:4px;font-family:var(--mono);font-size:11px" title="VAST: serve clients NFS over RDMA (RoCEv2). Turns on the front-end lossless storage class (leaves, spines, DPUs)."><input type="checkbox" id="fe-sto-rdma" autocomplete="off"> RDMA</label>
     <label id="fe-sto-dscpok-w" style="display:none;margin-left:4px;font-family:var(--mono);font-size:11px" title="Record that the DPU DSCP test (hbn/README.md) passed: tenant VXLAN outer DSCP is 0. Clears the SR Linux warning and the design-register item."><input type="checkbox" id="fe-sto-dscpok" autocomplete="off"> DPU DSCP test passed</label>
   </div>
-  <button class="btn alt" id="buildfab">&#9889; Build from rack count</button>
+  <button class="btn alt" id="buildfab" title="Build the design at the rack count in Total racks">&#9889; Build from rack count</button>
   <span class="status" id="status">Set rack count, then build</span>
 </div>
 
 <div class="bar bar-2">
-  <button class="btn alt" id="renderbtn">&#9635; Render</button>
-  <button class="btn alt" id="febtn">&#9635; FE Render</button>
-  <button class="btn alt" id="bombtn">&#128203; BoM</button><button class="btn alt" id="relbtn" title="Design basis, provenance of every load-bearing input, and the release-for-construction gate">&#9989; Release check</button>
-  <button class="btn alt" id="cfgbtn">&#9881; Config</button>
-  <button class="btn alt" id="mgmtbtn">&#128225; Infra</button>
-  <button class="btn alt" id="deploybtn">&#128640; Deploy</button>
+  <button class="btn alt" id="renderbtn" title="Draw the back-end fabric">&#9635; Render</button>
+  <button class="btn alt" id="febtn" title="Draw the front end: leaves, spines, edge, border and storage">&#9635; FE Render</button>
+  <button class="btn alt" id="bombtn" title="Bill of materials, with Excel and PDF exports">&#128203; BoM</button><button class="btn alt" id="relbtn" title="Design basis, provenance of every load-bearing input, and the release-for-construction gate">&#9989; Release check</button>
+  <button class="btn alt" id="cfgbtn" title="Device configurations, switch by switch">&#9881; Config</button>
+  <button class="btn alt" id="mgmtbtn" title="Out-of-band management: switches, consoles, firewalls and addressing">&#128225; Infra</button>
+  <button class="btn alt" id="deploybtn" title="ZTP bootstrap, DHCP and push files, the full package and the .run">&#128640; Deploy</button>
   <button class="btn alt" id="opendct" title="Open the DC Layout Builder in a new tab with this build loaded">&#9638; DC Layout Builder</button>
   <button class="btn alt" id="facbtn" title="Campus, data halls, power blocks, busway schedule and CDUs">&#9889; Facility</button>
   <span style="width:1px;height:24px;background:var(--line-strong);margin:0 3px"></span>
@@ -751,12 +751,12 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   <button class="btn" id="sharelink" title="Copy a link that reproduces this exact design &mdash; paste it to a teammate">&#128279; Share link</button>
   <button class="btn" id="tprofbtn" title="Tuned back-end profiles: import the profile the Deployment Console exports after lossless acceptance; later sites ship with the measured values">Tuned profiles</button>
   <button class="btn" id="registerbtn" title="Click: register this site and download the registry &#183; Shift-click: import a registry &#183; Alt-click: copy the source snippet">Register site</button>
-  <button class="btn" id="save">Save</button>
+  <button class="btn" id="save" title="Save the design file">Save</button>
   <button class="btn" id="runnerexp" title="Export this design for the DWR site runner: the settings it is rebuilt from, this release and the design fingerprint. The runner builds the Final package and the .run off the browser (mega sites).">Site runner</button>
-  <button class="btn" id="load">Load</button>
+  <button class="btn" id="load" title="Open a design file">Load</button>
   <button class="btn" id="insheetbtn" title="Customer input sheet: load a filled sheet (.xlsx or CSV) to set the design in one step, or get the template">Input sheet</button>
   <button class="btn" id="eqbtn" title="Equivalence report: load the customer's Baseline and compare it with this design, or get the Baseline template">Equivalence</button>
-  <button class="btn" id="reset">Reset</button>
+  <button class="btn" id="reset" title="Start a new design: every setting back to its default (asks first; tuned profiles are kept)">Reset</button>
 </div>
 
 <div class="paintbar">
@@ -949,7 +949,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.70';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.71';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   // HS v1.59: Vera Rubin NVL72 at 2 planes x 800G, NVIDIA's public reference layout (Owner decision D11); see the VR profile.
   // HS v1.58: the customer input sheet and importer (inputSheetImport, the SESSION_IN overlay); see the input sheet block.
   // HS v1.57 (release identity): the release is identified by the SHA-256 of this file, not by the string above (HS-v1.56 r1, r2
@@ -30176,11 +30176,42 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     catch(e){ setStatus('Site runner export failed: '+e.message); } }
   (function(){ var b=document.getElementById('runnerexp'); if(b) b.onclick=exportSiteRunner; })();
   // the runner's entry points (the runner drives the page; nothing here reaches the network)
+  // HS v1.71 (2.0.66): the reference half of the user guide, read from this builder: the input sheet keys and what each takes,
+  // the toolbar controls, and the platform catalogs. tools/gen-help-ref.js writes it into the guide; tools/help-ref-check.js fails
+  // a release whose guide differs from its builder.
+  function helpRefData(){
+    var T=function(x){ return String(x==null?'':x).replace(/\s+/g,' ').trim(); };
+    var sheet=insheetSpec().map(function(r){ var al=''; try{ al=insheetAllowedText(r); }catch(e){} return {tab:r.tab, key:r.key, label:r.label, unit:r.unit||'', allowed:T(al)}; });
+    var controls=[];
+    [].forEach.call(document.querySelectorAll('.bar'), function(bar, bi){
+      [].forEach.call(bar.querySelectorAll('input,select,button'), function(el){
+        if(el.type==='hidden' || el.closest('[hidden]') || (el.style && el.style.display==='none')) return;
+        var name='';
+        if(el.tagName==='BUTTON') name=T(el.textContent);
+        else { name=T(el.getAttribute('aria-label')||'');
+          var lb=!name && el.id && bar.querySelector('label[for="'+el.id+'"]'); if(lb) name=T(lb.textContent);
+          if(!name){ var t='', n=el.previousSibling;   // the words just before the control, back to the previous control
+            while(n && !(n.nodeType===1 && /^(INPUT|SELECT|BUTTON)$/.test(n.tagName)) && !(n.nodeType===1 && n.querySelector && n.querySelector('input,select,button'))){ t=(n.textContent||'')+' '+t; n=n.previousSibling; }
+            name=T(t); }
+          if(!name){ var wl=el.closest('label'); if(wl){ var c=wl.cloneNode(true); [].forEach.call(c.querySelectorAll('select,option,input'), function(o){ o.remove(); }); name=T(c.textContent); } }
+          if(!name) name=T(el.placeholder||el.getAttribute('title')||el.id); }
+        var title=T(el.getAttribute('title')||'');
+        if(el.tagName==='SELECT' && name.length>40){ if(!title) title=name; var o0=el.options[0]; var pre=o0?T(o0.textContent).split(':')[0]:''; name=(o0 && /:/.test(o0.textContent) && pre.length<=24)?pre:name.split(/[.:(]/)[0]; if(name.length>40) name=name.split(' ').slice(0,3).join(' '); }
+        name=name.replace(/[\u25cf\u25cb\u25be]\s*\d*/g,'').replace(/[:@\s]+$/,'').replace(/^[^A-Za-z0-9]+/,'').trim();
+        if(!name) return;
+        if(el.id==='profile' || /^this site /.test(title)) title='';   // these tooltips describe the open design, not the control
+        var sk=null; insheetSpec().some(function(r){ if(r.m && r.m.c===el.id){ sk=r; return true; } });   // the input sheet row this control takes
+        controls.push({row:bi+1, id:el.id||'', key:sk?sk.key:'', sets:sk?sk.label:'', kind:el.tagName==='BUTTON'?'button':(el.type==='checkbox'?'checkbox':(el.tagName==='SELECT'?'list':'box')), name:name, title:title}); }); });
+    var profiles=Object.keys(PROFILES).map(function(k){ var p=PROFILES[k]; return {name:T(p.preset||k), label:T(p.label), gpus:(p.hosts||0)*(p.perHost||0), rackKW:p.rackKW||null, cooling:p.cooling||(p.immersionOk?'liquid':''), planes:(p.planeOpts||[p.planes]).filter(Boolean).join(', '), dpu:T(p.feNic&&p.feNic.model||''), note:T(p.note||'')}; });
+    var be=Object.keys(BE_MODELS).map(function(k){ var m=BE_MODELS[k]; return {name:k, label:T(m.label), ru:m.ru||null, cooling:m.cooling||'', ports:m.cages?(m.cages+' x '+m.cageG+'G'):(m.cageG?(Math.round(102400/m.cageG)+' x '+(m.cageG>=1000?(m.cageG/1000)+'T':m.cageG+'G')):'64 x 800G'), maxPorts:m.maxPorts||null, lane:!!m.laneOnly, note:T(m.note||'')}; });
+    var sw=function(C){ return Object.keys(C).map(function(k){ var m=C[k]; var r=m.roles||m.role||[]; return {name:k, label:T(m.label), roles:(Array.isArray(r)?r:[r]).join(', '), ru:m.ru||null, access:m.access?(m.access.n+' x '+m.access.gbps+'G '+(m.access.ff||'')).trim():'', maxW:m.maxW||null}; }); };
+    return {builder:BUILDER_VER, sheet:sheet, controls:controls, profiles:profiles, be:be, fe:sw(FE_SW), edge:sw(FE_EDGE_SW)}; }
   // HS v1.70 (2.0.65): the user guide, shipped beside the builder; the app opens it in its own window (F1, Help > User guide)
   window.aidcHelp=function(sec){ sec=String(sec||'').replace(/[^a-z0-9-]/gi,''); var d=window.aidcDesktop;
     if(d && d.openHelp) d.openHelp(sec); else window.open('aidc-dbd-help.html'+(sec?'#'+sec:''), 'aidc-dbd-help'); return false; };
   window.__aidcRunner={ version:function(){ return BUILDER_VER; }, app:function(){ return APP_NAME; },
     buildId:function(){ try{ return byType('rack').length?identBuild():''; }catch(e){ return ''; } },   // HS v1.63 (2.0.57): File > New project folder
+    helpRef:function(){ return helpRefData(); },   // HS v1.71 (2.0.66): the user guide's reference, from this builder
     load:function(f, o){ if(!f || f.format!==SITE_RUNNER_FORMAT) throw new Error('not a site-runner file');   // HS v1.06: o.settings -- built from the settings alone
       if(f.builder!==BUILDER_VER && !(o && o.settings)) throw new Error('the file was exported from '+f.builder+'; the runner loaded '+BUILDER_VER+' -- use the same release');
       var _bs=builderSha256(); if(!(o && o.settings) && f.builderSha256 && _bs && f.builderSha256!==_bs) throw new Error('the file was exported from builder '+f.builder+' with SHA-256 '+f.builderSha256.slice(0,16)+'...; the builder loaded here has SHA-256 '+_bs.slice(0,16)+'... -- use the same builder file');   // HS v1.57: release identity
