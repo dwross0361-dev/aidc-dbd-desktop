@@ -1,3 +1,7 @@
+# AIDC DBD Desktop 2.0.86 (builder HS-v1.87, site runner 1.11.0)
+
+- **SRX4700 faceplate matches the front panel** (Juniper SRX4700 chassis and interfaces pages): per PIC, left to right, port 0 QSFP56-DD (400G) over port 1 (100G), ports 2-5 QSFP28, then 6-9 and 10-13 SFP56 (50G), each block numbered down its columns (0/2 over 0/3, 0/4 over 0/5); PIC 0 then PIC 1; the two 1G SFP HA (CTL) ports; MGMT (fxp0) over CON. Was one row per port type. MGMT and CON now light when cabled.
+
 # AIDC DBD Desktop 2.0.85 (builder HS-v1.86, site runner 1.11.0)
 
 - **Gateway links scale with north-south.** Above 800G the gateway links become LACP LAGs of 400G members: edge router to each gateway N-S / 800 members (one edge router alone carries the whole rate over its two gateway LAGs), border leaf to each gateway (block share) / 800 members once a firewall block carries more than 800G. Generated in every gateway OS (Junos, EOS, NX-OS, SR Linux, SR OS) and border-leaf OS (Junos, EOS, NX-OS, Cumulus, SR Linux): member ports, the bundle, LACP active and fast, the routed /31 and the per-tenant edge subinterfaces on the LAG, and the SR OS edge router's lag-11 / lag-12. One cable per member in the physical model, Cable Matrix and Port Mapping; the FE Render labels each mesh ("each link 2 x 400G LAG"). At or below 800G every output is unchanged.
