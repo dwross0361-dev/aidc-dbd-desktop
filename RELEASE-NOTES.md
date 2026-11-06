@@ -1,3 +1,7 @@
+# AIDC DBD Desktop 2.0.70 (builder HS-v1.72, site runner 1.11.0)
+
+- **User guide: Cable Matrix, steps 0 to 4.** What each step holds and the order inside it, why a large step splits into numbered sheets (4a, 4b: sheet 1, sheet 2, one step and one gate), the columns, lengths and PDF files, and the deployment path: each step's Deployment Console gate opens the next. How to deploy, stage 4, now follows the same order.
+
 # AIDC DBD Desktop 2.0.69 (builder HS-v1.72, site runner 1.11.0)
 
 - **User guide: How to deploy, start to finish.** The whole path in seven stages (Workflows > How to deploy, start to finish), with every command and gate: design freeze, procure, site readiness, install and cable, provision, validate, handover.

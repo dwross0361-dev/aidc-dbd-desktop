@@ -67,6 +67,7 @@ mark{ background:var(--mark); color:inherit; }
   <a href="#delivery">Release check and delivery build</a>
   <a href="#equivalence">Equivalence and the Baseline</a>
   <a href="#layout">DC Layout Builder</a>
+  <a href="#cablematrix">Cable Matrix: steps 0 to 4</a>
   <a href="#large">Large sites (past 512 racks)</a>
   <a href="#deploy">Deploy panel</a>
   <a href="#reset">Reset and save</a>
@@ -211,8 +212,8 @@ sudo bash air/ztp-host.sh [--engine go|python] [interface]</code></pre></li>
 
 <h3>4. Install and cable (each wave)</h3>
 <ol>
-  <li>Give the crews the elevations, the cable matrix and the labels for the wave.</li>
-  <li>Order: OOB drops and console ports first, then power, then back-end, front-end and storage links.</li>
+  <li>Give the crews the elevations, the Cable Matrix and the labels for the wave. Cable it step by step (see <a href="#cablematrix">Cable Matrix: steps 0 to 4</a>).</li>
+  <li>Order: step 0 power cords (laid, not energized), step 1 OOB drops and console cables, then step 2 Edge PoP, step 3 front end and storage, step 4 back end.</li>
   <li>No device is powered before its OOB drop is live.</li>
 </ol>
 
@@ -317,6 +318,36 @@ sudo python3 /opt/estate-build/estate_build.py start --plane be</code></pre></li
   <li><b>Faceplates:</b> each switch's front panel shows its ports, with the breakout this design uses. A label marked CONFIRM is drawn from a source that does not state it (for example cage numbering read from an LED legend); ports labeled by type only are not cabled by the design.</li>
   <li><b>Save layout</b> writes the cabinets, devices and your edits. On a large site the file holds no links; they come from the design when the layout is opened again.</li>
 </ul>
+</section>
+
+<section id="cablematrix">
+<h2>Cable Matrix: steps 0 to 4</h2>
+<p>The Cable Matrix (<span class="ui">Cable Matrix</span> button, Excel or PDF; past 512 racks written by the site runner) lists every power cord and cable once, in the order the site is built. Each step is one part of the site, and each matches a gate in the Deployment Console, so a crew can cable one step while the step before it is being brought up.</p>
+<table>
+<tr><th>Step (sheet)</th><th>What it holds, top to bottom</th><th>Before you start it / gate it feeds</th></tr>
+<tr><td><b>0</b> Power</td><td>Every cord: PDU outlet, the PSU it feeds, cord type and length. Equipment in build order (OOB, Edge PoP, front end and storage, back end, GPU compute), cabinet by cabinet, top of the cabinet down. Dual-PSU devices have one cord on PDU A and one on PDU B. Compute racks on a DC busbar list no cords; their power shelves ship in the rack.</td><td>Before any device is powered. Lay the cords; do not energize a device until its OOB drop (step 1) is live.</td></tr>
+<tr><td><b>1</b> OOB Cable Map</td><td>The OOB backbone first (edge routers to the carriers, firewalls, core switches, OOB spines). Then cabinet by cabinet: each MGT switch (A, then B) with its uplink, its drops by port band (host BMCs, DPUs, switch management ports, PDUs, power shelves, NVLink trays, cooling), then the console cables.</td><td>First data cabling. Feeds the <b>OOB gate</b>: every console port reached, TACACS+ and break-glass logins, cellular.</td></tr>
+<tr><td><b>2</b> Edge PoP</td><td>Edge routers to the carriers, the gateways (edge routers, DCI handoffs, load-balancer DPUs), firewalls, border leaves to the firewalls.</td><td>After the OOB gate. Feeds the <b>Edge</b> gate (<code>start --plane edge</code>).</td></tr>
+<tr><td><b>3</b> FEF Cable Map</td><td>Border leaves to the gateways, FE spines to the border leaves, then the FE leaf pairs (A, then B): uplinks first, then the hosts rack by rack (DPU port 0 on leaf A, port 1 on leaf B), then the storage nodes.</td><td>Feeds the <b>Front end</b> gate (<code>start --plane fe</code>).</td></tr>
+<tr><td><b>4</b> BEF Cable Map</td><td>Spines to super-spines first (where there are any), then each leaf: its uplinks to the spines, then its downlinks to the GPU hosts in leaf port order (rail-optimized: one link to every host in the pod, on the host's matching GPU port; in a multi-plane build each port's lanes s0, s1 &hellip; go to different hosts). Storage back-end links are here too.</td><td>Feeds the <b>Back end</b> gate (<code>start --plane be</code>), then lossless and NCCL validation.</td></tr>
+</table>
+<ul>
+  <li><b>Steps 4a, 4b &hellip; (sheets "4 BEF Cable Map 1", "2" &hellip;):</b> one Excel sheet holds at most 1,048,576 rows. A step past that is split into numbered sheets, at a section break (a switch or a cabinet), so no switch's block is divided. Cable sheet 1, then sheet 2: it is still one step and one gate. Large back ends are usually the only step that splits.</li>
+  <li><b>Build order sheet</b> (first): one line per step with its cable count, its Deployment Console gate and the order inside the step. <b>Cabling rules</b> (second): the pattern behind every cable, with the check for each. Read both before pulling cable.</li>
+  <li><b>Columns:</b> # &middot; Device &middot; Port &middot; Far device &middot; Far port &middot; Far cabinet (cabinet and U) &middot; Speed &middot; Media &middot; Run (measured path, m) &middot; Order (orderable length, m). Each cable is listed once, under the switch or PDU it plugs into; to see one host's or one spine's cables, filter <b>Far device</b>.</li>
+  <li><b>Lengths:</b> measured from the DC Layout Builder. Until the site's geometry is entered, the subtitle says the lengths are indicative.</li>
+  <li><b>PDF:</b> past about 140,000 rows the PDF is written as one file per step (on a multi-hall site, per hall and step), named <code>&lt;build&gt;-cable-matrix-step&lt;N&gt;-&lt;part&gt;.pdf</code>; any file past 10,000 pages continues in <code>-vol2</code>, <code>-vol3</code>. Bookmarks go to each part, section and cabinet.</li>
+</ul>
+<h3>The deployment path</h3>
+<p>Each wave runs the steps in order, and each step's gate opens the next. In <a href="#howto">How to deploy</a> this is stages 4 to 6:</p>
+<ol>
+  <li><b>Step 0</b> cords laid, nothing energized.</li>
+  <li><b>Step 1</b> OOB cabled &rarr; power on the OOB equipment &rarr; <b>OOB gate</b>. Only now power the rest of the wave; devices call in over their OOB drops and are claimed by ZTP.</li>
+  <li><b>Step 2</b> Edge PoP cabled &rarr; software floor &rarr; <code>start --plane edge</code> &rarr; Edge gate.</li>
+  <li><b>Step 3</b> front end cabled &rarr; <code>start --plane fe</code> &rarr; Front end gate (cabling check, MTU, BGP, DPU VTEPs, tenant isolation, ingress).</li>
+  <li><b>Step 4</b> back end cabled (sheet 1, then 2 &hellip;) &rarr; <code>start --plane be</code> &rarr; Back end gate: lossless tests, then NCCL bus bandwidth at or above the target.</li>
+</ol>
+<p>Crews can run ahead: step 3 or 4 can be cabled while the gate before it is being worked, as long as nothing is powered before its OOB drop is live.</p>
 </section>
 
 <section id="large">
