@@ -1,3 +1,7 @@
+# AIDC DBD Desktop 2.0.76 (builder HS-v1.78, site runner 1.11.0)
+
+- **FE+EDG cabinets** moved into the Front end group, after N-S Gbps; shown only when the front end is on.
+
 # AIDC DBD Desktop 2.0.75 (builder HS-v1.77, site runner 1.11.0)
 
 - **Front end group:** Ingress Gbps now sits next to Assign tenants, before N-S Gbps (ingress is sized per tenant service).

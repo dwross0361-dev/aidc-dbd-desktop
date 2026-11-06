@@ -712,6 +712,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     <label class="lbl fe-dep" style="font-size:12px;color:var(--ink-soft);font-weight:600" title="North-south rate: the busy-hour traffic between the site and the internet through the Edge PoP, in Gbps, in the busier direction. Each of the two diverse internet circuits must carry it alone (circuits of 10, 100 or 400G); the edge routers are checked against it; and it sets the firewall pairs, one per 1,400G on Junos SRX or per 145G on Cisco FTD (at least one per tenant ceiling). Blank: not sized (two circuits, firewall pairs by tenant count). Example: 400.">N-S Gbps
       <input id="fe-nsgbps" type="number" min="0" max="100000" value="" placeholder="-" style="width:64px;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--mono);margin:0 4px" autocomplete="off">
     </label>
+    <label class="lbl fe-dep" style="font-size:12px;color:var(--ink-soft);font-weight:600">FE+EDG cabinets
+      <select id="netfoot" title="FE and Edge PoP cabinets in the physical model: one A/B pair holds the edge routers, gateways, border leaves, firewalls and FE spines, or the Edge PoP gets its own pair (EDG-NR01A/B) apart from the front-end core (FE-NR01A/B)" style="height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--body);margin:0 4px" autocomplete="off"><option value="consolidated">1 cabinet pair</option><option value="separate">separate pairs</option></select>
+    </label>
     <label class="lbl" id="fe-spare-wrap" style="display:none;font-size:12px;color:var(--ink-soft);font-weight:600;cursor:pointer" title="One spare per platform model per site, leaves scaled to count">
       <input type="checkbox" id="fe-spares" style="vertical-align:-1px" autocomplete="off"> Cold spares
       <select id="fe-spare-optics" aria-label="Cold spare optics" style="height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--mono);font-size:11px;margin:0 4px" autocomplete="off">
@@ -752,8 +755,6 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       <optgroup label="VAST"><option value="vast_ceres">VAST CNode + DBox</option></optgroup>
       <optgroup label="Pure Storage"><option value="pure_exa">FlashBlade//EXA</option></optgroup>
     </select></span>
-    <span class="nw"><label for="netfoot">FE+EDG cabinets</label>
-    <select id="netfoot" title="FE and Edge PoP cabinets in the physical model: one A/B pair holds the edge routers, gateways, border leaves, firewalls and FE spines, or the Edge PoP gets its own pair (EDG-NR01A/B) apart from the front-end core (FE-NR01A/B)" style="height:30px;margin-left:4px" autocomplete="off"><option value="consolidated">1 cabinet pair</option><option value="separate">separate pairs</option></select></span>
     <span class="nw"><label for="fe-sto-pp" id="fe-sto-pp-l">Storage nodes per scalable unit</label>
     <input id="fe-sto-pp" type="number" min="0" max="64" step="1" title="Storage nodes per scalable unit (the profile's pod: 8 racks on NVL72; the back-end pod on a host profile): WEKApod nodes (cluster minimum 8), DDN appliances, VAST CNodes (DBoxes follow at one per two) or Pure data nodes" style="width:56px;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--mono);font-size:11px;margin:0 4px" autocomplete="off"></span>
     <label id="fe-sto-rdma-w" style="display:none;margin-left:4px;font-family:var(--mono);font-size:11px" title="VAST: serve clients NFS over RDMA (RoCEv2). Turns on the front-end lossless storage class (leaves, spines, DPUs)."><input type="checkbox" id="fe-sto-rdma" autocomplete="off"> RDMA</label>
@@ -990,7 +991,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.77';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.78';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   // HS v1.59: Vera Rubin NVL72 at 2 planes x 800G, NVIDIA's public reference layout (Owner decision D11); see the VR profile.
   // HS v1.58: the customer input sheet and importer (inputSheetImport, the SESSION_IN overlay); see the input sheet block.
   // HS v1.57 (release identity): the release is identified by the SHA-256 of this file, not by the string above (HS-v1.56 r1, r2
