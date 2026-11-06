@@ -1,3 +1,7 @@
+# AIDC DBD Desktop 2.0.77 (builder HS-v1.79, site runner 1.11.0)
+
+- **Front-end platforms strip:** the storage node count sits with Storage, labeled "nodes per scalable unit (N racks)"; the pair wraps together. The strip lists use the body font.
+
 # AIDC DBD Desktop 2.0.76 (builder HS-v1.78, site runner 1.11.0)
 
 - **FE+EDG cabinets** moved into the Front end group, after N-S Gbps; shown only when the front end is on.

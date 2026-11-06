@@ -482,6 +482,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   .bar-1 .r1g{gap:7px}
   .bar #fe-sku-wrap{flex:1 0 100%;display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:8px 12px;background:#F4F6F8;border-radius:8px}
   .bar #fe-sku-wrap .nw,.bar #fe-sku-wrap>label{margin-left:0 !important}
+  .bar #fe-sku-wrap select{font-family:var(--body) !important;font-size:12px !important}
+  .bar #fe-sku-wrap{gap:8px 10px}
   #fe-grp.off .tbt{background:#9FB3C8}
   .r1st{flex:1 0 100%;display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
   .r1st #status{margin-left:auto}
@@ -754,8 +756,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       <optgroup label="DDN"><option value="ddn_ai400x3">DDN AI400X3 (2U)</option></optgroup>
       <optgroup label="VAST"><option value="vast_ceres">VAST CNode + DBox</option></optgroup>
       <optgroup label="Pure Storage"><option value="pure_exa">FlashBlade//EXA</option></optgroup>
-    </select></span>
-    <span class="nw"><label for="fe-sto-pp" id="fe-sto-pp-l">Storage nodes per scalable unit</label>
+    </select>
+    <label for="fe-sto-pp" id="fe-sto-pp-l" style="margin-left:8px">nodes per scalable unit</label>
     <input id="fe-sto-pp" type="number" min="0" max="64" step="1" title="Storage nodes per scalable unit (the profile's pod: 8 racks on NVL72; the back-end pod on a host profile): WEKApod nodes (cluster minimum 8), DDN appliances, VAST CNodes (DBoxes follow at one per two) or Pure data nodes" style="width:56px;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--mono);font-size:11px;margin:0 4px" autocomplete="off"></span>
     <label id="fe-sto-rdma-w" style="display:none;margin-left:4px;font-family:var(--mono);font-size:11px" title="VAST: serve clients NFS over RDMA (RoCEv2). Turns on the front-end lossless storage class (leaves, spines, DPUs)."><input type="checkbox" id="fe-sto-rdma" autocomplete="off"> RDMA</label>
     <label id="fe-sto-dscpok-w" style="display:none;margin-left:4px;font-family:var(--mono);font-size:11px" title="Record that the DPU DSCP test (hbn/README.md) passed: tenant VXLAN outer DSCP is 0. Clears the SR Linux warning and the design-register item."><input type="checkbox" id="fe-sto-dscpok" autocomplete="off"> DPU DSCP test passed</label>
@@ -991,7 +993,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.78';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.79';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   // HS v1.59: Vera Rubin NVL72 at 2 planes x 800G, NVIDIA's public reference layout (Owner decision D11); see the VR profile.
   // HS v1.58: the customer input sheet and importer (inputSheetImport, the SESSION_IN overlay); see the input sheet block.
   // HS v1.57 (release identity): the release is identified by the SHA-256 of this file, not by the string above (HS-v1.56 r1, r2
@@ -20643,7 +20645,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     FE.storageNicsPerNode=STORAGE_PLATFORM.nics; FE.storageNicGbps=STORAGE_PLATFORM.nicGbps; } }   // v500: the node's port shape drives the leaf budget
   // HS v1.63: the control's label names the unit it counts in
   function stoSuLabel(){ return 'Storage nodes per scalable unit ('+suRacks()+' racks)'; }
-  function syncStoSu(){ try{ var l=document.getElementById('fe-sto-pp-l'); if(l) l.textContent=stoSuLabel()+':'; }catch(e){} }
+  function syncStoSu(){ try{ var l=document.getElementById('fe-sto-pp-l'); if(l) l.textContent=stoSuLabel().replace(/^Storage nodes/,'nodes'); }catch(e){} }
   function syncStoRdma(){ try{ var w=document.getElementById('fe-sto-rdma-w'), c=document.getElementById('fe-sto-rdma');
     if(w) w.style.display=(STORAGE_PLATFORM.vendor==='vast')?'':'none'; if(c) c.checked=!!FE.vastRdma;
     var w2=document.getElementById('fe-sto-dscpok-w'), c2=document.getElementById('fe-sto-dscpok');   // v504
