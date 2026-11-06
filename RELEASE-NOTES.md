@@ -1,3 +1,7 @@
+# AIDC DBD Desktop 2.0.75 (builder HS-v1.77, site runner 1.11.0)
+
+- **Front end group:** Ingress Gbps now sits next to Assign tenants, before N-S Gbps (ingress is sized per tenant service).
+
 # AIDC DBD Desktop 2.0.74 (builder HS-v1.76, site runner 1.11.0)
 
 - **Toolbar row 1 by group.** Blue tags, as on row 2: **Site** (Customer, Code, Site code, Region, Site #, Device IDs, Site params, Public IPs), **Back end** (Fabric, Pod size, Total racks, BE platform) and **Front end** (On, Tenants, Assign tenants, N-S Gbps, Ingress Gbps, Cold spares). With the front end off its tag is gray and only On shows. The front-end platforms have their own strip, shown only when the front end is on. The status line ends with the green **Build from rack count**.
