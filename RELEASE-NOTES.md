@@ -1,3 +1,7 @@
+# AIDC DBD Desktop 2.0.78 (builder HS-v1.80, site runner 1.11.0)
+
+- **BE switch (leaf · spine · super-spine)** replaces the "BE platform" label: one switch model covers every back-end tier, and the tooltip says why (same radix and lane speed, 1:1 non-blocking, uniform planes, breakouts, optics and spares).
+
 # AIDC DBD Desktop 2.0.77 (builder HS-v1.79, site runner 1.11.0)
 
 - **Front-end platforms strip:** the storage node count sits with Storage, labeled "nodes per scalable unit (N racks)"; the pair wraps together. The strip lists use the body font.
