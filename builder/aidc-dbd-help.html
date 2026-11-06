@@ -51,7 +51,7 @@ mark{ background:var(--mark); color:inherit; }
 <body>
 <header>
   <h1>AIDC DBD User Guide</h1>
-  <span class="ver">Builder HS-v1.73 &middot; DWR Networking</span>
+  <span class="ver">Builder HS-v1.74 &middot; DWR Networking</span>
   <input id="q" type="search" placeholder="Search the guide" aria-label="Search the guide">
 </header>
 <div class="wrap">
@@ -134,7 +134,7 @@ mark{ background:var(--mark); color:inherit; }
 <h2>Load the input sheet</h2>
 <p>The input sheet sets the design in one step from the customer's values.</p>
 <ol>
-  <li><span class="ui">File &gt; Input sheet template (blank)</span> saves the template, generated from the builder's catalog. <span class="ui">Input sheet filled from this design</span> saves one filled from the open design. In a browser, the toolbar's <span class="ui">Input sheet</span> button does the same.</li>
+  <li><span class="ui">File &gt; Input sheet template (blank)</span> saves the template, generated from the builder's catalog. <span class="ui">Input sheet filled from this design</span> saves one filled from the open design. In a browser, <span class="ui">File &#9662; &gt; Input sheet</span> on the toolbar does the same.</li>
   <li>The customer fills it in. The app reads <code>.xlsx</code> or a CSV with the columns <code>key,value,unit,source</code>. It does not read <code>.txt</code>.</li>
   <li><span class="ui">File &gt; Load input sheet&hellip;</span> reads it. A meter shows each step: reading the file, reading the sheet, applying the settings, building the design, drawing, checking the result. If a step fails, the status line names it and the open design is put back.</li>
   <li>The import report lists every row. <span class="ui">Download session input file</span> saves the record; it is also saved to the project folder.</li>
@@ -188,13 +188,15 @@ mark{ background:var(--mark); color:inherit; }
   <li>Past 120 tenants the route distinguishers move to compact ranges; nothing to set.</li>
   <li>The input sheet row is <code>fe.tenants</code>.</li>
 </ul>
-<h3>Buttons, by the tool they serve</h3>
+<h3>The toolbar, by tool</h3>
+<p>The second toolbar row has a blue tag for each tool (a label, not a button) followed by that tool's operations in green. <span class="ui">Save</span>, <span class="ui">Load</span> and <span class="ui">File &#9662;</span> are amber, on the right. The layout settings have their own strip below.</p>
 <table>
-<tr><th>Group</th><th>Buttons</th><th>What they give</th></tr>
-<tr><td><b>Fabric Designer</b></td><td><span class="ui">Render</span> &middot; <span class="ui">FE Render</span> &middot; <span class="ui">Config</span> &middot; <span class="ui">Infra</span> &middot; <span class="ui">Facility</span> &middot; <span class="ui">BoM</span> &middot; <span class="ui">Release check</span> &middot; <span class="ui">Blueprint package</span></td><td>The back-end and front-end drawings; device configurations; out-of-band management; campus, halls, power and CDUs; the bill of materials (Excel, PDF); the release gate; the customer package, Review (watermarked) or Final.</td></tr>
-<tr><td><b>DC Layout Builder</b></td><td><span class="ui">DC Layout Builder</span> &middot; <span class="ui">Physical model</span> &middot; <span class="ui">Cable Matrix</span>, and the physical settings (cabinet height, row network, floor columns, AOC reach, hall MW, feeds, compute power, row feed, FE+EDG footprint)</td><td>The layout tool with this build loaded; the cabinets, contents and links it reads; every cable with its measured length (see <a href="#cablematrix">Cable Matrix</a>).</td></tr>
-<tr><td><b>Deployment Console</b></td><td><span class="ui">Deploy</span> &middot; <span class="ui">Site runner</span> &middot; <span class="ui">Day-2 SoT</span> &middot; <span class="ui">Tuned profiles</span></td><td>What the provisioning host runs, the full package and the .run (see <a href="#deploy">Deploy panel</a>); the site-runner file; NetBox, Ansible and JSON source of truth; the tuning measured by past sites (see <a href="#tuned">Tuned profiles</a>).</td></tr>
-<tr><td><b>File</b></td><td><span class="ui">Input sheet</span> &middot; <span class="ui">Equivalence</span> &middot; <span class="ui">Save</span> &middot; <span class="ui">Load</span> &middot; <span class="ui">Share link</span> &middot; <span class="ui">Site registry</span> &middot; <span class="ui">Reset</span></td><td>Load or get the customer sheet; the Baseline comparison; the design file; a link that reproduces the design; the region's sites; a new design.</td></tr>
+<tr><th>Tag (tool)</th><th>Green buttons</th><th>What they give</th></tr>
+<tr><td><b>Designer</b> (Fabric Designer)</td><td><span class="ui">BE Render</span> &middot; <span class="ui">FE Render</span> &middot; <span class="ui">Configs</span> &middot; <span class="ui">Infra</span> &middot; <span class="ui">Facility</span> &middot; <span class="ui">BoM</span> &middot; <span class="ui">Release check</span> &middot; <span class="ui">Blueprint package</span> (gold)</td><td>The back-end and front-end drawings; device configurations; out-of-band management; campus, halls, power and CDUs; the bill of materials (Excel, PDF); the release gate; the customer package, Review (watermarked) or Final.</td></tr>
+<tr><td><b>Builder</b> (DC Layout Builder)</td><td><span class="ui">DC Layout</span> &middot; <span class="ui">Physical model</span> &middot; <span class="ui">Cable Matrix &#9662;</span></td><td>Opens the DC Layout Builder with this build loaded; the cabinets, contents and links it reads; every cable with its measured length, Excel or PDF (see <a href="#cablematrix">Cable Matrix</a>).</td></tr>
+<tr><td><b>Deploy</b> (Deployment Console)</td><td><span class="ui">Deploy panel</span> &middot; <span class="ui">Site runner</span> &middot; <span class="ui">Day-2 SoT</span> &middot; <span class="ui">Tuned profiles</span></td><td>What the provisioning host runs, the full package and the .run (see <a href="#deploy">Deploy panel</a>); the site-runner file; NetBox, Ansible and JSON source of truth; the tuning measured by past sites (see <a href="#tuned">Tuned profiles</a>).</td></tr>
+<tr><td>Amber, right</td><td><span class="ui">Save</span> &middot; <span class="ui">Load</span> &middot; <span class="ui">File &#9662;</span>: <span class="ui">Input sheet</span>, <span class="ui">Equivalence</span>, <span class="ui">Share link</span>, <span class="ui">Site registry</span>, <span class="ui">Reset</span></td><td>The design file; load or get the customer sheet; the Baseline comparison; a link that reproduces the design; the region's sites; a new design.</td></tr>
+<tr><td>Layout settings (strip)</td><td>Network cabinet height, row network, floor columns, keep pods in one column, AOC reach, hall MW, network feed, OOB spine, compute power, row feed, FE+EDG footprint</td><td>The physical layout and every cable length (see <a href="#layout">DC Layout Builder</a>).</td></tr>
 </table>
 <p>Every control with its tooltip and input sheet key: <a href="#ref-controls">Reference: toolbar controls</a>.</p>
 </section>
@@ -236,7 +238,7 @@ mark{ background:var(--mark); color:inherit; }
 
 <section id="deploy">
 <h2>Deploy panel</h2>
-<p><span class="ui">Deploy</span> shows what the provisioning host runs, per tab:</p>
+<p><span class="ui">Deploy panel</span> (Deploy group) shows what the provisioning host runs, per tab:</p>
 <table>
 <tr><th>Tab</th><th>Shows</th></tr>
 <tr><td>0 &middot; installer</td><td>The installer for the selected switch OS.</td></tr>
@@ -289,7 +291,7 @@ platform.be_switch,NV-SN5610,,dry run</code></pre></li>
 <section id="layout">
 <h2>DC Layout Builder</h2>
 <p>The physical site: cabinets in rows and halls, the devices in each cabinet, and every cable run measured along the trays. The cable lengths in the Cable Matrix and the BoM come from here.</p>
-<p><b>Opens from:</b> the <span class="ui">DC Layout Builder</span> button or <span class="ui">Site build &gt; DC Layout Builder</span>, with the open build loaded. Past 512 racks it opens in its own window in large-site mode (see <a href="#large">Large sites</a>).</p>
+<p><b>Opens from:</b> the <span class="ui">DC Layout</span> button (Builder group) or <span class="ui">Site build &gt; DC Layout Builder</span>, with the open build loaded. Past 512 racks it opens in its own window in large-site mode (see <a href="#large">Large sites</a>).</p>
 <h3>What it shows</h3>
 <table>
 <tr><th>View</th><th>What it holds</th></tr>
@@ -299,7 +301,7 @@ platform.be_switch,NV-SN5610,,dry run</code></pre></li>
 <tr><td>Links and length schedule</td><td>A device's links, a cabinet's power cords, the site-wide checks and the length schedule by cable type.</td></tr>
 </table>
 <h3>Settings that drive it</h3>
-<p>Set in the Fabric Designer (the <b>DC Layout Builder</b> group): network cabinet height, row network, <span class="ui">Floor</span> columns (whole halls side by side; a site with three halls or fewer looks the same at 3 and 4 columns), keep pods in one column, AOC reach (a longer run becomes structured cabling), hall MW, feeds, compute power, row feed and FE+EDG footprint.</p>
+<p>Set in the Fabric Designer, in the <b>Layout settings</b> strip: network cabinet height, row network, <span class="ui">Floor</span> columns (whole halls side by side; a site with three halls or fewer looks the same at 3 and 4 columns), keep pods in one column, AOC reach (a longer run becomes structured cabling), hall MW, feeds, compute power, row feed and FE+EDG footprint.</p>
 <h3>Working in it</h3>
 <ul>
   <li><b>Refresh from Fabric Designer</b> takes the design as the Designer has it now and keeps your physical edits. Change a setting in the Designer, then refresh here.</li>
@@ -559,7 +561,7 @@ sudo python3 /opt/estate-build/estate_build.py start --plane be</code></pre></li
 <!-- REF:BEGIN (generated by tools/gen-help-ref.js; do not edit) -->
 <section id="ref-sheet">
 <h2>Reference: input sheet keys</h2>
-<p>Every row the input sheet takes, as builder HS-v1.73 reads it. A numbered row (<code>constraint.6</code>, <code>site.obstruction.4</code>) is read like its family.</p>
+<p>Every row the input sheet takes, as builder HS-v1.74 reads it. A numbered row (<code>constraint.6</code>, <code>site.obstruction.4</code>) is read like its family.</p>
 <h3>Site &amp; footprint</h3>
 <table>
 <tr><th>Key</th><th>Row</th><th>What it is</th><th>Takes</th></tr>
@@ -697,25 +699,49 @@ sudo python3 /opt/estate-build/estate_build.py start --plane be</code></pre></li
 <tr><td>DPU DSCP test passed (check box)</td><td>Record that the DPU DSCP test (hbn/README.md) passed: tenant VXLAN outer DSCP is 0. Clears the SR Linux warning and the design-register item.</td><td>fe.storage_dscp_ok</td></tr>
 <tr><td>Build from rack count (button)</td><td>Build the design at the rack count in Total racks</td><td></td></tr>
 </table>
-<h3>Toolbar row 2: Fabric Designer</h3>
+<h3>Toolbar row 2: Designer</h3>
 <table>
 <tr><th>Control</th><th>What it does</th><th>Input sheet key</th></tr>
-<tr><td>Render (button)</td><td>Draw the back-end fabric</td><td></td></tr>
+<tr><td>BE Render (button)</td><td>Draw the back-end fabric</td><td></td></tr>
 <tr><td>FE Render (button)</td><td>Draw the front end: leaves, spines, edge, border and storage</td><td></td></tr>
-<tr><td>Config (button)</td><td>Device configurations, switch by switch</td><td></td></tr>
+<tr><td>Configs (button)</td><td>Device configurations, switch by switch</td><td></td></tr>
 <tr><td>Infra (button)</td><td>Out-of-band management: switches, consoles, firewalls and addressing</td><td></td></tr>
 <tr><td>Facility (button)</td><td>Campus, data halls, power blocks, busway schedule and CDUs</td><td></td></tr>
 <tr><td>BoM (button)</td><td>Bill of materials, with Excel and PDF exports</td><td></td></tr>
 <tr><td>Release check (button)</td><td>Design basis, provenance of every load-bearing input, and the release-for-construction gate</td><td></td></tr>
 <tr><td>Blueprint package (button)</td><td>Blueprint package for the customer: Review (watermarked) or Final</td><td></td></tr>
 </table>
-<h3>Toolbar row 2: DC Layout Builder</h3>
+<h3>Toolbar row 2: Builder</h3>
 <table>
 <tr><th>Control</th><th>What it does</th><th>Input sheet key</th></tr>
-<tr><td>DC Layout Builder (button)</td><td>Open the DC Layout Builder in a new tab with this build loaded</td><td></td></tr>
+<tr><td>DC Layout (button)</td><td>Open the DC Layout Builder in a new tab with this build loaded</td><td></td></tr>
 <tr><td>Physical model (button)</td><td>Physical model for the DC Layout Builder: cabinets, contents and every link</td><td></td></tr>
 <tr><td>Cable Matrix (button)</td><td>Cable matrix: every cable by device -- back end, front end and out-of-band -- with the port mapping</td><td></td></tr>
-<tr><td>Network cabinet height (list)</td><td>Network cabinet height for every MoR, EoR, FE/edge and OOB cabinet. 2U at the top is kept for cable entry; each device takes a cable manager and each cabinet a patch field sized to its cross-row links</td><td>site.network_cabinet_u</td></tr>
+</table>
+<h3>Toolbar row 2: Deploy</h3>
+<table>
+<tr><th>Control</th><th>What it does</th><th>Input sheet key</th></tr>
+<tr><td>Deploy panel (button)</td><td>ZTP bootstrap, DHCP and push files, the full package and the .run</td><td></td></tr>
+<tr><td>Site runner (button)</td><td>Export this design for the DWR site runner: the settings it is rebuilt from, this release and the design fingerprint. The runner builds the Final package and the .run off the browser (mega sites).</td><td></td></tr>
+<tr><td>Day-2 SoT (button)</td><td>Day-2 source of truth: NetBox import files, an Ansible inventory and a JSON model of the whole design</td><td></td></tr>
+<tr><td>Tuned profiles (button)</td><td>Tuned back-end profiles: import the profile the Deployment Console exports after lossless acceptance; later sites ship with the measured values</td><td></td></tr>
+</table>
+<h3>Toolbar row 2: File</h3>
+<table>
+<tr><th>Control</th><th>What it does</th><th>Input sheet key</th></tr>
+<tr><td>Save (button)</td><td>Save the design file</td><td></td></tr>
+<tr><td>Load (button)</td><td>Open a design file</td><td></td></tr>
+<tr><td>File (button)</td><td>Input sheet, Equivalence, Share link, Site registry and Reset</td><td></td></tr>
+<tr><td>Input sheet (button)</td><td>Customer input sheet: load a filled sheet (.xlsx or CSV) to set the design in one step, or get the template</td><td></td></tr>
+<tr><td>Equivalence (button)</td><td>Equivalence report: load the customer's Baseline and compare it with this design, or get the Baseline template</td><td></td></tr>
+<tr><td>Share link (button)</td><td>Copy a link that reproduces this exact design — paste it to a teammate</td><td></td></tr>
+<tr><td>Site registry (button)</td><td>The site registry: the sites of each region and their numbering</td><td></td></tr>
+<tr><td>Reset (button)</td><td>Start a new design: every setting back to its default (asks first; tuned profiles are kept)</td><td></td></tr>
+</table>
+<h3>Toolbar row 2: Layout settings</h3>
+<table>
+<tr><th>Control</th><th>What it does</th><th>Input sheet key</th></tr>
+<tr><td>Layout settings (list)</td><td>Network cabinet height for every MoR, EoR, FE/edge and OOB cabinet. 2U at the top is kept for cable entry; each device takes a cable manager and each cabinet a patch field sized to its cross-row links</td><td>site.network_cabinet_u</td></tr>
 <tr><td>Row network (list)</td><td>Row network: one block of cabinets in the middle of the row (leaves, spines, OOB access, consoles and storage together), or a middle-of-row pair for the leaves plus end-of-row cabinets for the spines</td><td>site.network_rack_position</td></tr>
 <tr><td>Floor (list)</td><td>Floor columns: the rows are laid out in 1 to 4 side-by-side columns (vertical stacks of rows), a 3 m aisle between columns. Sets the floor plan and every cable run length.</td><td>site.floor_columns</td></tr>
 <tr><td>keep pods in one column (check box)</td><td>Break columns at pod boundaries where the row counts allow, so a pod's leaf-to-spine cables stay off the cross tray</td><td>site.floor_by_pod</td></tr>
@@ -727,29 +753,10 @@ sudo python3 /opt/estate-build/estate_build.py start --plane be</code></pre></li
 <tr><td>Rows (list)</td><td>How compute rows are fed: overhead busway A/B (half-row runs, 480 V in North America, 415 V elsewhere) or home-run circuits per power shelf / PDU</td><td>power.row_feed</td></tr>
 <tr><td>FE+EDG (list)</td><td>FE / Edge PoP cabinet footprint in the physical model</td><td>site.network_footprint</td></tr>
 </table>
-<h3>Toolbar row 2: Deployment Console</h3>
-<table>
-<tr><th>Control</th><th>What it does</th><th>Input sheet key</th></tr>
-<tr><td>Deploy (button)</td><td>ZTP bootstrap, DHCP and push files, the full package and the .run</td><td></td></tr>
-<tr><td>Site runner (button)</td><td>Export this design for the DWR site runner: the settings it is rebuilt from, this release and the design fingerprint. The runner builds the Final package and the .run off the browser (mega sites).</td><td></td></tr>
-<tr><td>Day-2 SoT (button)</td><td>Day-2 source of truth: NetBox import files, an Ansible inventory and a JSON model of the whole design</td><td></td></tr>
-<tr><td>Tuned profiles (button)</td><td>Tuned back-end profiles: import the profile the Deployment Console exports after lossless acceptance; later sites ship with the measured values</td><td></td></tr>
-</table>
-<h3>Toolbar row 2: File</h3>
-<table>
-<tr><th>Control</th><th>What it does</th><th>Input sheet key</th></tr>
-<tr><td>Input sheet (button)</td><td>Customer input sheet: load a filled sheet (.xlsx or CSV) to set the design in one step, or get the template</td><td></td></tr>
-<tr><td>Equivalence (button)</td><td>Equivalence report: load the customer's Baseline and compare it with this design, or get the Baseline template</td><td></td></tr>
-<tr><td>Save (button)</td><td>Save the design file</td><td></td></tr>
-<tr><td>Load (button)</td><td>Open a design file</td><td></td></tr>
-<tr><td>Share link (button)</td><td>Copy a link that reproduces this exact design — paste it to a teammate</td><td></td></tr>
-<tr><td>Site registry (button)</td><td>The site registry: the sites of each region and their numbering</td><td></td></tr>
-<tr><td>Reset (button)</td><td>Start a new design: every setting back to its default (asks first; tuned profiles are kept)</td><td></td></tr>
-</table>
 </section>
 <section id="ref-platforms">
 <h2>Reference: platforms</h2>
-<p>The catalogs in builder HS-v1.73. A figure marked CONFIRM is still to confirm with the vendor.</p>
+<p>The catalogs in builder HS-v1.74. A figure marked CONFIRM is still to confirm with the vendor.</p>
 <h3>Compute platforms</h3>
 <table>
 <tr><th>Platform</th><th>Per rack</th><th>Back end and DPU</th><th>Notes</th></tr>

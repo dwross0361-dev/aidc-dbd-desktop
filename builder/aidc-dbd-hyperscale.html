@@ -484,10 +484,27 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   .bar .nw{white-space:nowrap;display:inline-flex;align-items:center}
   .bar-1{margin:11px 0 6px}
   .bar-2{margin:0 0 11px;padding-top:8px;border-top:1px solid var(--line)}
-  .bar>.tg{flex-shrink:1;max-width:100%}
-  .tg{display:inline-flex;flex-wrap:wrap;gap:6px 7px;align-items:center;padding:4px 7px;border:1px solid var(--line);border-radius:9px;background:rgba(0,0,0,.015)}   /* HS v1.73 */
-  .tgl{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);white-space:nowrap;margin-right:1px}
-  .tgsep{width:1px;height:24px;background:var(--line-strong);margin:0 2px}
+  .bar-2{column-gap:12px}   /* HS v1.74 */
+  .bar-2 .tg2 .btn{padding:6px 8px;font-size:12.5px}
+  .bar-2 .tg2{gap:5px}
+  .lset select,.lset input{font-size:11.5px;margin-left:0 !important;padding-left:5px;padding-right:2px}
+  .lset{gap:6px 5px !important;padding:6px 8px !important}
+  .lset label{margin-left:2px !important}
+  .lset .lsetl{letter-spacing:.03em;margin-right:0;font-size:9.5px}
+  .tg2{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px}
+  .tbt{display:inline-flex;align-items:center;height:30px;padding:0 18px 0 12px;background:#3B72B9;color:#fff;font:700 11px var(--body);letter-spacing:.06em;text-transform:uppercase;border-radius:7px 0 0 7px;clip-path:polygon(0 0,calc(100% - 8px) 0,100% 50%,calc(100% - 8px) 100%,0 100%);cursor:default;user-select:none}
+  .bar-2 .tg2 .btn,.bar-2 .tg2 .btn.dl{background:#2E8B57;border-color:#2E8B57;color:#fff;font-weight:600}
+  .bar-2 .tg2 .btn:hover,.bar-2 .tg2 .btn.dl:hover{background:#24724A}
+  .bar-2 .tg2 .btn.gold{background:#C9A227;border-color:#A8851C;color:#1E1806}.bar-2 .tg2 .btn.gold:hover{background:#B38E1D}
+  .bar-2 .tgf{margin-left:auto}
+  .bar-2 .tgf .btn{background:#F59E0B;border-color:#E08A00;color:#2B1A00}.bar-2 .tgf .btn:hover{background:#E08A00}
+  #filemenu,#cmmenu{position:absolute;right:0;top:calc(100% + 4px);z-index:60;background:#fff;border:1px solid var(--line-strong);border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.16);padding:4px;min-width:180px}
+  #cmmenu{left:0;right:auto}
+  .bar-2 #filemenu .btn,.bar-2 #cmmenu .btn{display:block;width:100%;text-align:left;margin:0;background:#fff;border-color:transparent;color:var(--ink);font-weight:500}
+  .bar-2 #filemenu .btn:hover,.bar-2 #cmmenu .btn:hover{background:#EFEEE8}
+  .bar-2 #filemenu #reset{color:#B42318;border-top:1px solid var(--line);border-radius:0 0 6px 6px}
+  .lset{flex:1 0 100%;display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;padding:6px 10px;background:#F4F6F8;border-radius:8px}
+  .lsetl{font:700 10px var(--body);letter-spacing:.07em;text-transform:uppercase;color:var(--ink-soft);margin-right:4px}
   .bar .status{margin-left:auto;white-space:nowrap;padding-left:12px;overflow:hidden;text-overflow:ellipsis}
   .btn{font-family:var(--body);font-size:13px;color:var(--ink);background:var(--panel);border:1px solid var(--line-strong);border-radius:7px;padding:6px 10px;cursor:pointer}
   .btn:hover{background:#EFEEE8}
@@ -737,39 +754,36 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   <span class="status" id="status">Set rack count, then build</span>
 </div>
 
-<div class="bar bar-2">   <!-- HS v1.73: grouped by the tool each button serves (user guide, Fabric Designer) -->
-  <span class="tg" data-tg="Fabric Designer"><span class="tgl">Fabric Designer</span>
-    <button class="btn alt" id="renderbtn" title="Draw the back-end fabric">&#9635; Render</button>
-    <button class="btn alt" id="febtn" title="Draw the front end: leaves, spines, edge, border and storage">&#9635; FE Render</button>
-    <button class="btn alt" id="cfgbtn" title="Device configurations, switch by switch">&#9881; Config</button>
-    <button class="btn alt" id="mgmtbtn" title="Out-of-band management: switches, consoles, firewalls and addressing">&#128225; Infra</button>
-    <button class="btn alt" id="facbtn" title="Campus, data halls, power blocks, busway schedule and CDUs">&#9889; Facility</button>
-    <button class="btn alt" id="bombtn" title="Bill of materials, with Excel and PDF exports">&#128203; BoM</button>
-    <button class="btn alt" id="relbtn" title="Design basis, provenance of every load-bearing input, and the release-for-construction gate">&#9989; Release check</button>
-    <button class="btn gold" id="pkgbtn" title="Blueprint package for the customer: Review (watermarked) or Final">&#128230; Blueprint package</button>
+<div class="bar bar-2">   <!-- HS v1.74: a blue tag per tool (not a button), its operations in green; Save, Load and File in amber; the layout settings in their own strip -->
+  <span class="tg2" data-tg="Designer"><span class="tbt">Designer</span>
+    <button class="btn" id="renderbtn" title="Draw the back-end fabric">BE Render</button>
+    <button class="btn" id="febtn" title="Draw the front end: leaves, spines, edge, border and storage">FE Render</button>
+    <button class="btn" id="cfgbtn" title="Device configurations, switch by switch">Configs</button>
+    <button class="btn" id="mgmtbtn" title="Out-of-band management: switches, consoles, firewalls and addressing">Infra</button>
+    <button class="btn" id="facbtn" title="Campus, data halls, power blocks, busway schedule and CDUs">Facility</button>
+    <button class="btn" id="bombtn" title="Bill of materials, with Excel and PDF exports">BoM</button>
+    <button class="btn" id="relbtn" title="Design basis, provenance of every load-bearing input, and the release-for-construction gate">Release check</button>
+    <button class="btn gold" id="pkgbtn" title="Blueprint package for the customer: Review (watermarked) or Final">Blueprint package</button>
   </span>
-  <span class="tg" data-tg="DC Layout Builder"><span class="tgl">DC Layout Builder</span>
-    <button class="btn alt" id="opendct" title="Open the DC Layout Builder in a new tab with this build loaded">&#9638; DC Layout Builder</button>
-    <button class="btn" id="physjson" title="Physical model for the DC Layout Builder: cabinets, contents and every link">&#8681; Physical model</button>
-    <span style="position:relative;display:inline-block"><button class="btn" id="xlsx" aria-haspopup="true" aria-expanded="false" title="Cable matrix: every cable by device -- back end, front end and out-of-band -- with the port mapping">&#8681; Cable Matrix &#9662;</button><span id="cmmenu" role="menu" hidden style="position:absolute;left:0;top:calc(100% + 4px);z-index:60;background:#fff;border:1px solid var(--line-strong);border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.16);padding:4px;min-width:160px"><button class="btn" id="cmxlsx" role="menuitem" style="display:block;width:100%;margin:2px 0;text-align:left">&#8681; Excel (.xlsx)</button><button class="btn" id="cmpdf" role="menuitem" style="display:block;width:100%;margin:2px 0;text-align:left">&#8681; PDF</button></span></span>
-    <span class="tgsep"></span>
-    <select id="cabu" title="Network cabinet height for every MoR, EoR, FE/edge and OOB cabinet. 2U at the top is kept for cable entry; each device takes a cable manager and each cabinet a patch field sized to its cross-row links" style="height:30px;margin-left:4px" autocomplete="off"><option value="42">Net cabinets 42U</option><option value="45">Net cabinets 45U</option><option value="48" selected>Net cabinets 48U</option><option value="52">Net cabinets 52U</option></select><select id="rownet" title="Row network: one block of cabinets in the middle of the row (leaves, spines, OOB access, consoles and storage together), or a middle-of-row pair for the leaves plus end-of-row cabinets for the spines" style="height:30px;margin-left:4px" autocomplete="off"><option value="block" selected>Row network: one block</option><option value="split">Row network: MoR + EoR</option></select><select id="floorcols" title="Floor columns: the rows are laid out in 1 to 4 side-by-side columns (vertical stacks of rows), a 3 m aisle between columns. Sets the floor plan and every cable run length." style="height:30px;margin-left:4px" autocomplete="off"><option value="1" selected>Floor: 1 column</option><option value="2">Floor: 2 columns</option><option value="3">Floor: 3 columns</option><option value="4">Floor: 4 columns</option></select><label style="font-size:12px;margin-left:6px;display:inline-flex;align-items:center;gap:4px" title="Break columns at pod boundaries where the row counts allow, so a pod's leaf-to-spine cables stay off the cross tray"><input type="checkbox" id="floorpods"> keep pods in one column</label><label style="font-size:12px;margin-left:8px;display:inline-flex;align-items:center;gap:4px" title="AOC reach: a run longer than this becomes structured cabling (transceivers, MPO patch cords and trunks through column-head patch panels)">AOC reach <input id="aocreach" type="number" min="5" max="150" step="5" value="30" style="width:56px;height:28px" autocomplete="off"> m</label><label style="font-size:12px;margin-left:8px;display:inline-flex;align-items:center;gap:4px" title="Data hall size (IT MW). A site with more than one hall is laid out as a grid of halls, each with its own network rows; the core network sits in a CORE block.">Hall <input id="hallmw" type="number" min="2" max="60" step="1" value="10" style="width:52px;height:28px" autocomplete="off"> MW</label><select id="netfeed" title="Network-cabinet feed per side: sets the MoR/EoR/FE/OOB power budget" style="height:30px;margin-left:4px" autocomplete="off"><option value="208/30">Net feed 208V 30A</option><option value="208/50" selected>Net feed 208V 50A</option><option value="415/16">Net feed 415V 16A</option><option value="415/32">Net feed 415V 32A</option><option value="415/60">Net feed 415V 60A</option></select><select id="oobspine" title="OOB spine layer for rack-scale (NVL72) in-rack SN2201s: Auto adds it only when the OOB core runs out of ports" style="height:30px;margin-left:4px" autocomplete="off"><option value="auto">OOB spine: auto</option><option value="always">OOB spine: always</option><option value="off">OOB spine: off</option></select><select id="cpower" title="Compute-rack power: ORv3 HPR busbar with power shelves (split = two 1,400 A segments of four hosts, vendor-certified), or AC rack PDUs" style="height:30px;margin-left:4px" autocomplete="off"><option value="busbar-split">Compute: split busbar 2x1400A</option><option value="busbar-single">Compute: single busbar 1400A</option><option value="ac">Compute: AC PDUs</option></select><select id="rowfeed" title="How compute rows are fed: overhead busway A/B (half-row runs, 480 V in North America, 415 V elsewhere) or home-run circuits per power shelf / PDU" style="height:30px;margin-left:4px" autocomplete="off"><option value="busway">Rows: busway A/B</option><option value="circuits">Rows: home-run circuits</option></select><select id="netfoot" title="FE / Edge PoP cabinet footprint in the physical model" style="height:30px;margin-left:4px" autocomplete="off"><option value="consolidated">FE+EDG: 1 cabinet pair</option><option value="separate">FE+EDG: separate pairs</option></select>
+  <span class="tg2" data-tg="Builder"><span class="tbt">Builder</span>
+    <button class="btn" id="opendct" title="Open the DC Layout Builder in a new tab with this build loaded">DC Layout</button>
+    <button class="btn" id="physjson" title="Physical model for the DC Layout Builder: cabinets, contents and every link">Physical model</button>
+    <span style="position:relative;display:inline-block"><button class="btn" id="xlsx" aria-haspopup="true" aria-expanded="false" title="Cable matrix: every cable by device -- back end, front end and out-of-band -- with the port mapping">Cable Matrix &#9662;</button><span id="cmmenu" role="menu" hidden style="position:absolute;left:0;top:calc(100% + 4px);z-index:60;background:#fff;border:1px solid var(--line-strong);border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.16);padding:4px;min-width:160px"><button class="btn" id="cmxlsx" role="menuitem" style="display:block;width:100%;margin:2px 0;text-align:left">&#8681; Excel (.xlsx)</button><button class="btn" id="cmpdf" role="menuitem" style="display:block;width:100%;margin:2px 0;text-align:left">&#8681; PDF</button></span></span>
   </span>
-  <span class="tg" data-tg="Deployment Console"><span class="tgl">Deployment Console</span>
-    <button class="btn alt" id="deploybtn" title="ZTP bootstrap, DHCP and push files, the full package and the .run">&#128640; Deploy</button>
+  <span class="tg2" data-tg="Deploy"><span class="tbt">Deploy</span>
+    <button class="btn" id="deploybtn" title="ZTP bootstrap, DHCP and push files, the full package and the .run">Deploy panel</button>
     <button class="btn" id="runnerexp" title="Export this design for the DWR site runner: the settings it is rebuilt from, this release and the design fingerprint. The runner builds the Final package and the .run off the browser (mega sites).">Site runner</button>
-    <button class="btn" id="sotbtn" title="Day-2 source of truth: NetBox import files, an Ansible inventory and a JSON model of the whole design">&#8681; Day-2 SoT</button>
+    <button class="btn" id="sotbtn" title="Day-2 source of truth: NetBox import files, an Ansible inventory and a JSON model of the whole design">Day-2 SoT</button>
     <button class="btn" id="tprofbtn" title="Tuned back-end profiles: import the profile the Deployment Console exports after lossless acceptance; later sites ship with the measured values">Tuned profiles</button>
   </span>
-  <span class="tg" data-tg="File"><span class="tgl">File</span>
-    <button class="btn" id="insheetbtn" title="Customer input sheet: load a filled sheet (.xlsx or CSV) to set the design in one step, or get the template">Input sheet</button>
-    <button class="btn" id="eqbtn" title="Equivalence report: load the customer's Baseline and compare it with this design, or get the Baseline template">Equivalence</button>
+  <span class="tg2 tgf" data-tg="File">
     <button class="btn" id="save" title="Save the design file">Save</button>
     <button class="btn" id="load" title="Open a design file">Load</button>
-    <button class="btn" id="sharelink" title="Copy a link that reproduces this exact design &mdash; paste it to a teammate">&#128279; Share link</button>
-    <button class="btn" id="registerbtn" title="Click: register this site and download the registry &#183; Shift-click: import a registry &#183; Alt-click: copy the source snippet">Register site</button>
-    <button class="btn" id="reset" title="Start a new design: every setting back to its default (asks first; tuned profiles are kept)">Reset</button>
+    <span style="position:relative;display:inline-block"><button class="btn" id="filemenubtn" aria-haspopup="true" aria-expanded="false" title="Input sheet, Equivalence, Share link, Site registry and Reset">File &#9662;</button><span id="filemenu" role="menu" hidden data-ref="1"><button class="btn" role="menuitem" id="insheetbtn" title="Customer input sheet: load a filled sheet (.xlsx or CSV) to set the design in one step, or get the template">Input sheet</button><button class="btn" role="menuitem" id="eqbtn" title="Equivalence report: load the customer's Baseline and compare it with this design, or get the Baseline template">Equivalence</button><button class="btn" role="menuitem" id="sharelink" title="Copy a link that reproduces this exact design &mdash; paste it to a teammate">&#128279; Share link</button><button class="btn" role="menuitem" id="registerbtn" title="Click: register this site and download the registry &#183; Shift-click: import a registry &#183; Alt-click: copy the source snippet">Register site</button><button class="btn" role="menuitem" id="reset" title="Start a new design: every setting back to its default (asks first; tuned profiles are kept)">Reset</button></span></span>
   </span>
+  <div class="lset" data-tg="Layout settings"><span class="lsetl">Layout settings</span>
+    <select id="cabu" title="Network cabinet height for every MoR, EoR, FE/edge and OOB cabinet. 2U at the top is kept for cable entry; each device takes a cable manager and each cabinet a patch field sized to its cross-row links" style="height:30px;margin-left:4px" autocomplete="off"><option value="42">Net cabinets 42U</option><option value="45">Net cabinets 45U</option><option value="48" selected>Net cabinets 48U</option><option value="52">Net cabinets 52U</option></select><select id="rownet" title="Row network: one block of cabinets in the middle of the row (leaves, spines, OOB access, consoles and storage together), or a middle-of-row pair for the leaves plus end-of-row cabinets for the spines" style="height:30px;margin-left:4px" autocomplete="off"><option value="block" selected>Row network: one block</option><option value="split">Row network: MoR + EoR</option></select><select id="floorcols" title="Floor columns: the rows are laid out in 1 to 4 side-by-side columns (vertical stacks of rows), a 3 m aisle between columns. Sets the floor plan and every cable run length." style="height:30px;margin-left:4px" autocomplete="off"><option value="1" selected>Floor: 1 column</option><option value="2">Floor: 2 columns</option><option value="3">Floor: 3 columns</option><option value="4">Floor: 4 columns</option></select><label style="font-size:12px;margin-left:6px;display:inline-flex;align-items:center;gap:4px" title="Break columns at pod boundaries where the row counts allow, so a pod's leaf-to-spine cables stay off the cross tray"><input type="checkbox" id="floorpods"> keep pods in one column</label><label style="font-size:12px;margin-left:8px;display:inline-flex;align-items:center;gap:4px" title="AOC reach: a run longer than this becomes structured cabling (transceivers, MPO patch cords and trunks through column-head patch panels)">AOC reach <input id="aocreach" type="number" min="5" max="150" step="5" value="30" style="width:56px;height:28px" autocomplete="off"> m</label><label style="font-size:12px;margin-left:8px;display:inline-flex;align-items:center;gap:4px" title="Data hall size (IT MW). A site with more than one hall is laid out as a grid of halls, each with its own network rows; the core network sits in a CORE block.">Hall <input id="hallmw" type="number" min="2" max="60" step="1" value="10" style="width:52px;height:28px" autocomplete="off"> MW</label><select id="netfeed" title="Network-cabinet feed per side: sets the MoR/EoR/FE/OOB power budget" style="height:30px;margin-left:4px" autocomplete="off"><option value="208/30">Net feed 208V 30A</option><option value="208/50" selected>Net feed 208V 50A</option><option value="415/16">Net feed 415V 16A</option><option value="415/32">Net feed 415V 32A</option><option value="415/60">Net feed 415V 60A</option></select><select id="oobspine" title="OOB spine layer for rack-scale (NVL72) in-rack SN2201s: Auto adds it only when the OOB core runs out of ports" style="height:30px;margin-left:4px" autocomplete="off"><option value="auto">OOB spine: auto</option><option value="always">OOB spine: always</option><option value="off">OOB spine: off</option></select><select id="cpower" title="Compute-rack power: ORv3 HPR busbar with power shelves (split = two 1,400 A segments of four hosts, vendor-certified), or AC rack PDUs" style="height:30px;margin-left:4px" autocomplete="off"><option value="busbar-split">Compute: split busbar 2x1400A</option><option value="busbar-single">Compute: single busbar 1400A</option><option value="ac">Compute: AC PDUs</option></select><select id="rowfeed" title="How compute rows are fed: overhead busway A/B (half-row runs, 480 V in North America, 415 V elsewhere) or home-run circuits per power shelf / PDU" style="height:30px;margin-left:4px" autocomplete="off"><option value="busway">Rows: busway A/B</option><option value="circuits">Rows: home-run circuits</option></select><select id="netfoot" title="FE / Edge PoP cabinet footprint in the physical model" style="height:30px;margin-left:4px" autocomplete="off"><option value="consolidated">FE+EDG: 1 cabinet pair</option><option value="separate">FE+EDG: separate pairs</option></select>
+  </div>
 </div>
 
 <div class="paintbar">
@@ -962,7 +976,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.73';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.74';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   // HS v1.59: Vera Rubin NVL72 at 2 planes x 800G, NVIDIA's public reference layout (Owner decision D11); see the VR profile.
   // HS v1.58: the customer input sheet and importer (inputSheetImport, the SESSION_IN overlay); see the input sheet block.
   // HS v1.57 (release identity): the release is identified by the SHA-256 of this file, not by the string above (HS-v1.56 r1, r2
@@ -30200,7 +30214,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     var controls=[];
     [].forEach.call(document.querySelectorAll('.bar'), function(bar, bi){
       [].forEach.call(bar.querySelectorAll('input,select,button'), function(el){
-        if(el.type==='hidden' || el.closest('[hidden]') || (el.style && el.style.display==='none')) return;
+        if(el.type==='hidden' || el.closest('[hidden]:not([data-ref])') || (el.style && el.style.display==='none')) return;
         var name='';
         if(el.tagName==='BUTTON') name=T(el.textContent);
         else { name=T(el.getAttribute('aria-label')||'');
@@ -32388,6 +32402,12 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     b.onclick=function(e){ e.stopPropagation(); m.hidden=!m.hidden; b.setAttribute('aria-expanded', m.hidden?'false':'true'); };
     document.getElementById('cmxlsx').onclick=function(e){ e.stopPropagation(); close(); exportCableMatrix('xlsx'); };
     document.getElementById('cmpdf').onclick=function(e){ e.stopPropagation(); close(); exportCableMatrix('pdf'); };
+    (function(){ var fb=document.getElementById('filemenubtn'), fm=document.getElementById('filemenu'); if(!fb||!fm) return;   // HS v1.74: the File menu
+      var fc=function(){ fm.hidden=true; fb.setAttribute('aria-expanded','false'); };
+      fb.onclick=function(e){ e.stopPropagation(); m.hidden=true; fm.hidden=!fm.hidden; fb.setAttribute('aria-expanded', fm.hidden?'false':'true'); };
+      fm.addEventListener('click', function(){ setTimeout(fc, 0); });
+      document.addEventListener('click', function(e){ if(!fm.hidden && !fm.contains(e.target) && e.target!==fb) fc(); });
+      document.addEventListener('keydown', function(e){ if(e.key==='Escape' && !fm.hidden){ fc(); fb.focus(); } }); })();
     document.addEventListener('click', function(e){ if(!m.hidden && !m.contains(e.target)) close(); });
     document.addEventListener('keydown', function(e){ if(e.key==='Escape' && !m.hidden){ close(); b.focus(); } });
   })();

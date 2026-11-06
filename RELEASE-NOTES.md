@@ -1,3 +1,8 @@
+# AIDC DBD Desktop 2.0.72 (builder HS-v1.74)
+
+- **Toolbar redesigned.** Row 2 is one line of tools: a blue tag per tool (a label, not a button), then its operations in green. **Designer:** BE Render (was Render), FE Render, Configs (was Config), Infra, Facility, BoM, Release check, Blueprint package (gold). **Builder:** DC Layout (was DC Layout Builder), Physical model, Cable Matrix. **Deploy:** Deploy panel (was Deploy), Site runner, Day-2 SoT, Tuned profiles. On the right in amber: Save, Load and **File ▾** (Input sheet, Equivalence, Share link, Site registry, Reset). The layout settings have their own strip below. Every button keeps its id and behavior; fingerprints and plan digests are unchanged.
+- **User guide** updated to the new names and layout; the toolbar reference lists row 2 by tag, the File menu and the Layout settings strip.
+
 # AIDC DBD Desktop 2.0.71 (builder HS-v1.73, site runner 1.11.0)
 
 - **Toolbar grouped by tool.** The second toolbar row is now four labeled groups: **Fabric Designer** (Render, FE Render, Config, Infra, Facility, BoM, Release check, Blueprint package), **DC Layout Builder** (DC Layout Builder, Physical model, Cable Matrix, and the physical settings), **Deployment Console** (Deploy, Site runner, Day-2 SoT, Tuned profiles) and **File** (Input sheet, Equivalence, Save, Load, Share link, Site registry, Reset). Every button keeps its id and behavior; design fingerprints and plan digests are unchanged.
