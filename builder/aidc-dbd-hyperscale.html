@@ -484,13 +484,15 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   .bar .nw{white-space:nowrap;display:inline-flex;align-items:center}
   .bar-1{margin:11px 0 6px}
   .bar-2{margin:0 0 11px;padding-top:8px;border-top:1px solid var(--line)}
-  .bar-2{column-gap:12px}   /* HS v1.74 */
-  .bar-2 .tg2 .btn{padding:6px 8px;font-size:12.5px}
-  .bar-2 .tg2{gap:5px}
-  .lset select,.lset input{font-size:11.5px;margin-left:0 !important;padding-left:5px;padding-right:2px}
-  .lset{gap:6px 5px !important;padding:6px 8px !important}
-  .lset label{margin-left:2px !important}
-  .lset .lsetl{letter-spacing:.03em;margin-right:0;font-size:9.5px}
+  .bar-2{column-gap:22px;row-gap:10px}   /* HS v1.74; 2.0.73: roomier */
+  .bar-2 .tg2 .btn{padding:6px 12px;font-size:13px}
+  .bar-2 .tg2{gap:7px}
+  .tbt{margin-right:3px}
+  .lset select,.lset input{font-size:12.5px}
+  .lset{gap:8px 10px !important;padding:8px 12px !important}
+  .lset label{margin-left:4px !important}
+  .lset .lsetl{margin-right:4px}
+  #buildfab{background:#2E8B57;border-color:#2E8B57;color:#fff;font-weight:600;padding:6px 14px}#buildfab:hover{background:#24724A}   /* 2.0.73: an action, green */
   .tg2{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px}
   .tbt{display:inline-flex;align-items:center;height:30px;padding:0 18px 0 12px;background:#3B72B9;color:#fff;font:700 11px var(--body);letter-spacing:.06em;text-transform:uppercase;border-radius:7px 0 0 7px;clip-path:polygon(0 0,calc(100% - 8px) 0,100% 50%,calc(100% - 8px) 100%,0 100%);cursor:default;user-select:none}
   .bar-2 .tg2 .btn,.bar-2 .tg2 .btn.dl{background:#2E8B57;border-color:#2E8B57;color:#fff;font-weight:600}
@@ -976,7 +978,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.74';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.75';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   // HS v1.59: Vera Rubin NVL72 at 2 planes x 800G, NVIDIA's public reference layout (Owner decision D11); see the VR profile.
   // HS v1.58: the customer input sheet and importer (inputSheetImport, the SESSION_IN overlay); see the input sheet block.
   // HS v1.57 (release identity): the release is identified by the SHA-256 of this file, not by the string above (HS-v1.56 r1, r2

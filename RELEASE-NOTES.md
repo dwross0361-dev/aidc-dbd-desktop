@@ -1,3 +1,8 @@
+# AIDC DBD Desktop 2.0.73 (builder HS-v1.75, site runner 1.11.0)
+
+- **Toolbar spacing restored.** Wider gaps between buttons and between the tool groups, full-size buttons and settings. On a wide screen each row fits on one line; at 1920 the Deploy group and the last settings wrap neatly.
+- **Build from rack count is green**, like the other action buttons.
+
 # AIDC DBD Desktop 2.0.72 (builder HS-v1.74)
 
 - **Toolbar redesigned.** Row 2 is one line of tools: a blue tag per tool (a label, not a button), then its operations in green. **Designer:** BE Render (was Render), FE Render, Configs (was Config), Infra, Facility, BoM, Release check, Blueprint package (gold). **Builder:** DC Layout (was DC Layout Builder), Physical model, Cable Matrix. **Deploy:** Deploy panel (was Deploy), Site runner, Day-2 SoT, Tuned profiles. On the right in amber: Save, Load and **File ▾** (Input sheet, Equivalence, Share link, Site registry, Reset). The layout settings have their own strip below. Every button keeps its id and behavior; fingerprints and plan digests are unchanged.
