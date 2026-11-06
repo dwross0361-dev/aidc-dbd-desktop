@@ -711,7 +711,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     <label class="lbl fe-dep" style="font-size:12px;color:var(--ink-soft);font-weight:600" title="Ingress rate: the busy-hour traffic arriving from outside to the tenants' published services (their VIPs) through the F5 BNK ingress nodes, in Gbps. It sizes the ingress nodes N+1 at 200G per node: rate / 200, rounded up, plus one spare; at least 2, at most 4. Blank: two nodes. Example: 300 gives 3 nodes.">Ingress Gbps
       <input id="fe-inggbps" type="number" min="0" max="100000" value="" placeholder="-" style="width:64px;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--mono);margin:0 4px" autocomplete="off">
     </label>
-    <label class="lbl fe-dep" style="font-size:12px;color:var(--ink-soft);font-weight:600" title="North-south rate: the busy-hour traffic between the site and the internet through the Edge PoP, in Gbps, in the busier direction. Each of the two diverse internet circuits must carry it alone (circuits of 10, 100 or 400G); the edge routers are checked against it; and it sets the firewall pairs, one per 1,400G on Junos SRX or per 145G on Cisco FTD (at least one per tenant ceiling). Blank: not sized (two circuits, firewall pairs by tenant count). Example: 400.">N-S Gbps
+    <label class="lbl fe-dep" style="font-size:12px;color:var(--ink-soft);font-weight:600" title="North-south rate: the busy-hour traffic between the site and the internet through the Edge PoP, in Gbps, in the busier direction. Each of the two diverse internet circuits must carry it alone (circuits of 10, 100 or 400G; above 400G each ISP's circuit is a LAG of 400G members on its edge router, Nokia 7750 SR or 7250 IXR-X3); the edge routers are checked against it; and it sets the firewall pairs, one per 1,400G on Junos SRX or per 145G on Cisco FTD (at least one per tenant ceiling). Blank: not sized (two circuits, firewall pairs by tenant count). Example: 400.">N-S Gbps
       <input id="fe-nsgbps" type="number" min="0" max="100000" value="" placeholder="-" style="width:64px;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--mono);margin:0 4px" autocomplete="off">
     </label>
     <label class="lbl fe-dep" style="font-size:12px;color:var(--ink-soft);font-weight:600">FE+EDG cabinets
@@ -993,7 +993,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.82';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.83';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   // HS v1.59: Vera Rubin NVL72 at 2 planes x 800G, NVIDIA's public reference layout (Owner decision D11); see the VR profile.
   // HS v1.58: the customer input sheet and importer (inputSheetImport, the SESSION_IN overlay); see the input sheet block.
   // HS v1.57 (release identity): the release is identified by the SHA-256 of this file, not by the string above (HS-v1.56 r1, r2
@@ -1430,7 +1430,13 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   function edgeSizing(o){
     var rows=[], ns=+FE.nsGbps||0, ig=+FE.ingressGbps||0, nb=edgeBlockCount(), C=tenantCeiling(), t=Math.max(1,FE.tenants||1);
     var add=function(tier, need, have, ok, note){ rows.push({tier:tier, need:need, have:have, ok:ok, note:note||''}); };
-    var sp=EDGE_CAP.circuitGbps.filter(function(g){ return g>=ns; })[0];
+    var sp=EDGE_CAP.circuitGbps.filter(function(g){ return g>=ns; })[0], nM=carrierMembers(), lagP=carrierLagPorts();
+    if(nM>1){   // HS v1.83
+      add('Internet circuits', '2 diverse ISPs, each a LAG of '+nM+' x 400G carrying '+ns+'G alone', '2 x '+nM+' x 400G (one LAG per ISP)', !!lagP,
+          lagP?('order '+nM+' x 400G per ISP, delivered as one LAG on that ISP\'s edge router'):((FE.edgeModel==='MX304'?'no LAG member port map for the MX304':'no free 400G ports for a '+nM+'-member LAG on '+FE.edgeModel)+': choose a Nokia 7750 SR or 7250 IXR-X3 edge router'));
+      var _cap=((FE_EDGE_SW[FE.edgeModel]||{}).ports||{}), _max=(_cap['400G']||_cap['800G']||0);
+      add('Edge router ports', 'per router '+(nM+4)+' x 400G ('+nM+' LAG members + 2 ISL + 2 gateway links)', FE.edgeModel+' ('+_max+' x 400G-capable)', !!lagP && nM+4<=_max);
+    } else
     add('Internet circuits', ns?('2 diverse, each carrying '+ns+'G (either one alone)'):'2 diverse (no north-south rate entered)',
         (FE.diaCircuits||2)+' x '+(FE.diaGbps||0)+'G', !ns || (!!sp && (FE.diaGbps||0)>=ns),
         ns? (sp? ('order '+sp+'G circuits'+((FE.diaGbps||0)<ns?' (set to '+(FE.diaGbps||0)+'G)':'')) : ('above '+EDGE_CAP.circuitGbps[EDGE_CAP.circuitGbps.length-1]+'G per circuit: a second circuit per edge router, not generated')) : '');
@@ -2937,7 +2943,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
                   +', '+TENANT_RESERVE+' held back) and the transit addressing holds '+TENANT_ADDR_CEILING+'.'});
               }
               var needTransport=FE.transportTier || wavesPerGw>bs400;
-              return {dia:(isSpokeSite()?0:FE.diaCircuits), diaGbps:FE.diaGbps, routers:FE.borderRouters, fw:2*edgeBlockCount(), lb:lbNodeCount(), blocks:edgeBlockCount(),
+              return {dia:(isSpokeSite()?0:FE.diaCircuits), diaGbps:((carrierMembers()>1&&carrierLagPorts())?400:FE.diaGbps), diaLag:((carrierMembers()>1&&carrierLagPorts())?carrierMembers():1), routers:FE.borderRouters, fw:2*edgeBlockCount(), lb:lbNodeCount(), blocks:edgeBlockCount(),
                   // Class A takes one context each; ALL of Class B shares exactly one.
                   fwContexts:Math.max(1,FE.tenants) + ((FE.classBTenants>0 && FE.hostEnforcement)?1:0),
                   classB:Math.max(0,FE.classBTenants||0), hostEnf:!!FE.hostEnforcement,
@@ -3101,7 +3107,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
        b:'DPU-equipped servers \u00b7 per-tenant metering \u2014 billing boundary'},   // v517: F5 BNK, the only ingress tier
       {n:'EDGE-FW \u00d7'+p.edge.fw,     a:(FE.fwMode==='transparent'?'transparent':'routed')+' pair', b:p.edge.fwContexts+' tenant context'+(p.edge.fwContexts>1?'s':'')+' \u00b7 north/south only'},
       {n:'FE-ER \u00d7'+p.edge.routers, a:'router pair', b:'edge router \u00b7 eBGP to carriers \u00b7 own ASN'},
-      {n:'DIA \u00d7'+p.edge.dia, a:p.edge.diaGbps+'G \u00b7 diverse carriers', b:'verify entrance facility diversity'}
+      {n:'DIA \u00d7'+p.edge.dia, a:((p.edge.diaLag||1)>1?p.edge.diaLag+'\u00d7':'')+p.edge.diaGbps+'G'+((p.edge.diaLag||1)>1?' LAG':'')+' \u00b7 diverse carriers', b:'verify entrance facility diversity'}
     ];
     if(isSpokeSite()) edge=edge.slice(0,2).concat([{n:'VIA HUB', a:'internet through site 1', b:'over the DCI waves \u00b7 no edge routers or carriers here'}]);
     edge.forEach(function(e){
@@ -5682,7 +5688,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     var xCar=row(circ.length,xMain,300);
     circ.forEach(function(c,i){ var er=xEr[Math.min(i,xEr.length-1)];
       s+=ln(xCar[i],Y.car+28,er,Y.er-BH/2);
-      s+='<rect x="'+(xCar[i]-110)+'" y="'+(Y.car-28)+'" width="220" height="56" rx="28" fill="#D6DADD" stroke="#9AA1A6"/>'+T(xCar[i],Y.car+5,'ISP '+(i+1),{fs:13}); });   // generic carriers on the reference drawing
+      s+='<rect x="'+(xCar[i]-110)+'" y="'+(Y.car-28)+'" width="220" height="56" rx="28" fill="#D6DADD" stroke="#9AA1A6"/>'+T(xCar[i],Y.car+5,'ISP '+(i+1)+(carrierMembers()>1?' \u00b7 '+carrierMembers()+' \u00d7 400G LAG':''),{fs:13}); });   // generic carriers on the reference drawing
     if(FE.pni && xEr.length){ s+=ln(110,Y.car+20,xEr[0]-BW/2,Y.er); s+=box(110,Y.car,'Peer'+(FE.pniPeerAs?' AS'+FE.pniPeerAs:''),'private interconnect',{f:'#D6DADD',s:'#9AA1A6'}); }
     // ER ISL, ER->BG mesh
     if(ers.length>1) s+=ln(xEr[0]+BW/2,Y.er-6,xEr[1]-BW/2,Y.er-6)+ln(xEr[0]+BW/2,Y.er+6,xEr[1]-BW/2,Y.er+6);
@@ -7669,7 +7675,9 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       var EPx=edgePorts() || {isl:MX_P.isl, bg:MX_P.bg, carrier:MX_P.carrier, speed:'100G'};
       if(ers.length>=2){ EL(ers[0].name,EPx.isl[0],ers[1].name,EPx.isl[0],EPx.speed||'400G','ER ISL 1'); EL(ers[0].name,EPx.isl[1],ers[1].name,EPx.isl[1],EPx.speed||'400G','ER ISL 2'); }
       ers.forEach(function(d,i){
-        EL('Carrier '+(i+1)+' handoff', 'demarc', d.name, EPx.carrier, '100G', 'carrier handoff');
+        var _lp=carrierLagPorts(), _nM=carrierMembers();
+        if(_nM>1 && _lp) _lp.forEach(function(pt,m){ EL('Carrier '+(i+1)+' handoff member '+(m+1), 'demarc', d.name, pt, '400G', 'carrier handoff, LAG member '+(m+1)+' of '+_nM); });   // HS v1.83
+        else EL('Carrier '+(i+1)+' handoff', 'demarc', d.name, EPx.carrier, '100G', 'carrier handoff');
         var _gp=xlateIf(gwPorts().er[i],feRoleVendor('gw'));
         if(gws[0]) EL(d.name,EPx.bg[0],gws[0].name,_gp,EPx.speed||'400G','ER to gateway 1');
         if(gws[1]) EL(d.name,EPx.bg[1],gws[1].name,_gp,EPx.speed||'400G','ER to gateway 2');
@@ -11774,7 +11782,17 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
   // the carrier circuit's physical handoff. Speed sets the port (and breakout); a committed
   // rate below it adds an egress shaper so the carrier's policer never drops our bursts; the optic
   // is what the carrier hands us. Each edge generator renders these in its own syntax.
+  // HS v1.83: past the largest circuit (400G), each ISP's circuit is a LAG of 400G members, each ISP still
+  // carrying the whole north-south rate alone; the members land on that ISP's edge router.
+  function carrierMembers(){ var ns=+FE.nsGbps||0, top=EDGE_CAP.circuitGbps[EDGE_CAP.circuitGbps.length-1]; return ns>top?Math.ceil(ns/top):1; }
+  function carrierLagPorts(){   // the member ports on this edge model; null when it has no free 400G ports for the LAG
+    var n=carrierMembers(), P=edgePorts(); if(!P) return null; if(n<2) return [P.carrier];
+    if(feRoleVendor('edge')!=='sros') return null;   // NCS-57B1, 7280CR3K and ACX7100 spend every 400G port on the ISL and gateway links; MX304 has no LAG port map
+    var cap=((FE_EDGE_SW[FE.edgeModel]||{}).ports||{}), max=(cap['400G']||cap['800G']||0), out=[P.carrier];
+    for(var k=7; out.length<n && k<=max; k++) out.push('1/1/c'+k+'/1');   // c2 firewall, c3-c4 ISL, c5-c6 gateways
+    return out.length===n?out:null; }
   function carrierPhy(c){
+    if(carrierMembers()>1 && carrierLagPorts()) return {gbps:400, optic:(c&&/400G/.test(c.optic||''))?c.optic:'400GBASE-LR4-10', commitMbps:null, members:carrierMembers()};
     var g=parseInt(c&&c.handoffGbps,10); if(!(g>0)) g=100;
     var m=parseInt(c&&c.commitMbps,10); if(!(m>0) || m>=g*1000) m=null;
     return {gbps:g, optic:(c&&c.optic)||'', commitMbps:m};
@@ -11782,7 +11800,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
   function carrierOpticRows(){
     var g={};
     circuitsForPlane('fe').forEach(function(c){ var p=carrierPhy(c), k=(p.optic||'optic TBD')+'|'+p.gbps;
-      if(!g[k]) g[k]={optic:p.optic||'optic TBD -- set in Public IPs', gbps:p.gbps, qty:0, ids:[]}; g[k].qty++; g[k].ids.push(c.id); });
+      if(!g[k]) g[k]={optic:p.optic||'optic TBD -- set in Public IPs', gbps:p.gbps, qty:0, ids:[]}; g[k].qty+=(p.members||1); g[k].ids.push(c.id+((p.members||1)>1?' (LAG of '+p.members+')':'')); });
     return Object.keys(g).map(function(k){ var x=g[k]; x.circuits=x.ids.join(', '); return x; });
   }
   function circuitAddrs(c){
@@ -19695,6 +19713,9 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
   // Warnings that belong on every vendor's output, not just Junos.
   function feEdgeWarnings(x, cm){
     var L=[];
+    if(carrierMembers()>1 && !carrierLagPorts()){   // HS v1.83
+      L.push(cm+' !! NOT SIZED -- north-south '+FE.nsGbps+'G needs a LAG of '+carrierMembers()+' x 400G per ISP; '+(FE.edgeModel==='MX304'?'the MX304 has no LAG member port map.':FE.edgeModel+' has no free 400G ports for it.'));
+      L.push(cm+' !! This configuration carries one handoff only. Choose a Nokia 7750 SR or 7250 IXR-X3 edge router.'); }
     if(circuitIsPlaceholder(x.c)){
       L.push(cm+' !! NOT DEPLOYABLE -- circuit '+x.c.id+' is still on documentation space.');
       L.push(cm+' !! Enter the real carrier assignment before this is used.');
@@ -20104,6 +20125,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       S.push(['# !! Public ASN is the documentation placeholder '+ASN_PUBLIC_PLACEHOLDER+' until the registry',
               '# !! allocates. It is the BGP origin AS here, so it must be real before peering.']);
     }
+    var _nsz=feEdgeWarnings({c:{id:'',p2p:'',block:''}},'#').filter(function(l){ return /NOT SIZED|one handoff only/.test(l); });   // HS v1.83
+    if(_nsz.length) S.push(_nsz);
     S.push(['system host-name '+nm]);
     opsBlock(null).forEach(function(g){ S.push(g); });
     S.push(['interfaces lo0 unit 0 family inet address '+lo+'/32']);
@@ -22545,15 +22568,24 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     L.push(B+'interface "system" ipv4 primary address '+x.lo+' prefix-length 32');
     // ---- ports: every connector needs its breakout before its port exists ----
     L.push('# ---- connectors: breakout first (TUNE to the fitted optic: c1-100g, c1-400g, c4-100g ...) ----');
-    var _cps=carrierPhy(c);
-    L.push('/configure port '+conn(EP.carrier)+' admin-state enable connector breakout c1-'+_cps.gbps+'g   # carrier handoff '+_cps.gbps+'G'+(_cps.optic?(', '+_cps.optic):''));
+    var _cps=carrierPhy(c), _lag=(carrierMembers()>1)?carrierLagPorts():null;   // HS v1.83: a LAG of 400G members past 400G
+    if(_lag) _lag.forEach(function(pt,m){ L.push('/configure port '+conn(pt)+' admin-state enable connector breakout c1-400g   # carrier LAG member '+(m+1)+' of '+_lag.length+', 400G'+(_cps.optic?(', '+_cps.optic):'')); });
+    else L.push('/configure port '+conn(EP.carrier)+' admin-state enable connector breakout c1-'+_cps.gbps+'g   # carrier handoff '+_cps.gbps+'G'+(_cps.optic?(', '+_cps.optic):''));
     if(_cps.commitMbps) L.push('/configure port '+EP.carrier+' ethernet egress-rate '+(_cps.commitMbps*1000)+'   # committed rate, kb/s');
     var _gpS={}; x.gwSess.forEach(function(g){ _gpS[g.erIf]=g.gw; });
     Object.keys(_gpS).forEach(function(pt){ if((EP.isl||[]).indexOf(pt)<0) L.push('/configure port '+conn(pt)+' admin-state enable connector breakout c1-400g   # gateway link'); });
     (EP.isl||[]).forEach(function(pt){ L.push('/configure port '+conn(pt)+' admin-state enable connector breakout c1-400g'); });
     // ---- carrier ----
+    if(_lag){
+      _lag.forEach(function(pt,m){ L.push('/configure port '+pt+' admin-state enable description "'+c.name+' carrier handoff, LAG member '+(m+1)+'"'); });
+      L.push('/configure lag "lag-1" admin-state enable description "'+c.name+' carrier handoff, '+_lag.length+' x 400G"');
+      L.push('/configure lag "lag-1" lacp mode active administrative-key 32768   # CONFIRM LACP with the carrier');
+      _lag.forEach(function(pt){ L.push('/configure lag "lag-1" port '+pt); });
+      L.push(B+'interface "CARRIER" port lag-1 ipv4 primary address '+c.ourP2P+' prefix-length '+x.p2pMask+'   # one BGP session per ISP over the LAG');
+    } else {
     L.push('/configure port '+EP.carrier+' admin-state enable description "'+c.name+' carrier handoff"');
     L.push(B+'interface "CARRIER" port '+EP.carrier+' ipv4 primary address '+c.ourP2P+' prefix-length '+x.p2pMask);
+    }
     L.push(B+'interface "CARRIER" ingress filter ip "CARRIER-IN-FILTER"');
     L.push(B+'interface "CARRIER" ipv4 urpf-check mode loose');
     L.push(B+'interface "CARRIER" ipv4 bfd admin-state enable transmit-interval 300 receive 300 multiplier 3');
@@ -27263,7 +27295,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
         var plane=c.plane==='mgt'?'mgt':'fe', ctype=plane==='mgt'?'Internet (OOB management)':'Internet transit';
         _prov[c.name]=1; _ctype[ctype]=1;
         var term=null;
-        if(plane==='fe'){ var lk=pm.links.filter(function(l){ return l.ap==='demarc' && /^Carrier/.test(l.a); })[circuitsForPlane('fe').indexOf(c)];
+        if(plane==='fe'){ var _ci=circuitsForPlane('fe').indexOf(c), lk=pm.links.filter(function(l){ return l.ap==='demarc' && String(l.a).indexOf('Carrier '+(_ci+1)+' handoff')===0; })[0];   // HS v1.83: member 1 of a LAG
           if(lk && seen[lk.b]) term={device:lk.b, interface:lk.bp}; }
         else { var k=circuitsForPlane('mgt').indexOf(c), er=oobName('ER',k+1); if(seen[er]){
           try{ var en=(dp.all||[]).filter(function(e){ return e.name===er; })[0], T=en?String(genDeployConfig(en,'set')||''):'', hm=/^(?:set interfaces |interface )(\S+)(?: description|\n\s+description) "?[^"\n]*handoff/m.exec(T);
@@ -29448,11 +29480,11 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       if(fp.spines>0){h+='<tr><td>Frontend spine \u2014 '+fp.spineSW.label+'</td><td>'+fp.spineSW.access.n+'\u00d7'+fp.spineSW.access.gbps+'G '+fp.spineSW.access.ff+' \u00b7 '+fp.spinePorts+'/'+fp.spineSW.access.n+' ports used ('+Math.round(fp.spineUtil*100)+'%)'+(fp.maxPods?' \u00b7 scales to '+fp.maxPods+' pods':'')+'</td><td class="num">'+fp.spines+'</td></tr>';
       } else {h+='<tr><td>Frontend spine</td><td>Not instantiated \u2014 spineCount is 0</td><td class="num">0</td></tr>';
       }
-      if(!isSpokeSite()) h+='<tr><td>Edge router \u2014 '+fp.edge.edgeModel+'</td><td>eBGP to carriers, own ASN \u00b7 '+fp.edge.dia+'\u00d7'+fp.edge.diaGbps+'G DIA on 100G ports, 400G toward fabric</td><td class="num">'+fp.edge.routers+'</td></tr>';
+      if(!isSpokeSite()) h+='<tr><td>Edge router \u2014 '+fp.edge.edgeModel+'</td><td>eBGP to carriers, own ASN \u00b7 '+fp.edge.dia+'\u00d7'+((fp.edge.diaLag||1)>1?('('+fp.edge.diaLag+'\u00d7400G LAG) DIA'):(fp.edge.diaGbps+'G DIA on 100G ports'))+', 400G toward fabric</td><td class="num">'+fp.edge.routers+'</td></tr>';
       h+='<tr><td>Border leaf \u2014 '+fp.edge.borderModel+'</td><td>EVPN-VXLAN stitching + type-5 handoff per tenant VRF \u00b7 firewall bump in the wire (DCI is on the gateways) \u00b7 deep buffer, inline MACsec all ports, 4M IPv4 FIB \u00b7 <b>ports in 3 power zones \u2014 map wave count to the zone table</b></td><td class="num">'+(fp.cores||2)+'</td></tr>';
       h+='<tr><td>Edge firewall \u2014 '+fp.edge.fwModel+'</td><td>'+fp.edge.fwContexts+' virtual context'+(fp.edge.fwContexts>1?'s':'')+' \u2014 one per tenant \u00b7 north/south only, no IPS/ATP</td><td class="num">'+fp.edge.fw+'</td></tr>';
       lbBomLines(fp.edge.lb).forEach(function(L){ h+='<tr><td>'+L.part.replace('(REQUIRED)','<b style="color:#8A2E2E">(REQUIRED)</b>')+'</td><td>'+L.desc+'</td><td class="num">'+L.qty+'</td></tr>'; });
-      if(fp.edge.dia) h+='<tr><td>DIA circuit</td><td>'+fp.edge.diaGbps+'G each \u00b7 diverse carriers \u2014 verify separate entrance facility / meet-me room</td><td class="num">'+fp.edge.dia+'</td></tr>';
+      if(fp.edge.dia) h+='<tr><td>DIA circuit</td><td>'+fp.edge.diaGbps+'G each'+((fp.edge.diaLag||1)>1?(' \u00b7 '+fp.edge.diaLag+' per carrier as one LAG'):'')+' \u00b7 diverse carriers \u2014 verify separate entrance facility / meet-me room</td><td class="num">'+(fp.edge.dia*(fp.edge.diaLag||1))+'</td></tr>';
       // the carrier-facing optic on each edge router, from the circuit record (the carrier fits its own end).
       carrierOpticRows().forEach(function(o){ h+='<tr><td>Carrier handoff optic</td><td>'+o.optic+' \u00b7 '+o.gbps+'G \u00b7 edge-router end \u00b7 '+o.circuits+'</td><td class="num">'+o.qty+'</td></tr>'; });
       var _d=fp.edge.dci;
@@ -29909,7 +29941,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
         out.push(_m(['Optic','QSFP-100G-DR-S','FTD 4245 side of each firewall-to-border-leaf link (Threat Defense 7.4+)','LC duplex','',nL], {kind:'optic', sec:'edge'}));
         out.push(_m(['Optic','SDD-100G-DR','Border leaf side of each firewall-to-border-leaf link','LC duplex','',nL], {kind:'optic', sec:'edge'}));
       }
-      if(fx.edge.dia) out.push(['Service','DIA circuit',fx.edge.diaGbps+'G each; diverse carriers; separate entrance facility','','',fx.edge.dia]);
+      if(fx.edge.dia) out.push(['Service','DIA circuit',fx.edge.diaGbps+'G each; '+((fx.edge.diaLag||1)>1?(fx.edge.diaLag+' per carrier as one LAG; '):'')+'diverse carriers; separate entrance facility','','',fx.edge.dia*(fx.edge.diaLag||1)]);
       out.push(['Service','DCI coherent wave','ZR/ZR+ on the gateways; '+fx.edge.dci.sites+' sites, '+fx.edge.dci.wavesPerSite+' waves per site','','',fx.edge.dci.waves||(fx.edge.dci.sites*fx.edge.dci.wavesPerSite)||0]);
       (function(){ var _x=fx.edge.dci; if(_x.hubSpoke){ out.push(['DCI','Hub router ('+_x.hubModel+')','Carrier-neutral hub facility; '+_x.hubPorts+' coherent ports across the pair','','',_x.hubRouters]); out.push(['DCI','Hub cross-connect','One per wave landing at the hub','','',_x.hubPorts]); } })();
       // ---- 2. FRONT-END FABRIC ----
@@ -31347,7 +31379,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
         '<td style="padding:7px 6px"><input data-ci="'+i+'" data-cf="ourP2P" value="'+_q(c.ourP2P)+'" style="width:106px" class="cinp"></td>'+
         '<td style="padding:7px 6px"><input data-ci="'+i+'" data-cf="carrierAsn" value="'+_q(c.carrierAsn)+'" placeholder="ASN" style="width:66px" class="cinp"></td>'+
         '<td style="padding:7px 6px"><input data-ci="'+i+'" data-cf="block" value="'+_q(c.block)+'" style="width:126px" class="cinp"></td>'+
-        '<td style="padding:7px 6px;white-space:nowrap"><input data-ci="'+i+'" data-cf="handoffGbps" value="'+_q(c.handoffGbps||'100')+'" title="handoff speed, Gb/s (10/25/100/400)" style="width:40px" class="cinp">'+
+        '<td style="padding:7px 6px;white-space:nowrap"><input data-ci="'+i+'" data-cf="handoffGbps" value="'+_q(c.handoffGbps||'100')+'" title="handoff speed, Gb/s (10/25/100/400)" style="width:40px" class="cinp">'+(c.plane==='fe' && carrierMembers()>1?' <span style="font-size:11px;color:var(--ink-soft)" title="Set by N-S Gbps: each ISP carries the whole north-south rate alone">LAG '+carrierMembers()+' \u00d7 400G</span>':'')+
           ' <input data-ci="'+i+'" data-cf="optic" value="'+_q(c.optic)+'" placeholder="optic" title="carrier optic" style="width:104px" class="cinp">'+
           ' <input data-ci="'+i+'" data-cf="commitMbps" value="'+_q(c.commitMbps)+'" placeholder="CIR Mb/s" title="committed rate; blank = port speed" style="width:70px" class="cinp"></td>'+
         '<td style="padding:7px 6px;font-family:var(--mono);font-size:10.5px;color:var(--muted);line-height:1.5">'+
