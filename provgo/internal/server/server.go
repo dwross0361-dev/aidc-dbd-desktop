@@ -17,6 +17,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime/debug"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -815,13 +816,35 @@ func ConsoleHandler(est *estate.Estate, html []byte, isTLS bool) http.Handler {
 			need = s("any")
 		}
 		if u.Role != "admin" {
-			allowed := need != nil && *need != "" && (*need == "any" || est.MayAct(u, *need))
+			allowed := need != nil && *need != "" && (*need == "any" || est.MayAct(u, *need, n))
 			if !allowed {
+				if len(u.Rows) > 0 && need != nil && *need != "" && *need != "any" && slices.Contains(u.Planes, *need) { // HS v1.91: a row login
+					why := "this acts on the whole plane: its plane lead does it"
+					if n != "" {
+						if dr := est.DeviceRow(n); dr != "" {
+							why = n + " is in row " + dr
+						} else {
+							why = n + " serves the whole plane: its plane lead acts on it"
+						}
+					}
+					j(w, 403, pyjson.O("ok", false, "msg", "not permitted: your login acts in rows "+strings.Join(u.Rows, ", ")+" only ("+why+")"))
+					return
+				}
 				pl := strings.Join(u.Planes, ", ")
 				if pl == "" {
 					pl = "no plane"
 				}
 				j(w, 403, pyjson.O("ok", false, "msg", "not permitted: your login acts on "+pl+" only"))
+				return
+			}
+		}
+		if n != "" { // HS v1.90: one person on a device at a time
+			if hu, left := est.DeviceHold(n, user); hu != "" {
+				l := int(left)
+				if l < 1 {
+					l = 1
+				}
+				j(w, 409, pyjson.O("ok", false, "msg", fmt.Sprintf("%s is being worked by %s: try again in %d s", n, hu, l)))
 				return
 			}
 		}
@@ -838,12 +861,16 @@ func ConsoleHandler(est *estate.Estate, html []byte, isTLS bool) http.Handler {
 				j(w, 409, pyjson.O("ok", false, "msg", "that login exists: reset or update it instead"))
 				return
 			}
-			pw, err := est.UserAdd(nm, dval(data, "role", "operator"), "", dval(data, "planes", ""), true, dstr(data, "org", "customer"))
+			pw, err := est.UserAdd(nm, dval(data, "role", "operator"), "", dval(data, "planes", ""), true, dstr(data, "org", "customer"), dval(data, "rows", ""))
 			if err != nil {
 				j(w, 409, pyjson.O("ok", false, "msg", err.Error()))
 				return
 			}
-			est.Audit(user, "user-add", estate.PyStr(data.V("name")), fmt.Sprintf("role=%s planes=%s", estate.PyStr(data.V("role")), estate.PyStr(dval(data, "planes", ""))))
+			det := fmt.Sprintf("role=%s planes=%s", estate.PyStr(data.V("role")), estate.PyStr(dval(data, "planes", "")))
+			if data.Truthy("rows") {
+				det += " rows=" + estate.PyStr(data.V("rows"))
+			}
+			est.Audit(user, "user-add", estate.PyStr(data.V("name")), det)
 			j(w, 200, pyjson.O("ok", true, "msg", "created", "password", pw))
 			return
 		case "/api/users/reset":
@@ -855,7 +882,7 @@ func ConsoleHandler(est *estate.Estate, html []byte, isTLS bool) http.Handler {
 			}
 			return
 		case "/api/users/update":
-			okv, msg = est.UserUpdate(user, dstr(data, "name", ""), data.V("role"), data.V("planes"), data.V("disabled"), data.V("org"))
+			okv, msg = est.UserUpdate(user, dstr(data, "name", ""), data.V("role"), data.V("planes"), data.V("disabled"), data.V("org"), data.V("rows"))
 		case "/api/run":
 			rd := est.Readiness()
 			if !rd.Truthy("ok") && est.RunState() == "idle" {

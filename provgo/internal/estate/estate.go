@@ -109,6 +109,7 @@ type Estate struct {
 	DevOrder   []string
 	Devs       map[string]*pyjson.Map
 	WaveOf     map[string]wavePos
+	holds      map[string]hold // HS v1.91: device -> who holds it, until when
 	ByIP       map[string]string
 	FileOwner  map[string]string
 	Foreign    map[string][2]string
@@ -474,6 +475,12 @@ func (e *Estate) Event(text, level string) {
 }
 
 func (e *Estate) audit(user, action, target, detail string) {
+	if d, ok := e.Devs[target]; ok && d != nil && d.Str("row") != "" { // HS v1.91: device actions name the device's Floor view row
+		if detail != "" {
+			detail += " "
+		}
+		detail += "row=" + d.Str("row")
+	}
 	e.DB.MustExec("INSERT INTO audit(ts,user,action,target,detail) VALUES(?,?,?,?,?)", Now(), user, action, target, detail)
 }
 

@@ -70,7 +70,7 @@ button.b-run{border-color:#b45309!important;box-shadow:0 0 0 2px #fcd34d inset;o
 .ev{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;max-height:360px;overflow:auto}
 .ev li{display:flex;gap:10px;font-size:13px}
 .floor{display:flex;flex-direction:column;gap:10px;min-width:760px}
-.frow{display:flex;align-items:center;gap:10px}.frow .rl{width:120px;flex:0 0 120px;font-size:13px;font-weight:600}
+.frow{display:flex;align-items:center;gap:10px}.frow.mine{outline:2px solid #2E7D32;outline-offset:3px;border-radius:6px}.frow .rl{width:120px;flex:0 0 120px;font-size:13px;font-weight:600}
 .rk{flex:1 1 0;min-width:58px;height:54px;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11px}
 .login{max-width:380px;margin:12vh auto;background:#fff;border:1px solid var(--line);border-radius:10px;padding:24px;display:flex;flex-direction:column;gap:12px}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
@@ -281,8 +281,11 @@ function ask(title, body, fields){
 // ------------------------------------------------------------------ data
 // v480: personal logins. A temporary password opens only the password change; an operator acts on its planes only.
 function planeOf(n){ var b=(S.plan&&S.plan.builds)||[]; for(var i=0;i<b.length;i++){ var w=b[i].waves||[]; for(var j=0;j<w.length;j++){ if((w[j].devices||[]).indexOf(n)>=0) return b[i].key; } } return ''; }
-function canAct(plane){ if(!S.who||S.mode!=='live') return false; if(S.who.role==='admin') return true;
-  return S.who.role==='operator' && !!plane && (S.who.planes||[]).indexOf(plane)>=0; }
+function canAct(plane, dev){ if(!S.who||S.mode!=='live') return false; if(S.who.role==='admin') return true;
+  if(!(S.who.role==='operator' && !!plane && (S.who.planes||[]).indexOf(plane)>=0)) return false;
+  var R=S.who.rows||[]; if(!R.length) return true;   // HS v1.91: a row login acts on its rows' devices only; plane-wide devices and plane actions need the plane lead
+  var d=dev&&S.plan&&S.plan.devices&&S.plan.devices[dev]; return !!(d && d.row && R.indexOf(d.row)>=0); }
+function rowsTxt(u){ return (u.rows&&u.rows.length)?(' \u00b7 rows '+u.rows.join(', ')):''; }
 function showPw(forced){ var shown=$('pwView').style.display==='flex'; S.pwForced=forced!==false;   // HS v1.21: typed fields survive a re-show
   if(S.pwForced) $('pwWho').textContent='This login has a temporary password. Choose your own to continue: at least 12 characters, not your user name.';
   $('pwCancel').style.display=''; $('app').style.display='none'; $('loginView').style.display='none'; $('pwView').style.display='flex';
@@ -302,7 +305,7 @@ function boot(){
     S.who=w; if(w.must_change){ showPw(); return; }
     return api('api/plan').then(function(pl){
       S.plan=pl; $('app').style.display='flex';
-      $('hUser').textContent=S.who.user+(S.who.role==='admin'?' (admin)':S.who.role==='operator'?(' (operator: '+((S.who.planes||[]).join(', ')||'no plane')+')'):' (read only)');
+      $('hUser').textContent=S.who.user+(S.who.role==='admin'?' (admin)':S.who.role==='operator'?(' (operator: '+((S.who.planes||[]).join(', ')||'no plane')+rowsTxt(S.who)+')'):' (read only)');
       S.events=[]; S.lastId=0; return refresh();
     });
   }).catch(function(){});
@@ -426,7 +429,7 @@ function render(){
     if(tiles) html+='<div style="display:flex;flex-direction:column;gap:6px"><div class="glabel">'+esc(b.name)+'</div><div class="grid">'+tiles+'</div></div>'; });
   $('groups').innerHTML=html||'<div class="muted">Nothing to show.</div>'; $('gCount').textContent='· '+cnt+' shown';
   document.querySelectorAll('[data-d]').forEach(function(e){ e.onclick=function(){ S.sel=e.dataset.d; render(); loadDetail(); }; });
-  renderDetail(V, ro || (S.sel ? !canAct(planeOf(S.sel)) : true));
+  renderDetail(V, ro || (S.sel ? !canAct(planeOf(S.sel), S.sel) : true));
   // gate
   var gb=st.builds.filter(function(b){ return b.key===(S.bsel||curKey); })[0];
   $('gName').textContent='Gate · '+gb.name;
@@ -508,7 +511,8 @@ function render(){
   // floor
   $('fSite').textContent='· '+site.code;
   var byCab={}; Object.keys(P.devices).forEach(function(n){ var r=P.devices[n].rack; if(r) (byCab[r]=byCab[r]||[]).push(n); });
-  $('floor').innerHTML=(P.floor||[]).map(function(r){ return '<div class="frow"><div class="rl">'+esc(r.row)+'</div><div class="row" style="flex:1 1 auto;flex-wrap:nowrap;gap:6px">'+r.cabinets.map(function(c){
+  var _myR=(S.who&&S.who.role==='operator'&&S.who.rows)||[];   // HS v1.91: a row login's own rows are marked
+  $('floor').innerHTML=(P.floor||[]).map(function(r){ var mine=_myR.indexOf(r.row)>=0; return '<div class="frow'+(mine?' mine':'')+'"><div class="rl">'+esc(r.row)+(mine?' <span class="chip k-done" style="font-size:10px">yours</span>':'')+'</div><div class="row" style="flex:1 1 auto;flex-wrap:nowrap;gap:6px">'+r.cabinets.map(function(c){
     var L=byCab[c.id]||[], n=L.length, d=L.filter(function(x){ return V.devices[x].stage===6; }).length, bad=L.some(function(x){ return /failed|missing/.test(V.devices[x].flag); }),
         w=L.some(function(x){ return /unclaimed|waiting|rma/.test(V.devices[x].flag); }), a=L.some(function(x){ return V.devices[x].stage>0; });
     var k=bad?'tf':w?'tw':(n&&d===n)?'t6':a?'t1':'t0';
@@ -522,7 +526,7 @@ function render(){
     $('alertTxt').textContent=uopen.length?((uopen[0].serial?'Serial '+uopen[0].serial:'MAC '+uopen[0].mac)+' called in and is not in the '+site.code+' inventory'+((uopen[0].suggest||[])[0]?(' (likely '+uopen[0].suggest[0].device+')'):'')+'. The gate holds until it is bound or replaced.'+(fails.length?(' Also '+fails.length+' device(s) failed or missing.'):''))
       :(fails.length+' device(s) need attention: '+fails.slice(0,3).map(function(n){ return P.devices[n].short+' ('+V.devices[n].detail+')'; }).join('; '));
     $('alertBtns').innerHTML=fails.slice(0,1).map(function(n){ return '<button class="warn act" data-al="'+esc(n)+'">Retry '+esc(P.devices[n].short)+'</button>'; }).join('');
-    document.querySelectorAll('[data-al]').forEach(function(e){ e.disabled=!canAct(planeOf(e.dataset.al)); e.onclick=function(){ act('api/retry',{device:e.dataset.al}); }; });
+    document.querySelectorAll('[data-al]').forEach(function(e){ e.disabled=!canAct(planeOf(e.dataset.al), e.dataset.al); e.onclick=function(){ act('api/retry',{device:e.dataset.al}); }; });
   } else al.style.display='none';
   // replay bar
   if(!live){ var mx=Math.max(1,Math.ceil(S.events[S.events.length-1].ts-t0()));   /* v515: ceil, so the slider's end includes the last event */ $('rPos').max=mx; $('rPos').value=Math.round(S.rt);
@@ -616,7 +620,7 @@ $('bPause').onclick=function(){ act('api/pause',{}); };
 $('bCred').onclick=function(){ ask('Push credential','Used by the service to push Junos and SR Linux configurations. Held in memory only; never written to disk.',[{key:'user',label:'User',value:'netadmin'},{key:'password',label:'Password',type:'password'}]).then(function(v){ if(v) act('api/push-credential',v); }); };
 $('bMyPw').onclick=function(){ showPw(false); $('pwWho').textContent='Change your password: at least 12 characters, not your user name. Your other sessions end.'; $('pwCancel').style.display=''; };
 $('bLogout').onclick=function(){ api('api/logout',{}).then(signedOut).catch(signedOut); };   // HS v1.21: the previous user's plan goes too
-function planesTxt(u){ return u.role==='admin'?'all':(u.role==='operator'?(u.planes.join(', ')||'none'):'read only'); }
+function planesTxt(u){ return u.role==='admin'?'all':(u.role==='operator'?((u.planes.join(', ')||'none')+rowsTxt(u)):'read only'); }
 function usersDlg(){
   api('api/users').then(function(v){
     var cv=v.coverage||{}, keys=Object.keys(cv.per_plane||{});
@@ -629,16 +633,16 @@ function usersDlg(){
     var done=function(){ $('dlg').close(); setTimeout(usersDlg, 50); };
     var shownPw=function(j){ if(j&&j.password) ask('Temporary password', 'Give this to <b>'+esc(j.name||'')+'</b> privately. It works once: the console asks for a new password at first sign-in.<div class="mono" style="font-size:16px;margin-top:8px;user-select:all">'+esc(j.password)+'</div>', []).then(usersDlg); else usersDlg(); };
     $('uAdd').onclick=function(){ $('dlg').close();
-      ask('Add login','Operators act only on the planes listed (oob, edge, fe, be). A temporary password is shown once.',
-        [{key:'name',label:'User name'},{key:'org',label:'Organization (Release DWR access disables the DWR logins)',options:[['customer','Customer'],['dwr','DWR Networking']]},{key:'role',label:'Role',options:[['operator','operator'],['admin','admin'],['viewer','viewer (read only)']]},{key:'planes',label:'Planes (operator), comma-separated',value:'fe,edge'}])
+      ask('Add login','Operators act only on the planes listed (oob, edge, fe, be). Rows (Floor view labels, e.g. P1.1-P4.1, P7.1) narrow an operator to the devices racked in those rows; spines, cores, border leaves and the edge stay with an operator who has the whole plane. A temporary password is shown once.',
+        [{key:'name',label:'User name'},{key:'org',label:'Organization (Release DWR access disables the DWR logins)',options:[['customer','Customer'],['dwr','DWR Networking']]},{key:'role',label:'Role',options:[['operator','operator'],['admin','admin'],['viewer','viewer (read only)']]},{key:'planes',label:'Planes (operator), comma-separated',value:'fe,edge'},{key:'rows',label:'Rows (operator, optional): blank = the whole plane',value:''}])
       .then(function(f){ if(!f) return usersDlg(); api('api/users/add',f).then(function(j){ j.name=f.name; shownPw(j); }).catch(function(e){ alert(e.message); usersDlg(); }); }); };
     document.querySelectorAll('[data-ur]').forEach(function(b){ b.onclick=function(){ var nm=b.dataset.ur; $('dlg').close();
       api('api/users/reset',{name:nm}).then(function(j){ j.name=nm; shownPw(j); }).catch(function(e){ alert(e.message); usersDlg(); }); }; });
     document.querySelectorAll('[data-ud]').forEach(function(b){ b.onclick=function(){ var nm=b.dataset.ud;
       api('api/users/update',{name:nm, disabled:b.dataset.dis==='1'}).then(done).catch(function(e){ alert(e.message); }); }; });
     document.querySelectorAll('[data-ue]').forEach(function(b){ b.onclick=function(){ var nm=b.dataset.ue, u=v.users.filter(function(x){ return x.name===nm; })[0]; $('dlg').close();
-      ask('Edit '+nm,'Role, planes and organization. The last two admins cannot be demoted.',[{key:'org',label:'Organization',options:[['customer','Customer'],['dwr','DWR Networking']],value:u.org||'dwr'},{key:'role',label:'Role',options:[['operator','operator'],['admin','admin'],['viewer','viewer (read only)']],value:u.role},{key:'planes',label:'Planes (operator)',value:u.planes.join(',')}])
-      .then(function(f){ if(!f) return usersDlg(); api('api/users/update',{name:nm, role:f.role, planes:f.planes, org:f.org}).then(usersDlg).catch(function(e){ alert(e.message); usersDlg(); }); }); }; });
+      ask('Edit '+nm,'Role, planes, rows and organization. The last two admins cannot be demoted.',[{key:'org',label:'Organization',options:[['customer','Customer'],['dwr','DWR Networking']],value:u.org||'dwr'},{key:'role',label:'Role',options:[['operator','operator'],['admin','admin'],['viewer','viewer (read only)']],value:u.role},{key:'planes',label:'Planes (operator)',value:u.planes.join(',')},{key:'rows',label:'Rows (operator, optional): blank = the whole plane',value:(u.rows||[]).join(',')}])
+      .then(function(f){ if(!f) return usersDlg(); api('api/users/update',{name:nm, role:f.role, planes:f.planes, rows:f.rows, org:f.org}).then(usersDlg).catch(function(e){ alert(e.message); usersDlg(); }); }); }; });
   }).catch(function(e){ if(e.message!=='login') alert(e.message); });
 }
 $('bUsers').onclick=usersDlg;

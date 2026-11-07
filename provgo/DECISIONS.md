@@ -581,3 +581,16 @@ See RELEASE-NOTES.md 2.0.57, Proved before shipping.
 |---|---|---|
 | HL-2 | **Rows keep the new model's place and hall** in `applyRowOrder` (used by a refresh that keeps edits and by a saved layout): `hall`, `x0`, `y0` from the new model's row of the same id. | The rebuilt rows had none, so the page laid them out itself while `HALLR` held the builder's hall positions. |
 | ST-1 | **Storage block by need.** `stoNodesNeed()` = units x nodes per unit (+4 VIP slots for BGP storage). Up to 256 on a hyperscale site the /18 in the template; past it `10.(176+2r).0.0/15` (10.176.0.0/12 is unused), prefix /17, /16 or /15 by need; `stoMax()` follows. All address helpers compute from one integer base (`stoBaseInt`). Standard sites keep the /20 and the warning. | The /18 held 256 nodes; storage per scalable unit (2.0.57) gives 816 at 1,625 racks, and the old octet arithmetic overflowed. |
+
+# Row logins, device holds (HS v1.91, desktop 2.0.90); secrets CSV (HS v1.90, desktop 2.0.89)
+
+| # | Decision | Why |
+|---|---|---|
+| RW-1 | **Operators may be scoped to Floor view rows** (`users.rows`, `--rows`, `rows` in `/api/users/add|update`, `rows` in whoami and `/api/users`). Ranges run over pods at one row number (`P1.1-P4.1`) or rows of one pod (`P7.1-P7.3`), validated against `plan.floor`. Blank = the whole plane, as before. | XL builds: several people on one plane, each in their own rows. |
+| RW-2 | **The builder writes `row` on the devices a row login may act on** (OOB wave 3: access and in-rack switches; back-end and front-end wave 1: leaves), from the floor row of the device's rack. Spines, super-spines, cores, OOB edge and the whole Edge-PoP plane get none and stay with the plane lead. `/api/plan` devices carry `row`. | One place decides what is plane-wide; both engines only compare strings. |
+| RW-3 | **`may_act(who, plane, device)`:** an operator with rows acts only on a device whose row is listed; plane actions (run, gates, tuning, results) and row-less devices are refused with the reason named. | Shared devices must not be pushed from two rows. |
+| RW-4 | **Device hold:** any console action naming a device holds it for 120 s for that user; another user acting on it in that time gets 409 with the holder and seconds left. In memory only. | One person on a device at a time without a lock UI. |
+| RW-5 | **Audit:** a target that is a device with a row gets ` row=Pn.m` appended to the detail; user add/update detail adds ` rows=` when set. | The audit log answers who acted in which row. |
+| SC-1 | **Secrets CSV:** the package carries `secrets-<SITE>.csv`; `setup.sh --secrets FILE` imports it (account passwords hashed on import, cleartext not stored), then shreds FILE unless `--keep-secrets-file`. | No typed prompts; the CSV is the operator's one transient cleartext copy. |
+
+Verification: the differential test (run + P3 scenarios) and a row scenario (CLI add with good and bad rows, whoami, own-row/other-row/spine/plane actions, hold, update, list, plan, audit) are identical between estate_build.py and aidc-prov.

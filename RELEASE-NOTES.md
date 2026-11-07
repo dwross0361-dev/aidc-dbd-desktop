@@ -1,3 +1,9 @@
+# AIDC DBD Desktop 2.0.90 (builder HS-v1.91, site runner 1.11.0)
+
+- **Deployment Console: operators scoped to Floor view rows.** Besides planes, a login can be given rows (`P1.1-P4.1, P7.1`; Logins dialog, `/api/users`, or `user add NAME --role operator --planes be --rows P1.1-P4.1`), so several people work one plane in different rows on XL builds. A row login acts only on the devices racked in its rows: leaves, OOB access and in-rack switches. Spines, super-spines, OOB cores, border leaves and the Edge-PoP serve the whole plane and stay with an operator who has the whole plane (or an admin), as do plane actions (Start build, gate checks, tuning, results); a refusal names the reason. The Floor view marks your rows and keeps the others visible, read only.
+- **One person on a device at a time:** a console action holds the device for two minutes; anyone else acting on it in that time is told who holds it and for how long. The audit log names each device action's row.
+- Both service engines (Python and aidc-prov) carry the change; the differential test and a row scenario are identical between them.
+
 # AIDC DBD Desktop 2.0.89 (builder HS-v1.90, site runner 1.11.0)
 
 - **Secrets from a CSV, no prompts.** Each package carries `secrets-<SITE>.csv`: the keys this build uses, grouped (accounts, shared with other parties, ours only, site parameters, estate service). Account passwords go in as cleartext. `sudo bash <SITE>-deploy-....run --secrets secrets-<SITE>.csv` imports it: passwords are hashed on import in every form the build needs (SHA-512, NX-OS SHA-256, SR OS bcrypt; setup installs htpasswd when SR OS is in the build), account passwords are not stored, and the CSV is shredded afterwards (`--keep-secrets-file` keeps it, lab only). Importing for a new site sets the previous site's file aside.

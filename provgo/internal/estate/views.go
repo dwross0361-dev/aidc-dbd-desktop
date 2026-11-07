@@ -344,7 +344,7 @@ func (e *Estate) PlanView() *pyjson.Map {
 	for _, n := range e.DevOrder {
 		d := e.Devs[n]
 		m := pyjson.NewMap()
-		for _, k := range []string{"short", "role", "os", "os_label", "ip", "rack", "release", "aggregate", "push", "config_signal", "files", "model"} {
+		for _, k := range []string{"short", "role", "os", "os_label", "ip", "rack", "row", "release", "aggregate", "push", "config_signal", "files", "model"} {
 			m.Set(k, d.V(k))
 		}
 		devs.Set(n, m)

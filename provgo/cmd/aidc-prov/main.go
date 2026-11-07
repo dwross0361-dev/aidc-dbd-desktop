@@ -34,6 +34,7 @@ type opts struct {
 	args                                           []string
 	plan, conf, keaTemplate, console               string
 	plane, reason, role, planes, org, out, account string
+	rows                                           string // HS v1.91: user add --rows
 	device, adminPass, nic, macs                   string
 	readiness                                      bool
 }
@@ -73,7 +74,7 @@ func parseArgs(argv []string) *opts {
 	o := &opts{plan: filepath.Join(here, "estate.json"), conf: "/etc/fabric/estate.conf", keaTemplate: filepath.Join(here, "kea-dhcp4.json"),
 		plane: "all", role: "admin", org: "customer", adminPass: os.Getenv("ESTATE_ADMIN_PASS")}
 	str := map[string]*string{"--plan": &o.plan, "--conf": &o.conf, "--kea-template": &o.keaTemplate, "--console": &o.console,
-		"--plane": &o.plane, "--reason": &o.reason, "--role": &o.role, "--planes": &o.planes, "--org": &o.org, "--out": &o.out,
+		"--plane": &o.plane, "--reason": &o.reason, "--role": &o.role, "--planes": &o.planes, "--rows": &o.rows, "--org": &o.org, "--out": &o.out,
 		"--account": &o.account, "--device": &o.device, "--admin-pass": &o.adminPass, "--nic": &o.nic, "--macs": &o.macs}
 	var pos []string
 	for i := 0; i < len(argv); i++ {
@@ -239,7 +240,11 @@ func cliUser(est *estate.Estate, a *opts) int {
 			if u.Truthy("must_change") {
 				mc = "change-required"
 			}
-			fmt.Printf("%-20s %-8s %-16s %s%s\n", u.Str("name"), u.Str("role"), pl, dis, mc)
+			rw := ""
+			if r := pyjson.StrList(u.V("rows")); len(r) > 0 {
+				rw = "   rows " + strings.Join(r, ",")
+			}
+			fmt.Printf("%-20s %-8s %-16s %s%s%s\n", u.Str("name"), u.Str("role"), pl, dis, mc, rw)
 		}
 		cv := v.M("coverage")
 		pp := cv.M("per_plane")
@@ -258,12 +263,16 @@ func cliUser(est *estate.Estate, a *opts) int {
 		name := a.args[1]
 		switch sub {
 		case "add":
-			pw, err := est.UserAdd(name, a.role, "", a.planes, true, a.org)
+			pw, err := est.UserAdd(name, a.role, "", a.planes, true, a.org, a.rows)
 			if err != nil {
 				fmt.Println(err)
 				return 2
 			}
-			est.Audit("cli:root", "user-add", name, fmt.Sprintf("role=%s planes=%s", a.role, a.planes))
+			det := fmt.Sprintf("role=%s planes=%s", a.role, a.planes)
+			if a.rows != "" {
+				det += " rows=" + a.rows
+			}
+			est.Audit("cli:root", "user-add", name, det)
 			fmt.Printf("temporary password for %s: %s   (must be changed at first login)\n", name, pw)
 			return 0
 		case "reset":
@@ -282,7 +291,7 @@ func cliUser(est *estate.Estate, a *opts) int {
 		}
 		return 1
 	}
-	fmt.Println("usage: user add NAME [--role viewer|operator|admin] [--planes oob,edge,fe,be] | user reset NAME | user disable|enable NAME | user list")
+	fmt.Println("usage: user add NAME [--role viewer|operator|admin] [--planes oob,edge,fe,be] [--rows P1.1-P4.1] | user reset NAME | user disable|enable NAME | user list")
 	return 2
 }
 

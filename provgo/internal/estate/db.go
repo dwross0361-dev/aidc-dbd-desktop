@@ -62,7 +62,7 @@ func OpenDB(path string) (*DB, error) {
 		cols[pyjson.Str(r.V("name"))] = true
 	}
 	for _, c := range [][2]string{{"must_change", "INTEGER DEFAULT 0"}, {"planes", "TEXT DEFAULT ''"},
-		{"disabled", "INTEGER DEFAULT 0"}, {"org", "TEXT DEFAULT 'dwr'"}} {
+		{"disabled", "INTEGER DEFAULT 0"}, {"org", "TEXT DEFAULT 'dwr'"}, {"rows", "TEXT DEFAULT ''"}} {
 		if !cols[c[0]] {
 			if _, err := d.Exec(fmt.Sprintf("ALTER TABLE users ADD COLUMN %s %s", c[0], c[1])); err != nil {
 				return nil, err
