@@ -1,3 +1,9 @@
+# AIDC DBD Desktop 2.0.88 (builder HS-v1.89, site runner 1.11.0)
+
+- **setup.sh asks for the secrets.** On a terminal it creates `/etc/fabric/secrets.env` from the template and asks for each blank value the device files need: passwords twice, hidden, stored as SHA-512 hashes (the NX-OS SHA-256 and SR OS bcrypt forms from the same entry; bcrypt needs htpasswd); entering the read-only password also sets READ_PASSWORD; Enter leaves a value blank. Values are saved as entered. Unattended (`--yes` or no terminal) it stops for hand editing as before.
+- **One secrets file per site.** The file records its site; a package for another site asks whether to keep that site's secrets or start new (the old file is kept as `secrets.env.<site>`). Keys new in a package are added to an existing file (blank or with the template default) instead of leaving their tokens unfilled.
+- **Clock check:** setup warns when the host clock is not NTP-synchronized.
+
 # AIDC DBD Desktop 2.0.87 (builder HS-v1.88, site runner 1.11.0)
 
 - **SRX4700 interfaces are FPC 1** (Juniper port checker): et-1/<pic>/<port>, was et-0. The MNHA configs (border-leaf legs et-1/0/1-4 in ae1/ae2, the ICL et-1/1/1-2 in ae0, the SRG monitors), the physical model, the Cable Matrix and the faceplate (labels 1/0/0 ... 1/1/13) all use the new names. The legs stay on the QSFP28 ports at 100G; port 0 (400G) is unused, so the 400G pairing rule (port N+1 unused) is never hit.

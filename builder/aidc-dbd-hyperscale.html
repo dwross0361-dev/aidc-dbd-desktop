@@ -993,7 +993,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.88';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.89';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   // HS v1.59: Vera Rubin NVL72 at 2 planes x 800G, NVIDIA's public reference layout (Owner decision D11); see the VR profile.
   // HS v1.58: the customer input sheet and importer (inputSheetImport, the SESSION_IN overlay); see the input sheet block.
   // HS v1.57 (release identity): the release is identified by the SHA-256 of this file, not by the string above (HS-v1.56 r1, r2
@@ -18962,12 +18962,100 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     B.push('# ---- secrets: render /etc/fabric/secrets.env into the package, then refuse to serve anything unfilled ----');
     B.push('# The builder never holds secrets. Originals are kept in .templates/ so a re-run with new values starts clean.');
     B.push('SECRETS=/etc/fabric/secrets.env');
+    // HS v1.88: one secrets file per site, keys new in a package merged in, and blank values asked for on a terminal (hidden, hashed here)
+    B.push('ASK=0; [[ -t 0 && $ASSUME_YES -eq 0 ]] && ASK=1');
+    B.push('mkdir -p /etc/fabric && chmod 700 /etc/fabric');
+    B.push('if [[ -f "$SECRETS" ]]; then');
+    B.push('  OLD=$(sed -n "s/^# site: *//p" "$SECRETS" | head -1)');
+    B.push('  [[ -z "$OLD" && -f /opt/estate-build/estate.json ]] && OLD=$(python3 -c "import json,sys;print(json.load(open(sys.argv[1]))[\'site\'][\'code\'])" /opt/estate-build/estate.json 2>/dev/null || true)');
+    B.push('  if [[ -n "$OLD" && "${OLD^^}" != "${SITE_CODE^^}" ]]; then');
+    B.push('    echo "[!] $SECRETS holds site $OLD\'s secrets; this package is site $SITE_CODE."');
+    B.push('    A=k; [[ $ASK -eq 1 ]] && read -r -p "    [n]ew secrets for $SITE_CODE ($OLD\'s kept as secrets.env.$OLD) or [k]eep $OLD\'s? [n/k]: " A');
+    B.push('    if [[ "${A,,}" == n* ]]; then mv "$SECRETS" "$SECRETS.$OLD"; echo "[ok] $OLD\'s secrets kept as $SECRETS.$OLD"; else echo "[i] using $OLD\'s secrets for $SITE_CODE"; fi');
+    B.push('  fi');
+    B.push('fi');
     B.push('if [[ ! -f "$SECRETS" ]]; then');
-    B.push('  mkdir -p /etc/fabric && chmod 700 /etc/fabric');
-    B.push('  if [[ -f ./secrets.env.template ]]; then install -m 600 ./secrets.env.template "$SECRETS"; fi');
-    B.push('  echo "[!] $SECRETS created from the template. Fill in every value, then re-run setup.sh."; exit 3');
+    B.push('  if [[ -f ./secrets.env.template ]]; then install -m 600 ./secrets.env.template "$SECRETS"; else : > "$SECRETS"; fi');
+    B.push('  if [[ $ASK -ne 1 ]]; then echo "[!] $SECRETS created from the template. Fill in every value, then re-run setup.sh (or run it on a terminal to be asked)."; exit 3; fi');
+    B.push('  echo "[ok] $SECRETS created from the template"');
     B.push('fi');
     B.push('chmod 600 "$SECRETS"');
+    B.push('python3 - "$SECRETS" "$SITE_CODE" "$ASK" <<\'PYEOF\'');
+    var _meta={}; Object.keys(SECRET_INFO).forEach(function(t){ _meta[secretEnvKey(t)]=[SECRET_INFO[t].fmt, SECRET_INFO[t].what]; });
+    [
+      "import os, re, sys, getpass, subprocess, shutil",
+      "sec, site, ask = sys.argv[1], sys.argv[2], sys.argv[3] == \"1\"",
+      "META = __META__",
+      "txt = open(sec).read(); have = set(re.findall(r\"(?m)^([A-Z][A-Z0-9_]*)=\", txt)); add, req = [], []",
+      "tpl = open(\"secrets.env.template\").read().split(\"\\n\") if os.path.isfile(\"secrets.env.template\") else []",
+      "opt = False",
+      "for ln in tpl:",
+      "    if ln.startswith(\"# ---- estate provisioning service\"): opt = True",
+      "    m = re.match(r\"([A-Z][A-Z0-9_]*)=\", ln)",
+      "    if not m: continue",
+      "    if not opt: req.append(m.group(1))",
+      "    if m.group(1) not in have: add.append(ln); have.add(m.group(1))",
+      "if add:   # keys new in this package: added blank (or with the template default), every existing value kept",
+      "    txt = txt.rstrip(\"\\n\") + \"\\n#\\n# ---- added from the \" + (site or \"new\") + \" package template ----\\n\" + \"\\n\".join(add) + \"\\n\"",
+      "    print(\"[ok] %d key(s) new in this package added to %s: %s\" % (len(add), sec, \", \".join(a.split(\"=\")[0] for a in add)))",
+      "if site: txt = re.sub(r\"(?m)^# site: .*$\", \"# site: \" + site, txt, count=1) if re.search(r\"(?m)^# site: \", txt) else \"# site: \" + site + \"\\n\" + txt",
+      "def val(k):",
+      "    m = re.search(r\"(?m)^\" + k + r\"=(.*)$\", txt); v = (m.group(1).strip() if m else \"\")",
+      "    return v[1:-1] if len(v) >= 2 and v[0] == v[-1] and v[0] in \"\\\"'\" else v",
+      "def put(k, v):",
+      "    global txt",
+      "    if re.search(r\"(?m)^\" + k + r\"=\", txt): txt = re.sub(r\"(?m)^\" + k + r\"=.*$\", lambda m: k + \"=\" + v, txt, count=1)",
+      "    else: txt = txt.rstrip(\"\\n\") + \"\\n\" + k + \"=\" + v + \"\\n\"",
+      "    open(sec, \"w\").write(txt); os.chmod(sec, 0o600)   # saved as each answer lands: an interrupted run keeps what was entered",
+      "def line(label):   # stdin is this script (heredoc): read answers from the terminal",
+      "    sys.stdout.write(label); sys.stdout.flush(); return TTY.readline().rstrip(\"\\n\")",
+      "def crypt(p, alg):",
+      "    try: return subprocess.run([\"openssl\", \"passwd\", alg, \"-stdin\"], input=p + \"\\n\", capture_output=True, text=True, check=True).stdout.strip()",
+      "    except Exception: return \"\"",
+      "def bcrypt(p):",
+      "    if not shutil.which(\"htpasswd\"): return \"\"",
+      "    try: return subprocess.run([\"htpasswd\", \"-inBC\", \"10\", \"\"], input=p, capture_output=True, text=True, check=True).stdout.strip().lstrip(\":\")",
+      "    except Exception: return \"\"",
+      "def pw(label, twice):",
+      "    while True:",
+      "        a = getpass.getpass(\"    \" + label + \": \")",
+      "        if not a or not twice: return a",
+      "        if getpass.getpass(\"    again: \") == a: return a",
+      "        print(\"    [!] the two differ: again\")",
+      "TTY = open(\"/dev/tty\") if ask else None",
+      "base = lambda k: k[:-5] if k.endswith((\"_NXOS\", \"_SROS\")) else k",
+      "todo = [k for k in req if not val(k) and not (base(k) != k and META.get(base(k), [\"\", \"\"])[0] == \"hash\")] if ask else []",
+      "if todo:",
+      "    print(\"[..] %d value(s) to fill for site %s. Passwords are read hidden and hashed here; Enter on a blank leaves it empty (setup then refuses to serve it).\" % (len(todo), site or \"?\"))",
+      "for k in todo:",
+      "    kb = k[:-5] if k.endswith(\"_FILE\") else k; fmt, what = META.get(kb, [\"\", \"\"])",
+      "    if not fmt and kb.startswith(\"SET_BGP_KEY_\"): fmt, what = \"raw\", \"BGP session key agreed with the carrier, cleartext\"",
+      "    print(\"\\n  \" + k + ((\": \" + what) if what else \": site parameter (or set it in the builder's Site params and regenerate)\"))",
+      "    if k.endswith(\"_FILE\"):",
+      "        v = line(\"    file path on this host: \").strip()",
+      "        if v and not os.path.isfile(v): print(\"    [!] no such file: left blank\"); v = \"\"",
+      "        if v: put(k, v)",
+      "    elif fmt == \"hash\":",
+      "        a = pw(\"password\", True)",
+      "        if not a: continue",
+      "        put(k, crypt(a, \"-6\"))",
+      "        if k + \"_NXOS\" in req and not val(k + \"_NXOS\"): put(k + \"_NXOS\", crypt(a, \"-5\"))",
+      "        if k + \"_SROS\" in req and not val(k + \"_SROS\"):",
+      "            h = bcrypt(a)",
+      "            if h: put(k + \"_SROS\", h)",
+      "            else: print(\"    [!] SR OS takes bcrypt: install apache2-utils (htpasswd) and re-run, or fill \" + k + \"_SROS by hand\")",
+      "        if k == \"SET_READ_HASH\": put(\"READ_PASSWORD\", a); print(\"    [ok] READ_PASSWORD set to the same password (the service logs in as estate-ro)\")",
+      "    elif re.search(r\"PASSWORD|SECRET|PSK|COMMUNITY|CAK|CKN|KEY|HASH\", k):",
+      "        v = pw(\"value (hidden)\", \"PASSWORD\" in k)",
+      "        if '\"' in v: print(\"    [!] values may not contain a double quote: left blank\"); v = \"\"",
+      "        if v: put(k, v)",
+      "    else:",
+      "        v = line(\"    value: \").strip()",
+      "        if v: put(k, v)",
+      "open(sec, \"w\").write(txt); os.chmod(sec, 0o600)",
+      "if todo: print(\"\\n[ok] \" + sec + \" updated\")"
+    ].forEach(function(l){ var _mj=JSON.stringify(_meta); B.push(l.replace('__META__', function(){ return _mj; })); });
+    B.push('PYEOF');
     B.push('python3 - "$SECRETS" <<\'PYEOF\'');
     [
       'import os, re, sys, shlex, shutil, hashlib',
@@ -26278,6 +26366,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     B.push('elif command -v yum >/dev/null 2>&1; then PM=yum; ');
     B.push('else echo "No apt/dnf/yum found - install deps manually (see README)"; exit 1; fi');
     B.push('echo "Package manager: $PM"');
+    B.push('if command -v timedatectl >/dev/null 2>&1 && [[ "$(timedatectl show -p NTPSynchronized --value 2>/dev/null)" == "no" ]]; then   # HS v1.88');
+    B.push('  echo "[!] this host\'s clock is not NTP-synchronized (now $(date -u \'+%F %T\') UTC): package updates, DHCP leases, logs and certificate checks follow it. Fix: sudo timedatectl set-ntp true"; fi');
     B.push('');
     B.push('pkg_install() {  # pkg_install <apt-name> <rhel-name>');
     B.push('  local aptn="$1" rhn="$2"');
