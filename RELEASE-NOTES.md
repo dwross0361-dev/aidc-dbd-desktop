@@ -1,3 +1,8 @@
+# AIDC DBD Desktop 2.0.89 (builder HS-v1.90, site runner 1.11.0)
+
+- **Secrets from a CSV, no prompts.** Each package carries `secrets-<SITE>.csv`: the keys this build uses, grouped (accounts, shared with other parties, ours only, site parameters, estate service). Account passwords go in as cleartext. `sudo bash <SITE>-deploy-....run --secrets secrets-<SITE>.csv` imports it: passwords are hashed on import in every form the build needs (SHA-512, NX-OS SHA-256, SR OS bcrypt; setup installs htpasswd when SR OS is in the build), account passwords are not stored, and the CSV is shredded afterwards (`--keep-secrets-file` keeps it, lab only). Importing for a new site sets the previous site's file aside.
+- **Time zone default fixed:** OOB spine and aggregation configs did not get the site values, so `<TIME_ZONE>` stayed a token despite its UTC default.
+
 # AIDC DBD Desktop 2.0.88 (builder HS-v1.89, site runner 1.11.0)
 
 - **setup.sh asks for the secrets.** On a terminal it creates `/etc/fabric/secrets.env` from the template and asks for each blank value the device files need: passwords twice, hidden, stored as SHA-512 hashes (the NX-OS SHA-256 and SR OS bcrypt forms from the same entry; bcrypt needs htpasswd); entering the read-only password also sets READ_PASSWORD; Enter leaves a value blank. Values are saved as entered. Unattended (`--yes` or no terminal) it stops for hand editing as before.
