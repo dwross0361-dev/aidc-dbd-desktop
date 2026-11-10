@@ -1,3 +1,8 @@
+# AIDC DBD Desktop 2.0.95 (builder HS-v1.96, site runner 1.11.0)
+
+- **DC switches show their power.** The SN6000-LD switches (SN6600-LD, SN6810, SN6800) have no AC power supplies: they take 48 V DC from the busbar of their cabinet, fed by the cabinet's power shelves, so no PDU feeds them. Nothing said so. Now each DC switch has a "48 V DC busbar" inlet in its DC Layout panel, connected to the cabinet's A and B shelves; a shelf's panel shows the switches it feeds and its AC input as its own facility circuit. The Cable Matrix Power step lists each DC switch with its shelves ("48 V DC busbar from 2 shelves, no cords") and each shelf with its facility feed; the cabinet line counts cords and busbar devices apart. Busbar connections have no cable length, are not counted as cords in the BoM, and go to the source of truth as DC terminals (no cable).
+- **Network power shelves sized to the load, 2N.** A network cabinet holding DC switches had N+1 of the 110 kW MGX shelf (two 110 kW shelves for a 3.8 kW leaf). It now takes 33 kW shelves (six 5.5 kW hot-swap PSUs, 19-inch for MGX racks) while two sets of them fit the rack's shelf positions, and 110 kW above that; 2N, so the A shelves alone and the B shelves alone each carry the cabinet (one busbar, either feed can fail). The BoM lists shelves by size. Shelf height (1U) and circuit rating remain CONFIRM.
+
 # AIDC DBD Desktop 2.0.94 (builder HS-v1.95, site runner 1.11.0)
 
 - **Find device lists every match.** A partial name (WK0, BL0, RK05) that matches several devices now lists them all with cabinet, position (a chassis node shows its chassis) and role; choose one to open its cabinet and panel. It opened the first match only. One match still opens directly. The list has its own Find box.
