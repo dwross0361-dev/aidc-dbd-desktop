@@ -1,3 +1,8 @@
+# AIDC DBD Desktop 2.0.94 (builder HS-v1.95, site runner 1.11.0)
+
+- **Find device lists every match.** A partial name (WK0, BL0, RK05) that matches several devices now lists them all with cabinet, position (a chassis node shows its chassis) and role; choose one to open its cabinet and panel. It opened the first match only. One match still opens directly. The list has its own Find box.
+- **Find device is faster.** A search no longer redraws the cabinet list and floor plan (the selection mark moves), the device panel reads only its device's links from an index instead of every link of the site (large-site mode too), and the panel's "Move to cabinet" list is filled when used instead of holding every cabinet. On a 1,024-rack layout (1,816 cabinets, 353,817 links) a search takes 50-110 ms, was 190-310 ms.
+
 # AIDC DBD Desktop 2.0.93 (builder HS-v1.94, site runner 1.11.0)
 
 - **QFX5240-64OD border leaves reach every spine.** The platform had no border-leaf port plan of its own, so it took the 48-port QFX5130's eight spine uplinks and a front end with more than eight spines raised "[HIGH] border leaves cannot reach every spine". It now has its own entry and its 64 cages: uplinks extend past eight as on the SN5610 (a 1,024-rack test: 16 super-spine uplinks per border leaf, both ends configured, parity 23,260 of 23,260).
