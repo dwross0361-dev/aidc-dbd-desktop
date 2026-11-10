@@ -1,3 +1,9 @@
+# AIDC DBD Desktop 2.0.96 (builder HS-v1.97, site runner 1.11.0)
+
+- **SN6600 border leaf.** The air-cooled, AC NVIDIA SN6600 (Spectrum-6, 102.4T, 3RU, four AC PSUs) is now a border-leaf choice. Its 64 x 1.6T cages are channelized: spine uplinks 2 x 800G per cage (cages 9-12, then 13 and up for more spines), gateway links 4 x 400G (cage 2; LAG members from the top cage down), and the four firewall legs at 100G on one cage broken out 8 x 100G (cage 1). The breakout lines are generated (Cumulus 5.18 form: breakout count, then the sub-port speed); the 8 x 100G breakout cable is CONFIRM. A 1,024-rack test: 16 super-spine uplinks per border leaf, parity 23,260 of 23,260.
+- **SN6600 and SN6600-LD: 100G in the catalog.** NVIDIA lists 512 x 100GbE on both; the entries stopped at 8 x 200G.
+- **Fixed: Cumulus and NX-OS border leaves on a three-tier front end** marked every spine's worth of ports as fabric uplinks (EVPN multihoming uplink, port-type fabric), unused ports included; they now mark the super-spine uplinks they have.
+
 # AIDC DBD Desktop 2.0.95 (builder HS-v1.96, site runner 1.11.0)
 
 - **DC switches show their power.** The SN6000-LD switches (SN6600-LD, SN6810, SN6800) have no AC power supplies: they take 48 V DC from the busbar of their cabinet, fed by the cabinet's power shelves, so no PDU feeds them. Nothing said so. Now each DC switch has a "48 V DC busbar" inlet in its DC Layout panel, connected to the cabinet's A and B shelves; a shelf's panel shows the switches it feeds and its AC input as its own facility circuit. The Cable Matrix Power step lists each DC switch with its shelves ("48 V DC busbar from 2 shelves, no cords") and each shelf with its facility feed; the cabinet line counts cords and busbar devices apart. Busbar connections have no cable length, are not counted as cords in the BoM, and go to the source of truth as DC terminals (no cable).

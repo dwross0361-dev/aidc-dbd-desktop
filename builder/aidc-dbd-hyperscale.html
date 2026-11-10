@@ -993,7 +993,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.96';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.97';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   // HS v1.59: Vera Rubin NVL72 at 2 planes x 800G, NVIDIA's public reference layout (Owner decision D11); see the VR profile.
   // HS v1.58: the customer input sheet and importer (inputSheetImport, the SESSION_IN overlay); see the input sheet block.
   // HS v1.57 (release identity): the release is identified by the SHA-256 of this file, not by the string above (HS-v1.56 r1, r2
@@ -1465,6 +1465,10 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     var _s=FE_EDGE_SW[FE.borderModel]||FE_SW[FE.borderModel]||{}, _pt=_s.ports||{}, tot=0; Object.keys(_pt).forEach(function(k){ if(parseInt(k,10)>=100) tot+=_pt[k]; });
     if(FE.borderModel==='QFX5130-48C') tot=56; if(!tot) tot=BL_PORT_TOTAL[FE.borderModel]||36;
     var j=tot-1, lo=FE.borderModel==='QFX5130-48C'?48:10, short=0;
+    var _ch=BL_CHAN[FE.borderModel]; if(_ch){   // HS v1.97: channelized cages, 4 x 400G members each, from the top cage down
+      var pool=[]; for(var ci=_ch.cages-1; ci>=12; ci--) for(var kk=0; kk<_ch.gw; kk++){ var sp='et-0/0/'+ci+':'+kk; if(!used[sp]) pool.push(sp); }
+      for(var g0=0; g0<2; g0++){ var a0=[(b.bg||[])[g0]]; for(var k0=1; k0<m; k0++){ var nx0=pool.shift(); if(!nx0){ short++; continue; } a0.push(nx0); } out.push(a0); }
+      out.short=short; return out; }
     for(var g=0; g<2; g++){ var a=[(b.bg||[])[g]]; for(var k=1; k<m; k++){ while(j>=lo && used['et-0/0/'+j]) j--; if(j<lo){ short++; continue; } used['et-0/0/'+j]=1; a.push('et-0/0/'+j); j--; } out.push(a); }
     out.short=short; return out; }
   // the member and bundle lines for a LAG interface record f ({name:'aeNN', peer, lag:{members}}), per OS; the caller then configures f.name
@@ -1669,7 +1673,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     // standard 19-inch rack. Same ports and breakouts as the LD.
     'NV-SN6600':{ label:'NVIDIA SN6600 (Spectrum-6, 102.4T, air, AC)', role:['fe-spine','fe-leaf'], ru:3, typW:2340, maxW:4500,
       access:{n:128, gbps:800, ff:'OSFP224'}, uplink:null,
-      breakout:{'2x800':128,'4x400':256,'8x200':512},
+      breakout:{'2x800':128,'4x400':256,'8x200':512,'8x100':512},   // HS v1.97: 512 x 100GbE (NVIDIA SN6000 manual, Introduction)
       bankLayout:'uniform-channelized', chan:4,   // host ports are 4 x 400G sub-ports of a 1.6T cage: <cage>:<sub>
       breakoutCost:null, cageGbps:1600, cooling:'air', airflow:'port-side intake',
       leafPorts:{ access:{n:128, gbps:400, ff:'OSFP224 4x400'},
@@ -1682,7 +1686,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     // 32 cages 2 x 800G to the spines. Spine: every cage 2 x 800G. Rate list and cage map to CONFIRM (as the back end).
     'NV-SN6600-LD':{ label:'NVIDIA SN6600-LD (Spectrum-6, 102.4T, liquid, DC busbar)', role:['fe-spine','fe-leaf'], ru:2, typW:1700, maxW:3800,
       access:{n:128, gbps:800, ff:'OSFP224'}, uplink:null,
-      breakout:{'2x800':128,'4x400':256,'8x200':512},
+      breakout:{'2x800':128,'4x400':256,'8x200':512,'8x100':512},   // HS v1.97: 512 x 100GbE (NVIDIA SN6000 manual, Introduction)
       bankLayout:'uniform-channelized', chan:4,   // host ports are 4 x 400G sub-ports of a 1.6T cage: <cage>:<sub>
       breakoutCost:null, cageGbps:1600, dc:true, cooling:'liquid',
       leafPorts:{ access:{n:128, gbps:400, ff:'OSFP224 4x400'},
@@ -1821,6 +1825,12 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     'NV-SN5610':{ label:'NVIDIA SN5610 (Spectrum-4)', roles:['border'], ru:2, typW:900, maxW:2080,
       ports:{'800G':64}, tbps:51.2, os:'NVIDIA Cumulus Linux', macsec:'no', mpls:false, fib:'Spectrum-4',
       note:'64\u00d7800G OSFP \u00b7 2RU \u00b7 border leaf: EVPN-VXLAN Type 5, firewall bump in the wire. firewall legs run 100G, one per cage. 900 W typical; 2,080 W with 64 optics (SN5000 manual). Four 2 kW PSUs. Replaces the SN5600 (EoL).' },
+    // HS v1.97: the air-cooled, AC SN6600 as a border leaf. 64 x 1.6T OSFP cages, channelized: spine uplinks 2 x 800G per cage,
+    // gateway links 4 x 400G, and the four firewall legs on ONE cage broken out 8 x 100G (NVIDIA lists 512 x 100GbE; the
+    // breakout uses a splitter cable or adapter -- part number CONFIRM). Not the SN6600-LD: an edge cabinet is AC and air-cooled.
+    'NV-SN6600':{ label:'NVIDIA SN6600 (Spectrum-6, 102.4T, air, AC)', roles:['border'], ru:3, typW:3200, maxW:4500,
+      ports:{'800G':64}, tbps:102.4, os:'NVIDIA Cumulus Linux', macsec:'no', mpls:false, fib:'Spectrum-6',
+      note:'64\u00d71.6T OSFP \u00b7 3RU \u00b7 air-cooled, four AC PSUs (200-240 VAC) \u00b7 border leaf: EVPN-VXLAN Type 5, firewall bump in the wire. Spine uplinks 2\u00d7800G per cage; firewall legs 100G on one cage broken out 8\u00d7100G (breakout cable CONFIRM). 3.2 kW typical (TRO), 3.94 kW (FRO) (SN6000 manual).' },
     'NV-SN5600':{ label:'NVIDIA SN5600 (Spectrum-4, EoL)', roles:['border'], ru:2, typW:940, maxW:2080,
       ports:{'800G':64}, tbps:51.2, os:'NVIDIA Cumulus Linux', macsec:'no', mpls:false, fib:'Spectrum-4',
       note:'64\u00d7800G OSFP \u00b7 2RU \u00b7 border leaf: EVPN-VXLAN Type 5, firewall bump in the wire. firewall legs run 100G, one per cage. 940 W typical; 2,080 W planning maximum with optics (SN5610 figure, no SN5600 maximum published).' },
@@ -14564,7 +14574,14 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     'CS-N9332D-GX2B':{bl:{fw:['et-0/0/0','et-0/0/1','et-0/0/2','et-0/0/3'],bg:['et-0/0/4','et-0/0/5'],up:['et-0/0/8','et-0/0/9','et-0/0/10','et-0/0/11','et-0/0/12','et-0/0/13','et-0/0/14','et-0/0/15']}, gw:{er:['et-0/0/0','et-0/0/1'],dci:['et-0/0/24','et-0/0/25'],lat:['et-0/0/4','et-0/0/5','et-0/0/6'],bl:['et-0/0/8','et-0/0/9'],lb:['et-0/0/30','et-0/0/31']}}
   };
   BORDER_PORTS['NK-7250-IXR-X3B']=BORDER_PORTS['AR-7280DR3A-36'];
-  BORDER_PORTS['QFX5240-64OD']=BORDER_PORTS['QFX5130-48C'];   // HS v1.94: its own entry (was the fallback); 64 cages, so uplinks extend past 8 (BL_PORT_TOTAL)
+  BORDER_PORTS['QFX5240-64OD']=BORDER_PORTS['QFX5130-48C'];
+  // HS v1.97: SN6600 border leaf, channelized cages (Junos-form sub-ports; xlateIf renders swp<N>s<k>): cage 0 = firewall legs (8 x 100G),
+  // cage 1 = gateway links (4 x 400G), cages 8-11 = spine uplinks (2 x 800G); more spines take cages 12 and up, LAG members come down from 63
+  BORDER_PORTS['NV-SN6600']={bl:{fw:['et-0/0/0:0','et-0/0/0:1','et-0/0/0:2','et-0/0/0:3'], bg:['et-0/0/1:0','et-0/0/1:1'],
+    up:['et-0/0/8:0','et-0/0/8:1','et-0/0/9:0','et-0/0/9:1','et-0/0/10:0','et-0/0/10:1','et-0/0/11:0','et-0/0/11:1']}, gw:BORDER_PORTS['AR-7280DR3A-36'].gw};
+  var BL_CHAN={'NV-SN6600':{cages:64, up:2, gw:4, fwCage:0, fwBrk:'8x100G'}};   // HS v1.97: a border leaf whose cages are channelized
+  function blGwCages(){ var S={}, add=function(p){ var m=/^et-0\/0\/(\d+):\d+$/.exec(p||''); if(m) S[+m[1]+1]=1; };   // swp numbers of the cages carrying gateway links (4 x 400G)
+    try{ (blPorts().bg||[]).forEach(add); if(gwBlMembersNeed()>1) blGwLagPorts(null).forEach(function(a){ a.forEach(add); }); }catch(e){} return S; }   // HS v1.94: its own entry (was the fallback); 64 cages, so uplinks extend past 8 (BL_PORT_TOTAL)
   BORDER_PORTS['NV-SN5600']=BORDER_PORTS['NV-SN5610']=BORDER_PORTS['AR-7280DR3A-36'];        // same 36 x 400G port plan; names via xlateIf (cumulus, srl)
   BORDER_PORTS['NK-7750-SR-1X-48D']=BORDER_PORTS['AR-7280DR3A-36'];  // gateway role; names via xlateIf (sros)
   BORDER_PORTS['NK-7750-SR-1SE']=BORDER_PORTS['AR-7280DR3A-36'];
@@ -14599,15 +14616,18 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
   }
   function blPorts(){ return (BORDER_PORTS[FE.borderModel]||BORDER_PORTS['QFX5130-48C']).bl; }
   // v480: the platform's port count (index 0..N-1 in Junos form) where spare ports exist beyond the base plan
-  var BL_PORT_TOTAL={'AR-7280DR3A-36':36, 'NK-7250-IXR-X3B':36, 'CS-N9332D-GX2B':32, 'NV-SN5600':64, 'NV-SN5610':64, 'QFX5240-64OD':64};   // HS v1.94: + QFX5240-64OD (it was held to the QFX5130's 8 spine uplinks)
+  var BL_PORT_TOTAL={'AR-7280DR3A-36':36, 'NK-7250-IXR-X3B':36, 'CS-N9332D-GX2B':32, 'NV-SN5600':64, 'NV-SN5610':64, 'QFX5240-64OD':64, 'NV-SN6600':64};   // HS v1.94: + QFX5240-64OD (it was held to the QFX5130's 8 spine uplinks)
   function blPortsFor(nSp){
     var b=blPorts(); if(!(nSp>(b.up||[]).length)) return b;
     var tot=BL_PORT_TOTAL[FE.borderModel]||0, used={}, up=(b.up||[]).slice();
     [].concat(b.fw||[], b.bg||[], up).forEach(function(p){ used[p]=1; });
+    var _ch=BL_CHAN[FE.borderModel]; if(_ch){   // HS v1.97: channelized cages, 2 x 800G each, from cage 12 up
+      for(var ci=12; ci<_ch.cages && up.length<nSp; ci++) for(var k=0; k<_ch.up && up.length<nSp; k++){ var sp='et-0/0/'+ci+':'+k; if(!used[sp]) up.push(sp); }
+      return {fw:b.fw, bg:b.bg, up:up}; }
     for(var i=16; i<tot && up.length<nSp; i++){ var n='et-0/0/'+i; if(!used[n]) up.push(n); }
     return {fw:b.fw, bg:b.bg, up:up};
   }
-  function feSpineN(){ try{ return (feCfgPlan().spines||[]).length; }catch(e){ return 0; } }
+  function feSpineN(){ try{ var _p=feCfgPlan(); return _p.tier3?_p.tier3.groups:(_p.spines||[]).length; }catch(e){ return 0; } }   // HS v1.97: what a border leaf uplinks to -- the super-spine groups on a three-tier front end (was every spine: NX-OS and Cumulus border leaves marked unused ports as fabric uplinks)
   function gwPorts(){ return (BORDER_PORTS[FE.bgModel]||BORDER_PORTS['QFX5130-48C']).gw; }
   function feRoleVendor(role){
     // A NOKIA override is not one OS: SR Linux runs on the 7220/7250 IXR, SR OS on the 7750 SR. Either
@@ -14793,7 +14813,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
   // cage speed: 800G everywhere except the 7220 IXR-H6-64 spine (1.6T cages); there a cage facing a 400G border leaf
   // runs 2 x 400G, every other cage 2 x 800G.
   function brkCageGbps(os, txt){
-    if(XL_BE && XL_BE.cageG) return XL_BE.cageG;   // v538: a back-end device on 102.4T switches has 1.6T cages
+    if(XL_BE && XL_BE.cageG) return XL_BE.cageG;
+    if(BL_CHAN[FE.borderModel] && /frontend plane, border leaf/.test(txt||'')) return 1600;   // HS v1.97: SN6600 border leaf, 1.6T cages   // v538: a back-end device on 102.4T switches has 1.6T cages
     try{ var sw=feSpineSW(); if(os==='srl' && sw && sw.cageGbps && /frontend plane, spine/.test(txt||'')) return sw.cageGbps; }catch(e){}
     try{ var _ls=FE_SW[FE.leafModel]||{}, _ss=FE_SW[FE.spineModel]||{};   // HS v1.10: SN6600-LD front end (1.6T cages)
       if(_ls.cageGbps>800 && /frontend plane, (?!border)[^\n]*leaf/.test(txt||'')) return _ls.cageGbps;
@@ -14815,6 +14836,9 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
         L.push('interface breakout module 1 port '+c+' map '+g+'g-'+n+'x');
       } else if(os==='cumulus'){
         if(txt){ if(!_done) _done=_brkSet(/swp(\d+) link breakout/g, txt); if(_done[c]) return; }
+        var _bc=BL_CHAN[FE.borderModel]; if(_bc && /frontend plane, border leaf/.test(txt||'')){   // HS v1.97: SN6600 border leaf
+          if(c===_bc.fwCage+1){ L.push('nv set interface swp'+c+' link breakout '+_bc.fwBrk+'   # firewall legs: 8 x 100G on one 1.6T cage (breakout cable CONFIRM)'); return; }
+          if(blGwCages()[c]){ L.push('nv set interface swp'+c+' link breakout '+_bc.gw+'x400G   # gateway links, 4 x 400G'); return; } }
         L.push('nv set interface swp'+c+' link breakout '+n+'x'+g+'G');
       } else if(os==='srl'){
         if(txt && c<=32){ if(!_done){ _done=_brkSet(/ethernet-1\/(\d+) breakout-mode/g, txt); _brace=/ethernet-1\/\{[^}]*\} breakout-mode/.test(txt); } if(_brace || _done[c]) return; }
