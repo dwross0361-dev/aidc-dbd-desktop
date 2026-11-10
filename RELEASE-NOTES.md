@@ -1,3 +1,8 @@
+# AIDC DBD Desktop 2.0.92 (builder HS-v1.93, site runner 1.11.0)
+
+- **The two-node WEKA option is WEKApod Prime Max.** WEKA's datasheet lists WEKApod Nitro only as 2U with 4 servers; its 2U, 2-server model is Prime Max (70 QLC/TLC SSD slots, 15.8 PB raw per 2U, 2 failure domains per 2U). The storage choice "WEKApod 3 Nitro (2U, 2 nodes)" is now "WEKApod Prime Max (2U, 2 nodes)", with the same cabinet placement, cabling and addressing. Saved designs keep their choice; an input sheet with the old name still loads it.
+- **WEKApod faceplates marked CONFIRM.** WEKA publishes no panel or port layout for the 2U chassis: the node and chassis panels say so, and that the NIC ports (modeled 2 x 400G per server), cage type and power supplies are to confirm with WEKA.
+
 # AIDC DBD Desktop 2.0.91 (builder HS-v1.92, site runner 1.11.0)
 
 - **Storage chassis show their network ports.** In the DC Layout Builder a WEKApod 3 Nitro chassis (2-node and 4-node) showed only its power supplies, because the network cables land on the nodes riding in it. The chassis panel now shows each node in its own bay (Node 1 to 2, or 1 to 4) with NIC0 and NIC1 to the FE leaf pair and the BMC to the MGT switch, each with far end, plane, speed, media and order length, then the chassis PSUs. The chassis's port count includes its nodes. The chassis is now in the faceplate library, so the "not in the faceplate library" note is gone. Works the same in large-site mode. Single-node storage platforms (WEKApod gen 2, DDN, VAST, Pure) were already complete and are unchanged.
