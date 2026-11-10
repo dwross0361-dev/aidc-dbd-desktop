@@ -993,7 +993,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v1.93';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v1.94';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   // HS v1.59: Vera Rubin NVL72 at 2 planes x 800G, NVIDIA's public reference layout (Owner decision D11); see the VR profile.
   // HS v1.58: the customer input sheet and importer (inputSheetImport, the SESSION_IN overlay); see the input sheet block.
   // HS v1.57 (release identity): the release is identified by the SHA-256 of this file, not by the string above (HS-v1.56 r1, r2
@@ -1784,7 +1784,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   // ---- FE edge / border / firewall catalog -------------------------------------------
   // Distinct from the fabric switches: these are the internet-facing and DCI roles. Platform
   // selection here was worked through against a 2x50G DIA plane growing to 6-8 DCI sites.
-  //   - ACX7100-32C is used for BOTH the edge-router pair AND the border leaves. Junos EVO (same
+  //   - ACX7100-32C is the edge-router pair (HS v1.94: no longer a border leaf -- 4 x 400G cannot uplink to more than 4 spines). Junos EVO (same
   //     family as the QFX5130, so the ZTP/PyEZ package mostly carries over), ZR/ZR+ on ALL ports
   //     with NO pairing penalty (unlike the 32CD), MACsec everywhere, and MPLS-capable -- so it
   //     can stitch EVPN-VXLAN on the DC side and hand off to EVPN-MPLS/SR toward the WAN later.
@@ -1867,7 +1867,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       ports:{'800G':48}, tbps:36.0, tbpsIA:38.4, lineRate400:48, os:'Nokia SR OS', macsec:'ANYsec/MACsec', mpls:true, fib:'service-router scale',
       coherent:{ports:'confirm', pairPenalty:false, modules:'400ZR / 400ZR+ and 800ZR / 800ZR+', confirm:'coherent cage count and power per XMA2-s card'},
       note:'5RU, 2 slots (XMA2-s line cards, 18 Tb/s FD each at line rate) \u00b7 36 Tb/s FD (38.4 with intelligent aggregation) \u00b7 36 x 800G or 84 x 400G at line rate \u00b7 FP5 \u00b7 integrated power shelf (N+N) \u00b7 front-to-back airflow \u00b7 ANYsec/MACsec \u00b7 SR OS (MD-CLI) \u00b7 the next gateway or edge router past the SR-1se. Ports 1/1/c1-c24 and 2/1/c1-c24 (CONFIRM the XMA2-s connector count). Power draw to confirm (the data sheet gives feed ratings only).' },
-    'ACX7100-32C':{ label:'Juniper ACX7100-32C', roles:['edge','border'], ru:1,
+    'ACX7100-32C':{ label:'Juniper ACX7100-32C', roles:['edge'], ru:1,   // HS v1.94: no longer a border leaf (4 x 400G: at most 4 spine uplinks)
       ports:{'100G':32,'400G':4}, tbps:4.8, os:'Junos OS Evolved',
       coherent:{ports:'all', pairPenalty:false}, macsec:'all', mpls:true,
       note:'4.8 Tbps \u00b7 32\u00d7100G + 4\u00d7400G \u00b7 ZR/ZR+ on all ports, no pairing penalty \u00b7 MACsec all ports \u00b7 MPLS-capable (EVPN-VXLAN\u2194MPLS/SR handoff).' },
@@ -7075,6 +7075,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
           if(b.hostTenants && typeof b.hostTenants==='object'){ HOST_TENANT=b.hostTenants; }   // tenant assignment rides the definition
           if(b.feFw && (b.feFw.secVendor==='ftd'||b.feFw.secVendor==='junos')){ secVendor=b.feFw.secVendor; FE.fwModel=b.feFw.model||FE.fwModel; var _ff=document.getElementById('fe-fw-model'); if(_ff) _ff.value=(secVendor==='ftd')?'FPR4245':'SRX4700-700'; }
           if(b.mgmtFw==='junos'||b.mgmtFw==='ftd'||b.mgmtFw==='follow') mgmtSecVendorSel=b.mgmtFw;
+          if(b.borderModel==='ACX7100-32C') b.borderModel='QFX5240-64OD';   // HS v1.94: the ACX7100 left the border-leaf catalog; a saved ACX border stays Juniper
           if(b.borderModel && FE_EDGE_SW[b.borderModel] && (FE_EDGE_SW[b.borderModel].roles||[]).indexOf('border')>=0) FE.borderModel=b.borderModel;   // a saved PTX border falls back to the default
           if(/^(auto|always|off)$/.test(b.oobSpineMode||'')){ OOB_SPINE_MODE=b.oobSpineMode; var _os=document.getElementById('oobspine'); if(_os) _os.value=OOB_SPINE_MODE; }
           if(b.designBasis==='electrical'||b.designBasis==='planning') DESIGN_BASIS=b.designBasis;
@@ -14552,6 +14553,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     'CS-N9332D-GX2B':{bl:{fw:['et-0/0/0','et-0/0/1','et-0/0/2','et-0/0/3'],bg:['et-0/0/4','et-0/0/5'],up:['et-0/0/8','et-0/0/9','et-0/0/10','et-0/0/11','et-0/0/12','et-0/0/13','et-0/0/14','et-0/0/15']}, gw:{er:['et-0/0/0','et-0/0/1'],dci:['et-0/0/24','et-0/0/25'],lat:['et-0/0/4','et-0/0/5','et-0/0/6'],bl:['et-0/0/8','et-0/0/9'],lb:['et-0/0/30','et-0/0/31']}}
   };
   BORDER_PORTS['NK-7250-IXR-X3B']=BORDER_PORTS['AR-7280DR3A-36'];
+  BORDER_PORTS['QFX5240-64OD']=BORDER_PORTS['QFX5130-48C'];   // HS v1.94: its own entry (was the fallback); 64 cages, so uplinks extend past 8 (BL_PORT_TOTAL)
   BORDER_PORTS['NV-SN5600']=BORDER_PORTS['NV-SN5610']=BORDER_PORTS['AR-7280DR3A-36'];        // same 36 x 400G port plan; names via xlateIf (cumulus, srl)
   BORDER_PORTS['NK-7750-SR-1X-48D']=BORDER_PORTS['AR-7280DR3A-36'];  // gateway role; names via xlateIf (sros)
   BORDER_PORTS['NK-7750-SR-1SE']=BORDER_PORTS['AR-7280DR3A-36'];
@@ -14586,7 +14588,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
   }
   function blPorts(){ return (BORDER_PORTS[FE.borderModel]||BORDER_PORTS['QFX5130-48C']).bl; }
   // v480: the platform's port count (index 0..N-1 in Junos form) where spare ports exist beyond the base plan
-  var BL_PORT_TOTAL={'AR-7280DR3A-36':36, 'NK-7250-IXR-X3B':36, 'CS-N9332D-GX2B':32, 'NV-SN5600':64, 'NV-SN5610':64};
+  var BL_PORT_TOTAL={'AR-7280DR3A-36':36, 'NK-7250-IXR-X3B':36, 'CS-N9332D-GX2B':32, 'NV-SN5600':64, 'NV-SN5610':64, 'QFX5240-64OD':64};   // HS v1.94: + QFX5240-64OD (it was held to the QFX5130's 8 spine uplinks)
   function blPortsFor(nSp){
     var b=blPorts(); if(!(nSp>(b.up||[]).length)) return b;
     var tot=BL_PORT_TOTAL[FE.borderModel]||0, used={}, up=(b.up||[]).slice();

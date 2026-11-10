@@ -1,3 +1,8 @@
+# AIDC DBD Desktop 2.0.93 (builder HS-v1.94, site runner 1.11.0)
+
+- **QFX5240-64OD border leaves reach every spine.** The platform had no border-leaf port plan of its own, so it took the 48-port QFX5130's eight spine uplinks and a front end with more than eight spines raised "[HIGH] border leaves cannot reach every spine". It now has its own entry and its 64 cages: uplinks extend past eight as on the SN5610 (a 1,024-rack test: 16 super-spine uplinks per border leaf, both ends configured, parity 23,260 of 23,260).
+- **ACX7100-32C removed from the border-leaf catalog** (it stays the Juniper edge router). With four 400G ports it cannot uplink to more than four spines. A saved design with ACX7100 border leaves opens on the QFX5240-64OD, so it stays Juniper.
+
 # AIDC DBD Desktop 2.0.92 (builder HS-v1.93, site runner 1.11.0)
 
 - **The two-node WEKA option is WEKApod Prime Max.** WEKA's datasheet lists WEKApod Nitro only as 2U with 4 servers; its 2U, 2-server model is Prime Max (70 QLC/TLC SSD slots, 15.8 PB raw per 2U, 2 failure domains per 2U). The storage choice "WEKApod 3 Nitro (2U, 2 nodes)" is now "WEKApod Prime Max (2U, 2 nodes)", with the same cabinet placement, cabling and addressing. Saved designs keep their choice; an input sheet with the old name still loads it.
