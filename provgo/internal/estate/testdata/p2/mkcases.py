@@ -90,11 +90,18 @@ acc = [
     {"test": "T4", "text": TXT, "s0": None, "s1": None},
     {"test": "T4", "text": "nothing here\n", "s0": None, "s1": None, "rc": 1},
     {"test": "T1", "text": "ACCEPT T1 min_gbps=10\n", "s0": {"a": leaf, "b": leaf, "c": leaf, "d": leaf}, "s1": {"a": "x", "b": "y", "c": "z", "d": "w"}},
+    # HS v2.03: T7 elephant flows across the spines -- balanced, one collision, 2:1, no result line
+    {"test": "T7", "text": "ACCEPT T7 port_gbps=800 pairs=24 flows=384 rails=16 min_gbps=741.20 max_gbps=779.85 mean_gbps=764.33 sum_gbps=293502.72 n=384\nNIC T7 rx_discards_phy 0\n",
+     "s0": {"T-CUM-A": leaf, "T-CUM-SP1": spine0}, "s1": {"T-CUM-A": leaf, "T-CUM-SP1": spine0}, "crit": {"elephant_pct": 90, "ecmp_spread_pct": 10, "oversub": 1}},
+    {"test": "T7", "text": "ACCEPT T7 port_gbps=800 pairs=24 flows=384 rails=16 min_gbps=388.40 max_gbps=781.10 mean_gbps=760.02 n=384\n", "s0": None, "s1": None, "crit": {}},
+    {"test": "T7", "text": "ACCEPT T7 port_gbps=400 flows=64 min_gbps=184.5 max_gbps=196.25 mean_gbps=190.1 n=64\n", "s0": None, "s1": None, "crit": {"oversub": 2, "elephant_pct": 90.5}},
+    {"test": "T7", "text": "ACCEPT T7 error=no_pairs_file\n", "s0": None, "s1": None, "rc": 2, "crit": {"oversub": 0}},
 ]
 results = [
     {"kind": "accept", "text": TXT, "crit": {"line_rate_pct": 95, "fairness_pct": 10}},
     {"kind": "accept", "text": "ACCEPT T1 port_gbps=400 min_gbps=100\nACCEPT T3 busbw=1\n"},
     {"kind": "accept", "text": "no lines\n"},
+    {"kind": "accept", "text": TXT + "ACCEPT T7 port_gbps=400 flows=32 min_gbps=360 max_gbps=391 mean_gbps=380 n=32\n", "crit": {"elephant_pct": 90}},
     {"kind": "isolation", "tenants": ["TENANT-01", "TENANT-02"], "text":
         "ISOLATION TENANT-01 bind PASS vip on ns tenant-01\nISOLATION TENANT-01 snat PASS 10.240.1.1\nISOLATION TENANT-01 cross PASS none\n"
         "ISOLATION TENANT-02 bind PASS ok\nISOLATION TENANT-02 snat FAIL wrong pool\nISOLATION TENANT-02 cross PASS none\n"},

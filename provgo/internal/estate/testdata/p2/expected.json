@@ -7514,6 +7514,147 @@
      "leaf": {},
      "spine": {}
     }
+   },
+   {
+    "host": {
+     "flows": 384.0,
+     "max_gbps": 779.85,
+     "mean_gbps": 764.33,
+     "min_gbps": 741.2,
+     "n": 384.0,
+     "pairs": 24.0,
+     "port_gbps": 800.0,
+     "rails": 16.0,
+     "sum_gbps": 293502.72
+    },
+    "lines": [
+     {
+      "label": "T7 no drops on the RoCE queue (switches)",
+      "note": "0 dropped",
+      "ok": true
+     },
+     {
+      "label": "T7 no PFC watchdog events",
+      "note": "0 events",
+      "ok": true
+     },
+     {
+      "label": "T7 no loss at the hosts (NIC discards, sequence errors)",
+      "note": "0",
+      "ok": true
+     },
+     {
+      "label": "T7 every elephant flow across the spines near line rate",
+      "note": "slowest of 384 flows 741.2 of 800 Gb/s (target 90%)",
+      "ok": true
+     },
+     {
+      "label": "T7 flows spread evenly over the uplinks",
+      "note": "spread 5.1% (target 10%)",
+      "ok": true
+     }
+    ],
+    "nic": {
+     "rx_discards_phy": 0.0
+    },
+    "result": "pass",
+    "switch": {
+     "leaf": {
+      "drops": 0.0,
+      "ecn": 0.0,
+      "pfc_rx": 0.0,
+      "pfc_tx": 0.0,
+      "wd": 0.0
+     },
+     "spine": {
+      "drops": 0.0,
+      "ecn": 0.0,
+      "pfc_rx": 0.0,
+      "pfc_tx": 0.0,
+      "wd": 0.0
+     }
+    }
+   },
+   {
+    "host": {
+     "flows": 384.0,
+     "max_gbps": 781.1,
+     "mean_gbps": 760.02,
+     "min_gbps": 388.4,
+     "n": 384.0,
+     "pairs": 24.0,
+     "port_gbps": 800.0,
+     "rails": 16.0
+    },
+    "lines": [
+     {
+      "label": "T7 every elephant flow across the spines near line rate",
+      "note": "slowest of 384 flows 388.4 of 800 Gb/s (target 90%)",
+      "ok": false
+     },
+     {
+      "label": "T7 flows spread evenly over the uplinks",
+      "note": "spread 51.7% (target 10%)",
+      "ok": false
+     }
+    ],
+    "nic": {},
+    "result": "blocked",
+    "switch": {
+     "leaf": {},
+     "spine": {}
+    }
+   },
+   {
+    "host": {
+     "flows": 64.0,
+     "max_gbps": 196.25,
+     "mean_gbps": 190.1,
+     "min_gbps": 184.5,
+     "n": 64.0,
+     "port_gbps": 400.0
+    },
+    "lines": [
+     {
+      "label": "T7 every elephant flow across the spines near line rate",
+      "note": "slowest of 64 flows 184.5 of 200 Gb/s (target 90%)",
+      "ok": true
+     },
+     {
+      "label": "T7 flows spread evenly over the uplinks",
+      "note": "spread 6.2% (target 10%)",
+      "ok": true
+     }
+    ],
+    "nic": {},
+    "result": "pass",
+    "switch": {
+     "leaf": {},
+     "spine": {}
+    }
+   },
+   {
+    "host": {
+     "error": "no_pairs_file"
+    },
+    "lines": [
+     {
+      "label": "T7 every elephant flow across the spines near line rate",
+      "note": "no result line from the host script",
+      "ok": null
+     },
+     {
+      "label": "T7 flows spread evenly over the uplinks",
+      "note": "no result line from the host script",
+      "ok": null
+     }
+    ],
+    "nic": {},
+    "result": "unavailable",
+    "switch": {
+     "leaf": {},
+     "spine": {}
+    }
    }
   ],
   "bgp_text": [
@@ -8660,7 +8801,7 @@
     "progress": {
      "activity_12h": [
       {
-       "actions": 11,
+       "actions": 12,
        "user": "op1"
       }
      ],
@@ -9582,7 +9723,7 @@
     "progress": {
      "activity_12h": [
       {
-       "actions": 11,
+       "actions": 12,
        "user": "op1"
       }
      ],
@@ -10532,7 +10673,7 @@
     "progress": {
      "activity_12h": [
       {
-       "actions": 11,
+       "actions": 12,
        "user": "op1"
       }
      ],
@@ -11500,7 +11641,7 @@
     "progress": {
      "activity_12h": [
       {
-       "actions": 11,
+       "actions": 12,
        "user": "op1"
       }
      ],
@@ -11894,6 +12035,214 @@
     "submit": [
      false,
      "no ACCEPT lines in the text (paste the output of acceptance/lossless.sh)"
+    ]
+   },
+   {
+    "eval": {
+     "evidence": {
+      "T1 line rate on every path": {
+       "note": "slowest path 392.5 of 400 Gb/s (target 95%)",
+       "ok": true
+      },
+      "T1 no loss at the hosts (NIC discards, sequence errors)": {
+       "note": "0",
+       "ok": true
+      },
+      "T1 switch counters": {
+       "note": "confirm: uploaded by hand: confirm the switch criteria from the switches",
+       "ok": false
+      },
+      "T2 no loss at the hosts (NIC discards, sequence errors)": {
+       "note": "0",
+       "ok": true
+      },
+      "T2 senders share the receiver fairly": {
+       "note": "spread 7.3% (target 10%)",
+       "ok": true
+      },
+      "T2 switch counters": {
+       "note": "confirm: uploaded by hand: confirm the switch criteria from the switches",
+       "ok": false
+      },
+      "T3 all-to-all completed": {
+       "note": "bus bandwidth 401.5 GB/s",
+       "ok": true
+      },
+      "T3 switch counters": {
+       "note": "confirm: uploaded by hand: confirm the switch criteria from the switches",
+       "ok": false
+      },
+      "T4 bus bandwidth at target": {
+       "note": "383.2 GB/s against 380.0",
+       "ok": true
+      },
+      "T4 switch counters": {
+       "note": "confirm: uploaded by hand: confirm the switch criteria from the switches",
+       "ok": false
+      },
+      "T7 every elephant flow across the spines near line rate": {
+       "note": "slowest of 32 flows 360.0 of 400 Gb/s (target 90%)",
+       "ok": true
+      },
+      "T7 flows spread evenly over the uplinks": {
+       "note": "spread 8.2% (target 10%)",
+       "ok": true
+      },
+      "T7 switch counters": {
+       "note": "confirm: uploaded by hand: confirm the switch criteria from the switches",
+       "ok": false
+      }
+     },
+     "note": "T1 unavailable, T2 unavailable, T3 unavailable, T4 unavailable, T7 unavailable (op1)",
+     "result": "unavailable"
+    },
+    "stored": {
+     "T1": {
+      "host": {
+       "min_gbps": 392.5,
+       "port_gbps": 400.0
+      },
+      "lines": [
+       {
+        "label": "T1 no loss at the hosts (NIC discards, sequence errors)",
+        "note": "0",
+        "ok": true
+       },
+       {
+        "label": "T1 line rate on every path",
+        "note": "slowest path 392.5 of 400 Gb/s (target 95%)",
+        "ok": true
+       },
+       {
+        "label": "T1 switch counters",
+        "note": "uploaded by hand: confirm the switch criteria from the switches",
+        "ok": null
+       }
+      ],
+      "nic": {
+       "rx_discards_phy": 0.0
+      },
+      "result": "unavailable",
+      "switch": {
+       "leaf": {},
+       "spine": {}
+      }
+     },
+     "T2": {
+      "host": {
+       "max_gbps": 97.0,
+       "mean_gbps": 95.25,
+       "min_gbps": 90.0
+      },
+      "lines": [
+       {
+        "label": "T2 no loss at the hosts (NIC discards, sequence errors)",
+        "note": "0",
+        "ok": true
+       },
+       {
+        "label": "T2 senders share the receiver fairly",
+        "note": "spread 7.3% (target 10%)",
+        "ok": true
+       },
+       {
+        "label": "T2 switch counters",
+        "note": "uploaded by hand: confirm the switch criteria from the switches",
+        "ok": null
+       }
+      ],
+      "nic": {
+       "np_ecn_marked_roce_packets": 12.0
+      },
+      "result": "unavailable",
+      "switch": {
+       "leaf": {},
+       "spine": {}
+      }
+     },
+     "T3": {
+      "host": {
+       "busbw": 401.5
+      },
+      "lines": [
+       {
+        "label": "T3 all-to-all completed",
+        "note": "bus bandwidth 401.5 GB/s",
+        "ok": true
+       },
+       {
+        "label": "T3 switch counters",
+        "note": "uploaded by hand: confirm the switch criteria from the switches",
+        "ok": null
+       }
+      ],
+      "nic": {},
+      "result": "unavailable",
+      "switch": {
+       "leaf": {},
+       "spine": {}
+      }
+     },
+     "T4": {
+      "host": {
+       "busbw": 383.25
+      },
+      "lines": [
+       {
+        "label": "T4 bus bandwidth at target",
+        "note": "383.2 GB/s against 380.0",
+        "ok": true
+       },
+       {
+        "label": "T4 switch counters",
+        "note": "uploaded by hand: confirm the switch criteria from the switches",
+        "ok": null
+       }
+      ],
+      "nic": {},
+      "result": "unavailable",
+      "switch": {
+       "leaf": {},
+       "spine": {}
+      }
+     },
+     "T7": {
+      "host": {
+       "flows": 32.0,
+       "max_gbps": 391.0,
+       "mean_gbps": 380.0,
+       "min_gbps": 360.0,
+       "n": 32.0,
+       "port_gbps": 400.0
+      },
+      "lines": [
+       {
+        "label": "T7 every elephant flow across the spines near line rate",
+        "note": "slowest of 32 flows 360.0 of 400 Gb/s (target 90%)",
+        "ok": true
+       },
+       {
+        "label": "T7 flows spread evenly over the uplinks",
+        "note": "spread 8.2% (target 10%)",
+        "ok": true
+       },
+       {
+        "label": "T7 switch counters",
+        "note": "uploaded by hand: confirm the switch criteria from the switches",
+        "ok": null
+       }
+      ],
+      "nic": {},
+      "result": "unavailable",
+      "switch": {
+       "leaf": {},
+       "spine": {}
+      }
+     }
+    },
+    "submit": [
+     true,
+     "recorded"
     ]
    },
    {

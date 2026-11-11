@@ -612,6 +612,29 @@ func (e *Estate) accScore(test, text string, s0, s1 *AccSnap, crit *pyjson.Map, 
 			note = fmt.Sprintf("%s GB/s against %s", pyPctF(b, 1), pyPctF(tgt, 1))
 		}
 		line("bus bandwidth at target", ok, note)
+	case "T7": // HS v2.03: elephant flows across the spines (dynamic load balancing / adaptive routing at work)
+		r, mn, mx, mean := kvf("port_gbps"), kvf("min_gbps"), kvf("max_gbps"), kvf("mean_gbps")
+		ov := critf("oversub", 1)
+		if ov == 0 {
+			ov = 1
+		}
+		pct, spr := critf("elephant_pct", 90), critf("ecmp_spread_pct", 10)
+		var ok any
+		if r != 0 && kv.Has("min_gbps") {
+			ok = mn >= pct/100.0*r/ov
+		}
+		note := "no result line from the host script"
+		if r != 0 {
+			note = fmt.Sprintf("slowest of %s flows %s of %s Gb/s (target %s%%)", pyPctD(kvf("flows")), pyPctF(mn, 1), pyPctF(r/ov, 0), pyPctD(pct))
+		}
+		line("every elephant flow across the spines near line rate", ok, note)
+		var ok2 any
+		note2 := "no result line from the host script"
+		if mean != 0 {
+			ok2 = 100.0*(mx-mn)/mean <= spr
+			note2 = fmt.Sprintf("spread %s%% (target %s%%)", pyPctF(100.0*(mx-mn)/mean, 1), pyPctD(spr))
+		}
+		line("flows spread evenly over the uplinks", ok2, note2)
 	}
 	if len(unread) > 0 {
 		sh := unread
@@ -670,7 +693,7 @@ func (e *Estate) SubmitAcceptText(text, user string, crit *pyjson.Map) (bool, st
 		crit = pyjson.NewMap()
 	}
 	tests := pyjson.NewMap()
-	for _, t := range []string{"T1", "T2", "T3", "T4"} {
+	for _, t := range []string{"T1", "T2", "T3", "T4", "T7"} {
 		if pyRe(`(?m)^ACCEPT\s+` + t + `\b`).MatchString(text) {
 			r := e.accScore(t, text, nil, nil, crit, 0)
 			r.Set("lines", append(r.L("lines"), pyjson.O("label", t+" switch counters", "ok", nil, "note", "uploaded by hand: confirm the switch criteria from the switches")))
@@ -703,6 +726,21 @@ func (e *Estate) SubmitAcceptResult(tests *pyjson.Map, user string) (bool, strin
 	return true, "recorded"
 }
 
+// accTests is _acc_tests: the tests the plan's acceptance runner requires (HS v2.03: T7 where the back end has two pods).
+func (e *Estate) accTests() []string {
+	for _, rv := range e.Plan.L("runners") {
+		r, ok := rv.(*pyjson.Map)
+		if !ok || r.Str("kind") != "accept" {
+			continue
+		}
+		if t := pyjson.StrList(r.V("tests")); len(t) > 0 {
+			return t
+		}
+		return []string{"T1", "T2", "T3", "T4"}
+	}
+	return []string{"T1", "T2", "T3", "T4"}
+}
+
 func (e *Estate) acceptEval() *pyjson.Map {
 	r := e.Results.M("accept")
 	if !pyjson.Truthy(r) {
@@ -730,7 +768,7 @@ func (e *Estate) acceptEval() *pyjson.Map {
 		res = append(res, PyStr(T.M(t).V("result")))
 	}
 	var missing []string
-	for _, t := range []string{"T1", "T2", "T3", "T4"} {
+	for _, t := range e.accTests() {
 		if !T.Has(t) {
 			missing = append(missing, t)
 		}

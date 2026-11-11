@@ -1,3 +1,10 @@
+# AIDC DBD Desktop 2.1.2 (builder HS-v2.03, site runner 1.11.0)
+
+- **Elephant flows and load balancing, proved at acceptance.** A new lossless acceptance test, **T7**, runs on every back end with two or more pods: host pairs on different rail leaves (pod 1 to pod 2, `acceptance/t7_pairs.txt`), one queue pair per flow on every rail at once, started a fraction of a second apart. Every flow must reach 90% of line rate (of line rate divided by the oversubscription at 2:1) and the spread must stay within 10%. Static hashing fails it; working dynamic load balancing or adaptive routing passes. Both engines score it in the back-end gate.
+- **Front-end dynamic load balancing.** Host-facing front-end leaves now run DLB in flowlet mode on their uplinks: Junos (QFX5130, QFX5230, QFX5240), EOS (7060X6), NX-OS (N9364E-SG2) and SR Linux (7220 IXR-H5/H6, for the VTEP and storage prefixes). Border leaves are left on static hashing, since their ECMP groups lead to the gateways and firewalls. NVIDIA front-end leaves (adaptive routing is per-packet) and Nokia 7220 IXR-D5 / 7250 stay on static hashing and are recorded as exceptions in the design register.
+- **RDMA storage.** With DDN, Pure, or VAST over RDMA, the package adds `acceptance/storage_lossless.sh`: S1, elephant flows across the front-end spines on the storage class; S2, incast with no loss and ECN marks before pauses. The front-end gate holds for its confirmation. A front-end leaf without DLB raises a warning with RDMA storage.
+- Standards: HS-BE-001 2.5, HS-FE-001 2.3, HS-DEP-001, HS-DEP-002 and HS-DEP-003 2.6.
+
 # AIDC DBD Desktop 2.1.1 (builder HS-v2.02, site runner 1.11.0)
 
 - **Build reports and the Certificate of Conformance.** The Deployment Console has a **Reports** menu, generated on the provisioning host from the console's own record, so no build data leaves the site:

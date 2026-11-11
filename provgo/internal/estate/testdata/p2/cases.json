@@ -1274,6 +1274,94 @@
     "c": "z",
     "d": "w"
    }
+  },
+  {
+   "test": "T7",
+   "text": "ACCEPT T7 port_gbps=800 pairs=24 flows=384 rails=16 min_gbps=741.20 max_gbps=779.85 mean_gbps=764.33 sum_gbps=293502.72 n=384\nNIC T7 rx_discards_phy 0\n",
+   "s0": {
+    "T-CUM-A": {
+     "pfc_tx": 10.0,
+     "pfc_rx": 5.0,
+     "ecn": 3.0,
+     "drops": 0.0,
+     "wd": 0.0,
+     "seen": [
+      "pfc",
+      "ecn",
+      "drops",
+      "wd"
+     ]
+    },
+    "T-CUM-SP1": {
+     "pfc_tx": 1.0,
+     "pfc_rx": 1.0,
+     "ecn": 0.0,
+     "drops": 2.0,
+     "wd": 1.0,
+     "seen": [
+      "pfc",
+      "drops"
+     ]
+    }
+   },
+   "s1": {
+    "T-CUM-A": {
+     "pfc_tx": 10.0,
+     "pfc_rx": 5.0,
+     "ecn": 3.0,
+     "drops": 0.0,
+     "wd": 0.0,
+     "seen": [
+      "pfc",
+      "ecn",
+      "drops",
+      "wd"
+     ]
+    },
+    "T-CUM-SP1": {
+     "pfc_tx": 1.0,
+     "pfc_rx": 1.0,
+     "ecn": 0.0,
+     "drops": 2.0,
+     "wd": 1.0,
+     "seen": [
+      "pfc",
+      "drops"
+     ]
+    }
+   },
+   "crit": {
+    "elephant_pct": 90,
+    "ecmp_spread_pct": 10,
+    "oversub": 1
+   }
+  },
+  {
+   "test": "T7",
+   "text": "ACCEPT T7 port_gbps=800 pairs=24 flows=384 rails=16 min_gbps=388.40 max_gbps=781.10 mean_gbps=760.02 n=384\n",
+   "s0": null,
+   "s1": null,
+   "crit": {}
+  },
+  {
+   "test": "T7",
+   "text": "ACCEPT T7 port_gbps=400 flows=64 min_gbps=184.5 max_gbps=196.25 mean_gbps=190.1 n=64\n",
+   "s0": null,
+   "s1": null,
+   "crit": {
+    "oversub": 2,
+    "elephant_pct": 90.5
+   }
+  },
+  {
+   "test": "T7",
+   "text": "ACCEPT T7 error=no_pairs_file\n",
+   "s0": null,
+   "s1": null,
+   "rc": 2,
+   "crit": {
+    "oversub": 0
+   }
   }
  ],
  "results": [
@@ -1292,6 +1380,13 @@
   {
    "kind": "accept",
    "text": "no lines\n"
+  },
+  {
+   "kind": "accept",
+   "text": "ACCEPT T1 port_gbps=400 min_gbps=392.5\nNIC T1 rx_discards_phy 0\nACCEPT T2 min_gbps=90 max_gbps=97 mean_gbps=95.25\nNIC T2 np_ecn_marked_roce_packets 12\nACCEPT T3 busbw=401.5\nACCEPT T4 busbw=383.25\nACCEPT T7 port_gbps=400 flows=32 min_gbps=360 max_gbps=391 mean_gbps=380 n=32\n",
+   "crit": {
+    "elephant_pct": 90
+   }
   },
   {
    "kind": "isolation",
