@@ -1,3 +1,10 @@
+# AIDC DBD Desktop 2.0.98 (builder HS-v1.99, site runner 1.11.0)
+
+- **Inference without a back end.** The inference back-end choice adds **No back end**, for serving that stays within one NVLink domain (an NVL72 rack, or an HGX host); serving that crosses racks keeps a back end at 1:1 or 2:1. The design has no rail leaves, spines, super-spines, back-end cables or optics; the hosts' back-end NICs stay uncabled and disabled, so the Spectrum-X host package is not generated. The BoM's back-end section, the design register and the bring-up order say so. A 64-rack GB300 NVL72 site at four planes drops 328 switches and 36,864 links.
+- **NVLink acceptance.** In place of the lossless tests and NCCL across racks, `acceptance/nccl_nvlink.sh` runs NCCL all-reduce inside one NVLink domain with the network transports disabled (multi-node NVLink required on NVL72), against a bus-bandwidth target; the front-end gate holds for its confirmation. The empty back-end build completes at once in the Deployment Console.
+- Tested on GB300 NVL72 (8 and 512 racks), Vera Rubin NVL72 (64 racks) and HGX (16 racks): every package and .run built, parity identical. Training and inference 1:1 and 2:1 designs are unchanged (same design fingerprints and files as 2.0.97).
+- **Input sheet:** `fabric.be.inference_ratio` takes no back end; `fabric.be.oversubscription` reads 1:1, 2:1 or none.
+
 # AIDC DBD Desktop 2.0.97 (builder HS-v1.98, site runner 1.11.0)
 
 - **Workload: Training or Inference.** A new Workload selector in the Back end group. Training (the default) builds exactly as before: same devices, links, design fingerprint and outputs. Inference adds three things:
