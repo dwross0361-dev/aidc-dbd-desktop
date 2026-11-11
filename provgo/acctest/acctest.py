@@ -349,6 +349,7 @@ class Suite:
         S.put("iperf.lost.down", "300\n120\n0\n0\n"); S.put("iperf.lost.up", "20\n0\n0\n0\n")
         rc, out = self.run("bash failover.sh", **env)
         self.engine("failover.sh, every case within target", "pass", {"op": "rz", "kind": "failover", "text": out, "planes": planes})
+        env["FAILOVER_ONLY"] = rows[0]["id"]   # the faults on one case (the correct site covered every case)
         S.put("iperf.lost.down", "1800\n0\n0\n0\n")
         rc, out = self.run("bash failover.sh", **env)
         self.engine("failover.sh, a 1.8 s outage", ("fail", "1800 ms"), {"op": "rz", "kind": "failover", "text": out, "planes": planes})
@@ -525,7 +526,7 @@ class Suite:
 
     def ztp_cumulus(self):
         P, S = self.P, self.S
-        done = 0
+        done, todo = 0, []
         L0, L1 = self.truth("correct"), self.truth("ifindex")
         for n in sorted(P.devs):
             d = P.devs[n]
@@ -551,11 +552,16 @@ class Suite:
                 for l, x, p in nb:
                     kv.append("lldp.%s.chassis.name=%s" % (l, x))
                     kv += (["lldp.%s.port.local=%s" % (l, p), "lldp.%s.port.descr=to %s" % (l, n)] if re.match(r"^\d+$", p) else ["lldp.%s.port.ifname=%s" % (l, p)])
-                S.put("fake/%s/lldp" % n, "\n".join(kv) + "\n")
+                mh = "%s--%s" % (n, mode)   # one fake switch per run, so the runs go in parallel
+                S.put("fake/%s/lldp" % mh, "\n".join(kv) + "\n")
                 script = 'ci_fail(){ echo "CI_FAIL $*"; exit 1; }\nCFG=%s\n%s' % (cfg, block)
-                rc, out = sh(script, S.env(MOCKHOST=n), self.wk, 120)
-                got = ("fail", out.strip()[-300:]) if "CI_FAIL" in out else ("pass", "") if "no miswire seen" in out else ("none", out[-300:])
-                self.rows.append(("Cumulus ZTP cabling check on %s, %s" % (n, mode), ("fail", "expected") if mode == "swap" else "pass", got, None))
+                todo.append(("Cumulus ZTP cabling check on %s, %s" % (n, mode), ("fail", "expected") if mode == "swap" else "pass", script, mh))
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor(12) as ex:
+            res = list(ex.map(lambda t: sh(t[2], S.env(MOCKHOST=t[3]), self.wk, 180), todo))
+        for (case, exp, _, _), (rc, out) in zip(todo, res):
+            got = ("fail", out.strip()[-300:]) if "CI_FAIL" in out else ("pass", "") if "no miswire seen" in out else ("none", out[-300:])
+            self.rows.append((case, exp, got, None))
 
     def software(self):
         P, eb = self.P, self.P.eb
