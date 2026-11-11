@@ -1,3 +1,7 @@
+# AIDC DBD Desktop 2.0.99 (builder HS-v2.00, site runner 1.11.0)
+
+- **Site classes renamed after what they consume.** Standard is now **site block** (the site shares its region with up to seven others), hyperscale is **region block** (the site takes its region's front-end and OOB /16s), and mega is **multi-block** (it also takes the region's other site blocks). "Hyperscale" read as a size: a 32-rack GB300 NVL72 site (576 hosts) is past one site's /19, not hyperscale. The rules, thresholds and addresses are unchanged, and so are designs, fingerprints and outputs apart from the labels: the IP plan's block notes, the region-conflict warning, the OOB range errors and the guide. The product name is unchanged.
+
 # AIDC DBD Desktop 2.0.98 (builder HS-v1.99, site runner 1.11.0)
 
 - **Inference without a back end.** The inference back-end choice adds **No back end**, for serving that stays within one NVLink domain (an NVL72 rack, or an HGX host); serving that crosses racks keeps a back end at 1:1 or 2:1. The design has no rail leaves, spines, super-spines, back-end cables or optics; the hosts' back-end NICs stay uncabled and disabled, so the Spectrum-X host package is not generated. The BoM's back-end section, the design register and the bring-up order say so. A 64-rack GB300 NVL72 site at four planes drops 328 switches and 36,864 links.
