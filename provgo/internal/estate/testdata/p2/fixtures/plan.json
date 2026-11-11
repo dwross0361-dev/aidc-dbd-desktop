@@ -390,6 +390,61 @@
     "stage": 2,
     "flag": ""
    }
+  },
+  {
+   "name": "T-JUNOS-SP1",
+   "short": "JUNOS-SP1",
+   "os": "junos",
+   "role": "backend spine",
+   "ip": "127.250.0.29",
+   "_state": {
+    "stage": 6,
+    "flag": ""
+   }
+  },
+  {
+   "name": "T-JUNOS-SP2",
+   "short": "JUNOS-SP2",
+   "os": "junos",
+   "role": "backend spine",
+   "ip": "127.250.0.30",
+   "_state": {
+    "stage": 6,
+    "flag": ""
+   }
+  },
+  {
+   "name": "T-EOS-SP1",
+   "short": "EOS-SP1",
+   "os": "eos",
+   "role": "backend spine",
+   "ip": "127.250.0.31",
+   "_state": {
+    "stage": 6,
+    "flag": ""
+   }
+  },
+  {
+   "name": "T-NXOS-SP1",
+   "short": "NXOS-SP1",
+   "os": "nxos",
+   "role": "backend spine",
+   "ip": "127.250.0.32",
+   "_state": {
+    "stage": 6,
+    "flag": ""
+   }
+  },
+  {
+   "name": "T-SRL-SP1",
+   "short": "SRL-SP1",
+   "os": "srl",
+   "role": "backend spine",
+   "ip": "127.250.0.33",
+   "_state": {
+    "stage": 6,
+    "flag": ""
+   }
   }
  ],
  "builds": [
@@ -428,7 +483,12 @@
       "T-CUM-SP1",
       "T-CUM-SP2",
       "T-CUM-SP3",
-      "T-CUM-SP4"
+      "T-CUM-SP4",
+      "T-JUNOS-SP1",
+      "T-JUNOS-SP2",
+      "T-EOS-SP1",
+      "T-NXOS-SP1",
+      "T-SRL-SP1"
      ]
     }
    ],
@@ -465,7 +525,12 @@
       "T-CUM-SP1",
       "T-CUM-SP2",
       "T-CUM-SP3",
-      "T-CUM-SP4"
+      "T-CUM-SP4",
+      "T-JUNOS-SP1",
+      "T-JUNOS-SP2",
+      "T-EOS-SP1",
+      "T-NXOS-SP1",
+      "T-SRL-SP1"
      ]
     }
    ]

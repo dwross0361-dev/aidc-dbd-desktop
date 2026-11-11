@@ -61,7 +61,6 @@ var (
 	adminRE    = regexp.MustCompile(`(?i)admin`)
 	ifKeyRE    = pyRe(`^(swp|eth|Ethernet|et-|xe-|ge-|mgmt|e\d|ethernet-)\S*$`)
 	lldpKVRE   = pyRe(`^lldp\.([^.]+)\.(chassis\.name|port\.ifname|port\.descr)=(.*)$`)
-	digitsRE   = pyRe(`\d+`)
 )
 
 // Slug is the file name of a recorded command output (reader simulation).
@@ -250,6 +249,9 @@ func LLDPPairs(t string) (pairs map[string]LLDPLink, keys []string, ok bool) {
 		obj, err := pyjson.Loads([]byte(s))
 		if err == nil {
 			lldpWalk(obj, pairs, &keys)
+			if len(pairs) == 0 {
+				lldpRows(obj, pairs, &keys)
+			}
 			return pairs, keys, true
 		}
 	}
@@ -379,7 +381,17 @@ func lldpWalk(o any, out map[string]LLDPLink, keys *[]string) {
 }
 
 // vnum is the digits of a release joined by dots.
-func vnum(v string) string { return strings.Join(digitsRE.FindAllString(v, -1), ".") }
+// vnum is the release's numbers, leading zeros dropped (IOS XE prints 17.15.06 for 17.15.6). HS v2.05
+func vnum(v string) string {
+	xs := asciiDigitsRE.FindAllString(v, -1)
+	for i, x := range xs {
+		if x = strings.TrimLeft(x, "0"); x == "" {
+			x = "0"
+		}
+		xs[i] = x
+	}
+	return strings.Join(xs, ".")
+}
 
 func sameDev(seen, name, short string) bool {
 	s := pyLower(strings.SplitN(seen, ".", 2)[0])
@@ -725,3 +737,78 @@ func AccParse(text, test string) (*pyjson.Map, *FlatNum) {
 }
 
 func itoa(i int) string { return pyD(float64(i)) }
+
+var (
+	lldpRowLocal  = []string{"lldp-local-port-id", "lldp-local-interface", "l_port_id", "port"}
+	lldpRowName   = []string{"lldp-remote-system-name", "neighborDevice", "sys_name", "system-name"}
+	lldpRowPort   = []string{"lldp-remote-port-id", "neighborPort", "port_id", "port-id", "lldp-remote-port-description"}
+	lldpDigitsRE  = pyRe(`^[0-9]+$`)
+	asciiDigitsRE = regexp.MustCompile(`[0-9]+`)
+	lldpSpaceRE   = pyRe(`\s`)
+)
+
+// lldpFirst is lldp_first: the first non-empty str/int (not bool) under one of keys, one level down.
+func lldpFirst(keys []string, d *pyjson.Map) string {
+	for _, k := range keys {
+		if !d.Has(k) {
+			continue
+		}
+		v := ""
+		switch u := unwrap(d.V(k)).(type) {
+		case string:
+			v = u
+		case int64:
+			v = PyStr(u)
+		case float64:
+			if u == float64(int64(u)) && (u > 9.2e18 || u < -9.2e18) {
+				v = new(big.Float).SetFloat64(u).Text('f', 0)
+			}
+		}
+		if v != "" {
+			return v
+		}
+	}
+	return ""
+}
+
+// lldpRows is lldp_rows: one row per neighbor (Junos, EOS, NX-OS), or SR Linux's interface list with its neighbors.
+func lldpRows(o any, out map[string]LLDPLink, keys *[]string) {
+	add := func(lp string, l LLDPLink) {
+		if _, seen := out[lp]; !seen {
+			out[lp] = l
+			*keys = append(*keys, lp)
+		}
+	}
+	switch x := o.(type) {
+	case *pyjson.Map:
+		lp, nm := lldpFirst(lldpRowLocal, x), lldpFirst(lldpRowName, x)
+		if lp != "" && nm != "" {
+			add(lp, LLDPLink{nm, lldpFirst(lldpRowPort, x)})
+			return
+		}
+		name, isStr := x.V("name").(string)
+		if nb, isList := x.V("neighbor").([]any); isStr && isList {
+			for _, y := range nb {
+				if m, ok := y.(*pyjson.Map); ok {
+					if sn := lldpFirst([]string{"system-name"}, m); sn != "" {
+						add(name, LLDPLink{sn, lldpFirst([]string{"port-id"}, m)})
+					}
+				}
+			}
+			return
+		}
+		for _, k := range x.Keys() {
+			lldpRows(x.V(k), out, keys)
+		}
+	case []any:
+		for _, v := range x {
+			lldpRows(v, out, keys)
+		}
+	}
+}
+
+// LLDPPortNamed is lldp_port_named: false when the far end sends its port as an SNMP index or a description.
+func LLDPPortNamed(p string) bool {
+	p = pyStripU(p)
+	return p != "" && !lldpDigitsRE.MatchString(p) && !lldpSpaceRE.MatchString(p)
+}

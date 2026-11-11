@@ -41,6 +41,45 @@
                             "data": "T-JUNOS-SP1.lab"
                         }
                     ]
+                },
+                {
+                    "lldp-local-port-id": [
+                        {
+                            "data": "et-0/0/1"
+                        }
+                    ],
+                    "lldp-remote-port-id-subtype": [
+                        {
+                            "data": "Locally assigned"
+                        }
+                    ],
+                    "lldp-remote-port-id": [
+                        {
+                            "data": "523"
+                        }
+                    ],
+                    "lldp-remote-system-name": [
+                        {
+                            "data": "T-JUNOS-SP2"
+                        }
+                    ]
+                },
+                {
+                    "lldp-local-port-id": [
+                        {
+                            "data": "et-0/0/2"
+                        }
+                    ],
+                    "lldp-remote-port-id": [
+                        {
+                            "data": "enp1s0f0"
+                        }
+                    ],
+                    "lldp-remote-system-name": [
+                        {
+                            "data": "gpu-host-7"
+                        }
+                    ]
                 }
             ]
         }

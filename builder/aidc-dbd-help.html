@@ -51,7 +51,7 @@ mark{ background:var(--mark); color:inherit; }
 <body>
 <header>
   <h1>AIDC DBD User Guide</h1>
-  <span class="ver">Builder HS-v2.04 &middot; DWR Networking</span>
+  <span class="ver">Builder HS-v2.05 &middot; DWR Networking</span>
   <input id="q" type="search" placeholder="Search the guide" aria-label="Search the guide">
 </header>
 <div class="wrap">
@@ -434,6 +434,7 @@ platform.be_switch,NV-SN5610,,dry run</code></pre></li>
 </table>
 <p>With RDMA storage (DDN, Pure, or VAST over RDMA), the front-end gate also holds for <code>storage_lossless.sh</code> S1 and S2, driven by the storage client's load from every host, confirmed with their output.</p>
 <p><b>Resilience:</b> the back-end gate holds for failover (<code>failover.sh</code>) and the 24-hour soak (<code>soak.sh</code>); the front-end gate for failover and the alert path (<code>alerts.sh</code>). Each is run by the console or uploaded with <span class="ui">Upload results&hellip;</span>, and scored against the targets in the plan.</p>
+<p><b>A test fails only for what it tests.</b> A script that cannot run (a tool, address, SSH login or file missing, too few inference clients) prints a setup failure naming the cause and records no result. NCCL, T3/T4 and the soak run on the rail NICs only (<code>NCCL_IB_HCA</code>, by default the RDMA devices addressed in the rail block). The cabling check compares LLDP with the cable plan on every switch-to-switch link of every platform, by device only where the far end sends its port as an index; hosts, storage, firewalls and routers that send no LLDP are not observable, not failures.</p>
 <p>A passed gate backs up every device of that plane and lets the next plane start.</p>
 <h3>Tuning (back end)</h3>
 <p><span class="ui">Propose&hellip;</span> new lossless values within their limits &rarr; <span class="ui">Apply / roll back&hellip;</span> to the test pod &rarr; run the tests again &rarr; <span class="ui">Approve&hellip;</span> &rarr; <span class="ui">Roll out</span> pod by pod (a smoke test per pod). <span class="ui">Export profile&hellip;</span> saves the approved values as a tuned profile for the Fabric Designer.</p>
@@ -545,12 +546,12 @@ sudo python3 /opt/estate-build/estate_build.py start --plane be</code></pre></li
   <li>MTU: <code>ping -M do -s 8972 &lt;loopback&gt;</code> between leaf loopbacks; 9000-byte frames from each host's storage interface to a storage node.</li>
   <li>Control plane: every BGP session Established and every DPU VTEP reachable.</li>
   <li>Tenant isolation: <code>CLIENT_SSH=&lt;user&gt;@&lt;outside host&gt; acceptance/ingress_isolation.sh</code>.</li>
-  <li>Lossless (test pod): <code>HOSTFILE=pod&lt;N&gt;.hosts acceptance/lossless.sh T1</code>, then T2, T3, T4; upload each result in the Console's back-end gate. T5 and T6 are run by hand. If a test fails, tune in the Console: Propose, Apply to the test pod, run again, Approve.</li>
+  <li>Lossless (test pod): <code>HOSTFILE=pod&lt;N&gt;.hosts acceptance/lossless.sh T1</code>, then T2, T3, T4 and T7; upload each result in the Console's back-end gate. T5 and T6 are run by hand. If a test fails, tune in the Console: Propose, Apply to the test pod, run again, Approve.</li>
   <li>NCCL: <code>HOSTFILE=pod&lt;N&gt;.hosts TARGET_BUSBW=&lt;GB/s&gt; acceptance/nccl.sh</code>, per rail then all rails; record it with <code>estate_build.py result &lt;BUSBW&gt; &lt;TARGET&gt;</code> or <span class="ui">Enter result</span>. <b>Gate:</b> bus bandwidth at or above the target.</li>
   <li>No back end (inference within one NVLink domain): the back-end NICs stay uncabled and disabled; per NVLink domain (an NVL72 rack's compute trays, or an HGX host), <code>HOSTFILE=&lt;domain&gt;.hosts TARGET_BUSBW=&lt;GB/s&gt; acceptance/nccl_nvlink.sh</code> in place of the lossless and NCCL steps, then confirm it in the Console's front-end gate. <b>Gate:</b> bus bandwidth at or above the target in every domain.</li>
   <li>Storage: <code>weka/03-checks.sh</code>, then a read test from one host per pod, recorded as the baseline.</li>
   <li>Ingress: from outside, <code>curl https://&lt;VIP&gt;</code> for each tenant.</li>
-  <li>Inference load (inference sites with a request rate): set each tenant's hostname and request path in <code>acceptance/inference-targets.csv</code> and the model in <code>inference-request.json</code>, then from an outside client with <code>hey</code> installed: <code>CLIENT_SSH=&lt;user&gt;@&lt;outside host&gt; acceptance/inference_load.sh</code>; upload the output in the Console's front-end gate, or set <code>inference_cmd</code> in <code>estate.conf</code> for the runner. <b>Gate:</b> every tenant at 95% or more of its request rate with no more than 0.1% failed requests, and its p99 at or under the target where one is set.</li>
+  <li>Inference load (inference sites with a request rate): set each tenant's hostname and request path in <code>acceptance/inference-targets.csv</code> and the model in <code>inference-request.json</code>, then from outside clients with <code>hey</code> installed: <code>CLIENTS="&lt;user&gt;@&lt;client1&gt; &lt;user&gt;@&lt;client2&gt; &hellip;" acceptance/inference_load.sh</code> (one client holds up to 4,000 requests in flight; the script says how many clients a tenant needs); upload the output in the Console's front-end gate, or set <code>inference_cmd</code> in <code>estate.conf</code> for the runner. <b>Gate:</b> every tenant at 95% or more of its request rate with no more than 0.1% failed requests, and its p99 at or under the target where one is set.</li>
   <li>After the test pod passes, roll the approved tuning out pod by pod, then repeat stages 4 to 6 for each wave.</li>
 </ol>
 
@@ -606,7 +607,7 @@ sudo python3 /opt/estate-build/estate_build.py start --plane be</code></pre></li
 <!-- REF:BEGIN (generated by tools/gen-help-ref.js; do not edit) -->
 <section id="ref-sheet">
 <h2>Reference: input sheet keys</h2>
-<p>Every row the input sheet takes, as builder HS-v2.04 reads it. A numbered row (<code>constraint.6</code>, <code>site.obstruction.4</code>) is read like its family.</p>
+<p>Every row the input sheet takes, as builder HS-v2.05 reads it. A numbered row (<code>constraint.6</code>, <code>site.obstruction.4</code>) is read like its family.</p>
 <h3>Site &amp; footprint</h3>
 <table>
 <tr><th>Key</th><th>Row</th><th>What it is</th><th>Takes</th></tr>
@@ -826,7 +827,7 @@ sudo python3 /opt/estate-build/estate_build.py start --plane be</code></pre></li
 </section>
 <section id="ref-platforms">
 <h2>Reference: platforms</h2>
-<p>The catalogs in builder HS-v2.04. A figure marked CONFIRM is still to confirm with the vendor.</p>
+<p>The catalogs in builder HS-v2.05. A figure marked CONFIRM is still to confirm with the vendor.</p>
 <h3>Compute platforms</h3>
 <table>
 <tr><th>Platform</th><th>Per rack</th><th>Back end and DPU</th><th>Notes</th></tr>

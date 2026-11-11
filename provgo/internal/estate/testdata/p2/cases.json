@@ -673,6 +673,126 @@
    "dev": "T-CUM-SP4"
   },
   {
+   "kind": "bgp",
+   "dev": "T-JUNOS-SP1"
+  },
+  {
+   "kind": "evpn",
+   "dev": "T-JUNOS-SP1"
+  },
+  {
+   "kind": "roce",
+   "dev": "T-JUNOS-SP1"
+  },
+  {
+   "kind": "lossless",
+   "dev": "T-JUNOS-SP1"
+  },
+  {
+   "kind": "software",
+   "dev": "T-JUNOS-SP1"
+  },
+  {
+   "kind": "cabling",
+   "dev": "T-JUNOS-SP1"
+  },
+  {
+   "kind": "bgp",
+   "dev": "T-JUNOS-SP2"
+  },
+  {
+   "kind": "evpn",
+   "dev": "T-JUNOS-SP2"
+  },
+  {
+   "kind": "roce",
+   "dev": "T-JUNOS-SP2"
+  },
+  {
+   "kind": "lossless",
+   "dev": "T-JUNOS-SP2"
+  },
+  {
+   "kind": "software",
+   "dev": "T-JUNOS-SP2"
+  },
+  {
+   "kind": "cabling",
+   "dev": "T-JUNOS-SP2"
+  },
+  {
+   "kind": "bgp",
+   "dev": "T-EOS-SP1"
+  },
+  {
+   "kind": "evpn",
+   "dev": "T-EOS-SP1"
+  },
+  {
+   "kind": "roce",
+   "dev": "T-EOS-SP1"
+  },
+  {
+   "kind": "lossless",
+   "dev": "T-EOS-SP1"
+  },
+  {
+   "kind": "software",
+   "dev": "T-EOS-SP1"
+  },
+  {
+   "kind": "cabling",
+   "dev": "T-EOS-SP1"
+  },
+  {
+   "kind": "bgp",
+   "dev": "T-NXOS-SP1"
+  },
+  {
+   "kind": "evpn",
+   "dev": "T-NXOS-SP1"
+  },
+  {
+   "kind": "roce",
+   "dev": "T-NXOS-SP1"
+  },
+  {
+   "kind": "lossless",
+   "dev": "T-NXOS-SP1"
+  },
+  {
+   "kind": "software",
+   "dev": "T-NXOS-SP1"
+  },
+  {
+   "kind": "cabling",
+   "dev": "T-NXOS-SP1"
+  },
+  {
+   "kind": "bgp",
+   "dev": "T-SRL-SP1"
+  },
+  {
+   "kind": "evpn",
+   "dev": "T-SRL-SP1"
+  },
+  {
+   "kind": "roce",
+   "dev": "T-SRL-SP1"
+  },
+  {
+   "kind": "lossless",
+   "dev": "T-SRL-SP1"
+  },
+  {
+   "kind": "software",
+   "dev": "T-SRL-SP1"
+  },
+  {
+   "kind": "cabling",
+   "dev": "T-SRL-SP1"
+  },
+  {
    "kind": "mnha",
    "dev": "T-JUNOS-FW1",
    "c": {
@@ -880,7 +1000,9 @@
    "10.4(5)",
    "v24.10.1-492",
    "",
-   "abc"
+   "abc",
+   "17.15.06",
+   "007.0"
   ],
   "lldp_text": [
    "lldp.swp1.chassis.name=sp1\nlldp.swp1.port.ifname=swp9\n",
@@ -1638,6 +1760,26 @@
      "T-CUM-SP4": {
       "v": 1,
       "ok": true
+     },
+     "T-JUNOS-SP1": {
+      "v": 1,
+      "ok": true
+     },
+     "T-JUNOS-SP2": {
+      "v": 1,
+      "ok": true
+     },
+     "T-EOS-SP1": {
+      "v": 1,
+      "ok": true
+     },
+     "T-NXOS-SP1": {
+      "v": 1,
+      "ok": true
+     },
+     "T-SRL-SP1": {
+      "v": 1,
+      "ok": true
      }
     }
    }
@@ -2206,6 +2348,13 @@
    "target": null,
    "switch": null,
    "text": "no soak\n"
+  },
+  {
+   "kind": "soak",
+   "plan": {},
+   "target": null,
+   "switch": null,
+   "text": "SOAK error no_rail_RDMA_device_in_10.10.0.0/15_on_h1\n"
   },
   {
    "kind": "alerts",

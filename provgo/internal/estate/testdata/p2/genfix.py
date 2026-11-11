@@ -67,7 +67,10 @@ put("T-JUNOS-A", "show lldp neighbors | display json", J({"lldp-neighbors-inform
         {"lldp-local-port-id": [{"data": "et-0/0/0"}], "lldp-local-parent-interface-name": [{"data": "-"}],
          "lldp-remote-chassis-id-subtype": [{"data": "Mac address"}], "lldp-remote-chassis-id": [{"data": "9c:5a:80:11:22:33"}],
          "lldp-remote-port-id-subtype": [{"data": "Interface name"}], "lldp-remote-port-id": [{"data": "et-0/0/48"}],
-         "lldp-remote-system-name": [{"data": "T-JUNOS-SP1.lab"}]}]}]}))
+         "lldp-remote-system-name": [{"data": "T-JUNOS-SP1.lab"}]},
+        {"lldp-local-port-id": [{"data": "et-0/0/1"}], "lldp-remote-port-id-subtype": [{"data": "Locally assigned"}],
+         "lldp-remote-port-id": [{"data": "523"}], "lldp-remote-system-name": [{"data": "T-JUNOS-SP2"}]},
+        {"lldp-local-port-id": [{"data": "et-0/0/2"}], "lldp-remote-port-id": [{"data": "enp1s0f0"}], "lldp-remote-system-name": [{"data": "gpu-host-7"}]}]}]}))
 JCFG_A = """set version 25.2X100-D30.5
 set system host-name T-JUNOS-A
 set system root-authentication encrypted-password "$6$abc$def"
@@ -591,6 +594,11 @@ dev("T-CUM-SP1", "cumulus", "backend spine")
 dev("T-CUM-SP2", "cumulus", "backend spine")
 dev("T-CUM-SP3", "cumulus", "backend spine", state={"stage": 6, "flag": "quarantined"})
 dev("T-CUM-SP4", "cumulus", "backend spine", state={"stage": 2, "flag": ""})
+dev("T-JUNOS-SP1", "junos", "backend spine")
+dev("T-JUNOS-SP2", "junos", "backend spine")
+dev("T-EOS-SP1", "eos", "backend spine")
+dev("T-NXOS-SP1", "nxos", "backend spine")
+dev("T-SRL-SP1", "srl", "backend spine")
 devs[[d["name"] for d in devs].index("T-JUNOS-A")]["release"] = {"target": "25.2X100-D30"}
 
 plan = {"site": {"code": "TST", "prov_ip": "127.0.0.1"}, "dhcp": {"subnet_id": 1}, "devices": devs,
@@ -603,16 +611,23 @@ for d in devs:
     if not d.get("planned_config"):
         continue
     n, o = d["name"], d["os"]
+    # the cable plan in each vendor's form: a note above its command, a description, an EOS block; hosts, storage and
+    # firewalls are not checked
     if o == "cumulus":
-        txt = CUM_PLAN.format(h=n)
+        txt = CUM_PLAN.format(h=n) + "nv set interface swp1 link mtu 9216   # -> T-CUM-RK01:h0/gpu0:0\nnv set interface swp2 link mtu 9216   # -> T-WEKA swp9\n"
     elif o == "junos":
-        txt = JCFG_A.replace("T-JUNOS-A", n)
+        txt = JCFG_A.replace("T-JUNOS-A", n).replace("set interfaces et-0/0/0 mtu 9216\n",
+            "# -> T-JUNOS-SP1 et-0/0/48 -- unnumbered\nset interfaces et-0/0/0 mtu 9216\n"
+            "set interfaces et-0/0/1 description \"uplink -> T-JUNOS-SP2 et-0/0/48\"\n# -> gpu-host-7 enp1s0f0\nset interfaces et-0/0/2 mtu 9216\n"
+            "# -> T-JUNOS-FW1 et-0/0/9\nset interfaces et-0/0/3 mtu 9216\n# -> T-JUNOS-SP1 et-0/0/50\nset routing-options router-id 1.1.1.1\n"
+            "set interfaces ae0 description \"-> T-JUNOS-SP2 ae0\"\n")
     elif o == "eos":
-        txt = ECFG.replace("T-EOS-A", n)
+        txt = ECFG.replace("T-EOS-A", n).replace("interface Ethernet1/1\n", "! -> T-EOS-SP1 Ethernet49/1\ninterface Ethernet1/1\n")
     elif o == "nxos":
-        txt = NCFG.replace("T-NXOS-A", n)
+        txt = NCFG.replace("T-NXOS-A", n).replace("interface Ethernet1/1\n", "interface Ethernet1/1\n  description uplink -> T-NXOS-SP1 Ethernet1/50\n")
     else:
-        txt = "set / interface ethernet-1/1 mtu 9232\nset / qos interfaces interface ethernet-1/1 output pfc pfc-enable true\n"
+        txt = ("set / interface ethernet-1/1 mtu 9232 description \"-> T-SRL-SP1 ethernet-1/49\"\n"
+               "set / qos interfaces interface ethernet-1/1 output pfc pfc-enable true\n")
     open(os.path.join(OUT, "bundle", d["planned_config"]), "w").write(txt)
 json.dump(plan, open(os.path.join(OUT, "plan.json"), "w"), indent=1)
 for n, cmds in SIM.items():

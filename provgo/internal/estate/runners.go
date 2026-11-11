@@ -23,12 +23,13 @@ import (
 )
 
 var (
-	envKeyRE   = regexp.MustCompile(`^[A-Z_][A-Z0-9_]*$`)
-	subRE      = regexp.MustCompile(`\{([A-Z0-9_]+)\}`)
-	shUnsafeRE = regexp.MustCompile(`[^A-Za-z0-9_@%+=:,./-]`)
-	railsOkRE  = regexp.MustCompile(`RAILS ok (\d+)`)
-	failLineRE = regexp.MustCompile(`(?m)^FAIL.*$`)
-	ncclRE     = pyRe(`(PASS|FAIL) busbw\s+([0-9.]+)`)
+	envKeyRE    = regexp.MustCompile(`^[A-Z_][A-Z0-9_]*$`)
+	subRE       = regexp.MustCompile(`\{([A-Z0-9_]+)\}`)
+	shUnsafeRE  = regexp.MustCompile(`[^A-Za-z0-9_@%+=:,./-]`)
+	railsOkRE   = regexp.MustCompile(`RAILS ok (\d+)`)
+	failLineRE  = regexp.MustCompile(`(?m)^FAIL.*$`)
+	ncclRE      = pyRe(`(PASS|FAIL) busbw\s+([0-9.]+)`)
+	ncclSetupRE = pyRe(`NCCL setup FAIL[^\n]*`)
 )
 
 const dpuModeCheck = "mst start >/dev/null 2>&1; set -- /dev/mst/mt41692_pciconf[0-9]; " +
@@ -606,10 +607,13 @@ func (e *Estate) runRails(r *pyjson.Map, logf string) (bool, string, error) {
 			note += "; " + strings.Join(fl, "; ")
 		}
 		st := "fail"
-		if rc == 0 && k == rph {
+		if rc == 0 && k >= rph {
 			st = "pass"
 		}
 		got[i] = k
+		if k > rph {
+			got[i] = rph // HS v2.05: a host counts its planned rails, no more
+		}
 		out[i] = &res{st, note}
 	})
 	for _, err := range errs {
@@ -769,6 +773,9 @@ func (e *Estate) runNCCL(r *pyjson.Map, sec map[string]string, logf string) (boo
 		}
 		e.SubmitResult("nccl", m[2], tgt, "runner", pyTail(out, 1500))
 		return m[1] == "PASS", m[0], nil
+	}
+	if m2 := ncclSetupRE.FindString(out); m2 != "" { // HS v2.05: nothing measured, and why
+		return false, m2, nil
 	}
 	return false, fmt.Sprintf("no PASS/FAIL line (exit %d)", rc), nil
 }

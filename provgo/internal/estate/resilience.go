@@ -183,6 +183,7 @@ var (
 	soakItRE   = pyRe(`(?m)^SOAK\s+iter=(\d+)\s+busbw=([0-9]+(?:\.[0-9]+)?)`)
 	soakHostRE = pyRe(`(?m)^SOAK\s+host\s+(\S+)\s+(-?\d+)`)
 	soakDoneRE = pyRe(`(?m)^SOAK\s+done\s+hours=([0-9]+(?:\.[0-9]+)?)\s+iters=(\d+)`)
+	soakErrRE  = pyRe(`(?m)^SOAK error (\S+)`)
 )
 
 // SubmitSoakText records acceptance/soak.sh's output; sw is the switches' drop and watchdog counters over the run (runner only).
@@ -199,6 +200,9 @@ func (e *Estate) SubmitSoakText(text, user string, sw *pyjson.Map) (bool, string
 	}
 	d := soakDoneRE.FindAllStringSubmatch(text, -1)
 	if len(it) == 0 && len(d) == 0 {
+		if m2 := soakErrRE.FindStringSubmatch(text); m2 != nil { // HS v2.05: the script stopped before the first run
+			return false, "soak.sh stopped: " + strings.ReplaceAll(m2[1], "_", " ")
+		}
 		return false, "no SOAK lines in the text (paste the output of acceptance/soak.sh)"
 	}
 	if len(it) > 20000 {
@@ -252,8 +256,15 @@ func (e *Estate) soakEval() *pyjson.Map {
 		if n%2 == 0 {
 			med = (s[n/2-1] + s[n/2]) / 2.0
 		}
-		ev.set("bus bandwidth steady through the soak", s[0] >= (100.0-D)/100.0*med,
-			fmt.Sprintf("lowest %s GB/s against a median of %s (within %s%%), %d runs", pyPctF(s[0], 1), pyPctF(med, 1), pyPctD(D), n))
+		lo, thr := s[int(float64(n)*0.01)], (100.0-D)/100.0*med // the 1st percentile: one slow run in a day is not a fault
+		nb := 0
+		for _, x := range s {
+			if x < thr {
+				nb++
+			}
+		}
+		ev.set("bus bandwidth steady through the soak", lo >= thr,
+			fmt.Sprintf("1st-percentile run %s GB/s against a median of %s (within %s%%); %d of %d runs below", pyPctF(lo, 1), pyPctF(med, 1), pyPctD(D), nb, n))
 		tgt := 0.0
 		if v := e.Conf.V("TARGET_BUSBW"); pyjson.Truthy(v) {
 			tgt = pyFloatAnyZ(v)
@@ -261,9 +272,9 @@ func (e *Estate) soakEval() *pyjson.Map {
 			tgt = pyFloatAnyZ(sv)
 		}
 		if tgt != 0 {
-			ev.set("bus bandwidth at target", s[0] >= tgt, fmt.Sprintf("lowest %s GB/s against %s", pyPctF(s[0], 1), pyPctF(tgt, 1)))
+			ev.set("bus bandwidth at target", med >= tgt, fmt.Sprintf("median %s GB/s against %s", pyPctF(med, 1), pyPctF(tgt, 1)))
 		} else {
-			ev.set("bus bandwidth at target", nil, fmt.Sprintf("TARGET_BUSBW not set (lowest %s GB/s)", pyPctF(s[0], 1)))
+			ev.set("bus bandwidth at target", nil, fmt.Sprintf("TARGET_BUSBW not set (median %s GB/s)", pyPctF(med, 1)))
 		}
 	} else {
 		ev.set("bus bandwidth steady through the soak", false, "no NCCL runs reported")

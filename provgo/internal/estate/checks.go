@@ -70,8 +70,11 @@ func (e *Estate) plannedText(n string) (string, bool) {
 }
 
 var (
-	peerRE = pyRe(`neighbor (\S+) remote-as \S+\s+#\s*([A-Za-z0-9_.-]+)`)
-	linkRE = pyRe(`interface (\S+) link mtu \d+\s+#\s*->\s*(\S+)\s+(\S+)`)
+	peerRE      = pyRe(`neighbor (\S+) remote-as \S+\s+#\s*([A-Za-z0-9_.-]+)`)
+	linkArrowRE = pyRe(`->[ \t]*([A-Za-z0-9][A-Za-z0-9_.:/-]*)[ \t]+([A-Za-z][A-Za-z0-9_./:-]*[0-9])`)
+	linkIfRE    = pyRe(`^(?:nv set interface|set interfaces|set / interface|interface)[ \t]+(\S+)`)
+	linkLagRE   = pyRe(`(?i)^(?:ae[0-9]|bond|lag|port-channel)`)
+	linkNoLLDP  = pyRe(`(?i)firewall|edge|router|load balancer`)
 )
 
 // peersOf is each BGP neighbor's device, from the planned configuration's "neighbor X remote-as N  # PEER" comments.
@@ -119,17 +122,54 @@ func (e *Estate) peerName(x string) string {
 func (e *Estate) expectedLinks(n string) *orderedLinks {
 	c := e.p2s()
 	c.mu.Lock()
-	defer c.mu.Unlock()
 	if m, ok := c.exp[n]; ok {
+		c.mu.Unlock()
 		return m
 	}
+	c.mu.Unlock() // peerName takes c.mu itself
 	m := &orderedLinks{m: map[string][2]string{}}
 	t, _ := e.plannedText(n)
-	for _, x := range linkRE.FindAllStringSubmatch(t, -1) {
-		if _, ok := m.m[x[1]]; !ok {
-			m.keys = append(m.keys, x[1])
+	link := func(lp string, g [2]string) {
+		d := e.Devs[e.peerName(g[0])]
+		if d == nil || LLDPCmd[d.Str("os")] == "" || linkNoLLDP.MatchString(d.Str("role")) || linkLagRE.MatchString(lp) {
+			return
 		}
-		m.m[x[1]] = [2]string{x[2], x[3]}
+		if _, ok := m.m[lp]; !ok {
+			m.keys = append(m.keys, lp)
+			m.m[lp] = g
+		}
+	}
+	cur, havePend := "", false
+	var pend [2]string
+	for _, ln := range pySplitlines(t) {
+		s := pyStripU(ln)
+		if s == "" {
+			continue
+		}
+		a := linkArrowRE.FindStringSubmatch(s)
+		if s[0] == '#' || s[0] == '!' {
+			if a != nil {
+				pend, havePend = [2]string{a[1], a[2]}, true
+			}
+			continue
+		}
+		if x := linkIfRE.FindStringSubmatch(s); x != nil {
+			cur = x[1]
+			if havePend {
+				link(cur, pend)
+			}
+		} else if ln[0] != ' ' && ln[0] != '\t' {
+			cur = ""
+		}
+		havePend = false
+		if a != nil && cur != "" {
+			link(cur, [2]string{a[1], a[2]})
+		}
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if m0, ok := c.exp[n]; ok {
+		return m0
 	}
 	c.exp[n] = m
 	return m
@@ -538,10 +578,17 @@ func (e *Estate) EvalKind(kind, n string, c *pyjson.Map) (bool, string, string, 
 			return false, "", "", err
 		}
 		t := tt[0]
-		seen, _, understood := LLDPPairs(t)
+		seen, seenKeys, understood := LLDPPairs(t)
 		if !understood {
 			return false, "", "", unavailable("%s", "the LLDP output was not understood")
 		}
+		seenN := map[string]LLDPLink{}
+		for _, k := range seenKeys {
+			if _, ok := seenN[NormPort(k)]; !ok {
+				seenN[NormPort(k)] = seen[k]
+			}
+		}
+		byDev := 0
 		lps := append([]string(nil), exp.keys...)
 		sort.Strings(lps)
 		var bad []string
@@ -553,7 +600,7 @@ func (e *Estate) EvalKind(kind, n string, c *pyjson.Map) (bool, string, string, 
 			ps := e.St[pn]
 			got, have := seen[lp]
 			if !have {
-				got, have = seen[NormPort(lp)]
+				got, have = seenN[NormPort(lp)]
 			}
 			if have && pyLower(strings.SplitN(got.Name, ".", 2)[0]) == "cumulus" {
 				have = false
@@ -568,16 +615,22 @@ func (e *Estate) EvalKind(kind, n string, c *pyjson.Map) (bool, string, string, 
 			}
 			if !have {
 				bad = append(bad, fmt.Sprintf("%s: expected %s %s, no neighbor", lp, e.devShort(pn, pd), pp))
-			} else if !sameDev(got.Name, pn, e.devShort(pn, "")) || NormPort(got.Port) != NormPort(pp) {
+			} else if !sameDev(got.Name, pn, e.devShort(pn, "")) || (LLDPPortNamed(got.Port) && NormPort(got.Port) != NormPort(pp)) {
 				bad = append(bad, fmt.Sprintf("%s: expected %s %s, saw %s %s", lp, e.devShort(pn, pd), pp, got.Name, got.Port))
 			} else {
 				okN++
+				if !LLDPPortNamed(got.Port) {
+					byDev++
+				}
 			}
 		}
 		e.Mu.Unlock()
 		note := fmt.Sprintf("%d link(s) as planned", okN)
 		if skip > 0 {
 			note += fmt.Sprintf(" (%d not checked: far end set aside or not configured)", skip)
+		}
+		if byDev > 0 {
+			note += fmt.Sprintf(" (%d checked by device only: the far end does not send its port name)", byDev)
 		}
 		if len(bad) > 0 {
 			sh := bad

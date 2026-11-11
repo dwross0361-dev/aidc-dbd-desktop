@@ -16,9 +16,9 @@
    "text": "set class-of-service congestion-notification-profile CNP-ROCE input ieee-802.1 code-point 011 pfc\nset class-of-service schedulers SCH-ROCE explicit-congestion-notification\nset class-of-service interfaces et-0/0/0 congestion-notification-profile CNP-ROCE"
   },
   {
-   "note": "5 of 5 planned lossless lines in effect",
-   "ok": true,
-   "text": ""
+   "note": "5 of 7 planned lossless lines in effect; missing: set interfaces et-0/0/2 mtu 9216; set interfaces et-0/0/3 mtu 9216",
+   "ok": false,
+   "text": "- set interfaces et-0/0/2 mtu 9216\n- set interfaces et-0/0/3 mtu 9216"
   },
   {
    "note": "at 25.2X100-D30",
@@ -26,9 +26,9 @@
    "text": "\nHostname: T-JUNOS-A\nModel: qfx5240-64od\nJunos: 25.2X100-D30.5\nJUNOS OS Kernel 64-bit  [20240910.4f3a1c2_builder_stable_13]\nJUNOS OS libs [20240910.4f3a1c2_builder_stable_13]\nJUNOS OS runtime [20240910.4f3a1c2_builder_stable_13]\nJUNOS Packet Forwarding Engine Support (qfx-ms-fpc) [25.2X100-D30.5]\n"
   },
   {
-   "note": "no planned links on this device",
+   "note": "2 link(s) as planned (1 checked by device only: the far end does not send its port name)",
    "ok": true,
-   "text": ""
+   "text": "\u0000RAW\n{\n    \"lldp-neighbors-information\": [\n        {\n            \"attributes\": {\n                \"junos:style\": \"brief\"\n            },\n            \"lldp-neighbor-information\": [\n                {\n                    \"lldp-local-port-id\": [\n                        {\n                            \"data\": \"et-0/0/0\"\n                        }\n                    ],\n                    \"lldp-local-parent-interface-name\": [\n                        {\n                            \"data\": \"-\"\n                        }\n                    ],\n                    \"lldp-remote-chassis-id-subtype\": [\n                        {\n                            \"data\": \"Mac address\"\n                        }\n                    ],\n                    \"lldp-remote-chassis-id\": [\n                        {\n                            \"data\": \"9c:5a:80:11:22:33\"\n                        }\n                    ],\n                    \"lldp-remote-port-id-subtype\": [\n                        {\n                            \"data\": \"Interface name\"\n                        }\n                    ],\n                    \"lldp-remote-port-id\": [\n                        {\n                            \"data\": \"et-0/0/48\"\n                        }\n                    ],\n                    \"lldp-remote-system-name\": [\n                        {\n                            \"data\": \"T-JUNOS-SP1.lab\"\n                        }\n                    ]\n                },\n                {\n                    \"lldp-local-port-id\": [\n                        {\n                            \"data\": \"et-0/0/1\"\n                        }\n                    ],\n                    \"lldp-remote-port-id-subtype\": [\n                        {\n                            \"data\": \"Locally assigned\"\n                        }\n                    ],\n                    \"lldp-remote-port-id\": [\n                        {\n                            \"data\": \"523\"\n                        }\n                    ],\n                    \"lldp-remote-system-name\": [\n                        {\n                            \"data\": \"T-JUNOS-SP2\"\n                        }\n                    ]\n                },\n                {\n                    \"lldp-local-port-id\": [\n                        {\n                            \"data\": \"et-0/0/2\"\n                        }\n                    ],\n                    \"lldp-remote-port-id\": [\n                        {\n                            \"data\": \"enp1s0f0\"\n                        }\n                    ],\n                    \"lldp-remote-system-name\": [\n                        {\n                            \"data\": \"gpu-host-7\"\n                        }\n                    ]\n                }\n            ]\n        }\n    ]\n}"
   },
   {
    "note": "0 of 0 sessions established",
@@ -46,9 +46,9 @@
    "text": "set class-of-service congestion-notification-profile CNP-ROCE input ieee-802.1 code-point 011 pfc"
   },
   {
-   "note": "3 of 5 planned lossless lines in effect; missing: set class-of-service schedulers SCH-ROCE explicit-congestion-notification; set interfaces et-0/0/1 mtu 9216",
+   "note": "3 of 7 planned lossless lines in effect; missing: set class-of-service schedulers SCH-ROCE explicit-congestion-notification; set interfaces et-0/0/1 mtu 9216; set interfaces et-0/0/2 mtu 9216 +1 more",
    "ok": false,
-   "text": "- set class-of-service schedulers SCH-ROCE explicit-congestion-notification\n- set interfaces et-0/0/1 mtu 9216"
+   "text": "- set class-of-service schedulers SCH-ROCE explicit-congestion-notification\n- set interfaces et-0/0/1 mtu 9216\n- set interfaces et-0/0/2 mtu 9216\n- set interfaces et-0/0/3 mtu 9216"
   },
   {
    "note": "running ?, target 25.2X100-D30",
@@ -56,9 +56,7 @@
    "text": "\nHostname: T-JUNOS-B\nModel: qfx5240-64od\nJunos: 24.4R1.9\nJUNOS OS Kernel 64-bit  [20240910.4f3a1c2_builder_stable_13]\nJUNOS OS libs [20240910.4f3a1c2_builder_stable_13]\nJUNOS OS runtime [20240910.4f3a1c2_builder_stable_13]\nJUNOS Packet Forwarding Engine Support (qfx-ms-fpc) [24.4R1.9]\n"
   },
   {
-   "note": "no planned links on this device",
-   "ok": true,
-   "text": ""
+   "unavailable": "no recorded output for T-JUNOS-B: show lldp neighbors | display json"
   },
   {
    "note": "2 of 2 sessions established",
@@ -86,9 +84,9 @@
    "text": "Arista DCS-7280DR3A-36-F\nHardware version: 11.01\nSerial number: JPE21120001\nHardware MAC address: 2899.3a00.0001\nSystem MAC address: 2899.3a00.0001\n\nSoftware image version: 4.33.2F\nArchitecture: x86_64\nInternal build version: 4.33.2F-38936741.4321F\nInternal build ID: 3a9b0f1e-7f2c-4d7a-9a3a-1d2e3f4a5b6c\nImage format version: 3.0\nImage optimization: Strata-4GB\n\nUptime: 1 week, 2 days, 3 hours and 4 minutes\nTotal memory: 32556392 kB\nFree memory: 25163720 kB\n"
   },
   {
-   "note": "no planned links on this device",
+   "note": "1 link(s) as planned",
    "ok": true,
-   "text": ""
+   "text": "\u0000RAW\n{\n    \"tablesLastChangeTime\": 1761900000.5,\n    \"tablesAgeOuts\": 0,\n    \"tablesInserts\": 4,\n    \"tablesDeletes\": 0,\n    \"tablesDrops\": 0,\n    \"lldpNeighbors\": [\n        {\n            \"port\": \"Ethernet1/1\",\n            \"neighborDevice\": \"T-EOS-SP1\",\n            \"neighborPort\": \"Ethernet49/1\",\n            \"ttl\": 120\n        }\n    ]\n}"
   },
   {
    "note": "1 of 2 sessions established; 1 down: 10.201.0.6 active",
@@ -116,9 +114,7 @@
    "text": "Arista DCS-7280DR3A-36-F\nHardware version: 11.01\nSerial number: JPE21120001\nHardware MAC address: 2899.3a00.0001\nSystem MAC address: 2899.3a00.0001\n\nSoftware image version: 4.32.1F\nArchitecture: x86_64\nInternal build version: 4.32.1F-38936741.4321F\nInternal build ID: 3a9b0f1e-7f2c-4d7a-9a3a-1d2e3f4a5b6c\nImage format version: 3.0\nImage optimization: Strata-4GB\n\nUptime: 1 week, 2 days, 3 hours and 4 minutes\nTotal memory: 32556392 kB\nFree memory: 25163720 kB\n"
   },
   {
-   "note": "no planned links on this device",
-   "ok": true,
-   "text": ""
+   "unavailable": "no recorded output for T-EOS-B: show lldp neighbors | json"
   },
   {
    "note": "2 of 2 sessions established",
@@ -146,9 +142,9 @@
    "text": "Cisco Nexus Operating System (NX-OS) Software\nTAC support: http://www.cisco.com/tac\nCopyright (C) 2002-2025, Cisco and/or its affiliates.\n\nSoftware\n  BIOS: version 01.12\n  NXOS: version 10.4(5)\n  BIOS compile time:  06/14/2024\n  NXOS image file is: bootflash:///nxos64-cs.10.4(5).bin\n  NXOS compile time:  3/20/2025 12:00:00 [03/20/2025 20:21:22]\n\nHardware\n  cisco Nexus9000 C9332D-GX2B Chassis\n  Intel(R) Xeon(R) CPU D-1633N @ 2.50GHz with 32737096 kB of memory.\n  Processor Board ID FDO24070001\n  Device name: T-NXOS\n"
   },
   {
-   "note": "no planned links on this device",
-   "ok": true,
-   "text": ""
+   "note": "1 miswired or missing: Ethernet1/1: expected NXOS-SP1 Ethernet1/50, saw T-NXOS-SP1 Ethernet1/49; 0 link(s) as planned",
+   "ok": false,
+   "text": "Ethernet1/1: expected NXOS-SP1 Ethernet1/50, saw T-NXOS-SP1 Ethernet1/49\n\u0000RAW\n{\n    \"TABLE_nbor_detail\": {\n        \"ROW_nbor_detail\": [\n            {\n                \"chassis_type\": \"Mac Address\",\n                \"chassis_id\": \"b08b.d0aa.0001\",\n                \"l_port_id\": \"Eth1/1\",\n                \"port_type\": \"Interface Name\",\n                \"port_id\": \"Ethernet1/49\",\n                \"ttl\": 120,\n                \"sys_name\": \"T-NXOS-SP1\",\n                \"sys_desc\": \"Cisco NX-OS\"\n            }\n        ]\n    },\n    \"neigh_hdr\": \"neigh_hdr\",\n    \"neigh_count\": 1\n}"
   },
   {
    "note": "0 of 1 sessions established; 1 down: 10.202.0.4 idle",
@@ -176,9 +172,7 @@
    "text": "Cisco Nexus Operating System (NX-OS) Software\nTAC support: http://www.cisco.com/tac\nCopyright (C) 2002-2025, Cisco and/or its affiliates.\n\nSoftware\n  BIOS: version 01.12\n  NXOS: version 10.3(6)\n  BIOS compile time:  06/14/2024\n  NXOS image file is: bootflash:///nxos64-cs.10.3(6).bin\n  NXOS compile time:  3/20/2025 12:00:00 [03/20/2025 20:21:22]\n\nHardware\n  cisco Nexus9000 C9332D-GX2B Chassis\n  Intel(R) Xeon(R) CPU D-1633N @ 2.50GHz with 32737096 kB of memory.\n  Processor Board ID FDO24070001\n  Device name: T-NXOS\n"
   },
   {
-   "note": "no planned links on this device",
-   "ok": true,
-   "text": ""
+   "unavailable": "no recorded output for T-NXOS-B: show lldp neighbors detail | json"
   },
   {
    "note": "2 of 2 sessions established",
@@ -196,9 +190,9 @@
    "text": "{\n    \"enable\": \"on\",\n    \"mode\": \"lossless\",\n    \"pfc\": {\n        \"pfc-priority\": \"3\",\n        \"switch-priority\": 3\n    },\n    \"congestion-control\": {\n        \"congestion-mode\": \"ecn\",\n        \"min-threshold\": \"150.00 KB\",\n        \"max-threshold\": \"1500.00 KB\",\n        \"probability\": 100\n    }\n}"
   },
   {
-   "note": "12 of 12 planned lossless lines in effect",
-   "ok": true,
-   "text": ""
+   "note": "12 of 14 planned lossless lines in effect; missing: nv set interface swp1 link mtu 9216; nv set interface swp2 link mtu 9216",
+   "ok": false,
+   "text": "- nv set interface swp1 link mtu 9216\n- nv set interface swp2 link mtu 9216"
   },
   {
    "note": "at 5.18.3",
@@ -226,9 +220,9 @@
    "text": "{\n    \"enable\": \"on\",\n    \"mode\": \"lossy\"\n}"
   },
   {
-   "note": "3 of 12 planned lossless lines in effect; missing: nv set interface swp51 qos pfc-watchdog; nv set interface swp52 qos pfc-watchdog; nv set interface swp53 link mtu 9216 +6 more",
+   "note": "3 of 14 planned lossless lines in effect; missing: nv set interface swp1 link mtu 9216; nv set interface swp2 link mtu 9216; nv set interface swp51 qos pfc-watchdog +8 more",
    "ok": false,
-   "text": "- nv set interface swp51 qos pfc-watchdog\n- nv set interface swp52 qos pfc-watchdog\n- nv set interface swp53 link mtu 9216\n- nv set interface swp53 qos pfc-watchdog\n- nv set interface swp54 link mtu 9216\n- nv set interface swp54 qos pfc-watchdog\n- nv set qos egress-scheduler default-global traffic-class 0,3 mode dwrr\n- nv set qos pfc-watchdog polling-interval 100\n- nv set qos traffic-pool roce-lossless switch-priority 3"
+   "text": "- nv set interface swp1 link mtu 9216\n- nv set interface swp2 link mtu 9216\n- nv set interface swp51 qos pfc-watchdog\n- nv set interface swp52 qos pfc-watchdog\n- nv set interface swp53 link mtu 9216\n- nv set interface swp53 qos pfc-watchdog\n- nv set interface swp54 link mtu 9216\n- nv set interface swp54 qos pfc-watchdog\n- nv set qos egress-scheduler default-global traffic-class 0,3 mode dwrr\n- nv set qos pfc-watchdog polling-interval 100\n- nv set qos traffic-pool roce-lossless switch-priority 3"
   },
   {
    "note": "running 5.11.1, target 5.18.3",
@@ -256,9 +250,9 @@
    "text": "set / qos classifiers dscp-policy dscp-default dscp 26 forwarding-class fc3\nset / qos output-queues ... pfc-enable true\nset / qos interfaces interface ethernet-1/1 output pfc pfc-enable true\n"
   },
   {
-   "note": "2 of 2 planned lossless lines in effect",
-   "ok": true,
-   "text": ""
+   "note": "1 of 2 planned lossless lines in effect; missing: set / interface ethernet-1/1 mtu 9232 description -> T-SRL-SP1 ethernet-1/49",
+   "ok": false,
+   "text": "- set / interface ethernet-1/1 mtu 9232 description -> T-SRL-SP1 ethernet-1/49"
   },
   {
    "note": "at 24.10.1",
@@ -266,9 +260,9 @@
    "text": "    system {\n        information {\n            version v24.10.1-492-g7a1b2c3d4e\n        }\n    }"
   },
   {
-   "note": "no planned links on this device",
+   "note": "1 link(s) as planned",
    "ok": true,
-   "text": ""
+   "text": "\u0000RAW\n{\n    \"system\": {\n        \"lldp\": {\n            \"interface\": [\n                {\n                    \"name\": \"ethernet-1/1\",\n                    \"neighbor\": [\n                        {\n                            \"id\": \"1A:2B:3C:00:00:01\",\n                            \"system-name\": \"T-SRL-SP1\",\n                            \"port-id\": \"ethernet-1/49\",\n                            \"port-description\": \"to leaf\"\n                        }\n                    ]\n                }\n            ]\n        }\n    }\n}"
   },
   {
    "note": "1 of 2 sessions established; 1 down: 10.203.0.6 connect",
@@ -286,9 +280,9 @@
    "text": "set / qos classifiers dscp-policy dscp-default dscp 26 forwarding-class fc3\n"
   },
   {
-   "note": "0 of 2 planned lossless lines in effect; missing: set / interface ethernet-1/1 mtu 9232; set / qos interfaces interface ethernet-1/1 output pfc pfc-enable true",
+   "note": "0 of 2 planned lossless lines in effect; missing: set / interface ethernet-1/1 mtu 9232 description -> T-SRL-SP1 ethernet-1/49; set / qos interfaces interface ethernet-1/1 output pfc pfc-enable true",
    "ok": false,
-   "text": "- set / interface ethernet-1/1 mtu 9232\n- set / qos interfaces interface ethernet-1/1 output pfc pfc-enable true"
+   "text": "- set / interface ethernet-1/1 mtu 9232 description -> T-SRL-SP1 ethernet-1/49\n- set / qos interfaces interface ethernet-1/1 output pfc pfc-enable true"
   },
   {
    "note": "running 23.10.3-21-g0000000000, target 24.10.1",
@@ -296,9 +290,7 @@
    "text": "    system {\n        information {\n            version v23.10.3-21-g0000000000\n        }\n    }"
   },
   {
-   "note": "no planned links on this device",
-   "ok": true,
-   "text": ""
+   "unavailable": "no recorded output for T-SRL-B: info from state system lldp interface * neighbor * | as json"
   },
   {
    "note": "3 of 3 sessions established",
@@ -705,6 +697,116 @@
    "text": ""
   },
   {
+   "unavailable": "no recorded output for T-JUNOS-SP1: show bgp summary | display json"
+  },
+  {
+   "unavailable": "no recorded output for T-JUNOS-SP1: show bgp summary | display json"
+  },
+  {
+   "unavailable": "no recorded output for T-JUNOS-SP1: show configuration class-of-service | display set | match \"pfc|explicit-congestion|ecn\""
+  },
+  {
+   "unavailable": "no running-configuration reader or planned configuration for junos"
+  },
+  {
+   "note": "no target release in the profile",
+   "ok": true,
+   "text": ""
+  },
+  {
+   "note": "no planned links on this device",
+   "ok": true,
+   "text": ""
+  },
+  {
+   "unavailable": "no recorded output for T-JUNOS-SP2: show bgp summary | display json"
+  },
+  {
+   "unavailable": "no recorded output for T-JUNOS-SP2: show bgp summary | display json"
+  },
+  {
+   "unavailable": "no recorded output for T-JUNOS-SP2: show configuration class-of-service | display set | match \"pfc|explicit-congestion|ecn\""
+  },
+  {
+   "unavailable": "no running-configuration reader or planned configuration for junos"
+  },
+  {
+   "note": "no target release in the profile",
+   "ok": true,
+   "text": ""
+  },
+  {
+   "note": "no planned links on this device",
+   "ok": true,
+   "text": ""
+  },
+  {
+   "unavailable": "no recorded output for T-EOS-SP1: show ip bgp summary vrf all | json"
+  },
+  {
+   "unavailable": "no recorded output for T-EOS-SP1: show bgp evpn summary | json"
+  },
+  {
+   "unavailable": "no recorded output for T-EOS-SP1: show priority-flow-control"
+  },
+  {
+   "unavailable": "no running-configuration reader or planned configuration for eos"
+  },
+  {
+   "note": "no target release in the profile",
+   "ok": true,
+   "text": ""
+  },
+  {
+   "note": "no planned links on this device",
+   "ok": true,
+   "text": ""
+  },
+  {
+   "unavailable": "no recorded output for T-NXOS-SP1: show ip bgp summary vrf all | json"
+  },
+  {
+   "unavailable": "no recorded output for T-NXOS-SP1: show bgp l2vpn evpn summary | json"
+  },
+  {
+   "unavailable": "no recorded output for T-NXOS-SP1: show interface priority-flow-control"
+  },
+  {
+   "unavailable": "no running-configuration reader or planned configuration for nxos"
+  },
+  {
+   "note": "no target release in the profile",
+   "ok": true,
+   "text": ""
+  },
+  {
+   "note": "no planned links on this device",
+   "ok": true,
+   "text": ""
+  },
+  {
+   "unavailable": "no recorded output for T-SRL-SP1: info from state network-instance * protocols bgp neighbor * session-state | as json"
+  },
+  {
+   "unavailable": "no recorded output for T-SRL-SP1: info from state network-instance * protocols bgp neighbor * session-state | as json"
+  },
+  {
+   "unavailable": "no recorded output for T-SRL-SP1: info flat qos"
+  },
+  {
+   "unavailable": "no running-configuration reader or planned configuration for srl"
+  },
+  {
+   "note": "no target release in the profile",
+   "ok": true,
+   "text": ""
+  },
+  {
+   "note": "no planned links on this device",
+   "ok": true,
+   "text": ""
+  },
+  {
    "note": "active NOT confirmed",
    "ok": false,
    "text": "Node failure codes:\n    HW  Hardware monitoring    LB  Loopback monitoring\n    MB  Mbuf monitoring        SP  SPU monitoring\n\nNode Status: ONLINE\nLocal-id: 1\nLocal-IP: 10.255.0.1\nHA Peer Information:\n\n  Peer Id: 2   IP address: 10.255.0.2   Interface: ge-0/0/2.0\n   Routing Instance: default\n   Encrypted: YES    Conn State: UP\n   Cold Sync Status: COMPLETE\n\nServices Redundancy Group: 0\n        Current State: ONLINE\n        Peer Information:\n          Peer Id: 2\n\nSRG failure event codes:\n    BF  BFD monitoring\n\nServices Redundancy Group: 1\n        Deployment Type: ROUTING\n        Status: ACTIVE\n        Activeness Priority: 200\n        Preemption: ENABLED\n        Process Packet In Backup State: NO\n        Control Plane State: READY\n        System Integrity Check: N/A\n        Failure Events: NONE\n        Peer Information:\n          Peer Id: 2\n          Status : BACKUP\n          Health Status: HEALTHY\n          Failover Readiness: READY\n"
@@ -988,7 +1090,7 @@
     []
    ],
    "text_bgp": [],
-   "vnum": "51.1.48.0.2.00.00.01"
+   "vnum": "51.1.48.0.2.0.0.1"
   },
   "T-CUM-A/nv_show_interface_swp51_counters_qos_o_json.txt": {
    "acc_counts": {
@@ -1812,7 +1914,7 @@
     []
    ],
    "text_bgp": [],
-   "vnum": "51.2.48.0.2.00.00.01"
+   "vnum": "51.2.48.0.2.0.0.1"
   },
   "T-CUM-B/nv_show_qos_roce_o_json.txt": {
    "acc_counts": {
@@ -2022,7 +2124,7 @@
     []
    ],
    "text_bgp": [],
-   "vnum": "01.1002"
+   "vnum": "1.1002"
   },
   "T-EOS-A/show_bgp_evpn_summary_json.txt": {
    "acc_counts": {
@@ -2476,7 +2578,15 @@
     "{",
     "}"
    ],
-   "lldp_pairs": [],
+   "lldp_pairs": [
+    [
+     "Ethernet1/1",
+     [
+      "T-EOS-SP1",
+      "Ethernet49/1"
+     ]
+    ]
+   ],
    "parse_bgp": [
     0,
     0,
@@ -2768,7 +2878,7 @@
     []
    ],
    "text_bgp": [],
-   "vnum": "7280.3.36.11.01.21120001.2899.3.00.0001.2899.3.00.0001.4.33.2.86.6"
+   "vnum": "7280.3.36.11.1.21120001.2899.3.0.1.2899.3.0.1.4.33.2.86.6"
   },
   "T-EOS-B/show_bgp_evpn_summary_json.txt": {
    "acc_counts": {
@@ -3266,7 +3376,7 @@
     []
    ],
    "text_bgp": [],
-   "vnum": "7280.3.36.11.01.21120001.2899.3.00.0001.2899.3.00.0001.4.32.1.86.6"
+   "vnum": "7280.3.36.11.1.21120001.2899.3.0.1.2899.3.0.1.4.32.1.86.6"
   },
   "T-FTD-A/show_bgp_summary.txt": {
    "acc_counts": {
@@ -3384,7 +3494,7 @@
     []
    ],
    "text_bgp": [],
-   "vnum": "1.8.0.00.00.1.15.5"
+   "vnum": "1.8.0.0.0.1.15.5"
   },
   "T-FTD-B/show_bgp_summary.txt": {
    "acc_counts": {
@@ -3707,7 +3817,7 @@
     []
    ],
    "text_bgp": [],
-   "vnum": "802.1.011"
+   "vnum": "802.1.11"
   },
   "T-JUNOS-A/show_configuration_display_set.txt": {
    "acc_counts": {
@@ -3971,19 +4081,31 @@
     "seen": [],
     "wd": 0.0
    },
-   "acc_flat_text": [],
+   "acc_flat_text": [
+    [
+     "/lldp-neighbors-information/0/lldp-neighbor-information/1/lldp-remote-port-id/0/data",
+     523.0
+    ]
+   ],
    "bgp_sessions": [],
    "cfg_norm_cumulus": [
     "]",
     "],",
     "attributes: {",
     "data: -",
+    "data: 523",
     "data: 9c:5a:80:11:22:33",
     "data: Interface name",
+    "data: Locally assigned",
     "data: Mac address",
     "data: T-JUNOS-SP1.lab",
+    "data: T-JUNOS-SP2",
+    "data: enp1s0f0",
     "data: et-0/0/0",
+    "data: et-0/0/1",
+    "data: et-0/0/2",
     "data: et-0/0/48",
+    "data: gpu-host-7",
     "junos:style: brief",
     "lldp-local-parent-interface-name: [",
     "lldp-local-port-id: [",
@@ -4003,12 +4125,19 @@
     "],",
     "attributes: {",
     "data: -",
+    "data: 523",
     "data: 9c:5a:80:11:22:33",
     "data: Interface name",
+    "data: Locally assigned",
     "data: Mac address",
     "data: T-JUNOS-SP1.lab",
+    "data: T-JUNOS-SP2",
+    "data: enp1s0f0",
     "data: et-0/0/0",
+    "data: et-0/0/1",
+    "data: et-0/0/2",
     "data: et-0/0/48",
+    "data: gpu-host-7",
     "junos:style: brief",
     "lldp-local-parent-interface-name: [",
     "lldp-local-port-id: [",
@@ -4023,7 +4152,29 @@
     "}",
     "},"
    ],
-   "lldp_pairs": [],
+   "lldp_pairs": [
+    [
+     "et-0/0/0",
+     [
+      "T-JUNOS-SP1.lab",
+      "et-0/0/48"
+     ]
+    ],
+    [
+     "et-0/0/1",
+     [
+      "T-JUNOS-SP2",
+      "523"
+     ]
+    ],
+    [
+     "et-0/0/2",
+     [
+      "gpu-host-7",
+      "enp1s0f0"
+     ]
+    ]
+   ],
    "parse_bgp": [
     0,
     0,
@@ -4311,7 +4462,7 @@
     []
    ],
    "text_bgp": [],
-   "vnum": "802.1.011"
+   "vnum": "802.1.11"
   },
   "T-JUNOS-B/show_configuration_display_set.txt": {
    "acc_counts": {
@@ -5111,14 +5262,22 @@
     "}",
     "},"
    ],
-   "lldp_pairs": [],
+   "lldp_pairs": [
+    [
+     "Eth1/1",
+     [
+      "T-NXOS-SP1",
+      "Ethernet1/49"
+     ]
+    ]
+   ],
    "parse_bgp": [
     0,
     0,
     []
    ],
    "text_bgp": [],
-   "vnum": "08.0.0001"
+   "vnum": "8.0.1"
   },
   "T-NXOS-A/show_queuing_interface_json.txt": {
    "acc_counts": {
@@ -5306,7 +5465,7 @@
     []
    ],
    "text_bgp": [],
-   "vnum": "31.20.00.00.2025.31.22.00.00.2025.10.4.5.01.12"
+   "vnum": "31.20.0.0.2025.31.22.0.0.2025.10.4.5.1.12"
   },
   "T-NXOS-A/show_version.txt": {
    "acc_counts": {
@@ -5358,7 +5517,7 @@
     []
    ],
    "text_bgp": [],
-   "vnum": "2002.2025.01.12.10.4.5"
+   "vnum": "2002.2025.1.12.10.4.5"
   },
   "T-NXOS-B/show_bgp_l2vpn_evpn_summary_json.txt": {
    "acc_counts": {
@@ -5800,7 +5959,7 @@
     []
    ],
    "text_bgp": [],
-   "vnum": "31.20.00.00.2025.31.22.00.00.2025.10.4.5.01.12"
+   "vnum": "31.20.0.0.2025.31.22.0.0.2025.10.4.5.1.12"
   },
   "T-NXOS-B/show_version.txt": {
    "acc_counts": {
@@ -5852,7 +6011,7 @@
     []
    ],
    "text_bgp": [],
-   "vnum": "2002.2025.01.12.10.3.6"
+   "vnum": "2002.2025.1.12.10.3.6"
   },
   "T-SRL-A/info_flat.txt": {
    "acc_counts": {
@@ -6046,7 +6205,15 @@
     "{",
     "}"
    ],
-   "lldp_pairs": [],
+   "lldp_pairs": [
+    [
+     "ethernet-1/1",
+     [
+      "T-SRL-SP1",
+      "ethernet-1/49"
+     ]
+    ]
+   ],
    "parse_bgp": [
     0,
     0,
@@ -6202,7 +6369,7 @@
     []
    ],
    "text_bgp": [],
-   "vnum": "23.10.3.21.0000000000"
+   "vnum": "23.10.3.21.0"
   },
   "T-SROS-A/admin_show_configuration_configure_flat.txt": {
    "acc_counts": {
@@ -6424,7 +6591,7 @@
     []
    ],
    "text_bgp": [],
-   "vnum": "26.7.1.86.64.7750.2000.2026.16.12.00.00.2026"
+   "vnum": "26.7.1.86.64.7750.2000.2026.16.12.0.0.2026"
   },
   "T-SROS-B/show_router_bgp_summary_all.txt": {
    "acc_counts": {
@@ -6675,7 +6842,7 @@
     []
    ],
    "text_bgp": [],
-   "vnum": "17.12.04.3.9.17.12.4.3"
+   "vnum": "17.12.4.3.9.17.12.4.3"
   },
   "T-XE-B/show_version.txt": {
    "acc_counts": {
@@ -6703,7 +6870,7 @@
     []
    ],
    "text_bgp": [],
-   "vnum": "17.09.05.17.9.5.1"
+   "vnum": "17.9.5.17.9.5.1"
   },
   "T-XR-A/show_bgp_l2vpn_evpn_summary.txt": {
    "acc_counts": {
@@ -6743,7 +6910,7 @@
      "Established"
     ]
    ],
-   "vnum": "31.22.01.03.001.10.250.0.1.0.4200009100.9921.9900.882.0.0.3.0.410"
+   "vnum": "31.22.1.3.1.10.250.0.1.0.4200009100.9921.9900.882.0.0.3.0.410"
   },
   "T-XR-A/show_bgp_vrf_all_summary.txt": {
    "acc_counts": {
@@ -6823,7 +6990,7 @@
      "Established"
     ]
    ],
-   "vnum": "31.22.01.02.345.10.0.250.41.0.0.60000000.10.0.250.41.42000"
+   "vnum": "31.22.1.2.345.10.0.250.41.0.0.60000000.10.0.250.41.42000"
   },
   "T-XR-A/show_running_config.txt": {
    "acc_counts": {
@@ -6865,7 +7032,7 @@
     []
    ],
    "text_bgp": [],
-   "vnum": "31.22.01.05.000.24.4.2.10.6.0.0.0.0.9216"
+   "vnum": "31.22.1.5.0.24.4.2.10.6.0.0.0.0.9216"
   },
   "T-XR-A/show_version.txt": {
    "acc_counts": {
@@ -6909,7 +7076,7 @@
     []
    ],
    "text_bgp": [],
-   "vnum": "31.22.01.04.000.24.4.2.2013.2025.18.08.00.00"
+   "vnum": "31.22.1.4.0.24.4.2.2013.2025.18.8.0.0"
   },
   "T-XR-B/show_bgp_l2vpn_evpn_summary.txt": {
    "acc_counts": {
@@ -6937,7 +7104,7 @@
     []
    ],
    "text_bgp": [],
-   "vnum": "31.22.01.03.001"
+   "vnum": "31.22.1.3.1"
   },
   "T-XR-B/show_bgp_vrf_all_summary.txt": {
    "acc_counts": {
@@ -6995,7 +7162,7 @@
      "Active"
     ]
    ],
-   "vnum": "31.22.01.02.345.10.204.0.4.0.4200002000.43812.43790.1203.0"
+   "vnum": "31.22.1.2.345.10.204.0.4.0.4200002000.43812.43790.1203.0"
   },
   "T-XR-B/show_version.txt": {
    "acc_counts": {
@@ -7023,7 +7190,7 @@
     []
    ],
    "text_bgp": [],
-   "vnum": "31.22.01.04.000.7.11.2"
+   "vnum": "31.22.1.4.0.7.11.2"
   }
  },
  "scenarios": {
@@ -7754,9 +7921,9 @@
       "20261030T100000Z.cfg"
      ],
      "defaults_hidden": 0,
-     "diff": "--- only in the plan (11)\n- nv set interface swp51 qos pfc-watchdog\n- nv set interface swp52 qos pfc-watchdog\n- nv set interface swp53 qos pfc-watchdog\n- nv set interface swp54 qos pfc-watchdog\n- nv set qos egress-scheduler default-global traffic-class 0,3 mode dwrr\n- nv set qos pfc-watchdog polling-interval 100\n- nv set qos traffic-pool roce-lossless switch-priority 3\n- nv set system aaa user netadmin password <secret>\n- nv set vrf default router bgp neighbor swp51 remote-as external\n- nv set vrf default router bgp neighbor swp52 remote-as external\n- nv set vrf default router bgp neighbor swp53 remote-as external\n\n+++ only on the device (1)\n+ nv set extra 1",
+     "diff": "--- only in the plan (13)\n- nv set interface swp1 link mtu 9216\n- nv set interface swp2 link mtu 9216\n- nv set interface swp51 qos pfc-watchdog\n- nv set interface swp52 qos pfc-watchdog\n- nv set interface swp53 qos pfc-watchdog\n- nv set interface swp54 qos pfc-watchdog\n- nv set qos egress-scheduler default-global traffic-class 0,3 mode dwrr\n- nv set qos pfc-watchdog polling-interval 100\n- nv set qos traffic-pool roce-lossless switch-priority 3\n- nv set system aaa user netadmin password <secret>\n- nv set vrf default router bgp neighbor swp51 remote-as external\n- nv set vrf default router bgp neighbor swp52 remote-as external\n- nv set vrf default router bgp neighbor swp53 remote-as external\n\n+++ only on the device (1)\n+ nv set extra 1",
      "planned": true,
-     "removed": 11,
+     "removed": 13,
      "same": 6
     },
     {
@@ -7776,9 +7943,9 @@
       "20261031T000000Z.cfg"
      ],
      "defaults_hidden": 0,
-     "diff": "--- only in the plan (9)\n- set class-of-service congestion-notification-profile CNP-ROCE input ieee-802.1 code-point 011 pfc\n- set class-of-service drop-profiles DP-ROCE interpolate fill-level [ 10 50 ] drop-probability [ 0 20 ]\n- set class-of-service schedulers SCH-ROCE explicit-congestion-notification\n- set interfaces et-0/0/0 mtu 9216\n- set interfaces et-0/0/1 mtu 9216\n- set protocols bgp group UNDERLAY neighbor 10.200.0.0 peer-as 4200002000\n- set snmp community s3cret authorization read-only\n- set system login user netadmin authentication encrypted-password <secret>\n- set system root-authentication encrypted-password <secret>\n\n+++ only on the device (0)",
+     "diff": "--- only in the plan (14)\n- set class-of-service congestion-notification-profile CNP-ROCE input ieee-802.1 code-point 011 pfc\n- set class-of-service drop-profiles DP-ROCE interpolate fill-level [ 10 50 ] drop-probability [ 0 20 ]\n- set class-of-service schedulers SCH-ROCE explicit-congestion-notification\n- set interfaces ae0 description -> T-JUNOS-SP2 ae0\n- set interfaces et-0/0/0 mtu 9216\n- set interfaces et-0/0/1 description uplink -> T-JUNOS-SP2 et-0/0/48\n- set interfaces et-0/0/1 mtu 9216\n- set interfaces et-0/0/2 mtu 9216\n- set interfaces et-0/0/3 mtu 9216\n- set protocols bgp group UNDERLAY neighbor 10.200.0.0 peer-as 4200002000\n- set routing-options router-id 1.1.1.1\n- set snmp community s3cret authorization read-only\n- set system login user netadmin authentication encrypted-password <secret>\n- set system root-authentication encrypted-password <secret>\n\n+++ only on the device (0)",
      "planned": true,
-     "removed": 9,
+     "removed": 14,
      "same": 2
     },
     {
@@ -7834,9 +8001,9 @@
       "20261031T000000Z.cfg"
      ],
      "defaults_hidden": 0,
-     "diff": "--- only in the plan (14)\n- class type network-qos c-8q-nq3\n- feature bgp\n- hostname T-NXOS-A\n- interface Ethernet1/1\n- mtu 9216\n- neighbor 10.202.0.0\n- pause pfc-cos 3\n- policy-map type network-qos RDMA-NQ\n- priority-flow-control mode on\n- priority-flow-control watch-dog-interval on\n- remote-as 4200002000\n- router bgp 4200001001\n- username admin password <secret> $5$abcd$efgh role network-admin\n- version 10.4(5) Bios:version 01.12\n\n+++ only on the device (29)\n+ line 0\n+ x10\n+ x11\n+ x12\n+ x13\n+ x14\n+ x15\n+ x16\n+ x17\n+ x18\n+ x19\n+ x2\n+ x20\n+ x21\n+ x22\n+ x23\n+ x24\n+ x25\n+ x26\n+ x27\n+ x28\n+ x29\n+ x3\n+ x4\n+ x5\n+ x6\n+ x7\n+ x8\n+ x9",
+     "diff": "--- only in the plan (15)\n- class type network-qos c-8q-nq3\n- description uplink -> T-NXOS-SP1 Ethernet1/50\n- feature bgp\n- hostname T-NXOS-A\n- interface Ethernet1/1\n- mtu 9216\n- neighbor 10.202.0.0\n- pause pfc-cos 3\n- policy-map type network-qos RDMA-NQ\n- priority-flow-control mode on\n- priority-flow-control watch-dog-interval on\n- remote-as 4200002000\n- router bgp 4200001001\n- username admin password <secret> $5$abcd$efgh role network-admin\n- version 10.4(5) Bios:version 01.12\n\n+++ only on the device (29)\n+ line 0\n+ x10\n+ x11\n+ x12\n+ x13\n+ x14\n+ x15\n+ x16\n+ x17\n+ x18\n+ x19\n+ x2\n+ x20\n+ x21\n+ x22\n+ x23\n+ x24\n+ x25\n+ x26\n+ x27\n+ x28\n+ x29\n+ x3\n+ x4\n+ x5\n+ x6\n+ x7\n+ x8\n+ x9",
      "planned": true,
-     "removed": 14,
+     "removed": 15,
      "same": 0
     },
     {
@@ -8013,7 +8180,7 @@
      ],
      "generated": "<T>",
      "kind": "cert",
-     "post_sha256": "266fbc35a185e3d8a2adb8e25d2b5335498b09e1f1e203831d0b7486a4ca78fa",
+     "post_sha256": "54855a044fc571bdd18e59cfe8f93bd345aa374d9fccee18cc13a700bbe7cdd8",
      "reasons": [
       "not every build has passed its gate",
       "4 device(s) not built",
@@ -8048,14 +8215,14 @@
      "status": "not issued",
      "title": "Certificate of Conformance",
      "totals": {
-      "built": 22,
-      "devices": 28,
+      "built": 27,
+      "devices": 33,
       "gpus": 512,
       "racks": 8,
       "set_aside": 2
      }
     },
-    "cert csv": "item,value\r\nstatus,not issued\r\nsite,TST-512-001\r\naccepted,\r\nissued,2026-11-11T00:00:00Z\r\npost_sha256,266fbc35a185e3d8a2adb8e25d2b5335498b09e1f1e203831d0b7486a4ca78fa\r\n",
+    "cert csv": "item,value\r\nstatus,not issued\r\nsite,TST-512-001\r\naccepted,\r\nissued,2026-11-11T00:00:00Z\r\npost_sha256,54855a044fc571bdd18e59cfe8f93bd345aa374d9fccee18cc13a700bbe7cdd8\r\n",
     "final": {
      "asbuilt": [
       {
@@ -8073,10 +8240,10 @@
       {
        "counts": {
         "active": 2,
-        "done": 22,
+        "done": 27,
         "flagged": 1,
         "set_aside": 2,
-        "total": 28,
+        "total": 33,
         "waiting": 1
        },
        "gate": [
@@ -8084,7 +8251,7 @@
          "key": "done",
          "kind": "",
          "label": "Every device done",
-         "note": "22 of 26 done (2 set aside); T-EOS-B Expected, T-SRL-B Config, T-NOREL failed, T-CUM-SP4 Bootstrap",
+         "note": "27 of 31 done (2 set aside); T-EOS-B Expected, T-SRL-B Config, T-NOREL failed, T-CUM-SP4 Bootstrap",
          "result": "blocked",
          "type": "devices_done"
         },
@@ -8092,7 +8259,7 @@
          "key": "reach",
          "kind": "",
          "label": "Management reachable",
-         "note": "22 of 26 answer on their management ports (2 set aside)",
+         "note": "27 of 31 answer on their management ports (2 set aside)",
          "result": "running",
          "type": "reachable"
         },
@@ -8134,10 +8301,10 @@
      "completed": "",
      "counts": {
       "active": 2,
-      "done": 22,
+      "done": 27,
       "flagged": 1,
       "set_aside": 2,
-      "total": 28,
+      "total": 33,
       "waiting": 1
      },
      "deviations": [
@@ -8170,13 +8337,13 @@
      "open": [
       {
        "build": "Test",
-       "detail": "22 of 26 done (2 set aside); T-EOS-B Expected, T-SRL-B Config, T-NOREL failed, T-CUM-SP4 Bootstrap",
+       "detail": "27 of 31 done (2 set aside); T-EOS-B Expected, T-SRL-B Config, T-NOREL failed, T-CUM-SP4 Bootstrap",
        "item": "Every device done",
        "result": "blocked"
       },
       {
        "build": "Test",
-       "detail": "22 of 26 answer on their management ports (2 set aside)",
+       "detail": "27 of 31 answer on their management ports (2 set aside)",
        "item": "Management reachable",
        "result": "running"
       },
@@ -8236,6 +8403,11 @@
        "release": "5.18.3"
       },
       {
+       "devices": 1,
+       "os": "eos",
+       "release": ""
+      },
+      {
        "devices": 2,
        "os": "eos",
        "release": "4.33.2F"
@@ -8256,7 +8428,7 @@
        "release": "24.4.2"
       },
       {
-       "devices": 2,
+       "devices": 4,
        "os": "junos",
        "release": ""
       },
@@ -8276,9 +8448,19 @@
        "release": "25.2X100-D30"
       },
       {
+       "devices": 1,
+       "os": "nxos",
+       "release": ""
+      },
+      {
        "devices": 2,
        "os": "nxos",
        "release": "10.4(5)"
+      },
+      {
+       "devices": 1,
+       "os": "srl",
+       "release": ""
       },
       {
        "devices": 2,
@@ -8370,10 +8552,10 @@
      "completed": "",
      "counts": {
       "active": 2,
-      "done": 22,
+      "done": 27,
       "flagged": 1,
       "set_aside": 2,
-      "total": 28,
+      "total": 33,
       "waiting": 1
      },
      "deviations": [
@@ -8411,10 +8593,10 @@
        {
         "counts": {
          "active": 2,
-         "done": 22,
+         "done": 27,
          "flagged": 1,
          "set_aside": 2,
-         "total": 28,
+         "total": 33,
          "waiting": 1
         },
         "gate": [
@@ -8422,7 +8604,7 @@
           "key": "done",
           "kind": "",
           "label": "Every device done",
-          "note": "22 of 26 done (2 set aside); T-EOS-B Expected, T-SRL-B Config, T-NOREL failed, T-CUM-SP4 Bootstrap",
+          "note": "27 of 31 done (2 set aside); T-EOS-B Expected, T-SRL-B Config, T-NOREL failed, T-CUM-SP4 Bootstrap",
           "result": "blocked",
           "type": "devices_done"
          },
@@ -8430,7 +8612,7 @@
           "key": "reach",
           "kind": "",
           "label": "Management reachable",
-          "note": "22 of 26 answer on their management ports (2 set aside)",
+          "note": "27 of 31 answer on their management ports (2 set aside)",
           "result": "running",
           "type": "reachable"
          },
@@ -8472,10 +8654,10 @@
       "completed": "",
       "counts": {
        "active": 2,
-       "done": 22,
+       "done": 27,
        "flagged": 1,
        "set_aside": 2,
-       "total": 28,
+       "total": 33,
        "waiting": 1
       },
       "deviations": [
@@ -8508,13 +8690,13 @@
       "open": [
        {
         "build": "Test",
-        "detail": "22 of 26 done (2 set aside); T-EOS-B Expected, T-SRL-B Config, T-NOREL failed, T-CUM-SP4 Bootstrap",
+        "detail": "27 of 31 done (2 set aside); T-EOS-B Expected, T-SRL-B Config, T-NOREL failed, T-CUM-SP4 Bootstrap",
         "item": "Every device done",
         "result": "blocked"
        },
        {
         "build": "Test",
-        "detail": "22 of 26 answer on their management ports (2 set aside)",
+        "detail": "27 of 31 answer on their management ports (2 set aside)",
         "item": "Management reachable",
         "result": "running"
        },
@@ -8574,6 +8756,11 @@
         "release": "5.18.3"
        },
        {
+        "devices": 1,
+        "os": "eos",
+        "release": ""
+       },
+       {
         "devices": 2,
         "os": "eos",
         "release": "4.33.2F"
@@ -8594,7 +8781,7 @@
         "release": "24.4.2"
        },
        {
-        "devices": 2,
+        "devices": 4,
         "os": "junos",
         "release": ""
        },
@@ -8614,9 +8801,19 @@
         "release": "25.2X100-D30"
        },
        {
+        "devices": 1,
+        "os": "nxos",
+        "release": ""
+       },
+       {
         "devices": 2,
         "os": "nxos",
         "release": "10.4(5)"
+       },
+       {
+        "devices": 1,
+        "os": "srl",
+        "release": ""
        },
        {
         "devices": 2,
@@ -8653,13 +8850,13 @@
      "open": [
       {
        "build": "Test",
-       "detail": "22 of 26 done (2 set aside); T-EOS-B Expected, T-SRL-B Config, T-NOREL failed, T-CUM-SP4 Bootstrap",
+       "detail": "27 of 31 done (2 set aside); T-EOS-B Expected, T-SRL-B Config, T-NOREL failed, T-CUM-SP4 Bootstrap",
        "item": "Every device done",
        "result": "blocked"
       },
       {
        "build": "Test",
-       "detail": "22 of 26 answer on their management ports (2 set aside)",
+       "detail": "27 of 31 answer on their management ports (2 set aside)",
        "item": "Management reachable",
        "result": "running"
       },
@@ -8717,6 +8914,11 @@
        "release": "5.18.3"
       },
       {
+       "devices": 1,
+       "os": "eos",
+       "release": ""
+      },
+      {
        "devices": 2,
        "os": "eos",
        "release": "4.33.2F"
@@ -8737,7 +8939,7 @@
        "release": "24.4.2"
       },
       {
-       "devices": 2,
+       "devices": 4,
        "os": "junos",
        "release": ""
       },
@@ -8757,9 +8959,19 @@
        "release": "25.2X100-D30"
       },
       {
+       "devices": 1,
+       "os": "nxos",
+       "release": ""
+      },
+      {
        "devices": 2,
        "os": "nxos",
        "release": "10.4(5)"
+      },
+      {
+       "devices": 1,
+       "os": "srl",
+       "release": ""
       },
       {
        "devices": 2,
@@ -8796,7 +9008,7 @@
       "versions": 0
      }
     },
-    "post canon": "{\"acceptance\":[{\"build\":\"Test\",\"detail\":\"by the site lead\",\"evidence\":[],\"item\":\"Servers confirmed\",\"result\":\"needs confirmation\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"evidence\":[{\"check\":\"t1 bind\",\"note\":\"bound\",\"ok\":true},{\"check\":\"t1 snat\",\"note\":\"\",\"ok\":true},{\"check\":\"t1 cross\",\"note\":\"refused\",\"ok\":true},{\"check\":\"t2 bind\",\"note\":\"\",\"ok\":true},{\"check\":\"t2 snat\",\"note\":\"pool\",\"ok\":true},{\"check\":\"t2 cross\",\"note\":\"\",\"ok\":true}],\"item\":\"Ingress isolation per tenant\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"evidence\":[],\"item\":\"NCCL all-reduce at target\",\"result\":\"running\"}],\"by\":\"admin\",\"completed\":\"\",\"counts\":{\"active\":2,\"done\":22,\"flagged\":1,\"set_aside\":2,\"total\":28,\"waiting\":1},\"deviations\":[{\"build\":\"Test\",\"by\":\"\",\"detail\":\"lab\",\"item\":\"T-NOIP\",\"type\":\"set aside\",\"when\":\"\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"\",\"item\":\"T-CUM-SP3\",\"type\":\"set aside\",\"when\":\"\"}],\"final_build\":{\"asbuilt\":[{\"device\":\"T-CUM-A\",\"identity\":\"SN123\",\"source\":\"as-built\"},{\"device\":\"T-CUM-B\",\"identity\":\"aa:bb:cc:dd:ee:ff\",\"source\":\"bind\"}],\"builds\":[{\"counts\":{\"active\":2,\"done\":22,\"flagged\":1,\"set_aside\":2,\"total\":28,\"waiting\":1},\"gate\":[{\"key\":\"done\",\"kind\":\"\",\"label\":\"Every device done\",\"note\":\"22 of 26 done (2 set aside); T-EOS-B Expected, T-SRL-B Config, T-NOREL failed, T-CUM-SP4 Bootstrap\",\"result\":\"blocked\",\"type\":\"devices_done\"},{\"key\":\"reach\",\"kind\":\"\",\"label\":\"Management reachable\",\"note\":\"22 of 26 answer on their management ports (2 set aside)\",\"result\":\"running\",\"type\":\"reachable\"},{\"key\":\"srv\",\"kind\":\"\",\"label\":\"Servers confirmed\",\"note\":\"by the site lead\",\"result\":\"needs confirmation\",\"type\":\"confirm\"},{\"key\":\"iso\",\"kind\":\"isolation\",\"label\":\"Ingress isolation per tenant\",\"note\":\"automatic check queued\",\"result\":\"running\",\"type\":\"auto\"},{\"key\":\"nccl\",\"kind\":\"nccl\",\"label\":\"NCCL all-reduce at target\",\"note\":\"automatic check queued\",\"result\":\"running\",\"type\":\"auto\"}],\"key\":\"be\",\"name\":\"Test\",\"override\":null,\"passed\":\"\",\"state\":\"building\",\"waves\":1,\"waves_open\":1}],\"by\":\"admin\",\"completed\":\"\",\"counts\":{\"active\":2,\"done\":22,\"flagged\":1,\"set_aside\":2,\"total\":28,\"waiting\":1},\"deviations\":[{\"build\":\"Test\",\"by\":\"\",\"detail\":\"lab\",\"item\":\"T-NOIP\",\"type\":\"set aside\",\"when\":\"\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"\",\"item\":\"T-CUM-SP3\",\"type\":\"set aside\",\"when\":\"\"}],\"generated\":\"2026-11-11T00:00:00Z\",\"kind\":\"final\",\"not_done\":[\"T-EOS-B\",\"T-SRL-B\",\"T-NOREL\",\"T-CUM-SP4\"],\"not_done_n\":4,\"open\":[{\"build\":\"Test\",\"detail\":\"22 of 26 done (2 set aside); T-EOS-B Expected, T-SRL-B Config, T-NOREL failed, T-CUM-SP4 Bootstrap\",\"item\":\"Every device done\",\"result\":\"blocked\"},{\"build\":\"Test\",\"detail\":\"22 of 26 answer on their management ports (2 set aside)\",\"item\":\"Management reachable\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"by the site lead\",\"item\":\"Servers confirmed\",\"result\":\"needs confirmation\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"item\":\"Ingress isolation per tenant\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"item\":\"NCCL all-reduce at target\",\"result\":\"running\"}],\"rmas\":[{\"device\":\"T-XE-A\",\"state\":\"open\",\"ticket\":\"RMA-1\"}],\"run\":{\"started\":\"\",\"state\":\"idle\"},\"site\":{\"build\":\"TST-512-001\",\"builder\":\"HS-v2.02\",\"code\":\"TST\",\"customer\":\"Test Co\",\"delivered_by\":\"DWR Networking\",\"fingerprint\":\"0123456789abcdef\",\"gpus\":512,\"plan_digest\":\"\",\"racks\":8,\"region\":\"\",\"region_name\":\"Test region \\u00e9\",\"workload\":\"training\"},\"software\":[{\"devices\":4,\"os\":\"cumulus\",\"release\":\"\"},{\"devices\":2,\"os\":\"cumulus\",\"release\":\"5.18.3\"},{\"devices\":2,\"os\":\"eos\",\"release\":\"4.33.2F\"},{\"devices\":2,\"os\":\"ftd\",\"release\":\"7.6.0\"},{\"devices\":2,\"os\":\"iosxe\",\"release\":\"17.12.04\"},{\"devices\":2,\"os\":\"iosxr\",\"release\":\"24.4.2\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"\"},{\"devices\":1,\"os\":\"junos\",\"release\":\"1.0\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"24.4R2-S3\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"25.2X100-D30\"},{\"devices\":2,\"os\":\"nxos\",\"release\":\"10.4(5)\"},{\"devices\":2,\"os\":\"srl\",\"release\":\"24.10.1\"},{\"devices\":2,\"os\":\"sros\",\"release\":\"26.7.R1\"},{\"devices\":1,\"os\":\"weka\",\"release\":\"1.0\"}],\"standards\":[{\"id\":\"HS-ARC-001\",\"rev\":\"2.6\",\"title\":\"Architecture Overview\"},{\"id\":\"HS-DEP-001\",\"rev\":\"2.5\",\"title\":\"Deployment and Acceptance\"}],\"title\":\"Final build report\"},\"generated\":\"2026-11-11T00:00:00Z\",\"kind\":\"post\",\"open\":[{\"build\":\"Test\",\"detail\":\"22 of 26 done (2 set aside); T-EOS-B Expected, T-SRL-B Config, T-NOREL failed, T-CUM-SP4 Bootstrap\",\"item\":\"Every device done\",\"result\":\"blocked\"},{\"build\":\"Test\",\"detail\":\"22 of 26 answer on their management ports (2 set aside)\",\"item\":\"Management reachable\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"by the site lead\",\"item\":\"Servers confirmed\",\"result\":\"needs confirmation\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"item\":\"Ingress isolation per tenant\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"item\":\"NCCL all-reduce at target\",\"result\":\"running\"}],\"results\":[{\"busbw\":412.5,\"by\":\"op1\",\"target\":380.0,\"test\":\"nccl\",\"when\":\"2023-11-14T22:13:20Z\"}],\"site\":{\"build\":\"TST-512-001\",\"builder\":\"HS-v2.02\",\"code\":\"TST\",\"customer\":\"Test Co\",\"delivered_by\":\"DWR Networking\",\"fingerprint\":\"0123456789abcdef\",\"gpus\":512,\"plan_digest\":\"\",\"racks\":8,\"region\":\"\",\"region_name\":\"Test region \\u00e9\",\"workload\":\"training\"},\"software\":[{\"devices\":4,\"os\":\"cumulus\",\"release\":\"\"},{\"devices\":2,\"os\":\"cumulus\",\"release\":\"5.18.3\"},{\"devices\":2,\"os\":\"eos\",\"release\":\"4.33.2F\"},{\"devices\":2,\"os\":\"ftd\",\"release\":\"7.6.0\"},{\"devices\":2,\"os\":\"iosxe\",\"release\":\"17.12.04\"},{\"devices\":2,\"os\":\"iosxr\",\"release\":\"24.4.2\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"\"},{\"devices\":1,\"os\":\"junos\",\"release\":\"1.0\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"24.4R2-S3\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"25.2X100-D30\"},{\"devices\":2,\"os\":\"nxos\",\"release\":\"10.4(5)\"},{\"devices\":2,\"os\":\"srl\",\"release\":\"24.10.1\"},{\"devices\":2,\"os\":\"sros\",\"release\":\"26.7.R1\"},{\"devices\":1,\"os\":\"weka\",\"release\":\"1.0\"}],\"standards\":[{\"id\":\"HS-ARC-001\",\"rev\":\"2.6\",\"title\":\"Architecture Overview\"},{\"id\":\"HS-DEP-001\",\"rev\":\"2.5\",\"title\":\"Deployment and Acceptance\"}],\"title\":\"Post-deployment report\",\"tuning\":{\"approved\":null,\"switches\":0,\"versions\":0}}",
+    "post canon": "{\"acceptance\":[{\"build\":\"Test\",\"detail\":\"by the site lead\",\"evidence\":[],\"item\":\"Servers confirmed\",\"result\":\"needs confirmation\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"evidence\":[{\"check\":\"t1 bind\",\"note\":\"bound\",\"ok\":true},{\"check\":\"t1 snat\",\"note\":\"\",\"ok\":true},{\"check\":\"t1 cross\",\"note\":\"refused\",\"ok\":true},{\"check\":\"t2 bind\",\"note\":\"\",\"ok\":true},{\"check\":\"t2 snat\",\"note\":\"pool\",\"ok\":true},{\"check\":\"t2 cross\",\"note\":\"\",\"ok\":true}],\"item\":\"Ingress isolation per tenant\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"evidence\":[],\"item\":\"NCCL all-reduce at target\",\"result\":\"running\"}],\"by\":\"admin\",\"completed\":\"\",\"counts\":{\"active\":2,\"done\":27,\"flagged\":1,\"set_aside\":2,\"total\":33,\"waiting\":1},\"deviations\":[{\"build\":\"Test\",\"by\":\"\",\"detail\":\"lab\",\"item\":\"T-NOIP\",\"type\":\"set aside\",\"when\":\"\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"\",\"item\":\"T-CUM-SP3\",\"type\":\"set aside\",\"when\":\"\"}],\"final_build\":{\"asbuilt\":[{\"device\":\"T-CUM-A\",\"identity\":\"SN123\",\"source\":\"as-built\"},{\"device\":\"T-CUM-B\",\"identity\":\"aa:bb:cc:dd:ee:ff\",\"source\":\"bind\"}],\"builds\":[{\"counts\":{\"active\":2,\"done\":27,\"flagged\":1,\"set_aside\":2,\"total\":33,\"waiting\":1},\"gate\":[{\"key\":\"done\",\"kind\":\"\",\"label\":\"Every device done\",\"note\":\"27 of 31 done (2 set aside); T-EOS-B Expected, T-SRL-B Config, T-NOREL failed, T-CUM-SP4 Bootstrap\",\"result\":\"blocked\",\"type\":\"devices_done\"},{\"key\":\"reach\",\"kind\":\"\",\"label\":\"Management reachable\",\"note\":\"27 of 31 answer on their management ports (2 set aside)\",\"result\":\"running\",\"type\":\"reachable\"},{\"key\":\"srv\",\"kind\":\"\",\"label\":\"Servers confirmed\",\"note\":\"by the site lead\",\"result\":\"needs confirmation\",\"type\":\"confirm\"},{\"key\":\"iso\",\"kind\":\"isolation\",\"label\":\"Ingress isolation per tenant\",\"note\":\"automatic check queued\",\"result\":\"running\",\"type\":\"auto\"},{\"key\":\"nccl\",\"kind\":\"nccl\",\"label\":\"NCCL all-reduce at target\",\"note\":\"automatic check queued\",\"result\":\"running\",\"type\":\"auto\"}],\"key\":\"be\",\"name\":\"Test\",\"override\":null,\"passed\":\"\",\"state\":\"building\",\"waves\":1,\"waves_open\":1}],\"by\":\"admin\",\"completed\":\"\",\"counts\":{\"active\":2,\"done\":27,\"flagged\":1,\"set_aside\":2,\"total\":33,\"waiting\":1},\"deviations\":[{\"build\":\"Test\",\"by\":\"\",\"detail\":\"lab\",\"item\":\"T-NOIP\",\"type\":\"set aside\",\"when\":\"\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"\",\"item\":\"T-CUM-SP3\",\"type\":\"set aside\",\"when\":\"\"}],\"generated\":\"2026-11-11T00:00:00Z\",\"kind\":\"final\",\"not_done\":[\"T-EOS-B\",\"T-SRL-B\",\"T-NOREL\",\"T-CUM-SP4\"],\"not_done_n\":4,\"open\":[{\"build\":\"Test\",\"detail\":\"27 of 31 done (2 set aside); T-EOS-B Expected, T-SRL-B Config, T-NOREL failed, T-CUM-SP4 Bootstrap\",\"item\":\"Every device done\",\"result\":\"blocked\"},{\"build\":\"Test\",\"detail\":\"27 of 31 answer on their management ports (2 set aside)\",\"item\":\"Management reachable\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"by the site lead\",\"item\":\"Servers confirmed\",\"result\":\"needs confirmation\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"item\":\"Ingress isolation per tenant\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"item\":\"NCCL all-reduce at target\",\"result\":\"running\"}],\"rmas\":[{\"device\":\"T-XE-A\",\"state\":\"open\",\"ticket\":\"RMA-1\"}],\"run\":{\"started\":\"\",\"state\":\"idle\"},\"site\":{\"build\":\"TST-512-001\",\"builder\":\"HS-v2.02\",\"code\":\"TST\",\"customer\":\"Test Co\",\"delivered_by\":\"DWR Networking\",\"fingerprint\":\"0123456789abcdef\",\"gpus\":512,\"plan_digest\":\"\",\"racks\":8,\"region\":\"\",\"region_name\":\"Test region \\u00e9\",\"workload\":\"training\"},\"software\":[{\"devices\":4,\"os\":\"cumulus\",\"release\":\"\"},{\"devices\":2,\"os\":\"cumulus\",\"release\":\"5.18.3\"},{\"devices\":1,\"os\":\"eos\",\"release\":\"\"},{\"devices\":2,\"os\":\"eos\",\"release\":\"4.33.2F\"},{\"devices\":2,\"os\":\"ftd\",\"release\":\"7.6.0\"},{\"devices\":2,\"os\":\"iosxe\",\"release\":\"17.12.04\"},{\"devices\":2,\"os\":\"iosxr\",\"release\":\"24.4.2\"},{\"devices\":4,\"os\":\"junos\",\"release\":\"\"},{\"devices\":1,\"os\":\"junos\",\"release\":\"1.0\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"24.4R2-S3\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"25.2X100-D30\"},{\"devices\":1,\"os\":\"nxos\",\"release\":\"\"},{\"devices\":2,\"os\":\"nxos\",\"release\":\"10.4(5)\"},{\"devices\":1,\"os\":\"srl\",\"release\":\"\"},{\"devices\":2,\"os\":\"srl\",\"release\":\"24.10.1\"},{\"devices\":2,\"os\":\"sros\",\"release\":\"26.7.R1\"},{\"devices\":1,\"os\":\"weka\",\"release\":\"1.0\"}],\"standards\":[{\"id\":\"HS-ARC-001\",\"rev\":\"2.6\",\"title\":\"Architecture Overview\"},{\"id\":\"HS-DEP-001\",\"rev\":\"2.5\",\"title\":\"Deployment and Acceptance\"}],\"title\":\"Final build report\"},\"generated\":\"2026-11-11T00:00:00Z\",\"kind\":\"post\",\"open\":[{\"build\":\"Test\",\"detail\":\"27 of 31 done (2 set aside); T-EOS-B Expected, T-SRL-B Config, T-NOREL failed, T-CUM-SP4 Bootstrap\",\"item\":\"Every device done\",\"result\":\"blocked\"},{\"build\":\"Test\",\"detail\":\"27 of 31 answer on their management ports (2 set aside)\",\"item\":\"Management reachable\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"by the site lead\",\"item\":\"Servers confirmed\",\"result\":\"needs confirmation\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"item\":\"Ingress isolation per tenant\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"item\":\"NCCL all-reduce at target\",\"result\":\"running\"}],\"results\":[{\"busbw\":412.5,\"by\":\"op1\",\"target\":380.0,\"test\":\"nccl\",\"when\":\"2023-11-14T22:13:20Z\"}],\"site\":{\"build\":\"TST-512-001\",\"builder\":\"HS-v2.02\",\"code\":\"TST\",\"customer\":\"Test Co\",\"delivered_by\":\"DWR Networking\",\"fingerprint\":\"0123456789abcdef\",\"gpus\":512,\"plan_digest\":\"\",\"racks\":8,\"region\":\"\",\"region_name\":\"Test region \\u00e9\",\"workload\":\"training\"},\"software\":[{\"devices\":4,\"os\":\"cumulus\",\"release\":\"\"},{\"devices\":2,\"os\":\"cumulus\",\"release\":\"5.18.3\"},{\"devices\":1,\"os\":\"eos\",\"release\":\"\"},{\"devices\":2,\"os\":\"eos\",\"release\":\"4.33.2F\"},{\"devices\":2,\"os\":\"ftd\",\"release\":\"7.6.0\"},{\"devices\":2,\"os\":\"iosxe\",\"release\":\"17.12.04\"},{\"devices\":2,\"os\":\"iosxr\",\"release\":\"24.4.2\"},{\"devices\":4,\"os\":\"junos\",\"release\":\"\"},{\"devices\":1,\"os\":\"junos\",\"release\":\"1.0\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"24.4R2-S3\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"25.2X100-D30\"},{\"devices\":1,\"os\":\"nxos\",\"release\":\"\"},{\"devices\":2,\"os\":\"nxos\",\"release\":\"10.4(5)\"},{\"devices\":1,\"os\":\"srl\",\"release\":\"\"},{\"devices\":2,\"os\":\"srl\",\"release\":\"24.10.1\"},{\"devices\":2,\"os\":\"sros\",\"release\":\"26.7.R1\"},{\"devices\":1,\"os\":\"weka\",\"release\":\"1.0\"}],\"standards\":[{\"id\":\"HS-ARC-001\",\"rev\":\"2.6\",\"title\":\"Architecture Overview\"},{\"id\":\"HS-DEP-001\",\"rev\":\"2.5\",\"title\":\"Deployment and Acceptance\"}],\"title\":\"Post-deployment report\",\"tuning\":{\"approved\":null,\"switches\":0,\"versions\":0}}",
     "post csv": "build,item,result,detail\r\nTest,Servers confirmed,needs confirmation,by the site lead\r\nTest,Ingress isolation per tenant,running,automatic check queued\r\nTest,NCCL all-reduce at target,running,automatic check queued\r\n",
     "progress": {
      "activity_12h": [
@@ -8818,10 +9030,10 @@
       {
        "counts": {
         "active": 2,
-        "done": 22,
+        "done": 27,
         "flagged": 1,
         "set_aside": 2,
-        "total": 28,
+        "total": 33,
         "waiting": 1
        },
        "gate": [
@@ -8829,7 +9041,7 @@
          "key": "done",
          "kind": "",
          "label": "Every device done",
-         "note": "22 of 26 done (2 set aside); T-EOS-B Expected, T-SRL-B Config, T-NOREL failed, T-CUM-SP4 Bootstrap",
+         "note": "27 of 31 done (2 set aside); T-EOS-B Expected, T-SRL-B Config, T-NOREL failed, T-CUM-SP4 Bootstrap",
          "result": "blocked",
          "type": "devices_done"
         },
@@ -8837,7 +9049,7 @@
          "key": "reach",
          "kind": "",
          "label": "Management reachable",
-         "note": "22 of 26 answer on their management ports (2 set aside)",
+         "note": "27 of 31 answer on their management ports (2 set aside)",
          "result": "running",
          "type": "reachable"
         },
@@ -8878,10 +9090,10 @@
      "by": "admin",
      "counts": {
       "active": 2,
-      "done": 22,
+      "done": 27,
       "flagged": 1,
       "set_aside": 2,
-      "total": 28,
+      "total": 33,
       "waiting": 1
      },
      "generated": "<T>",
@@ -8931,7 +9143,7 @@
      ],
      "title": "Progress build report"
     },
-    "progress csv": "build,state,total,done,active,waiting,flagged,set_aside\r\nTest,building,28,22,2,1,1,2\r\n",
+    "progress csv": "build,state,total,done,active,waiting,flagged,set_aside\r\nTest,building,33,27,2,1,1,2\r\n",
     "ready": {
      "cert": {
       "ok": false,
@@ -9004,7 +9216,7 @@
      ],
      "generated": "<T>",
      "kind": "cert",
-     "post_sha256": "30ca26365592ed0be9a2d40844bd74617170425f45dd56a1bfba6ca03e2d390e",
+     "post_sha256": "954af407d06fa2519b2e9437348b142b0063a573ddb27cd396046f935c0dd50c",
      "reasons": [
       "1 device(s) not built"
      ],
@@ -9037,14 +9249,14 @@
      "status": "not issued",
      "title": "Certificate of Conformance",
      "totals": {
-      "built": 25,
-      "devices": 28,
+      "built": 30,
+      "devices": 33,
       "gpus": 512,
       "racks": 8,
       "set_aside": 2
      }
     },
-    "cert csv": "item,value\r\nstatus,not issued\r\nsite,TST-512-001\r\naccepted,2023-11-14T23:13:20Z\r\nissued,2026-11-11T00:00:00Z\r\npost_sha256,30ca26365592ed0be9a2d40844bd74617170425f45dd56a1bfba6ca03e2d390e\r\n",
+    "cert csv": "item,value\r\nstatus,not issued\r\nsite,TST-512-001\r\naccepted,2023-11-14T23:13:20Z\r\nissued,2026-11-11T00:00:00Z\r\npost_sha256,954af407d06fa2519b2e9437348b142b0063a573ddb27cd396046f935c0dd50c\r\n",
     "final": {
      "asbuilt": [
       {
@@ -9062,10 +9274,10 @@
       {
        "counts": {
         "active": 1,
-        "done": 25,
+        "done": 30,
         "flagged": 0,
         "set_aside": 2,
-        "total": 28,
+        "total": 33,
         "waiting": 0
        },
        "gate": [
@@ -9073,7 +9285,7 @@
          "key": "done",
          "kind": "",
          "label": "Every device done",
-         "note": "25 of 26 done (2 set aside); T-CUM-SP4 Bootstrap",
+         "note": "30 of 31 done (2 set aside); T-CUM-SP4 Bootstrap",
          "result": "running",
          "type": "devices_done"
         },
@@ -9081,7 +9293,7 @@
          "key": "reach",
          "kind": "",
          "label": "Management reachable",
-         "note": "25 of 26 answer on their management ports (2 set aside)",
+         "note": "30 of 31 answer on their management ports (2 set aside)",
          "result": "running",
          "type": "reachable"
         },
@@ -9127,10 +9339,10 @@
      "completed": "2023-11-14T23:13:20Z",
      "counts": {
       "active": 1,
-      "done": 25,
+      "done": 30,
       "flagged": 0,
       "set_aside": 2,
-      "total": 28,
+      "total": 33,
       "waiting": 0
      },
      "deviations": [
@@ -9203,6 +9415,11 @@
        "release": "5.18.3"
       },
       {
+       "devices": 1,
+       "os": "eos",
+       "release": ""
+      },
+      {
        "devices": 2,
        "os": "eos",
        "release": "4.33.2F"
@@ -9223,7 +9440,7 @@
        "release": "24.4.2"
       },
       {
-       "devices": 2,
+       "devices": 4,
        "os": "junos",
        "release": ""
       },
@@ -9243,9 +9460,19 @@
        "release": "25.2X100-D30"
       },
       {
+       "devices": 1,
+       "os": "nxos",
+       "release": ""
+      },
+      {
        "devices": 2,
        "os": "nxos",
        "release": "10.4(5)"
+      },
+      {
+       "devices": 1,
+       "os": "srl",
+       "release": ""
       },
       {
        "devices": 2,
@@ -9337,10 +9564,10 @@
      "completed": "2023-11-14T23:13:20Z",
      "counts": {
       "active": 1,
-      "done": 25,
+      "done": 30,
       "flagged": 0,
       "set_aside": 2,
-      "total": 28,
+      "total": 33,
       "waiting": 0
      },
      "deviations": [
@@ -9386,10 +9613,10 @@
        {
         "counts": {
          "active": 1,
-         "done": 25,
+         "done": 30,
          "flagged": 0,
          "set_aside": 2,
-         "total": 28,
+         "total": 33,
          "waiting": 0
         },
         "gate": [
@@ -9397,7 +9624,7 @@
           "key": "done",
           "kind": "",
           "label": "Every device done",
-          "note": "25 of 26 done (2 set aside); T-CUM-SP4 Bootstrap",
+          "note": "30 of 31 done (2 set aside); T-CUM-SP4 Bootstrap",
           "result": "running",
           "type": "devices_done"
          },
@@ -9405,7 +9632,7 @@
           "key": "reach",
           "kind": "",
           "label": "Management reachable",
-          "note": "25 of 26 answer on their management ports (2 set aside)",
+          "note": "30 of 31 answer on their management ports (2 set aside)",
           "result": "running",
           "type": "reachable"
          },
@@ -9451,10 +9678,10 @@
       "completed": "2023-11-14T23:13:20Z",
       "counts": {
        "active": 1,
-       "done": 25,
+       "done": 30,
        "flagged": 0,
        "set_aside": 2,
-       "total": 28,
+       "total": 33,
        "waiting": 0
       },
       "deviations": [
@@ -9527,6 +9754,11 @@
         "release": "5.18.3"
        },
        {
+        "devices": 1,
+        "os": "eos",
+        "release": ""
+       },
+       {
         "devices": 2,
         "os": "eos",
         "release": "4.33.2F"
@@ -9547,7 +9779,7 @@
         "release": "24.4.2"
        },
        {
-        "devices": 2,
+        "devices": 4,
         "os": "junos",
         "release": ""
        },
@@ -9567,9 +9799,19 @@
         "release": "25.2X100-D30"
        },
        {
+        "devices": 1,
+        "os": "nxos",
+        "release": ""
+       },
+       {
         "devices": 2,
         "os": "nxos",
         "release": "10.4(5)"
+       },
+       {
+        "devices": 1,
+        "os": "srl",
+        "release": ""
        },
        {
         "devices": 2,
@@ -9639,6 +9881,11 @@
        "release": "5.18.3"
       },
       {
+       "devices": 1,
+       "os": "eos",
+       "release": ""
+      },
+      {
        "devices": 2,
        "os": "eos",
        "release": "4.33.2F"
@@ -9659,7 +9906,7 @@
        "release": "24.4.2"
       },
       {
-       "devices": 2,
+       "devices": 4,
        "os": "junos",
        "release": ""
       },
@@ -9679,9 +9926,19 @@
        "release": "25.2X100-D30"
       },
       {
+       "devices": 1,
+       "os": "nxos",
+       "release": ""
+      },
+      {
        "devices": 2,
        "os": "nxos",
        "release": "10.4(5)"
+      },
+      {
+       "devices": 1,
+       "os": "srl",
+       "release": ""
       },
       {
        "devices": 2,
@@ -9718,7 +9975,7 @@
       "versions": 0
      }
     },
-    "post canon": "{\"acceptance\":[{\"build\":\"Test\",\"detail\":\"admin: checked by J. Doe\",\"evidence\":[],\"item\":\"Servers confirmed\",\"result\":\"confirmed\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"evidence\":[{\"check\":\"t1 bind\",\"note\":\"bound\",\"ok\":true},{\"check\":\"t1 snat\",\"note\":\"\",\"ok\":true},{\"check\":\"t1 cross\",\"note\":\"refused\",\"ok\":true},{\"check\":\"t2 bind\",\"note\":\"\",\"ok\":true},{\"check\":\"t2 snat\",\"note\":\"pool\",\"ok\":true},{\"check\":\"t2 cross\",\"note\":\"\",\"ok\":true}],\"item\":\"Ingress isolation per tenant\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"evidence\":[],\"item\":\"NCCL all-reduce at target\",\"result\":\"running\"}],\"by\":\"admin\",\"completed\":\"2023-11-14T23:13:20Z\",\"counts\":{\"active\":1,\"done\":25,\"flagged\":0,\"set_aside\":2,\"total\":28,\"waiting\":0},\"deviations\":[{\"build\":\"Test\",\"by\":\"admin\",\"detail\":\"lab without hosts\",\"item\":\"build gate\",\"type\":\"gate override\",\"when\":\"2023-11-14T23:03:20Z\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"lab\",\"item\":\"T-NOIP\",\"type\":\"set aside\",\"when\":\"\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"\",\"item\":\"T-CUM-SP3\",\"type\":\"set aside\",\"when\":\"\"}],\"final_build\":{\"asbuilt\":[{\"device\":\"T-CUM-A\",\"identity\":\"SN123\",\"source\":\"as-built\"},{\"device\":\"T-CUM-B\",\"identity\":\"aa:bb:cc:dd:ee:ff\",\"source\":\"bind\"}],\"builds\":[{\"counts\":{\"active\":1,\"done\":25,\"flagged\":0,\"set_aside\":2,\"total\":28,\"waiting\":0},\"gate\":[{\"key\":\"done\",\"kind\":\"\",\"label\":\"Every device done\",\"note\":\"25 of 26 done (2 set aside); T-CUM-SP4 Bootstrap\",\"result\":\"running\",\"type\":\"devices_done\"},{\"key\":\"reach\",\"kind\":\"\",\"label\":\"Management reachable\",\"note\":\"25 of 26 answer on their management ports (2 set aside)\",\"result\":\"running\",\"type\":\"reachable\"},{\"key\":\"srv\",\"kind\":\"\",\"label\":\"Servers confirmed\",\"note\":\"admin: checked by J. Doe\",\"result\":\"confirmed\",\"type\":\"confirm\"},{\"key\":\"iso\",\"kind\":\"isolation\",\"label\":\"Ingress isolation per tenant\",\"note\":\"automatic check queued\",\"result\":\"running\",\"type\":\"auto\"},{\"key\":\"nccl\",\"kind\":\"nccl\",\"label\":\"NCCL all-reduce at target\",\"note\":\"automatic check queued\",\"result\":\"running\",\"type\":\"auto\"}],\"key\":\"be\",\"name\":\"Test\",\"override\":{\"by\":\"admin\",\"reason\":\"lab without hosts\",\"when\":\"2023-11-14T23:03:20Z\"},\"passed\":\"2023-11-14T23:13:20Z\",\"state\":\"complete\",\"waves\":1,\"waves_open\":1}],\"by\":\"admin\",\"completed\":\"2023-11-14T23:13:20Z\",\"counts\":{\"active\":1,\"done\":25,\"flagged\":0,\"set_aside\":2,\"total\":28,\"waiting\":0},\"deviations\":[{\"build\":\"Test\",\"by\":\"admin\",\"detail\":\"lab without hosts\",\"item\":\"build gate\",\"type\":\"gate override\",\"when\":\"2023-11-14T23:03:20Z\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"lab\",\"item\":\"T-NOIP\",\"type\":\"set aside\",\"when\":\"\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"\",\"item\":\"T-CUM-SP3\",\"type\":\"set aside\",\"when\":\"\"}],\"generated\":\"2026-11-11T00:00:00Z\",\"kind\":\"final\",\"not_done\":[\"T-CUM-SP4\"],\"not_done_n\":1,\"open\":[],\"rmas\":[{\"device\":\"T-XE-A\",\"state\":\"closed\",\"ticket\":\"RMA-1\"}],\"run\":{\"started\":\"\",\"state\":\"idle\"},\"site\":{\"build\":\"TST-512-001\",\"builder\":\"HS-v2.02\",\"code\":\"TST\",\"customer\":\"Test Co\",\"delivered_by\":\"DWR Networking\",\"fingerprint\":\"0123456789abcdef\",\"gpus\":512,\"plan_digest\":\"\",\"racks\":8,\"region\":\"\",\"region_name\":\"Test region \\u00e9\",\"workload\":\"training\"},\"software\":[{\"devices\":4,\"os\":\"cumulus\",\"release\":\"\"},{\"devices\":2,\"os\":\"cumulus\",\"release\":\"5.18.3\"},{\"devices\":2,\"os\":\"eos\",\"release\":\"4.33.2F\"},{\"devices\":2,\"os\":\"ftd\",\"release\":\"7.6.0\"},{\"devices\":2,\"os\":\"iosxe\",\"release\":\"17.12.04\"},{\"devices\":2,\"os\":\"iosxr\",\"release\":\"24.4.2\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"\"},{\"devices\":1,\"os\":\"junos\",\"release\":\"1.0\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"24.4R2-S3\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"25.2X100-D30\"},{\"devices\":2,\"os\":\"nxos\",\"release\":\"10.4(5)\"},{\"devices\":2,\"os\":\"srl\",\"release\":\"24.10.1\"},{\"devices\":2,\"os\":\"sros\",\"release\":\"26.7.R1\"},{\"devices\":1,\"os\":\"weka\",\"release\":\"1.0\"}],\"standards\":[{\"id\":\"HS-ARC-001\",\"rev\":\"2.6\",\"title\":\"Architecture Overview\"},{\"id\":\"HS-DEP-001\",\"rev\":\"2.5\",\"title\":\"Deployment and Acceptance\"}],\"title\":\"Final build report\"},\"generated\":\"2026-11-11T00:00:00Z\",\"kind\":\"post\",\"open\":[],\"results\":[{\"busbw\":412.5,\"by\":\"op1\",\"target\":380.0,\"test\":\"nccl\",\"when\":\"2023-11-14T22:13:20Z\"}],\"site\":{\"build\":\"TST-512-001\",\"builder\":\"HS-v2.02\",\"code\":\"TST\",\"customer\":\"Test Co\",\"delivered_by\":\"DWR Networking\",\"fingerprint\":\"0123456789abcdef\",\"gpus\":512,\"plan_digest\":\"\",\"racks\":8,\"region\":\"\",\"region_name\":\"Test region \\u00e9\",\"workload\":\"training\"},\"software\":[{\"devices\":4,\"os\":\"cumulus\",\"release\":\"\"},{\"devices\":2,\"os\":\"cumulus\",\"release\":\"5.18.3\"},{\"devices\":2,\"os\":\"eos\",\"release\":\"4.33.2F\"},{\"devices\":2,\"os\":\"ftd\",\"release\":\"7.6.0\"},{\"devices\":2,\"os\":\"iosxe\",\"release\":\"17.12.04\"},{\"devices\":2,\"os\":\"iosxr\",\"release\":\"24.4.2\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"\"},{\"devices\":1,\"os\":\"junos\",\"release\":\"1.0\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"24.4R2-S3\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"25.2X100-D30\"},{\"devices\":2,\"os\":\"nxos\",\"release\":\"10.4(5)\"},{\"devices\":2,\"os\":\"srl\",\"release\":\"24.10.1\"},{\"devices\":2,\"os\":\"sros\",\"release\":\"26.7.R1\"},{\"devices\":1,\"os\":\"weka\",\"release\":\"1.0\"}],\"standards\":[{\"id\":\"HS-ARC-001\",\"rev\":\"2.6\",\"title\":\"Architecture Overview\"},{\"id\":\"HS-DEP-001\",\"rev\":\"2.5\",\"title\":\"Deployment and Acceptance\"}],\"title\":\"Post-deployment report\",\"tuning\":{\"approved\":null,\"switches\":0,\"versions\":0}}",
+    "post canon": "{\"acceptance\":[{\"build\":\"Test\",\"detail\":\"admin: checked by J. Doe\",\"evidence\":[],\"item\":\"Servers confirmed\",\"result\":\"confirmed\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"evidence\":[{\"check\":\"t1 bind\",\"note\":\"bound\",\"ok\":true},{\"check\":\"t1 snat\",\"note\":\"\",\"ok\":true},{\"check\":\"t1 cross\",\"note\":\"refused\",\"ok\":true},{\"check\":\"t2 bind\",\"note\":\"\",\"ok\":true},{\"check\":\"t2 snat\",\"note\":\"pool\",\"ok\":true},{\"check\":\"t2 cross\",\"note\":\"\",\"ok\":true}],\"item\":\"Ingress isolation per tenant\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"evidence\":[],\"item\":\"NCCL all-reduce at target\",\"result\":\"running\"}],\"by\":\"admin\",\"completed\":\"2023-11-14T23:13:20Z\",\"counts\":{\"active\":1,\"done\":30,\"flagged\":0,\"set_aside\":2,\"total\":33,\"waiting\":0},\"deviations\":[{\"build\":\"Test\",\"by\":\"admin\",\"detail\":\"lab without hosts\",\"item\":\"build gate\",\"type\":\"gate override\",\"when\":\"2023-11-14T23:03:20Z\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"lab\",\"item\":\"T-NOIP\",\"type\":\"set aside\",\"when\":\"\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"\",\"item\":\"T-CUM-SP3\",\"type\":\"set aside\",\"when\":\"\"}],\"final_build\":{\"asbuilt\":[{\"device\":\"T-CUM-A\",\"identity\":\"SN123\",\"source\":\"as-built\"},{\"device\":\"T-CUM-B\",\"identity\":\"aa:bb:cc:dd:ee:ff\",\"source\":\"bind\"}],\"builds\":[{\"counts\":{\"active\":1,\"done\":30,\"flagged\":0,\"set_aside\":2,\"total\":33,\"waiting\":0},\"gate\":[{\"key\":\"done\",\"kind\":\"\",\"label\":\"Every device done\",\"note\":\"30 of 31 done (2 set aside); T-CUM-SP4 Bootstrap\",\"result\":\"running\",\"type\":\"devices_done\"},{\"key\":\"reach\",\"kind\":\"\",\"label\":\"Management reachable\",\"note\":\"30 of 31 answer on their management ports (2 set aside)\",\"result\":\"running\",\"type\":\"reachable\"},{\"key\":\"srv\",\"kind\":\"\",\"label\":\"Servers confirmed\",\"note\":\"admin: checked by J. Doe\",\"result\":\"confirmed\",\"type\":\"confirm\"},{\"key\":\"iso\",\"kind\":\"isolation\",\"label\":\"Ingress isolation per tenant\",\"note\":\"automatic check queued\",\"result\":\"running\",\"type\":\"auto\"},{\"key\":\"nccl\",\"kind\":\"nccl\",\"label\":\"NCCL all-reduce at target\",\"note\":\"automatic check queued\",\"result\":\"running\",\"type\":\"auto\"}],\"key\":\"be\",\"name\":\"Test\",\"override\":{\"by\":\"admin\",\"reason\":\"lab without hosts\",\"when\":\"2023-11-14T23:03:20Z\"},\"passed\":\"2023-11-14T23:13:20Z\",\"state\":\"complete\",\"waves\":1,\"waves_open\":1}],\"by\":\"admin\",\"completed\":\"2023-11-14T23:13:20Z\",\"counts\":{\"active\":1,\"done\":30,\"flagged\":0,\"set_aside\":2,\"total\":33,\"waiting\":0},\"deviations\":[{\"build\":\"Test\",\"by\":\"admin\",\"detail\":\"lab without hosts\",\"item\":\"build gate\",\"type\":\"gate override\",\"when\":\"2023-11-14T23:03:20Z\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"lab\",\"item\":\"T-NOIP\",\"type\":\"set aside\",\"when\":\"\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"\",\"item\":\"T-CUM-SP3\",\"type\":\"set aside\",\"when\":\"\"}],\"generated\":\"2026-11-11T00:00:00Z\",\"kind\":\"final\",\"not_done\":[\"T-CUM-SP4\"],\"not_done_n\":1,\"open\":[],\"rmas\":[{\"device\":\"T-XE-A\",\"state\":\"closed\",\"ticket\":\"RMA-1\"}],\"run\":{\"started\":\"\",\"state\":\"idle\"},\"site\":{\"build\":\"TST-512-001\",\"builder\":\"HS-v2.02\",\"code\":\"TST\",\"customer\":\"Test Co\",\"delivered_by\":\"DWR Networking\",\"fingerprint\":\"0123456789abcdef\",\"gpus\":512,\"plan_digest\":\"\",\"racks\":8,\"region\":\"\",\"region_name\":\"Test region \\u00e9\",\"workload\":\"training\"},\"software\":[{\"devices\":4,\"os\":\"cumulus\",\"release\":\"\"},{\"devices\":2,\"os\":\"cumulus\",\"release\":\"5.18.3\"},{\"devices\":1,\"os\":\"eos\",\"release\":\"\"},{\"devices\":2,\"os\":\"eos\",\"release\":\"4.33.2F\"},{\"devices\":2,\"os\":\"ftd\",\"release\":\"7.6.0\"},{\"devices\":2,\"os\":\"iosxe\",\"release\":\"17.12.04\"},{\"devices\":2,\"os\":\"iosxr\",\"release\":\"24.4.2\"},{\"devices\":4,\"os\":\"junos\",\"release\":\"\"},{\"devices\":1,\"os\":\"junos\",\"release\":\"1.0\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"24.4R2-S3\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"25.2X100-D30\"},{\"devices\":1,\"os\":\"nxos\",\"release\":\"\"},{\"devices\":2,\"os\":\"nxos\",\"release\":\"10.4(5)\"},{\"devices\":1,\"os\":\"srl\",\"release\":\"\"},{\"devices\":2,\"os\":\"srl\",\"release\":\"24.10.1\"},{\"devices\":2,\"os\":\"sros\",\"release\":\"26.7.R1\"},{\"devices\":1,\"os\":\"weka\",\"release\":\"1.0\"}],\"standards\":[{\"id\":\"HS-ARC-001\",\"rev\":\"2.6\",\"title\":\"Architecture Overview\"},{\"id\":\"HS-DEP-001\",\"rev\":\"2.5\",\"title\":\"Deployment and Acceptance\"}],\"title\":\"Final build report\"},\"generated\":\"2026-11-11T00:00:00Z\",\"kind\":\"post\",\"open\":[],\"results\":[{\"busbw\":412.5,\"by\":\"op1\",\"target\":380.0,\"test\":\"nccl\",\"when\":\"2023-11-14T22:13:20Z\"}],\"site\":{\"build\":\"TST-512-001\",\"builder\":\"HS-v2.02\",\"code\":\"TST\",\"customer\":\"Test Co\",\"delivered_by\":\"DWR Networking\",\"fingerprint\":\"0123456789abcdef\",\"gpus\":512,\"plan_digest\":\"\",\"racks\":8,\"region\":\"\",\"region_name\":\"Test region \\u00e9\",\"workload\":\"training\"},\"software\":[{\"devices\":4,\"os\":\"cumulus\",\"release\":\"\"},{\"devices\":2,\"os\":\"cumulus\",\"release\":\"5.18.3\"},{\"devices\":1,\"os\":\"eos\",\"release\":\"\"},{\"devices\":2,\"os\":\"eos\",\"release\":\"4.33.2F\"},{\"devices\":2,\"os\":\"ftd\",\"release\":\"7.6.0\"},{\"devices\":2,\"os\":\"iosxe\",\"release\":\"17.12.04\"},{\"devices\":2,\"os\":\"iosxr\",\"release\":\"24.4.2\"},{\"devices\":4,\"os\":\"junos\",\"release\":\"\"},{\"devices\":1,\"os\":\"junos\",\"release\":\"1.0\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"24.4R2-S3\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"25.2X100-D30\"},{\"devices\":1,\"os\":\"nxos\",\"release\":\"\"},{\"devices\":2,\"os\":\"nxos\",\"release\":\"10.4(5)\"},{\"devices\":1,\"os\":\"srl\",\"release\":\"\"},{\"devices\":2,\"os\":\"srl\",\"release\":\"24.10.1\"},{\"devices\":2,\"os\":\"sros\",\"release\":\"26.7.R1\"},{\"devices\":1,\"os\":\"weka\",\"release\":\"1.0\"}],\"standards\":[{\"id\":\"HS-ARC-001\",\"rev\":\"2.6\",\"title\":\"Architecture Overview\"},{\"id\":\"HS-DEP-001\",\"rev\":\"2.5\",\"title\":\"Deployment and Acceptance\"}],\"title\":\"Post-deployment report\",\"tuning\":{\"approved\":null,\"switches\":0,\"versions\":0}}",
     "post csv": "build,item,result,detail\r\nTest,Servers confirmed,confirmed,admin: checked by J. Doe\r\nTest,Ingress isolation per tenant,running,automatic check queued\r\nTest,NCCL all-reduce at target,running,automatic check queued\r\n",
     "progress": {
      "activity_12h": [
@@ -9733,10 +9990,10 @@
       {
        "counts": {
         "active": 1,
-        "done": 25,
+        "done": 30,
         "flagged": 0,
         "set_aside": 2,
-        "total": 28,
+        "total": 33,
         "waiting": 0
        },
        "gate": [
@@ -9744,7 +10001,7 @@
          "key": "done",
          "kind": "",
          "label": "Every device done",
-         "note": "25 of 26 done (2 set aside); T-CUM-SP4 Bootstrap",
+         "note": "30 of 31 done (2 set aside); T-CUM-SP4 Bootstrap",
          "result": "running",
          "type": "devices_done"
         },
@@ -9752,7 +10009,7 @@
          "key": "reach",
          "kind": "",
          "label": "Management reachable",
-         "note": "25 of 26 answer on their management ports (2 set aside)",
+         "note": "30 of 31 answer on their management ports (2 set aside)",
          "result": "running",
          "type": "reachable"
         },
@@ -9797,10 +10054,10 @@
      "by": "admin",
      "counts": {
       "active": 1,
-      "done": 25,
+      "done": 30,
       "flagged": 0,
       "set_aside": 2,
-      "total": 28,
+      "total": 33,
       "waiting": 0
      },
      "generated": "<T>",
@@ -9845,7 +10102,7 @@
      ],
      "title": "Progress build report"
     },
-    "progress csv": "build,state,total,done,active,waiting,flagged,set_aside\r\nTest,complete,28,25,1,0,0,2\r\n",
+    "progress csv": "build,state,total,done,active,waiting,flagged,set_aside\r\nTest,complete,33,30,1,0,0,2\r\n",
     "ready": {
      "cert": {
       "ok": false,
@@ -9910,7 +10167,7 @@
      ],
      "generated": "<T>",
      "kind": "cert",
-     "post_sha256": "91429888a3324a324efe2c3eb1c6aa82962be1c80361fc98a7c38c4062934511",
+     "post_sha256": "dc4436f4c2f3f0a981e7fbcefa1de7aeaaf80b2bb88faedf2cc496a674800ec7",
      "reasons": [
       "1 device(s) not built",
       "4 gate item(s) open"
@@ -9944,14 +10201,14 @@
      "status": "not issued",
      "title": "Certificate of Conformance",
      "totals": {
-      "built": 25,
-      "devices": 28,
+      "built": 30,
+      "devices": 33,
       "gpus": 512,
       "racks": 8,
       "set_aside": 2
      }
     },
-    "cert csv": "item,value\r\nstatus,not issued\r\nsite,TST-512-001\r\naccepted,2023-11-14T23:13:20Z\r\nissued,2026-11-11T00:00:00Z\r\npost_sha256,91429888a3324a324efe2c3eb1c6aa82962be1c80361fc98a7c38c4062934511\r\n",
+    "cert csv": "item,value\r\nstatus,not issued\r\nsite,TST-512-001\r\naccepted,2023-11-14T23:13:20Z\r\nissued,2026-11-11T00:00:00Z\r\npost_sha256,dc4436f4c2f3f0a981e7fbcefa1de7aeaaf80b2bb88faedf2cc496a674800ec7\r\n",
     "final": {
      "asbuilt": [
       {
@@ -9969,10 +10226,10 @@
       {
        "counts": {
         "active": 1,
-        "done": 25,
+        "done": 30,
         "flagged": 0,
         "set_aside": 2,
-        "total": 28,
+        "total": 33,
         "waiting": 0
        },
        "gate": [
@@ -9980,7 +10237,7 @@
          "key": "done",
          "kind": "",
          "label": "Every device done",
-         "note": "25 of 26 done (2 set aside); T-CUM-SP4 Bootstrap",
+         "note": "30 of 31 done (2 set aside); T-CUM-SP4 Bootstrap",
          "result": "running",
          "type": "devices_done"
         },
@@ -9988,7 +10245,7 @@
          "key": "reach",
          "kind": "",
          "label": "Management reachable",
-         "note": "25 of 26 answer on their management ports (2 set aside)",
+         "note": "30 of 31 answer on their management ports (2 set aside)",
          "result": "running",
          "type": "reachable"
         },
@@ -10030,10 +10287,10 @@
      "completed": "2023-11-14T23:13:20Z",
      "counts": {
       "active": 1,
-      "done": 25,
+      "done": 30,
       "flagged": 0,
       "set_aside": 2,
-      "total": 28,
+      "total": 33,
       "waiting": 0
      },
      "deviations": [
@@ -10063,13 +10320,13 @@
      "open": [
       {
        "build": "Test",
-       "detail": "25 of 26 done (2 set aside); T-CUM-SP4 Bootstrap",
+       "detail": "30 of 31 done (2 set aside); T-CUM-SP4 Bootstrap",
        "item": "Every device done",
        "result": "running"
       },
       {
        "build": "Test",
-       "detail": "25 of 26 answer on their management ports (2 set aside)",
+       "detail": "30 of 31 answer on their management ports (2 set aside)",
        "item": "Management reachable",
        "result": "running"
       },
@@ -10123,6 +10380,11 @@
        "release": "5.18.3"
       },
       {
+       "devices": 1,
+       "os": "eos",
+       "release": ""
+      },
+      {
        "devices": 2,
        "os": "eos",
        "release": "4.33.2F"
@@ -10143,7 +10405,7 @@
        "release": "24.4.2"
       },
       {
-       "devices": 2,
+       "devices": 4,
        "os": "junos",
        "release": ""
       },
@@ -10163,9 +10425,19 @@
        "release": "25.2X100-D30"
       },
       {
+       "devices": 1,
+       "os": "nxos",
+       "release": ""
+      },
+      {
        "devices": 2,
        "os": "nxos",
        "release": "10.4(5)"
+      },
+      {
+       "devices": 1,
+       "os": "srl",
+       "release": ""
       },
       {
        "devices": 2,
@@ -10257,10 +10529,10 @@
      "completed": "2023-11-14T23:13:20Z",
      "counts": {
       "active": 1,
-      "done": 25,
+      "done": 30,
       "flagged": 0,
       "set_aside": 2,
-      "total": 28,
+      "total": 33,
       "waiting": 0
      },
      "deviations": [
@@ -10298,10 +10570,10 @@
        {
         "counts": {
          "active": 1,
-         "done": 25,
+         "done": 30,
          "flagged": 0,
          "set_aside": 2,
-         "total": 28,
+         "total": 33,
          "waiting": 0
         },
         "gate": [
@@ -10309,7 +10581,7 @@
           "key": "done",
           "kind": "",
           "label": "Every device done",
-          "note": "25 of 26 done (2 set aside); T-CUM-SP4 Bootstrap",
+          "note": "30 of 31 done (2 set aside); T-CUM-SP4 Bootstrap",
           "result": "running",
           "type": "devices_done"
          },
@@ -10317,7 +10589,7 @@
           "key": "reach",
           "kind": "",
           "label": "Management reachable",
-          "note": "25 of 26 answer on their management ports (2 set aside)",
+          "note": "30 of 31 answer on their management ports (2 set aside)",
           "result": "running",
           "type": "reachable"
          },
@@ -10359,10 +10631,10 @@
       "completed": "2023-11-14T23:13:20Z",
       "counts": {
        "active": 1,
-       "done": 25,
+       "done": 30,
        "flagged": 0,
        "set_aside": 2,
-       "total": 28,
+       "total": 33,
        "waiting": 0
       },
       "deviations": [
@@ -10392,13 +10664,13 @@
       "open": [
        {
         "build": "Test",
-        "detail": "25 of 26 done (2 set aside); T-CUM-SP4 Bootstrap",
+        "detail": "30 of 31 done (2 set aside); T-CUM-SP4 Bootstrap",
         "item": "Every device done",
         "result": "running"
        },
        {
         "build": "Test",
-        "detail": "25 of 26 answer on their management ports (2 set aside)",
+        "detail": "30 of 31 answer on their management ports (2 set aside)",
         "item": "Management reachable",
         "result": "running"
        },
@@ -10452,6 +10724,11 @@
         "release": "5.18.3"
        },
        {
+        "devices": 1,
+        "os": "eos",
+        "release": ""
+       },
+       {
         "devices": 2,
         "os": "eos",
         "release": "4.33.2F"
@@ -10472,7 +10749,7 @@
         "release": "24.4.2"
        },
        {
-        "devices": 2,
+        "devices": 4,
         "os": "junos",
         "release": ""
        },
@@ -10492,9 +10769,19 @@
         "release": "25.2X100-D30"
        },
        {
+        "devices": 1,
+        "os": "nxos",
+        "release": ""
+       },
+       {
         "devices": 2,
         "os": "nxos",
         "release": "10.4(5)"
+       },
+       {
+        "devices": 1,
+        "os": "srl",
+        "release": ""
        },
        {
         "devices": 2,
@@ -10531,13 +10818,13 @@
      "open": [
       {
        "build": "Test",
-       "detail": "25 of 26 done (2 set aside); T-CUM-SP4 Bootstrap",
+       "detail": "30 of 31 done (2 set aside); T-CUM-SP4 Bootstrap",
        "item": "Every device done",
        "result": "running"
       },
       {
        "build": "Test",
-       "detail": "25 of 26 answer on their management ports (2 set aside)",
+       "detail": "30 of 31 answer on their management ports (2 set aside)",
        "item": "Management reachable",
        "result": "running"
       },
@@ -10589,6 +10876,11 @@
        "release": "5.18.3"
       },
       {
+       "devices": 1,
+       "os": "eos",
+       "release": ""
+      },
+      {
        "devices": 2,
        "os": "eos",
        "release": "4.33.2F"
@@ -10609,7 +10901,7 @@
        "release": "24.4.2"
       },
       {
-       "devices": 2,
+       "devices": 4,
        "os": "junos",
        "release": ""
       },
@@ -10629,9 +10921,19 @@
        "release": "25.2X100-D30"
       },
       {
+       "devices": 1,
+       "os": "nxos",
+       "release": ""
+      },
+      {
        "devices": 2,
        "os": "nxos",
        "release": "10.4(5)"
+      },
+      {
+       "devices": 1,
+       "os": "srl",
+       "release": ""
       },
       {
        "devices": 2,
@@ -10668,7 +10970,7 @@
       "versions": 0
      }
     },
-    "post canon": "{\"acceptance\":[{\"build\":\"Test\",\"detail\":\"admin: checked by J. Doe\",\"evidence\":[],\"item\":\"Servers confirmed\",\"result\":\"confirmed\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"evidence\":[{\"check\":\"t1 bind\",\"note\":\"bound\",\"ok\":true},{\"check\":\"t1 snat\",\"note\":\"\",\"ok\":true},{\"check\":\"t1 cross\",\"note\":\"refused\",\"ok\":true},{\"check\":\"t2 bind\",\"note\":\"\",\"ok\":true},{\"check\":\"t2 snat\",\"note\":\"pool\",\"ok\":true},{\"check\":\"t2 cross\",\"note\":\"\",\"ok\":true}],\"item\":\"Ingress isolation per tenant\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"evidence\":[],\"item\":\"NCCL all-reduce at target\",\"result\":\"running\"}],\"by\":\"admin\",\"completed\":\"2023-11-14T23:13:20Z\",\"counts\":{\"active\":1,\"done\":25,\"flagged\":0,\"set_aside\":2,\"total\":28,\"waiting\":0},\"deviations\":[{\"build\":\"Test\",\"by\":\"\",\"detail\":\"lab\",\"item\":\"T-NOIP\",\"type\":\"set aside\",\"when\":\"\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"\",\"item\":\"T-CUM-SP3\",\"type\":\"set aside\",\"when\":\"\"}],\"final_build\":{\"asbuilt\":[{\"device\":\"T-CUM-A\",\"identity\":\"SN123\",\"source\":\"as-built\"},{\"device\":\"T-CUM-B\",\"identity\":\"aa:bb:cc:dd:ee:ff\",\"source\":\"bind\"}],\"builds\":[{\"counts\":{\"active\":1,\"done\":25,\"flagged\":0,\"set_aside\":2,\"total\":28,\"waiting\":0},\"gate\":[{\"key\":\"done\",\"kind\":\"\",\"label\":\"Every device done\",\"note\":\"25 of 26 done (2 set aside); T-CUM-SP4 Bootstrap\",\"result\":\"running\",\"type\":\"devices_done\"},{\"key\":\"reach\",\"kind\":\"\",\"label\":\"Management reachable\",\"note\":\"25 of 26 answer on their management ports (2 set aside)\",\"result\":\"running\",\"type\":\"reachable\"},{\"key\":\"srv\",\"kind\":\"\",\"label\":\"Servers confirmed\",\"note\":\"admin: checked by J. Doe\",\"result\":\"confirmed\",\"type\":\"confirm\"},{\"key\":\"iso\",\"kind\":\"isolation\",\"label\":\"Ingress isolation per tenant\",\"note\":\"automatic check queued\",\"result\":\"running\",\"type\":\"auto\"},{\"key\":\"nccl\",\"kind\":\"nccl\",\"label\":\"NCCL all-reduce at target\",\"note\":\"automatic check queued\",\"result\":\"running\",\"type\":\"auto\"}],\"key\":\"be\",\"name\":\"Test\",\"override\":null,\"passed\":\"2023-11-14T23:13:20Z\",\"state\":\"complete\",\"waves\":1,\"waves_open\":1}],\"by\":\"admin\",\"completed\":\"2023-11-14T23:13:20Z\",\"counts\":{\"active\":1,\"done\":25,\"flagged\":0,\"set_aside\":2,\"total\":28,\"waiting\":0},\"deviations\":[{\"build\":\"Test\",\"by\":\"\",\"detail\":\"lab\",\"item\":\"T-NOIP\",\"type\":\"set aside\",\"when\":\"\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"\",\"item\":\"T-CUM-SP3\",\"type\":\"set aside\",\"when\":\"\"}],\"generated\":\"2026-11-11T00:00:00Z\",\"kind\":\"final\",\"not_done\":[\"T-CUM-SP4\"],\"not_done_n\":1,\"open\":[{\"build\":\"Test\",\"detail\":\"25 of 26 done (2 set aside); T-CUM-SP4 Bootstrap\",\"item\":\"Every device done\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"25 of 26 answer on their management ports (2 set aside)\",\"item\":\"Management reachable\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"item\":\"Ingress isolation per tenant\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"item\":\"NCCL all-reduce at target\",\"result\":\"running\"}],\"rmas\":[{\"device\":\"T-XE-A\",\"state\":\"closed\",\"ticket\":\"RMA-1\"}],\"run\":{\"started\":\"\",\"state\":\"idle\"},\"site\":{\"build\":\"TST-512-001\",\"builder\":\"HS-v2.02\",\"code\":\"TST\",\"customer\":\"Test Co\",\"delivered_by\":\"DWR Networking\",\"fingerprint\":\"0123456789abcdef\",\"gpus\":512,\"plan_digest\":\"\",\"racks\":8,\"region\":\"\",\"region_name\":\"Test region \\u00e9\",\"workload\":\"training\"},\"software\":[{\"devices\":4,\"os\":\"cumulus\",\"release\":\"\"},{\"devices\":2,\"os\":\"cumulus\",\"release\":\"5.18.3\"},{\"devices\":2,\"os\":\"eos\",\"release\":\"4.33.2F\"},{\"devices\":2,\"os\":\"ftd\",\"release\":\"7.6.0\"},{\"devices\":2,\"os\":\"iosxe\",\"release\":\"17.12.04\"},{\"devices\":2,\"os\":\"iosxr\",\"release\":\"24.4.2\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"\"},{\"devices\":1,\"os\":\"junos\",\"release\":\"1.0\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"24.4R2-S3\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"25.2X100-D30\"},{\"devices\":2,\"os\":\"nxos\",\"release\":\"10.4(5)\"},{\"devices\":2,\"os\":\"srl\",\"release\":\"24.10.1\"},{\"devices\":2,\"os\":\"sros\",\"release\":\"26.7.R1\"},{\"devices\":1,\"os\":\"weka\",\"release\":\"1.0\"}],\"standards\":[{\"id\":\"HS-ARC-001\",\"rev\":\"2.6\",\"title\":\"Architecture Overview\"},{\"id\":\"HS-DEP-001\",\"rev\":\"2.5\",\"title\":\"Deployment and Acceptance\"}],\"title\":\"Final build report\"},\"generated\":\"2026-11-11T00:00:00Z\",\"kind\":\"post\",\"open\":[{\"build\":\"Test\",\"detail\":\"25 of 26 done (2 set aside); T-CUM-SP4 Bootstrap\",\"item\":\"Every device done\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"25 of 26 answer on their management ports (2 set aside)\",\"item\":\"Management reachable\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"item\":\"Ingress isolation per tenant\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"item\":\"NCCL all-reduce at target\",\"result\":\"running\"}],\"results\":[{\"busbw\":412.5,\"by\":\"op1\",\"target\":380.0,\"test\":\"nccl\",\"when\":\"2023-11-14T22:13:20Z\"}],\"site\":{\"build\":\"TST-512-001\",\"builder\":\"HS-v2.02\",\"code\":\"TST\",\"customer\":\"Test Co\",\"delivered_by\":\"DWR Networking\",\"fingerprint\":\"0123456789abcdef\",\"gpus\":512,\"plan_digest\":\"\",\"racks\":8,\"region\":\"\",\"region_name\":\"Test region \\u00e9\",\"workload\":\"training\"},\"software\":[{\"devices\":4,\"os\":\"cumulus\",\"release\":\"\"},{\"devices\":2,\"os\":\"cumulus\",\"release\":\"5.18.3\"},{\"devices\":2,\"os\":\"eos\",\"release\":\"4.33.2F\"},{\"devices\":2,\"os\":\"ftd\",\"release\":\"7.6.0\"},{\"devices\":2,\"os\":\"iosxe\",\"release\":\"17.12.04\"},{\"devices\":2,\"os\":\"iosxr\",\"release\":\"24.4.2\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"\"},{\"devices\":1,\"os\":\"junos\",\"release\":\"1.0\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"24.4R2-S3\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"25.2X100-D30\"},{\"devices\":2,\"os\":\"nxos\",\"release\":\"10.4(5)\"},{\"devices\":2,\"os\":\"srl\",\"release\":\"24.10.1\"},{\"devices\":2,\"os\":\"sros\",\"release\":\"26.7.R1\"},{\"devices\":1,\"os\":\"weka\",\"release\":\"1.0\"}],\"standards\":[{\"id\":\"HS-ARC-001\",\"rev\":\"2.6\",\"title\":\"Architecture Overview\"},{\"id\":\"HS-DEP-001\",\"rev\":\"2.5\",\"title\":\"Deployment and Acceptance\"}],\"title\":\"Post-deployment report\",\"tuning\":{\"approved\":null,\"switches\":0,\"versions\":0}}",
+    "post canon": "{\"acceptance\":[{\"build\":\"Test\",\"detail\":\"admin: checked by J. Doe\",\"evidence\":[],\"item\":\"Servers confirmed\",\"result\":\"confirmed\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"evidence\":[{\"check\":\"t1 bind\",\"note\":\"bound\",\"ok\":true},{\"check\":\"t1 snat\",\"note\":\"\",\"ok\":true},{\"check\":\"t1 cross\",\"note\":\"refused\",\"ok\":true},{\"check\":\"t2 bind\",\"note\":\"\",\"ok\":true},{\"check\":\"t2 snat\",\"note\":\"pool\",\"ok\":true},{\"check\":\"t2 cross\",\"note\":\"\",\"ok\":true}],\"item\":\"Ingress isolation per tenant\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"evidence\":[],\"item\":\"NCCL all-reduce at target\",\"result\":\"running\"}],\"by\":\"admin\",\"completed\":\"2023-11-14T23:13:20Z\",\"counts\":{\"active\":1,\"done\":30,\"flagged\":0,\"set_aside\":2,\"total\":33,\"waiting\":0},\"deviations\":[{\"build\":\"Test\",\"by\":\"\",\"detail\":\"lab\",\"item\":\"T-NOIP\",\"type\":\"set aside\",\"when\":\"\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"\",\"item\":\"T-CUM-SP3\",\"type\":\"set aside\",\"when\":\"\"}],\"final_build\":{\"asbuilt\":[{\"device\":\"T-CUM-A\",\"identity\":\"SN123\",\"source\":\"as-built\"},{\"device\":\"T-CUM-B\",\"identity\":\"aa:bb:cc:dd:ee:ff\",\"source\":\"bind\"}],\"builds\":[{\"counts\":{\"active\":1,\"done\":30,\"flagged\":0,\"set_aside\":2,\"total\":33,\"waiting\":0},\"gate\":[{\"key\":\"done\",\"kind\":\"\",\"label\":\"Every device done\",\"note\":\"30 of 31 done (2 set aside); T-CUM-SP4 Bootstrap\",\"result\":\"running\",\"type\":\"devices_done\"},{\"key\":\"reach\",\"kind\":\"\",\"label\":\"Management reachable\",\"note\":\"30 of 31 answer on their management ports (2 set aside)\",\"result\":\"running\",\"type\":\"reachable\"},{\"key\":\"srv\",\"kind\":\"\",\"label\":\"Servers confirmed\",\"note\":\"admin: checked by J. Doe\",\"result\":\"confirmed\",\"type\":\"confirm\"},{\"key\":\"iso\",\"kind\":\"isolation\",\"label\":\"Ingress isolation per tenant\",\"note\":\"automatic check queued\",\"result\":\"running\",\"type\":\"auto\"},{\"key\":\"nccl\",\"kind\":\"nccl\",\"label\":\"NCCL all-reduce at target\",\"note\":\"automatic check queued\",\"result\":\"running\",\"type\":\"auto\"}],\"key\":\"be\",\"name\":\"Test\",\"override\":null,\"passed\":\"2023-11-14T23:13:20Z\",\"state\":\"complete\",\"waves\":1,\"waves_open\":1}],\"by\":\"admin\",\"completed\":\"2023-11-14T23:13:20Z\",\"counts\":{\"active\":1,\"done\":30,\"flagged\":0,\"set_aside\":2,\"total\":33,\"waiting\":0},\"deviations\":[{\"build\":\"Test\",\"by\":\"\",\"detail\":\"lab\",\"item\":\"T-NOIP\",\"type\":\"set aside\",\"when\":\"\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"\",\"item\":\"T-CUM-SP3\",\"type\":\"set aside\",\"when\":\"\"}],\"generated\":\"2026-11-11T00:00:00Z\",\"kind\":\"final\",\"not_done\":[\"T-CUM-SP4\"],\"not_done_n\":1,\"open\":[{\"build\":\"Test\",\"detail\":\"30 of 31 done (2 set aside); T-CUM-SP4 Bootstrap\",\"item\":\"Every device done\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"30 of 31 answer on their management ports (2 set aside)\",\"item\":\"Management reachable\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"item\":\"Ingress isolation per tenant\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"item\":\"NCCL all-reduce at target\",\"result\":\"running\"}],\"rmas\":[{\"device\":\"T-XE-A\",\"state\":\"closed\",\"ticket\":\"RMA-1\"}],\"run\":{\"started\":\"\",\"state\":\"idle\"},\"site\":{\"build\":\"TST-512-001\",\"builder\":\"HS-v2.02\",\"code\":\"TST\",\"customer\":\"Test Co\",\"delivered_by\":\"DWR Networking\",\"fingerprint\":\"0123456789abcdef\",\"gpus\":512,\"plan_digest\":\"\",\"racks\":8,\"region\":\"\",\"region_name\":\"Test region \\u00e9\",\"workload\":\"training\"},\"software\":[{\"devices\":4,\"os\":\"cumulus\",\"release\":\"\"},{\"devices\":2,\"os\":\"cumulus\",\"release\":\"5.18.3\"},{\"devices\":1,\"os\":\"eos\",\"release\":\"\"},{\"devices\":2,\"os\":\"eos\",\"release\":\"4.33.2F\"},{\"devices\":2,\"os\":\"ftd\",\"release\":\"7.6.0\"},{\"devices\":2,\"os\":\"iosxe\",\"release\":\"17.12.04\"},{\"devices\":2,\"os\":\"iosxr\",\"release\":\"24.4.2\"},{\"devices\":4,\"os\":\"junos\",\"release\":\"\"},{\"devices\":1,\"os\":\"junos\",\"release\":\"1.0\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"24.4R2-S3\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"25.2X100-D30\"},{\"devices\":1,\"os\":\"nxos\",\"release\":\"\"},{\"devices\":2,\"os\":\"nxos\",\"release\":\"10.4(5)\"},{\"devices\":1,\"os\":\"srl\",\"release\":\"\"},{\"devices\":2,\"os\":\"srl\",\"release\":\"24.10.1\"},{\"devices\":2,\"os\":\"sros\",\"release\":\"26.7.R1\"},{\"devices\":1,\"os\":\"weka\",\"release\":\"1.0\"}],\"standards\":[{\"id\":\"HS-ARC-001\",\"rev\":\"2.6\",\"title\":\"Architecture Overview\"},{\"id\":\"HS-DEP-001\",\"rev\":\"2.5\",\"title\":\"Deployment and Acceptance\"}],\"title\":\"Final build report\"},\"generated\":\"2026-11-11T00:00:00Z\",\"kind\":\"post\",\"open\":[{\"build\":\"Test\",\"detail\":\"30 of 31 done (2 set aside); T-CUM-SP4 Bootstrap\",\"item\":\"Every device done\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"30 of 31 answer on their management ports (2 set aside)\",\"item\":\"Management reachable\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"item\":\"Ingress isolation per tenant\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"item\":\"NCCL all-reduce at target\",\"result\":\"running\"}],\"results\":[{\"busbw\":412.5,\"by\":\"op1\",\"target\":380.0,\"test\":\"nccl\",\"when\":\"2023-11-14T22:13:20Z\"}],\"site\":{\"build\":\"TST-512-001\",\"builder\":\"HS-v2.02\",\"code\":\"TST\",\"customer\":\"Test Co\",\"delivered_by\":\"DWR Networking\",\"fingerprint\":\"0123456789abcdef\",\"gpus\":512,\"plan_digest\":\"\",\"racks\":8,\"region\":\"\",\"region_name\":\"Test region \\u00e9\",\"workload\":\"training\"},\"software\":[{\"devices\":4,\"os\":\"cumulus\",\"release\":\"\"},{\"devices\":2,\"os\":\"cumulus\",\"release\":\"5.18.3\"},{\"devices\":1,\"os\":\"eos\",\"release\":\"\"},{\"devices\":2,\"os\":\"eos\",\"release\":\"4.33.2F\"},{\"devices\":2,\"os\":\"ftd\",\"release\":\"7.6.0\"},{\"devices\":2,\"os\":\"iosxe\",\"release\":\"17.12.04\"},{\"devices\":2,\"os\":\"iosxr\",\"release\":\"24.4.2\"},{\"devices\":4,\"os\":\"junos\",\"release\":\"\"},{\"devices\":1,\"os\":\"junos\",\"release\":\"1.0\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"24.4R2-S3\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"25.2X100-D30\"},{\"devices\":1,\"os\":\"nxos\",\"release\":\"\"},{\"devices\":2,\"os\":\"nxos\",\"release\":\"10.4(5)\"},{\"devices\":1,\"os\":\"srl\",\"release\":\"\"},{\"devices\":2,\"os\":\"srl\",\"release\":\"24.10.1\"},{\"devices\":2,\"os\":\"sros\",\"release\":\"26.7.R1\"},{\"devices\":1,\"os\":\"weka\",\"release\":\"1.0\"}],\"standards\":[{\"id\":\"HS-ARC-001\",\"rev\":\"2.6\",\"title\":\"Architecture Overview\"},{\"id\":\"HS-DEP-001\",\"rev\":\"2.5\",\"title\":\"Deployment and Acceptance\"}],\"title\":\"Post-deployment report\",\"tuning\":{\"approved\":null,\"switches\":0,\"versions\":0}}",
     "post csv": "build,item,result,detail\r\nTest,Servers confirmed,confirmed,admin: checked by J. Doe\r\nTest,Ingress isolation per tenant,running,automatic check queued\r\nTest,NCCL all-reduce at target,running,automatic check queued\r\n",
     "progress": {
      "activity_12h": [
@@ -10683,10 +10985,10 @@
       {
        "counts": {
         "active": 1,
-        "done": 25,
+        "done": 30,
         "flagged": 0,
         "set_aside": 2,
-        "total": 28,
+        "total": 33,
         "waiting": 0
        },
        "gate": [
@@ -10694,7 +10996,7 @@
          "key": "done",
          "kind": "",
          "label": "Every device done",
-         "note": "25 of 26 done (2 set aside); T-CUM-SP4 Bootstrap",
+         "note": "30 of 31 done (2 set aside); T-CUM-SP4 Bootstrap",
          "result": "running",
          "type": "devices_done"
         },
@@ -10702,7 +11004,7 @@
          "key": "reach",
          "kind": "",
          "label": "Management reachable",
-         "note": "25 of 26 answer on their management ports (2 set aside)",
+         "note": "30 of 31 answer on their management ports (2 set aside)",
          "result": "running",
          "type": "reachable"
         },
@@ -10743,10 +11045,10 @@
      "by": "admin",
      "counts": {
       "active": 1,
-      "done": 25,
+      "done": 30,
       "flagged": 0,
       "set_aside": 2,
-      "total": 28,
+      "total": 33,
       "waiting": 0
      },
      "generated": "<T>",
@@ -10791,7 +11093,7 @@
      ],
      "title": "Progress build report"
     },
-    "progress csv": "build,state,total,done,active,waiting,flagged,set_aside\r\nTest,complete,28,25,1,0,0,2\r\n",
+    "progress csv": "build,state,total,done,active,waiting,flagged,set_aside\r\nTest,complete,33,30,1,0,0,2\r\n",
     "ready": {
      "cert": {
       "ok": false,
@@ -10848,7 +11150,7 @@
       {
        "build": "Test",
        "by": "",
-       "detail": "26 of 26 done (2 set aside), every identity matched to TST",
+       "detail": "31 of 31 done (2 set aside), every identity matched to TST",
        "item": "Every device done",
        "type": "accepted warning",
        "when": ""
@@ -10856,7 +11158,7 @@
       {
        "build": "Test",
        "by": "",
-       "detail": "26 of 26 answer on their management ports (2 set aside)",
+       "detail": "31 of 31 answer on their management ports (2 set aside)",
        "item": "Management reachable",
        "type": "accepted warning",
        "when": ""
@@ -10880,7 +11182,7 @@
      ],
      "generated": "<T>",
      "kind": "cert",
-     "post_sha256": "af339869216761976cb22385d21a090fa54fa9cd6347ca0460d5076fa110efc0",
+     "post_sha256": "965f57f5353ce960ce041527c5020451235f0c4c93908af701e14c7b159d4efc",
      "reasons": [],
      "site": {
       "build": "TST-512-001",
@@ -10911,14 +11213,14 @@
      "status": "conformant with deviations",
      "title": "Certificate of Conformance",
      "totals": {
-      "built": 26,
-      "devices": 28,
+      "built": 31,
+      "devices": 33,
       "gpus": 512,
       "racks": 8,
       "set_aside": 2
      }
     },
-    "cert csv": "item,value\r\nstatus,conformant with deviations\r\nsite,TST-512-001\r\naccepted,2023-11-14T23:13:20Z\r\nissued,2026-11-11T00:00:00Z\r\npost_sha256,af339869216761976cb22385d21a090fa54fa9cd6347ca0460d5076fa110efc0\r\n",
+    "cert csv": "item,value\r\nstatus,conformant with deviations\r\nsite,TST-512-001\r\naccepted,2023-11-14T23:13:20Z\r\nissued,2026-11-11T00:00:00Z\r\npost_sha256,965f57f5353ce960ce041527c5020451235f0c4c93908af701e14c7b159d4efc\r\n",
     "final": {
      "asbuilt": [
       {
@@ -10936,10 +11238,10 @@
       {
        "counts": {
         "active": 0,
-        "done": 26,
+        "done": 31,
         "flagged": 0,
         "set_aside": 2,
-        "total": 28,
+        "total": 33,
         "waiting": 0
        },
        "gate": [
@@ -10947,7 +11249,7 @@
          "key": "done",
          "kind": "",
          "label": "Every device done",
-         "note": "26 of 26 done (2 set aside), every identity matched to TST",
+         "note": "31 of 31 done (2 set aside), every identity matched to TST",
          "result": "warn",
          "type": "devices_done"
         },
@@ -10955,7 +11257,7 @@
          "key": "reach",
          "kind": "",
          "label": "Management reachable",
-         "note": "26 of 26 answer on their management ports (2 set aside)",
+         "note": "31 of 31 answer on their management ports (2 set aside)",
          "result": "warn",
          "type": "reachable"
         },
@@ -11001,10 +11303,10 @@
      "completed": "2023-11-14T23:13:20Z",
      "counts": {
       "active": 0,
-      "done": 26,
+      "done": 31,
       "flagged": 0,
       "set_aside": 2,
-      "total": 28,
+      "total": 33,
       "waiting": 0
      },
      "deviations": [
@@ -11019,7 +11321,7 @@
       {
        "build": "Test",
        "by": "",
-       "detail": "26 of 26 done (2 set aside), every identity matched to TST",
+       "detail": "31 of 31 done (2 set aside), every identity matched to TST",
        "item": "Every device done",
        "type": "accepted warning",
        "when": ""
@@ -11027,7 +11329,7 @@
       {
        "build": "Test",
        "by": "",
-       "detail": "26 of 26 answer on their management ports (2 set aside)",
+       "detail": "31 of 31 answer on their management ports (2 set aside)",
        "item": "Management reachable",
        "type": "accepted warning",
        "when": ""
@@ -11091,6 +11393,11 @@
        "release": "5.18.3"
       },
       {
+       "devices": 1,
+       "os": "eos",
+       "release": ""
+      },
+      {
        "devices": 2,
        "os": "eos",
        "release": "4.33.2F"
@@ -11111,7 +11418,7 @@
        "release": "24.4.2"
       },
       {
-       "devices": 2,
+       "devices": 4,
        "os": "junos",
        "release": ""
       },
@@ -11131,9 +11438,19 @@
        "release": "25.2X100-D30"
       },
       {
+       "devices": 1,
+       "os": "nxos",
+       "release": ""
+      },
+      {
        "devices": 2,
        "os": "nxos",
        "release": "10.4(5)"
+      },
+      {
+       "devices": 1,
+       "os": "srl",
+       "release": ""
       },
       {
        "devices": 2,
@@ -11165,7 +11482,7 @@
      ],
      "title": "Final build report"
     },
-    "final csv": "type,build,item,detail,by,when\r\ngate override,Test,build gate,hosts not racked: accepted by the customer,admin,2023-11-14T23:05:00Z\r\naccepted warning,Test,Every device done,\"26 of 26 done (2 set aside), every identity matched to TST\",,\r\naccepted warning,Test,Management reachable,26 of 26 answer on their management ports (2 set aside),,\r\nset aside,Test,T-NOIP,lab,,\r\nset aside,Test,T-CUM-SP3,,,\r\n",
+    "final csv": "type,build,item,detail,by,when\r\ngate override,Test,build gate,hosts not racked: accepted by the customer,admin,2023-11-14T23:05:00Z\r\naccepted warning,Test,Every device done,\"31 of 31 done (2 set aside), every identity matched to TST\",,\r\naccepted warning,Test,Management reachable,31 of 31 answer on their management ports (2 set aside),,\r\nset aside,Test,T-NOIP,lab,,\r\nset aside,Test,T-CUM-SP3,,,\r\n",
     "post": {
      "acceptance": [
       {
@@ -11225,10 +11542,10 @@
      "completed": "2023-11-14T23:13:20Z",
      "counts": {
       "active": 0,
-      "done": 26,
+      "done": 31,
       "flagged": 0,
       "set_aside": 2,
-      "total": 28,
+      "total": 33,
       "waiting": 0
      },
      "deviations": [
@@ -11243,7 +11560,7 @@
       {
        "build": "Test",
        "by": "",
-       "detail": "26 of 26 done (2 set aside), every identity matched to TST",
+       "detail": "31 of 31 done (2 set aside), every identity matched to TST",
        "item": "Every device done",
        "type": "accepted warning",
        "when": ""
@@ -11251,7 +11568,7 @@
       {
        "build": "Test",
        "by": "",
-       "detail": "26 of 26 answer on their management ports (2 set aside)",
+       "detail": "31 of 31 answer on their management ports (2 set aside)",
        "item": "Management reachable",
        "type": "accepted warning",
        "when": ""
@@ -11290,10 +11607,10 @@
        {
         "counts": {
          "active": 0,
-         "done": 26,
+         "done": 31,
          "flagged": 0,
          "set_aside": 2,
-         "total": 28,
+         "total": 33,
          "waiting": 0
         },
         "gate": [
@@ -11301,7 +11618,7 @@
           "key": "done",
           "kind": "",
           "label": "Every device done",
-          "note": "26 of 26 done (2 set aside), every identity matched to TST",
+          "note": "31 of 31 done (2 set aside), every identity matched to TST",
           "result": "warn",
           "type": "devices_done"
          },
@@ -11309,7 +11626,7 @@
           "key": "reach",
           "kind": "",
           "label": "Management reachable",
-          "note": "26 of 26 answer on their management ports (2 set aside)",
+          "note": "31 of 31 answer on their management ports (2 set aside)",
           "result": "warn",
           "type": "reachable"
          },
@@ -11355,10 +11672,10 @@
       "completed": "2023-11-14T23:13:20Z",
       "counts": {
        "active": 0,
-       "done": 26,
+       "done": 31,
        "flagged": 0,
        "set_aside": 2,
-       "total": 28,
+       "total": 33,
        "waiting": 0
       },
       "deviations": [
@@ -11373,7 +11690,7 @@
        {
         "build": "Test",
         "by": "",
-        "detail": "26 of 26 done (2 set aside), every identity matched to TST",
+        "detail": "31 of 31 done (2 set aside), every identity matched to TST",
         "item": "Every device done",
         "type": "accepted warning",
         "when": ""
@@ -11381,7 +11698,7 @@
        {
         "build": "Test",
         "by": "",
-        "detail": "26 of 26 answer on their management ports (2 set aside)",
+        "detail": "31 of 31 answer on their management ports (2 set aside)",
         "item": "Management reachable",
         "type": "accepted warning",
         "when": ""
@@ -11445,6 +11762,11 @@
         "release": "5.18.3"
        },
        {
+        "devices": 1,
+        "os": "eos",
+        "release": ""
+       },
+       {
         "devices": 2,
         "os": "eos",
         "release": "4.33.2F"
@@ -11465,7 +11787,7 @@
         "release": "24.4.2"
        },
        {
-        "devices": 2,
+        "devices": 4,
         "os": "junos",
         "release": ""
        },
@@ -11485,9 +11807,19 @@
         "release": "25.2X100-D30"
        },
        {
+        "devices": 1,
+        "os": "nxos",
+        "release": ""
+       },
+       {
         "devices": 2,
         "os": "nxos",
         "release": "10.4(5)"
+       },
+       {
+        "devices": 1,
+        "os": "srl",
+        "release": ""
        },
        {
         "devices": 2,
@@ -11557,6 +11889,11 @@
        "release": "5.18.3"
       },
       {
+       "devices": 1,
+       "os": "eos",
+       "release": ""
+      },
+      {
        "devices": 2,
        "os": "eos",
        "release": "4.33.2F"
@@ -11577,7 +11914,7 @@
        "release": "24.4.2"
       },
       {
-       "devices": 2,
+       "devices": 4,
        "os": "junos",
        "release": ""
       },
@@ -11597,9 +11934,19 @@
        "release": "25.2X100-D30"
       },
       {
+       "devices": 1,
+       "os": "nxos",
+       "release": ""
+      },
+      {
        "devices": 2,
        "os": "nxos",
        "release": "10.4(5)"
+      },
+      {
+       "devices": 1,
+       "os": "srl",
+       "release": ""
       },
       {
        "devices": 2,
@@ -11636,7 +11983,7 @@
       "versions": 0
      }
     },
-    "post canon": "{\"acceptance\":[{\"build\":\"Test\",\"detail\":\"admin: checked by J. Doe\",\"evidence\":[],\"item\":\"Servers confirmed\",\"result\":\"confirmed\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"evidence\":[{\"check\":\"t1 bind\",\"note\":\"bound\",\"ok\":true},{\"check\":\"t1 snat\",\"note\":\"\",\"ok\":true},{\"check\":\"t1 cross\",\"note\":\"refused\",\"ok\":true},{\"check\":\"t2 bind\",\"note\":\"\",\"ok\":true},{\"check\":\"t2 snat\",\"note\":\"pool\",\"ok\":true},{\"check\":\"t2 cross\",\"note\":\"\",\"ok\":true}],\"item\":\"Ingress isolation per tenant\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"evidence\":[],\"item\":\"NCCL all-reduce at target\",\"result\":\"running\"}],\"by\":\"admin\",\"completed\":\"2023-11-14T23:13:20Z\",\"counts\":{\"active\":0,\"done\":26,\"flagged\":0,\"set_aside\":2,\"total\":28,\"waiting\":0},\"deviations\":[{\"build\":\"Test\",\"by\":\"admin\",\"detail\":\"hosts not racked: accepted by the customer\",\"item\":\"build gate\",\"type\":\"gate override\",\"when\":\"2023-11-14T23:05:00Z\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"26 of 26 done (2 set aside), every identity matched to TST\",\"item\":\"Every device done\",\"type\":\"accepted warning\",\"when\":\"\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"26 of 26 answer on their management ports (2 set aside)\",\"item\":\"Management reachable\",\"type\":\"accepted warning\",\"when\":\"\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"lab\",\"item\":\"T-NOIP\",\"type\":\"set aside\",\"when\":\"\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"\",\"item\":\"T-CUM-SP3\",\"type\":\"set aside\",\"when\":\"\"}],\"final_build\":{\"asbuilt\":[{\"device\":\"T-CUM-A\",\"identity\":\"SN123\",\"source\":\"as-built\"},{\"device\":\"T-CUM-B\",\"identity\":\"aa:bb:cc:dd:ee:ff\",\"source\":\"bind\"}],\"builds\":[{\"counts\":{\"active\":0,\"done\":26,\"flagged\":0,\"set_aside\":2,\"total\":28,\"waiting\":0},\"gate\":[{\"key\":\"done\",\"kind\":\"\",\"label\":\"Every device done\",\"note\":\"26 of 26 done (2 set aside), every identity matched to TST\",\"result\":\"warn\",\"type\":\"devices_done\"},{\"key\":\"reach\",\"kind\":\"\",\"label\":\"Management reachable\",\"note\":\"26 of 26 answer on their management ports (2 set aside)\",\"result\":\"warn\",\"type\":\"reachable\"},{\"key\":\"srv\",\"kind\":\"\",\"label\":\"Servers confirmed\",\"note\":\"admin: checked by J. Doe\",\"result\":\"confirmed\",\"type\":\"confirm\"},{\"key\":\"iso\",\"kind\":\"isolation\",\"label\":\"Ingress isolation per tenant\",\"note\":\"automatic check queued\",\"result\":\"running\",\"type\":\"auto\"},{\"key\":\"nccl\",\"kind\":\"nccl\",\"label\":\"NCCL all-reduce at target\",\"note\":\"automatic check queued\",\"result\":\"running\",\"type\":\"auto\"}],\"key\":\"be\",\"name\":\"Test\",\"override\":{\"by\":\"admin\",\"reason\":\"hosts not racked: accepted by the customer\",\"when\":\"2023-11-14T23:05:00Z\"},\"passed\":\"2023-11-14T23:13:20Z\",\"state\":\"complete\",\"waves\":1,\"waves_open\":1}],\"by\":\"admin\",\"completed\":\"2023-11-14T23:13:20Z\",\"counts\":{\"active\":0,\"done\":26,\"flagged\":0,\"set_aside\":2,\"total\":28,\"waiting\":0},\"deviations\":[{\"build\":\"Test\",\"by\":\"admin\",\"detail\":\"hosts not racked: accepted by the customer\",\"item\":\"build gate\",\"type\":\"gate override\",\"when\":\"2023-11-14T23:05:00Z\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"26 of 26 done (2 set aside), every identity matched to TST\",\"item\":\"Every device done\",\"type\":\"accepted warning\",\"when\":\"\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"26 of 26 answer on their management ports (2 set aside)\",\"item\":\"Management reachable\",\"type\":\"accepted warning\",\"when\":\"\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"lab\",\"item\":\"T-NOIP\",\"type\":\"set aside\",\"when\":\"\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"\",\"item\":\"T-CUM-SP3\",\"type\":\"set aside\",\"when\":\"\"}],\"generated\":\"2026-11-11T00:00:00Z\",\"kind\":\"final\",\"not_done\":[],\"not_done_n\":0,\"open\":[],\"rmas\":[{\"device\":\"T-XE-A\",\"state\":\"closed\",\"ticket\":\"RMA-1\"}],\"run\":{\"started\":\"\",\"state\":\"idle\"},\"site\":{\"build\":\"TST-512-001\",\"builder\":\"HS-v2.02\",\"code\":\"TST\",\"customer\":\"Test Co\",\"delivered_by\":\"DWR Networking\",\"fingerprint\":\"0123456789abcdef\",\"gpus\":512,\"plan_digest\":\"\",\"racks\":8,\"region\":\"\",\"region_name\":\"Test region \\u00e9\",\"workload\":\"training\"},\"software\":[{\"devices\":4,\"os\":\"cumulus\",\"release\":\"\"},{\"devices\":2,\"os\":\"cumulus\",\"release\":\"5.18.3\"},{\"devices\":2,\"os\":\"eos\",\"release\":\"4.33.2F\"},{\"devices\":2,\"os\":\"ftd\",\"release\":\"7.6.0\"},{\"devices\":2,\"os\":\"iosxe\",\"release\":\"17.12.04\"},{\"devices\":2,\"os\":\"iosxr\",\"release\":\"24.4.2\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"\"},{\"devices\":1,\"os\":\"junos\",\"release\":\"1.0\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"24.4R2-S3\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"25.2X100-D30\"},{\"devices\":2,\"os\":\"nxos\",\"release\":\"10.4(5)\"},{\"devices\":2,\"os\":\"srl\",\"release\":\"24.10.1\"},{\"devices\":2,\"os\":\"sros\",\"release\":\"26.7.R1\"},{\"devices\":1,\"os\":\"weka\",\"release\":\"1.0\"}],\"standards\":[{\"id\":\"HS-ARC-001\",\"rev\":\"2.6\",\"title\":\"Architecture Overview\"},{\"id\":\"HS-DEP-001\",\"rev\":\"2.5\",\"title\":\"Deployment and Acceptance\"}],\"title\":\"Final build report\"},\"generated\":\"2026-11-11T00:00:00Z\",\"kind\":\"post\",\"open\":[],\"results\":[{\"busbw\":412.5,\"by\":\"op1\",\"target\":380.0,\"test\":\"nccl\",\"when\":\"2023-11-14T22:13:20Z\"}],\"site\":{\"build\":\"TST-512-001\",\"builder\":\"HS-v2.02\",\"code\":\"TST\",\"customer\":\"Test Co\",\"delivered_by\":\"DWR Networking\",\"fingerprint\":\"0123456789abcdef\",\"gpus\":512,\"plan_digest\":\"\",\"racks\":8,\"region\":\"\",\"region_name\":\"Test region \\u00e9\",\"workload\":\"training\"},\"software\":[{\"devices\":4,\"os\":\"cumulus\",\"release\":\"\"},{\"devices\":2,\"os\":\"cumulus\",\"release\":\"5.18.3\"},{\"devices\":2,\"os\":\"eos\",\"release\":\"4.33.2F\"},{\"devices\":2,\"os\":\"ftd\",\"release\":\"7.6.0\"},{\"devices\":2,\"os\":\"iosxe\",\"release\":\"17.12.04\"},{\"devices\":2,\"os\":\"iosxr\",\"release\":\"24.4.2\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"\"},{\"devices\":1,\"os\":\"junos\",\"release\":\"1.0\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"24.4R2-S3\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"25.2X100-D30\"},{\"devices\":2,\"os\":\"nxos\",\"release\":\"10.4(5)\"},{\"devices\":2,\"os\":\"srl\",\"release\":\"24.10.1\"},{\"devices\":2,\"os\":\"sros\",\"release\":\"26.7.R1\"},{\"devices\":1,\"os\":\"weka\",\"release\":\"1.0\"}],\"standards\":[{\"id\":\"HS-ARC-001\",\"rev\":\"2.6\",\"title\":\"Architecture Overview\"},{\"id\":\"HS-DEP-001\",\"rev\":\"2.5\",\"title\":\"Deployment and Acceptance\"}],\"title\":\"Post-deployment report\",\"tuning\":{\"approved\":null,\"switches\":0,\"versions\":0}}",
+    "post canon": "{\"acceptance\":[{\"build\":\"Test\",\"detail\":\"admin: checked by J. Doe\",\"evidence\":[],\"item\":\"Servers confirmed\",\"result\":\"confirmed\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"evidence\":[{\"check\":\"t1 bind\",\"note\":\"bound\",\"ok\":true},{\"check\":\"t1 snat\",\"note\":\"\",\"ok\":true},{\"check\":\"t1 cross\",\"note\":\"refused\",\"ok\":true},{\"check\":\"t2 bind\",\"note\":\"\",\"ok\":true},{\"check\":\"t2 snat\",\"note\":\"pool\",\"ok\":true},{\"check\":\"t2 cross\",\"note\":\"\",\"ok\":true}],\"item\":\"Ingress isolation per tenant\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"evidence\":[],\"item\":\"NCCL all-reduce at target\",\"result\":\"running\"}],\"by\":\"admin\",\"completed\":\"2023-11-14T23:13:20Z\",\"counts\":{\"active\":0,\"done\":31,\"flagged\":0,\"set_aside\":2,\"total\":33,\"waiting\":0},\"deviations\":[{\"build\":\"Test\",\"by\":\"admin\",\"detail\":\"hosts not racked: accepted by the customer\",\"item\":\"build gate\",\"type\":\"gate override\",\"when\":\"2023-11-14T23:05:00Z\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"31 of 31 done (2 set aside), every identity matched to TST\",\"item\":\"Every device done\",\"type\":\"accepted warning\",\"when\":\"\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"31 of 31 answer on their management ports (2 set aside)\",\"item\":\"Management reachable\",\"type\":\"accepted warning\",\"when\":\"\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"lab\",\"item\":\"T-NOIP\",\"type\":\"set aside\",\"when\":\"\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"\",\"item\":\"T-CUM-SP3\",\"type\":\"set aside\",\"when\":\"\"}],\"final_build\":{\"asbuilt\":[{\"device\":\"T-CUM-A\",\"identity\":\"SN123\",\"source\":\"as-built\"},{\"device\":\"T-CUM-B\",\"identity\":\"aa:bb:cc:dd:ee:ff\",\"source\":\"bind\"}],\"builds\":[{\"counts\":{\"active\":0,\"done\":31,\"flagged\":0,\"set_aside\":2,\"total\":33,\"waiting\":0},\"gate\":[{\"key\":\"done\",\"kind\":\"\",\"label\":\"Every device done\",\"note\":\"31 of 31 done (2 set aside), every identity matched to TST\",\"result\":\"warn\",\"type\":\"devices_done\"},{\"key\":\"reach\",\"kind\":\"\",\"label\":\"Management reachable\",\"note\":\"31 of 31 answer on their management ports (2 set aside)\",\"result\":\"warn\",\"type\":\"reachable\"},{\"key\":\"srv\",\"kind\":\"\",\"label\":\"Servers confirmed\",\"note\":\"admin: checked by J. Doe\",\"result\":\"confirmed\",\"type\":\"confirm\"},{\"key\":\"iso\",\"kind\":\"isolation\",\"label\":\"Ingress isolation per tenant\",\"note\":\"automatic check queued\",\"result\":\"running\",\"type\":\"auto\"},{\"key\":\"nccl\",\"kind\":\"nccl\",\"label\":\"NCCL all-reduce at target\",\"note\":\"automatic check queued\",\"result\":\"running\",\"type\":\"auto\"}],\"key\":\"be\",\"name\":\"Test\",\"override\":{\"by\":\"admin\",\"reason\":\"hosts not racked: accepted by the customer\",\"when\":\"2023-11-14T23:05:00Z\"},\"passed\":\"2023-11-14T23:13:20Z\",\"state\":\"complete\",\"waves\":1,\"waves_open\":1}],\"by\":\"admin\",\"completed\":\"2023-11-14T23:13:20Z\",\"counts\":{\"active\":0,\"done\":31,\"flagged\":0,\"set_aside\":2,\"total\":33,\"waiting\":0},\"deviations\":[{\"build\":\"Test\",\"by\":\"admin\",\"detail\":\"hosts not racked: accepted by the customer\",\"item\":\"build gate\",\"type\":\"gate override\",\"when\":\"2023-11-14T23:05:00Z\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"31 of 31 done (2 set aside), every identity matched to TST\",\"item\":\"Every device done\",\"type\":\"accepted warning\",\"when\":\"\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"31 of 31 answer on their management ports (2 set aside)\",\"item\":\"Management reachable\",\"type\":\"accepted warning\",\"when\":\"\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"lab\",\"item\":\"T-NOIP\",\"type\":\"set aside\",\"when\":\"\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"\",\"item\":\"T-CUM-SP3\",\"type\":\"set aside\",\"when\":\"\"}],\"generated\":\"2026-11-11T00:00:00Z\",\"kind\":\"final\",\"not_done\":[],\"not_done_n\":0,\"open\":[],\"rmas\":[{\"device\":\"T-XE-A\",\"state\":\"closed\",\"ticket\":\"RMA-1\"}],\"run\":{\"started\":\"\",\"state\":\"idle\"},\"site\":{\"build\":\"TST-512-001\",\"builder\":\"HS-v2.02\",\"code\":\"TST\",\"customer\":\"Test Co\",\"delivered_by\":\"DWR Networking\",\"fingerprint\":\"0123456789abcdef\",\"gpus\":512,\"plan_digest\":\"\",\"racks\":8,\"region\":\"\",\"region_name\":\"Test region \\u00e9\",\"workload\":\"training\"},\"software\":[{\"devices\":4,\"os\":\"cumulus\",\"release\":\"\"},{\"devices\":2,\"os\":\"cumulus\",\"release\":\"5.18.3\"},{\"devices\":1,\"os\":\"eos\",\"release\":\"\"},{\"devices\":2,\"os\":\"eos\",\"release\":\"4.33.2F\"},{\"devices\":2,\"os\":\"ftd\",\"release\":\"7.6.0\"},{\"devices\":2,\"os\":\"iosxe\",\"release\":\"17.12.04\"},{\"devices\":2,\"os\":\"iosxr\",\"release\":\"24.4.2\"},{\"devices\":4,\"os\":\"junos\",\"release\":\"\"},{\"devices\":1,\"os\":\"junos\",\"release\":\"1.0\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"24.4R2-S3\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"25.2X100-D30\"},{\"devices\":1,\"os\":\"nxos\",\"release\":\"\"},{\"devices\":2,\"os\":\"nxos\",\"release\":\"10.4(5)\"},{\"devices\":1,\"os\":\"srl\",\"release\":\"\"},{\"devices\":2,\"os\":\"srl\",\"release\":\"24.10.1\"},{\"devices\":2,\"os\":\"sros\",\"release\":\"26.7.R1\"},{\"devices\":1,\"os\":\"weka\",\"release\":\"1.0\"}],\"standards\":[{\"id\":\"HS-ARC-001\",\"rev\":\"2.6\",\"title\":\"Architecture Overview\"},{\"id\":\"HS-DEP-001\",\"rev\":\"2.5\",\"title\":\"Deployment and Acceptance\"}],\"title\":\"Final build report\"},\"generated\":\"2026-11-11T00:00:00Z\",\"kind\":\"post\",\"open\":[],\"results\":[{\"busbw\":412.5,\"by\":\"op1\",\"target\":380.0,\"test\":\"nccl\",\"when\":\"2023-11-14T22:13:20Z\"}],\"site\":{\"build\":\"TST-512-001\",\"builder\":\"HS-v2.02\",\"code\":\"TST\",\"customer\":\"Test Co\",\"delivered_by\":\"DWR Networking\",\"fingerprint\":\"0123456789abcdef\",\"gpus\":512,\"plan_digest\":\"\",\"racks\":8,\"region\":\"\",\"region_name\":\"Test region \\u00e9\",\"workload\":\"training\"},\"software\":[{\"devices\":4,\"os\":\"cumulus\",\"release\":\"\"},{\"devices\":2,\"os\":\"cumulus\",\"release\":\"5.18.3\"},{\"devices\":1,\"os\":\"eos\",\"release\":\"\"},{\"devices\":2,\"os\":\"eos\",\"release\":\"4.33.2F\"},{\"devices\":2,\"os\":\"ftd\",\"release\":\"7.6.0\"},{\"devices\":2,\"os\":\"iosxe\",\"release\":\"17.12.04\"},{\"devices\":2,\"os\":\"iosxr\",\"release\":\"24.4.2\"},{\"devices\":4,\"os\":\"junos\",\"release\":\"\"},{\"devices\":1,\"os\":\"junos\",\"release\":\"1.0\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"24.4R2-S3\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"25.2X100-D30\"},{\"devices\":1,\"os\":\"nxos\",\"release\":\"\"},{\"devices\":2,\"os\":\"nxos\",\"release\":\"10.4(5)\"},{\"devices\":1,\"os\":\"srl\",\"release\":\"\"},{\"devices\":2,\"os\":\"srl\",\"release\":\"24.10.1\"},{\"devices\":2,\"os\":\"sros\",\"release\":\"26.7.R1\"},{\"devices\":1,\"os\":\"weka\",\"release\":\"1.0\"}],\"standards\":[{\"id\":\"HS-ARC-001\",\"rev\":\"2.6\",\"title\":\"Architecture Overview\"},{\"id\":\"HS-DEP-001\",\"rev\":\"2.5\",\"title\":\"Deployment and Acceptance\"}],\"title\":\"Post-deployment report\",\"tuning\":{\"approved\":null,\"switches\":0,\"versions\":0}}",
     "post csv": "build,item,result,detail\r\nTest,Servers confirmed,confirmed,admin: checked by J. Doe\r\nTest,Ingress isolation per tenant,running,automatic check queued\r\nTest,NCCL all-reduce at target,running,automatic check queued\r\n",
     "progress": {
      "activity_12h": [
@@ -11651,10 +11998,10 @@
       {
        "counts": {
         "active": 0,
-        "done": 26,
+        "done": 31,
         "flagged": 0,
         "set_aside": 2,
-        "total": 28,
+        "total": 33,
         "waiting": 0
        },
        "gate": [
@@ -11662,7 +12009,7 @@
          "key": "done",
          "kind": "",
          "label": "Every device done",
-         "note": "26 of 26 done (2 set aside), every identity matched to TST",
+         "note": "31 of 31 done (2 set aside), every identity matched to TST",
          "result": "warn",
          "type": "devices_done"
         },
@@ -11670,7 +12017,7 @@
          "key": "reach",
          "kind": "",
          "label": "Management reachable",
-         "note": "26 of 26 answer on their management ports (2 set aside)",
+         "note": "31 of 31 answer on their management ports (2 set aside)",
          "result": "warn",
          "type": "reachable"
         },
@@ -11715,10 +12062,10 @@
      "by": "admin",
      "counts": {
       "active": 0,
-      "done": 26,
+      "done": 31,
       "flagged": 0,
       "set_aside": 2,
-      "total": 28,
+      "total": 33,
       "waiting": 0
      },
      "generated": "<T>",
@@ -11763,7 +12110,7 @@
      ],
      "title": "Progress build report"
     },
-    "progress csv": "build,state,total,done,active,waiting,flagged,set_aside\r\nTest,complete,28,26,0,0,0,2\r\n",
+    "progress csv": "build,state,total,done,active,waiting,flagged,set_aside\r\nTest,complete,33,31,0,0,0,2\r\n",
     "ready": {
      "cert": {
       "ok": true,
@@ -12825,11 +13172,11 @@
      {
       "evidence": {
        "bus bandwidth at target": {
-        "note": "lowest 399.8 GB/s against 380.0",
+        "note": "median 400.6 GB/s against 380.0",
         "ok": true
        },
        "bus bandwidth steady through the soak": {
-        "note": "lowest 399.8 GB/s against a median of 400.6 (within 5%), 5 runs",
+        "note": "1st-percentile run 399.8 GB/s against a median of 400.6 (within 5%); 0 of 5 runs below",
         "ok": true
        },
        "no PFC watchdog events": {
@@ -12900,11 +13247,11 @@
      {
       "evidence": {
        "bus bandwidth at target": {
-        "note": "lowest 350.4 GB/s against 380.0",
-        "ok": false
+        "note": "median 400.4 GB/s against 380.0",
+        "ok": true
        },
        "bus bandwidth steady through the soak": {
-        "note": "lowest 350.4 GB/s against a median of 400.4 (within 5%), 6 runs",
+        "note": "1st-percentile run 350.4 GB/s against a median of 400.4 (within 5%); 1 of 6 runs below",
         "ok": false
        },
        "no link flaps on the host links": {
@@ -12928,7 +13275,7 @@
         "ok": false
        }
       },
-      "note": "5 failing: soak ran its full duration, bus bandwidth steady through the soak, bus bandwidth at target, no link flaps on the host links +1 more (op1)",
+      "note": "4 failing: soak ran its full duration, bus bandwidth steady through the soak, no link flaps on the host links, no loss at the hosts (op1)",
       "result": "blocked"
      }
     ],
@@ -12961,11 +13308,11 @@
      {
       "evidence": {
        "bus bandwidth at target": {
-        "note": "lowest 399.8 GB/s against 500.0",
+        "note": "median 400.6 GB/s against 500.0",
         "ok": false
        },
        "bus bandwidth steady through the soak": {
-        "note": "lowest 399.8 GB/s against a median of 400.6 (within 5%), 5 runs",
+        "note": "1st-percentile run 399.8 GB/s against a median of 400.6 (within 5%); 0 of 5 runs below",
         "ok": true
        },
        "host counters": {
@@ -13064,6 +13411,20 @@
     "ret": [
      false,
      "no SOAK lines in the text (paste the output of acceptance/soak.sh)"
+    ],
+    "stored": {}
+   },
+   {
+    "eval": [
+     {
+      "evidence": {},
+      "note": "waiting for the soak (runner or uploaded results)",
+      "result": "waiting"
+     }
+    ],
+    "ret": [
+     false,
+     "soak.sh stopped: no rail RDMA device in 10.10.0.0/15 on h1"
     ],
     "stored": {}
    },
@@ -13234,17 +13595,17 @@
     "nv set qos roce mode lossless"
    ],
    {
-    "note": "12 of 13 planned lossless lines in effect; missing: nv set qos congestion-control default-global traffic-class 3 min-threshold 300KB",
+    "note": "12 of 15 planned lossless lines in effect; missing: nv set interface swp1 link mtu 9216; nv set interface swp2 link mtu 9216; nv set qos congestion-control default-global traffic-class 3 min-threshold 300KB",
     "ok": false,
-    "text": "- nv set qos congestion-control default-global traffic-class 3 min-threshold 300KB"
+    "text": "- nv set interface swp1 link mtu 9216\n- nv set interface swp2 link mtu 9216\n- nv set qos congestion-control default-global traffic-class 3 min-threshold 300KB"
    },
    [
     "a"
    ],
    {
-    "note": "12 of 12 planned lossless lines in effect",
-    "ok": true,
-    "text": ""
+    "note": "12 of 14 planned lossless lines in effect; missing: nv set interface swp1 link mtu 9216; nv set interface swp2 link mtu 9216",
+    "ok": false,
+    "text": "- nv set interface swp1 link mtu 9216\n- nv set interface swp2 link mtu 9216"
    }
   ],
   "tuned": [
@@ -13298,6 +13659,10 @@
       "note": "v0",
       "ok": false
      },
+     "T-EOS-SP1": {
+      "note": "v0",
+      "ok": false
+     },
      "T-FTD-A": {
       "note": "v0",
       "ok": false
@@ -13326,6 +13691,14 @@
       "note": "v0",
       "ok": false
      },
+     "T-JUNOS-SP1": {
+      "note": "v0",
+      "ok": false
+     },
+     "T-JUNOS-SP2": {
+      "note": "v0",
+      "ok": false
+     },
      "T-NOIP": {
       "note": "v0",
       "ok": false
@@ -13342,11 +13715,19 @@
       "note": "v0",
       "ok": false
      },
+     "T-NXOS-SP1": {
+      "note": "v0",
+      "ok": false
+     },
      "T-SRL-A": {
       "note": "v0",
       "ok": false
      },
      "T-SRL-B": {
+      "note": "v0",
+      "ok": false
+     },
+     "T-SRL-SP1": {
       "note": "v0",
       "ok": false
      },
@@ -13375,7 +13756,7 @@
       "ok": false
      }
     },
-    "note": "1 of 27 back-end switches at approved v1; rollout stopped at pod 1",
+    "note": "1 of 32 back-end switches at approved v1; rollout stopped at pod 1",
     "result": "blocked"
    },
    {
@@ -13395,7 +13776,9 @@
    "10.4.5",
    "24.10.1.492",
    "",
-   ""
+   "",
+   "17.15.6",
+   "7.0"
   ]
  }
 }
