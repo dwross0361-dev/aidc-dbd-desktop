@@ -1,3 +1,9 @@
+# AIDC DBD Desktop 2.1.6 (builder HS-v2.07, site runner 1.11.0)
+
+- **Setup on large sites.** Rendering the secrets into the device files now shows its progress (`[..] rendering secrets: 41,200 of 184,711 files (25%), about 6 min left`, estimated by bytes, so the large configurations going first do not skew it; one line per 10% when unattended) and reports its time. It is about three times faster: lines without a token are passed straight through. The rendered files are byte-identical to before.
+- **`estate` command.** Setup installs `/usr/local/bin/estate`, the service CLI for whichever engine is installed: `sudo estate user list`, `user add`, `user reset`, `status`. Decommission removes it.
+- **Deployment Console, scoped logins.** Each device tile shows its rack and row. For an operator, a device outside its planes or rows is faded, a plane-wide device (spines, super spines, OOB cores, border leaves, the Edge PoP) is tagged **plane lead**, and a new **Mine** filter lists only the devices it acts on. The Floor view counts only that login's devices per cabinet and fades a cabinet with none ("not yours"). Admins see the console as before.
+
 # AIDC DBD Desktop 2.1.5 (builder HS-v2.06, site runner 1.11.0)
 
 - **The acceptance-script release check** (`provgo/acctest/`). Every acceptance test of the reference designs is run on a simulated site (mock SSH, RDMA, NIC counters, perftest, mpirun, iperf3, fio, hey, kubectl, curl, lldpctl), first correct and then with each fault planted, and scored by both engines. Every verdict must be the expected one (pass, fail for the planted cause, or a setup failure naming why), the engines must agree, and the console's cable plan must equal `cabling-expected.csv` link for link. It runs before every release with the differential test; a change to an acceptance script or its scoring updates its case in the same commit.

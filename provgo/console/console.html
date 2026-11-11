@@ -50,6 +50,7 @@ h2{margin:0;font-size:17px}
 .cols{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:6px}
 .tile{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-height:48px;padding:6px 8px;border-radius:6px;text-align:left}
+.tile .l{font-size:10px;color:#5b6770}.tile.oos,.rk.oos{opacity:.42}.tile .pl{font-size:9px;font-weight:700;color:#6b3d0a;background:#fdf1dc;border-radius:3px;padding:0 4px;margin-left:4px;white-space:nowrap}
 .tile .n{font-family:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;font-weight:600}.tile .s{font-size:11px}
 .t0{background:var(--q-bg);color:var(--q-fg);border:1px solid var(--q-bd)}.t1{background:var(--a-bg);color:var(--a-fg);border:1px solid var(--a-bd)}
 .t6{background:#2f8f54;color:#fff;border:1px solid #1f6b3d}.tf{background:#c2410c;color:#fff;border:1px solid #9a3412}
@@ -285,6 +286,13 @@ function canAct(plane, dev){ if(!S.who||S.mode!=='live') return false; if(S.who.
   if(!(S.who.role==='operator' && !!plane && (S.who.planes||[]).indexOf(plane)>=0)) return false;
   var R=S.who.rows||[]; if(!R.length) return true;   // HS v1.91: a row login acts on its rows' devices only; plane-wide devices and plane actions need the plane lead
   var d=dev&&S.plan&&S.plan.devices&&S.plan.devices[dev]; return !!(d && d.row && R.indexOf(d.row)>=0); }
+// HS v2.07: what this login may act on, per device: '' yes; 'plane' not one of its planes; 'row' not one of its rows;
+// 'lead' plane-wide (no row: spines, super spines, OOB cores, border leaves, the Edge PoP), for the plane lead
+function scopeOf(n){ if(!S.who||S.who.role!=='operator') return '';
+  var pl=planeOf(n); if(!pl||(S.who.planes||[]).indexOf(pl)<0) return 'plane';
+  var R=S.who.rows||[]; if(!R.length) return '';
+  var d=S.plan&&S.plan.devices&&S.plan.devices[n]; if(!d||!d.row) return 'lead'; return R.indexOf(d.row)>=0?'':'row'; }
+var SCOPE_WHY={plane:'not one of your planes', row:'not in your rows', lead:'plane-wide: the plane lead acts on it'};
 function rowsTxt(u){ return (u.rows&&u.rows.length)?(' \u00b7 rows '+u.rows.join(', ')):''; }
 function showPw(forced){ var shown=$('pwView').style.display==='flex'; S.pwForced=forced!==false;   // HS v1.21: typed fields survive a re-show
   if(S.pwForced) $('pwWho').textContent='This login has a temporary password. Choose your own to continue: at least 12 characters, not your user name.';
@@ -419,13 +427,16 @@ function render(){
   document.querySelectorAll('[data-b]').forEach(function(e){ e.onclick=function(){ S.bsel=e.dataset.b; try{ localStorage.setItem('estate.bsel', S.bsel); }catch(x){} render(); }; });   // HS v1.25
   // grid
   var FL=[['all','All'],['oob','OOB'],['edge','Edge-PoP'],['fe','Front end'],['be','Back end'],['problems','Problems']];
+  var _scoped=!!(S.who&&S.who.role==='operator'); if(_scoped) FL.push(['mine','Mine']); else if(S.filter==='mine') S.filter='all';   // HS v2.07
+  var cabL={}; (P.floor||[]).forEach(function(r){ r.cabinets.forEach(function(c){ cabL[c.id]=c.label; }); });
   $('filters').innerHTML=FL.map(function(f){ return '<button data-f="'+f[0]+'" class="'+(S.filter===f[0]?'on':'')+'">'+f[1]+'</button>'; }).join('');
   document.querySelectorAll('[data-f]').forEach(function(e){ e.onclick=function(){ S.filter=e.dataset.f; render(); }; });
   var cnt=0, html='';
-  st.builds.forEach(function(b){ if(!(S.filter==='all'||S.filter==='problems'||S.filter===b.key)) return;
-    var tiles=''; b.waves.forEach(function(w){ w.devices.forEach(function(n){ var x=V.devices[n];
-      if(S.filter==='problems' && !x.flag) return; cnt++;
-      tiles+='<button class="tile '+tileClass(x)+(S.sel===n?' tsel':'')+'" data-d="'+esc(n)+'" title="'+esc(n+' — '+P.devices[n].role)+'"><span class="n">'+esc(P.devices[n].short)+'</span><span class="s">'+esc(stageTxt(n,x))+'</span></button>'; }); });
+  st.builds.forEach(function(b){ if(!(S.filter==='all'||S.filter==='problems'||S.filter==='mine'||S.filter===b.key)) return;
+    var tiles=''; b.waves.forEach(function(w){ w.devices.forEach(function(n){ var x=V.devices[n], dd=P.devices[n], sc=scopeOf(n);
+      if(S.filter==='problems' && !x.flag) return; if(S.filter==='mine' && sc) return; cnt++;
+      var loc=[dd.rack?(cabL[dd.rack]||dd.rack):'', dd.row||''].filter(Boolean).join(' \u00b7 ');   // HS v2.07: where it is racked
+      tiles+='<button class="tile '+tileClass(x)+(S.sel===n?' tsel':'')+(sc?' oos':'')+'" data-d="'+esc(n)+'" title="'+esc(n+' — '+dd.role+(loc?' — '+loc:'')+(sc?' — '+SCOPE_WHY[sc]:''))+'"><span class="n">'+esc(dd.short)+'</span><span class="s">'+esc(stageTxt(n,x))+'</span>'+((loc||sc==='lead')?'<span class="l">'+esc(loc)+(sc==='lead'?'<span class="pl">plane lead</span>':'')+'</span>':'')+'</button>'; }); });
     if(tiles) html+='<div style="display:flex;flex-direction:column;gap:6px"><div class="glabel">'+esc(b.name)+'</div><div class="grid">'+tiles+'</div></div>'; });
   $('groups').innerHTML=html||'<div class="muted">Nothing to show.</div>'; $('gCount').textContent='· '+cnt+' shown';
   document.querySelectorAll('[data-d]').forEach(function(e){ e.onclick=function(){ S.sel=e.dataset.d; render(); loadDetail(); }; });
@@ -519,10 +530,11 @@ function render(){
   var byCab={}; Object.keys(P.devices).forEach(function(n){ var r=P.devices[n].rack; if(r) (byCab[r]=byCab[r]||[]).push(n); });
   var _myR=(S.who&&S.who.role==='operator'&&S.who.rows)||[];   // HS v1.91: a row login's own rows are marked
   $('floor').innerHTML=(P.floor||[]).map(function(r){ var mine=_myR.indexOf(r.row)>=0; return '<div class="frow'+(mine?' mine':'')+'"><div class="rl">'+esc(r.row)+(mine?' <span class="chip k-done" style="font-size:10px">yours</span>':'')+'</div><div class="row" style="flex:1 1 auto;flex-wrap:nowrap;gap:6px">'+r.cabinets.map(function(c){
-    var L=byCab[c.id]||[], n=L.length, d=L.filter(function(x){ return V.devices[x].stage===6; }).length, bad=L.some(function(x){ return /failed|missing/.test(V.devices[x].flag); }),
+    var LA=byCab[c.id]||[], L=_myR.length||(S.who&&S.who.role==='operator')?LA.filter(function(x){ return !scopeOf(x); }):LA, n=L.length, d=L.filter(function(x){ return V.devices[x].stage===6; }).length, bad=L.some(function(x){ return /failed|missing/.test(V.devices[x].flag); }),
         w=L.some(function(x){ return /unclaimed|waiting|rma/.test(V.devices[x].flag); }), a=L.some(function(x){ return V.devices[x].stage>0; });
     var k=bad?'tf':w?'tw':(n&&d===n)?'t6':a?'t1':'t0';
-    return '<div class="rk tile '+k+'" title="'+esc(c.id+': '+L.map(function(x){ return P.devices[x].short; }).join(', '))+'"><span class="mono" style="font-weight:600">'+esc(c.label)+'</span><span>'+(n?(d+'/'+n):'—')+'</span></div>'; }).join('')+'</div></div>'; }).join('');
+    var oos=LA.length&&!L.length;
+    return '<div class="rk tile '+k+(oos?' oos':'')+'" title="'+esc(c.id+': '+LA.map(function(x){ return P.devices[x].short+(scopeOf(x)?' ('+SCOPE_WHY[scopeOf(x)]+')':''); }).join(', '))+'"><span class="mono" style="font-weight:600">'+esc(c.label)+'</span><span>'+(n?(d+'/'+n):(LA.length?'not yours':'—'))+'</span></div>'; }).join('')+'</div></div>'; }).join('');
   // alert banner
   var fails=Object.keys(V.devices).filter(function(n){ return /failed|missing/.test(V.devices[n].flag); });
   var al=$('alert');
