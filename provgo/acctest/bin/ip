@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# ip -4 -o addr show [dev X]
+f=$MOCK/fake/$MOCKHOST/addrs; [ -f "$f" ] || exit 0
+dev=""; a=("$@"); for i in "${!a[@]}"; do [ "${a[$i]}" = dev ] && dev=${a[$((i+1))]}; done
+n=1; while read -r d ipl; do [ -z "$dev" ] || [ "$dev" = "$d" ] && echo "$n: $d    inet $ipl brd 0.0.0.0 scope global $d\       valid_lft forever preferred_lft forever"; n=$((n+1)); done < "$f"

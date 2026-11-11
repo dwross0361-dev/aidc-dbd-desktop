@@ -1,0 +1,3 @@
+#!/bin/sh
+# acctest mock lldpctl -f keyvalue: the switch's neighbors ($MOCK/fake/<switch>/lldp)
+cat "$MOCK/fake/$MOCKHOST/lldp" 2>/dev/null

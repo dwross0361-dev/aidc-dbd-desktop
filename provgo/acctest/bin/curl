@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# acctest mock curl for ingress_isolation.sh: $MOCK/iso/<vip> holds "<namespace> <snat address>"; $MOCK/iso.leak names a VIP whose
+# requests land in another namespace (second word)
+u="${@: -1}"; vip=$(echo "$u" | sed 's#https://\([^/]*\)/.*#\1#'); read -r ns sn < "$MOCK/iso/$vip" 2>/dev/null || exit 7
+if [ -f "$MOCK/iso.leak" ]; then read -r lv lns < "$MOCK/iso.leak"; [ "$lv" = "$vip" ] && ns=$lns; fi
+case "$u" in */hostname) printf 'iso-%s' "$ns" ;; */clientip) echo "$sn:41234" ;; esac

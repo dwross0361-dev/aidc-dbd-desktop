@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# acctest mock ssh: runs the command here as host <h>, against that host's fake sysfs and tool data ($MOCK/fake/<h>)
+nostdin=0; while [ $# -gt 0 ]; do case "$1" in -n) nostdin=1; shift ;; -o|-p|-i|-l) shift 2 ;; -*) shift ;; *) break ;; esac; done
+h=${1#*@}; shift; cmd="$*"
+[ -d "$MOCK/fake/$h" ] || { echo "ssh: Could not resolve hostname $h" >&2; exit 255; }
+fx(){ local s=${1//\/sys\/class\/infiniband/$MOCK\/fake\/$h\/ib}; printf '%s' "${s//\/sys\/class\/net/$MOCK\/fake\/$h\/net}"; }
+cmd=$(fx "$cmd")
+if [ $nostdin = 1 ]; then MOCKHOST=$h bash -c "$cmd" </dev/null
+elif [[ "$cmd" == *"bash -s"* ]]; then body=$(cat); MOCKHOST=$h bash -c "$cmd" <<< "$(fx "$body")"
+else MOCKHOST=$h bash -c "$cmd"; fi

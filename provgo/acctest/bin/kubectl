@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# acctest mock kubectl for ingress_isolation.sh: apply/delete/rollout succeed; "exec ... agnhost connect" reaches a probe in its own
+# namespace (not while $MOCK/iso.noself exists) and another namespace's only while $MOCK/iso.open exists
+case "$*" in
+  apply*|delete*|*rollout*) exit 0 ;;
+  *exec*connect*) src=$2; dst=$(echo "$*" | sed -n 's/.*iso-probe\.\([^.]*\)\.svc.*/\1/p')
+     if [ "$src" = "$dst" ]; then [ -f "$MOCK/iso.noself" ] && exit 1; exit 0; fi
+     [ -f "$MOCK/iso.open" ] && exit 0; exit 1 ;;
+esac
+exit 0

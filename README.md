@@ -2,7 +2,7 @@
 
 DWR Networking internal. The AIDC DBD Hyperscale builder as a Windows app, with the site runner built in.
 
-- **The builder** runs unchanged in the main window (builder `HS-v2.05`).
+- **The builder** runs unchanged in the main window (builder `HS-v2.06`).
 - **Saves:** every download lands in your project folder. Nothing is overwritten: a second copy is saved as `name (2)`.
 - **Past 512 racks**, the Final package, the Review package and the .run are built by the built-in site runner.
   - The runner is a separate process with the workstation's memory, so a window's 4 GB limit does not apply to it.
@@ -90,6 +90,8 @@ npx electron-builder --win nsis --x64 --publish never
 ```
 
 **Neutrality gate** (`tools/neutrality-check.js`, also the first step of the GitHub build): it fails on an internal standards, deviation, tenancy or Edge PoP clause id, a person's title, or an organization name on the banned list, in the builder (and the pages and binaries it embeds), the runner, the app and `provgo`. Before a release, run it on the outputs of a test build too: `node tools/neutrality-check.js <job folder>` reads into the package zip, the .run payload, workbooks and PDFs.
+
+**Acceptance-script check** (`provgo/acctest/acctest.py`, 2.1.5): before a release, every acceptance test of the reference `.run` files is run on a simulated site, correct and with each fault planted, and scored by both engines: `python3 provgo/acctest/acctest.py --work <dir> --jobs 4 --run <A.run> --run <B.run> ...`. Any unexpected verdict or engine difference fails the release. A change to an acceptance script or its scoring updates its case in the same commit (see `provgo/acctest/README.md`).
 
 **Release identity:** a builder release is its file, identified by SHA-256. The app hands the SHA-256 to the window, the site-runner file carries it, and the site runner refuses a design exported from a different builder file.
 

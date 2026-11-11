@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# mock hey: rate = c*q capped by c/latency; latency from $MOCK/hey.lat (s, default 0.5)
+c=1; q=0; z=60s; a=("$@"); for i in "${!a[@]}"; do [ "${a[$i]}" = -c ] && c=${a[$((i+1))]}; [ "${a[$i]}" = -q ] && q=${a[$((i+1))]}; [ "${a[$i]}" = -z ] && z=${a[$((i+1))]}; done
+lat=$(cat $MOCK/hey.lat 2>/dev/null || echo 0.5); d=${z%s}
+r=$(awk -v c=$c -v q=$q -v l=$lat 'BEGIN{x=c*q; m=c/l; print (x<m)?x:m}'); n=$(awk -v r=$r -v d=$d 'BEGIN{printf "%d", r*d}')
+printf "\nSummary:\n  Total:\t%d.0012 secs\n  Requests/sec:\t%.4f\n\nLatency distribution:\n  50%% in %.4f secs\n  99%% in %.4f secs\n\nStatus code distribution:\n  [200]\t%d responses\n\n" $d $r $lat $(awk -v l=$lat 'BEGIN{print l*1.5}') $n

@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# acctest mock perftest: a server waits; a client prints one result line at 98% of the port rate ($MOCK/fake/<h>/bw overrides per
+# device: "<dev> <Gb/s>" or "* <Gb/s>"), or fails as perftest does when the GID index is not the device's RoCE v2 IPv4 GID
+dev=""; gx=""; a=("$@"); for i in "${!a[@]}"; do [ "${a[$i]}" = -d ] && dev=${a[$((i+1))]}; [ "${a[$i]}" = -x ] && gx=${a[$((i+1))]}; done
+F=$MOCK/fake/$MOCKHOST/ib/$dev/ports/1; want=$(cat "$F/v2gid" 2>/dev/null)
+last=${!#}; if [[ "$last" == -* ]] || [[ "$last" =~ ^[0-9]+$ ]] || [ $# -lt 2 ]; then sleep 0.3; exit 0; fi
+[ "$gx" = "$want" ] || { echo "Failed to modify QP to RTR (GID index $gx is not the RoCE v2 GID $want)"; exit 1; }
+bwf=$MOCK/fake/$MOCKHOST/bw; bw=$( [ -f "$bwf" ] && { grep "^$dev " "$bwf"; grep '^\* ' "$bwf"; } | awk '{print $2}' | head -1 )
+[ -n "$bw" ] || bw=$(awk '{printf "%.2f", $1*0.98}' "$F/rate")
+echo " #bytes     #iterations    BW peak[Gb/sec]    BW average[Gb/sec]   MsgRate[Mpps]"
+echo " 65536      1000000          $bw             $bw            0.748"

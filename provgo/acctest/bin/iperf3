@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+case " $* " in *" -s "*) sleep 0.2; exit 0 ;; esac
+P=1; t=30; port=0; a=("$@"); for i in "${!a[@]}"; do [ "${a[$i]}" = -P ] && P=${a[$((i+1))]}; [ "${a[$i]}" = -t ] && t=${a[$((i+1))]}; [ "${a[$i]}" = -p ] && port=${a[$((i+1))]}; done
+ph=down; [ "$port" -ge 24000 ] && ph=up
+tot=$((1000*t)); L=$MOCK/iperf.lost.$ph
+for s in $(seq 1 "$P"); do id=$((s+4)); lost=$( [ -f "$L" ] && sed -n "${s}p" "$L"); lost=${lost:-0}
+  printf "[%3d]   0.00-%d.00  sec  3.58 GBytes  1000 Mbits/sec  0.000 ms  0/%d (0%%)  sender\n" $id $t $tot
+  printf "[%3d]   0.00-%d.00  sec  3.58 GBytes  1000 Mbits/sec  0.012 ms  %d/%d (0%%)  receiver\n" $id $t $lost $tot; done
+printf "[SUM]   0.00-%d.00  sec  3.58 GBytes  32000 Mbits/sec  0.012 ms  0/%d (0%%)  receiver\n" $t $tot

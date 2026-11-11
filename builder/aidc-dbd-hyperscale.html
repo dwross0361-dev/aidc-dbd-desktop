@@ -1005,7 +1005,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v2.05';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v2.06';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   // HS v1.59: Vera Rubin NVL72 at 2 planes x 800G, NVIDIA's public reference layout (Owner decision D11); see the VR profile.
   // HS v1.58: the customer input sheet and importer (inputSheetImport, the SESSION_IN overlay); see the input sheet block.
   // HS v1.57 (release identity): the release is identified by the SHA-256 of this file, not by the string above (HS-v1.56 r1, r2
@@ -30707,7 +30707,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
   // HS v2.02: the standards library this release builds to (the Certificate of Conformance names each with its revision)
   var STD_LIBRARY=[['HS-ARC-001','Architecture Overview','2.6'],['HS-IPP-001','Addressing and ASN Plan','2.4'],['HS-OOB-001','OOB and Management','2.4'],
     ['HS-EDG-001','Edge and Security','2.3'],['HS-FE-001','Front-End Fabric','2.3'],['HS-BE-001','Back-End Fabric','2.5'],['HS-PHY-001','Physical Infrastructure','2.2'],
-    ['HS-CBL-001','Cabling','2.2'],['HS-DEP-001','Deployment and Acceptance','2.8'],['HS-DEP-002','Deployment Test Plan','2.8'],['HS-DEP-003','Site Deployment Runbook','2.8']];
+    ['HS-CBL-001','Cabling','2.2'],['HS-DEP-001','Deployment and Acceptance','2.9'],['HS-DEP-002','Deployment Test Plan','2.9'],['HS-DEP-003','Site Deployment Runbook','2.8']];
   var APP_NAME='AIDC DBD Hyperscale';   // v515: the name the deliverables carry
   var DWR_ID={name:'DWR Networking', person:'David Ross', email:'dross@dwrnetworking.com', web:'dwrnetworking.com'};
   function identGpus(){ try{ return byType('rack').reduce(function(a,r){ return a+(r.hosts||0)*ACC_PER_HOST; },0); }catch(e){ return 0; } }

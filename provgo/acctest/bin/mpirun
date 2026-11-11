@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# acctest mock mpirun: an nccl-tests report at $MOCK/busbw (default 392.4 GB/s; one value per line, one line per run); fails to
+# launch while $MOCK/mpifail exists. Logs the call and NCCL_IB_HCA.
+echo "mpirun $* | NCCL_IB_HCA=${NCCL_IB_HCA:-unset}" >> "$MOCK/mpirun.log"
+if [ -f "$MOCK/mpifail" ]; then echo "mpirun was unable to launch the specified application as it could not access or execute an executable"; exit 213; fi
+f=$MOCK/busbw; v=392.4; if [ -f "$f" ]; then v=$(head -1 "$f"); tail -n +2 "$f" > "$f.t"; if [ -s "$f.t" ]; then mv "$f.t" "$f"; else rm -f "$f" "$f.t"; fi; fi
+echo "#  Out of bounds values : 0 OK"; echo "# Avg bus bandwidth    : $v"; echo "#"

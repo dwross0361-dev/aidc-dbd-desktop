@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# rdma link show [dev/1]
+f=$MOCK/fake/$MOCKHOST/rdma; [ -f "$f" ] || exit 0
+if [ -n "${3:-}" ]; then grep "^link ${3} " "$f"; else cat "$f"; fi

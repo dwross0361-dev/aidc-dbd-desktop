@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# ethtool -S <dev>: the host's counters for that netdev, cumulative (each call adds the per-call increments)
+f=$MOCK/fake/$MOCKHOST/eth.$2; [ -f "$f" ] || exit 0
+echo "NIC statistics:"; awk '{print "     "$1": "$2}' "$f"
+inc=$MOCK/fake/$MOCKHOST/eth.$2.inc; [ -f "$inc" ] && { awk 'NR==FNR{d[$1]=$2; next} {v=$2+(($1 in d)?d[$1]:0); print $1, v}' "$inc" "$f" > "$f.tmp" && mv "$f.tmp" "$f"; }
+exit 0

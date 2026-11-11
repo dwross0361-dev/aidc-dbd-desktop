@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# fio --minimal: terse v3; field 7 read KiB/s, field 48 write KiB/s (per-host value from $MOCK/fake/<host>/fio, Gb/s)
+g=$(cat "$MOCK/fake/$MOCKHOST/fio" 2>/dev/null || echo 180); k=$(awk -v g="$g" 'BEGIN{printf "%d", g*1e9/8/1024}')
+f=(); for i in $(seq 1 130); do f+=(0); done; f[0]=3; f[6]=$k; f[47]=$k; (IFS=';'; echo "${f[*]}")
