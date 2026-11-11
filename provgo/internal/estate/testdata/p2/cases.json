@@ -1327,6 +1327,69 @@
     "A"
    ],
    "text": "nothing\n"
+  },
+  {
+   "kind": "inference",
+   "tenants": [
+    [
+     "TENANT-01",
+     900
+    ],
+    [
+     "TENANT-02",
+     900
+    ]
+   ],
+   "text": "INFERENCE TENANT-01 rps PASS measured 79650.2/s against 80000/s, 12 of 4779024 failed\nINFERENCE TENANT-01 p99 PASS 612 ms against 900 ms\nINFERENCE TENANT-02 rps FAIL measured 7000.1/s against 8000/s, 1012 of 420012 failed\nINFERENCE TENANT-02 p99 FAIL 1234 ms against 900 ms\n"
+  },
+  {
+   "kind": "inference",
+   "tenants": [
+    [
+     "A",
+     0
+    ]
+   ],
+   "text": "INFERENCE A rps PASS measured 10.0/s against 10/s, 0 of 600 failed\n"
+  },
+  {
+   "kind": "inference",
+   "tenants": [
+    [
+     "A",
+     500
+    ],
+    [
+     "B",
+     500
+    ]
+   ],
+   "text": "INFERENCE A rps PASS ok\n"
+  },
+  {
+   "kind": "inference",
+   "tenants": [
+    [
+     "A",
+     500
+    ]
+   ],
+   "text": "INFERENCE - setup FAIL hey not found on the client\n"
+  },
+  {
+   "kind": "inference",
+   "tenants": null,
+   "text": "INFERENCE T9 rps PASS ok\nINFERENCE T9 p99 PASS 10 ms against 20 ms\nINFERENCE T8 setup FAIL VIP or hostname not set\n"
+  },
+  {
+   "kind": "inference",
+   "tenants": [
+    [
+     "A",
+     500
+    ]
+   ],
+   "text": "nothing\n"
   }
  ],
  "tuned": [

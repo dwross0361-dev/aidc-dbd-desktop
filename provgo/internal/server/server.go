@@ -806,7 +806,7 @@ func ConsoleHandler(est *estate.Estate, html []byte, isTLS bool) http.Handler {
 			need = s(dstr(data, "build", ""))
 		case p == "/api/run":
 			need = s(dstr(data, "plane", "all"))
-		case p == "/api/result" && dstr(data, "kind", "") == "isolation":
+		case p == "/api/result" && (dstr(data, "kind", "") == "isolation" || dstr(data, "kind", "") == "inference"):
 			need = s("fe")
 		case p == "/api/result" || p == "/api/tuning/propose" || p == "/api/tuning/apply" || p == "/api/tuning/rollout" || p == "/api/tuning/profile":
 			need = s("be")
@@ -945,6 +945,8 @@ func ConsoleHandler(est *estate.Estate, html []byte, isTLS bool) http.Handler {
 			switch {
 			case kind == "isolation":
 				okv, msg = est.SubmitIsolationText(pyHeadS(estate.PyStr(dval(data, "text", "")), 2000000), user)
+			case kind == "inference":
+				okv, msg = est.SubmitInferenceText(pyHeadS(estate.PyStr(dval(data, "text", "")), 2000000), user)
 			case kind == "accept":
 				var crit *pyjson.Map
 				if acc := est.Plan.M("acceptance"); acc != nil && acc.Truthy("criteria") {

@@ -144,6 +144,13 @@ for sc in CASES["results"]:
             est.plan.pop("isolation", None)
         r = est.submit_isolation_text(sc["text"], "op1")
         S["results"].append({"submit": list(r), "stored": est.results.get("isolation", {}).get("tests"), "eval": est.isolation_eval()})
+    elif sc["kind"] == "inference":   # HS v1.98
+        if sc.get("tenants") is not None:
+            est.plan["inference"] = {"tool": "hey", "tenants": [{"tenant": t, "rps": 10, "p99_ms": p} for t, p in sc["tenants"]]}
+        else:
+            est.plan.pop("inference", None)
+        r = est.submit_inference_text(sc["text"], "op1")
+        S["results"].append({"submit": list(r), "stored": est.results.get("inference", {}).get("tests"), "eval": est.inference_eval()})
 
 # tuned_eval over tuning states, and the lossless check against an active overlay
 S["tuned"] = []

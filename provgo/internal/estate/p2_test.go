@@ -406,6 +406,23 @@ func TestP2Scenarios(t *testing.T) {
 				stored = gj(t, a.V("tests"))
 			}
 			got = map[string]any{"submit": []any{ok, msg}, "stored": stored, "eval": gj(t, e.isolationEval())}
+		case "inference": // HS v1.98
+			if ts, ok := sc["tenants"].([]any); ok {
+				var tl []any
+				for _, x := range ts {
+					p := x.([]any)
+					tl = append(tl, pyjson.O("tenant", p[0], "rps", int64(10), "p99_ms", int64(p[1].(float64))))
+				}
+				e.Plan.Set("inference", pyjson.O("tool", "hey", "tenants", tl))
+			} else {
+				e.Plan.Delete("inference")
+			}
+			ok, msg := e.SubmitInferenceText(sc["text"].(string), "op1")
+			var stored any
+			if a := e.Results.M("inference"); a != nil {
+				stored = gj(t, a.V("tests"))
+			}
+			got = map[string]any{"submit": []any{ok, msg}, "stored": stored, "eval": gj(t, e.inferenceEval())}
 		}
 		d.same(fmt.Sprintf("results %d", i), exp["results"].([]any)[i], gj(t, got))
 	}

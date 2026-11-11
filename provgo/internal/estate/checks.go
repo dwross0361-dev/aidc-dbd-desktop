@@ -708,13 +708,15 @@ func (e *Estate) RunAuto(k string, c *pyjson.Map) {
 		e.autoSet(k, key, withTS(res, Now()))
 		e.Mu.Unlock()
 		return
-	case "accept", "tuned", "isolation":
+	case "accept", "tuned", "isolation", "inference":
 		var res *pyjson.Map
 		switch kind {
 		case "accept":
 			res = e.acceptEval()
 		case "tuned":
 			res = e.tunedEval()
+		case "inference":
+			res = e.inferenceEval()
 		default:
 			res = e.isolationEval()
 		}

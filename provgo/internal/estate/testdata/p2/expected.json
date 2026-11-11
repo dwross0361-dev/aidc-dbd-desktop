@@ -8259,6 +8259,203 @@
      false,
      "no ISOLATION lines in the text (paste the output of acceptance/ingress_isolation.sh)"
     ]
+   },
+   {
+    "eval": {
+     "evidence": {
+      "TENANT-01 p99": {
+       "note": "612 ms against 900 ms",
+       "ok": true
+      },
+      "TENANT-01 rps": {
+       "note": "measured 79650.2/s against 80000/s, 12 of 4779024 failed",
+       "ok": true
+      },
+      "TENANT-02 p99": {
+       "note": "1234 ms against 900 ms",
+       "ok": false
+      },
+      "TENANT-02 rps": {
+       "note": "measured 7000.1/s against 8000/s, 1012 of 420012 failed",
+       "ok": false
+      }
+     },
+     "note": "2 failing: TENANT-02 rps, TENANT-02 p99 (op1)",
+     "result": "blocked"
+    },
+    "stored": {
+     "TENANT-01": {
+      "checks": {
+       "p99": {
+        "note": "612 ms against 900 ms",
+        "ok": true
+       },
+       "rps": {
+        "note": "measured 79650.2/s against 80000/s, 12 of 4779024 failed",
+        "ok": true
+       }
+      },
+      "result": "pass"
+     },
+     "TENANT-02": {
+      "checks": {
+       "p99": {
+        "note": "1234 ms against 900 ms",
+        "ok": false
+       },
+       "rps": {
+        "note": "measured 7000.1/s against 8000/s, 1012 of 420012 failed",
+        "ok": false
+       }
+      },
+      "result": "blocked"
+     }
+    },
+    "submit": [
+     true,
+     "recorded"
+    ]
+   },
+   {
+    "eval": {
+     "evidence": {
+      "A rps": {
+       "note": "measured 10.0/s against 10/s, 0 of 600 failed",
+       "ok": true
+      }
+     },
+     "note": "1 tenant(s): request rate met (op1)",
+     "result": "pass"
+    },
+    "stored": {
+     "A": {
+      "checks": {
+       "rps": {
+        "note": "measured 10.0/s against 10/s, 0 of 600 failed",
+        "ok": true
+       }
+      },
+      "result": "pass"
+     }
+    },
+    "submit": [
+     true,
+     "recorded"
+    ]
+   },
+   {
+    "eval": {
+     "evidence": {
+      "A rps": {
+       "note": "ok",
+       "ok": true
+      }
+     },
+     "note": "3 check(s) not reported: A p99, B rps, B p99 (op1)",
+     "result": "needs confirmation"
+    },
+    "stored": {
+     "A": {
+      "checks": {
+       "rps": {
+        "note": "ok",
+        "ok": true
+       }
+      },
+      "result": "pass"
+     }
+    },
+    "submit": [
+     true,
+     "recorded"
+    ]
+   },
+   {
+    "eval": {
+     "evidence": {
+      "- setup": {
+       "note": "hey not found on the client",
+       "ok": false
+      }
+     },
+     "note": "1 failing: - setup (op1)",
+     "result": "blocked"
+    },
+    "stored": {
+     "-": {
+      "checks": {
+       "setup": {
+        "note": "hey not found on the client",
+        "ok": false
+       }
+      },
+      "result": "blocked"
+     }
+    },
+    "submit": [
+     true,
+     "recorded"
+    ]
+   },
+   {
+    "eval": {
+     "evidence": {
+      "T8 setup": {
+       "note": "VIP or hostname not set",
+       "ok": false
+      },
+      "T9 p99": {
+       "note": "10 ms against 20 ms",
+       "ok": true
+      },
+      "T9 rps": {
+       "note": "ok",
+       "ok": true
+      }
+     },
+     "note": "1 failing: T8 setup (op1)",
+     "result": "blocked"
+    },
+    "stored": {
+     "T8": {
+      "checks": {
+       "setup": {
+        "note": "VIP or hostname not set",
+        "ok": false
+       }
+      },
+      "result": "blocked"
+     },
+     "T9": {
+      "checks": {
+       "p99": {
+        "note": "10 ms against 20 ms",
+        "ok": true
+       },
+       "rps": {
+        "note": "ok",
+        "ok": true
+       }
+      },
+      "result": "pass"
+     }
+    },
+    "submit": [
+     true,
+     "recorded"
+    ]
+   },
+   {
+    "eval": {
+     "evidence": {},
+     "note": "waiting for the inference load run (runner or uploaded results)",
+     "result": "waiting"
+    },
+    "stored": null,
+    "submit": [
+     false,
+     "no INFERENCE lines in the text (paste the output of acceptance/inference_load.sh)"
+    ]
    }
   ],
   "same_dev": [

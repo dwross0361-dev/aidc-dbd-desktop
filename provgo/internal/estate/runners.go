@@ -336,6 +336,8 @@ func (e *Estate) runRunner(r *pyjson.Map) {
 			ok, note, err = e.runAccept(r, sec, logf)
 		case "isolation":
 			ok, note, err = e.runIsolation(r, sec, logf)
+		case "inference":
+			ok, note, err = e.runInference(r, sec, logf)
 		case "nccl":
 			ok, note, err = e.runNCCL(r, sec, logf)
 		}
