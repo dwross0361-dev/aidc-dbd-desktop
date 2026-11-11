@@ -195,11 +195,14 @@ def v_engine(op, r):
     fails = []
     for ev in evs:
         for k, x in sorted((ev.get("evidence") or {}).items()):
-            if op["op"] == "accept" and (not k.startswith(op["test"] + " ") or "switch counters" in k):
+            if "switch counters" in k:   # uploaded by hand: the switch side is confirmed from the switches, not scored here
+                continue
+            if op["op"] == "accept" and not k.startswith(op["test"] + " "):
                 continue
             if x.get("ok") is False:
                 fails.append("%s: %s" % (k, x.get("note")))
-        if op["op"] != "accept" and ev.get("result") != "pass" and not fails:
+        if op["op"] != "accept" and ev.get("result") not in ("pass", "confirm") and not fails and not any(
+                "switch counters" in k for k, x in (ev.get("evidence") or {}).items() if x.get("ok") is False):
             fails.append(ev.get("note", ""))
     if not r["submit"][0]:
         return "fail", "not accepted: " + r["submit"][1]
@@ -596,7 +599,8 @@ class Suite:
                         rel = r["target"]
                         if mode == "below" and bad is None:
                             bad, rel = r["device"], "1.0.0" if r["os"] != "junos" else "1.1R1"
-                        open(os.path.join(d, r["device"] + ".txt"), "w").write(shown(r["os"], rel))
+                        txt = ("Software Version      : v%s-104-gabc\n" % rel) if r["os"] == "srl" else shown(r["os"], rel)   # SR Linux "show version"
+                        open(os.path.join(d, r["device"] + ".txt"), "w").write(txt)
                 rc, out = sh("python3 %s --offline %s" % (op, d), S_env(), self.wk, 300)
                 got = ("pass", out.strip().splitlines()[-1]) if rc == 0 else ("fail", " | ".join(l for l in out.splitlines() if l.startswith("FAIL"))[:300])
                 self.rows.append(("check_os_release.py, %s" % mode, "pass" if mode == "at-target" else ("fail", re.escape(bad or "-")), got, None))
@@ -669,34 +673,37 @@ def main():
         t0 = time.time()
         P = Pkg(run, a.work)
         X = Suite(P, a)
+        T = {}
+        def timed(name, f, *x):
+            t1 = time.time(); f(*x); T[name] = T.get(name, 0) + time.time() - t1
         if P.has("lossless.sh"):
-            X.lossless()
+            timed('lossless', X.lossless)
         if P.has("nccl.sh"):
-            X.nccl("nccl.sh")
+            timed("nccl", X.nccl, "nccl.sh")
         if P.has("nccl_nvlink.sh"):
-            X.nccl("nccl_nvlink.sh")
+            timed("nccl", X.nccl, "nccl_nvlink.sh")
         if os.path.exists(os.path.join(P.root, "provision", "rail_check.sh")) and X.S.rails:
-            X.rails()
+            timed('rails', X.rails)
         if P.has("soak.sh"):
-            X.soak()
+            timed('soak', X.soak)
         if P.has("storage_lossless.sh"):
-            X.storage()
+            timed('storage', X.storage)
         if P.has("failover.sh"):
-            X.failover()
+            timed('failover', X.failover)
         if P.has("alerts.sh"):
-            X.alerts()
+            timed('alerts', X.alerts)
         if P.has("inference_load.sh"):
-            X.inference()
+            timed('inference', X.inference)
         if P.has("ingress_isolation.sh"):
-            X.isolation()
+            timed('isolation', X.isolation)
         if P.cable_rows():
-            X.cabling()
-        X.software()
-        X.score()
+            timed('cabling', X.cabling)
+        timed('software', X.software)
+        timed('score', X.score)
         n = len(X.rows)
         fails = [(c, e, g, s) for c, e, g, s in X.rows if not expect_ok(e, g) or s is False]
         total += n; bad += len(fails)
-        print("== %s: %d cases, %d unexpected (%.0f s)" % (P.name, n, len(fails), time.time() - t0))
+        print("== %s: %d cases, %d unexpected (%.0f s: %s)" % (P.name, n, len(fails), time.time() - t0, ", ".join("%s %.0f" % kv for kv in T.items())))
         for c, e, g, s in (X.rows if a.verbose else fails):
             print("  %-4s %s\n       expected %s, got %s%s" % ("ok" if (c, e, g, s) not in fails else "FAIL", c, e if e == "pass" else "%s /%s/" % e,
                   g[0], (": " + g[1][:200]) if g[1] else "") + ("" if s is not False else "   ENGINES DIFFER"))
