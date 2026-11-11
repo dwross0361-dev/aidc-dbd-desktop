@@ -1,3 +1,7 @@
+# AIDC DBD Desktop 2.1.0 (builder HS-v2.01, site runner 1.11.0)
+
+- **Site class names restored:** standard, hyperscale and mega, as before 2.0.99. Classes are still decided by IP and ASN reach; nothing else changes. The builder is HS-v1.99 with its version advanced.
+
 # AIDC DBD Desktop 2.0.99 (builder HS-v2.00, site runner 1.11.0)
 
 - **Site classes renamed after what they consume.** Standard is now **site block** (the site shares its region with up to seven others), hyperscale is **region block** (the site takes its region's front-end and OOB /16s), and mega is **multi-block** (it also takes the region's other site blocks). "Hyperscale" read as a size: a 32-rack GB300 NVL72 site (576 hosts) is past one site's /19, not hyperscale. The rules, thresholds and addresses are unchanged, and so are designs, fingerprints and outputs apart from the labels: the IP plan's block notes, the region-conflict warning, the OOB range errors and the guide. The product name is unchanged.

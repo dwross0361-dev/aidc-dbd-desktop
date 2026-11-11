@@ -801,7 +801,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   </span>
   <span class="tg2" data-tg="Deploy"><span class="tbt">Deploy</span>
     <button class="btn" id="deploybtn" title="ZTP bootstrap, DHCP and push files, the full package and the .run">Deploy panel</button>
-    <button class="btn" id="runnerexp" title="Export this design for the DWR site runner: the settings it is rebuilt from, this release and the design fingerprint. The runner builds the Final package and the .run off the browser (multi-block sites).">Site runner</button>
+    <button class="btn" id="runnerexp" title="Export this design for the DWR site runner: the settings it is rebuilt from, this release and the design fingerprint. The runner builds the Final package and the .run off the browser (mega sites).">Site runner</button>
     <button class="btn" id="sotbtn" title="Day-2 source of truth: NetBox import files, an Ansible inventory and a JSON model of the whole design">Day-2 SoT</button>
     <button class="btn" id="tprofbtn" title="Tuned back-end profiles: import the profile the Deployment Console exports after lossless acceptance; later sites ship with the measured values">Tuned profiles</button>
   </span>
@@ -1005,7 +1005,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v2.00';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v2.01';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   // HS v1.59: Vera Rubin NVL72 at 2 planes x 800G, NVIDIA's public reference layout (Owner decision D11); see the VR profile.
   // HS v1.58: the customer input sheet and importer (inputSheetImport, the SESSION_IN overlay); see the input sheet block.
   // HS v1.57 (release identity): the release is identified by the SHA-256 of this file, not by the string above (HS-v1.56 r1, r2
@@ -10505,7 +10505,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     place.sort(function(a,b){ return b.agg-a.agg; });
     var cur=oobMegaBase(), top=cur+524288;
     place.forEach(function(P){ P.base=cur; cur+=P.agg; });
-    if(cur>top) OOB_ERRORS.push('OOB multi-block range: the zones and fabric need '+(cur-oobMegaBase()).toLocaleString('en-US')+' addresses; '+oobMegaBlock()+' holds 524,288');
+    if(cur>top) OOB_ERRORS.push('OOB mega block: the zones and fabric need '+(cur-oobMegaBase()).toLocaleString('en-US')+' addresses; '+oobMegaBlock()+' holds 524,288');
     var Z={zones:nz, segs:[], agg:{}, zoneOf:zoneOf, block:oobMegaBlock(), fab:{}};
     place.forEach(function(P){
       if(P.k==='_fab'){ var fo=P.base; Z.fab.all={base:P.base, size:P.agg, net:_intIp(P.base)+'/'+_lenOf(P.agg)};
@@ -16804,8 +16804,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     if(!siteHyper()) return '';
     var me=siteCode().toUpperCase(), other=registryAll().filter(function(e){ return e.region===REGION_CODE && +e.site!==1 && String(e.client||'').toUpperCase()!==me; })
       .map(function(e){ return (e.client||'?')+' (site '+e.site+')'; });   // v527: who, not just which slot
-    if(SITE_INDEX!==1) return 'region-block site takes '+REGION_CODE+'\'s whole front-end and OOB /16s: number it site 1 of the region (it is site '+SITE_INDEX+')';
-    if(other.length) return 'region-block site takes '+REGION_CODE+'\'s whole front-end and OOB /16s, but '+other.join(', ')+(other.length>1?' are':' is')+' registered in '+REGION_CODE+': move '+(other.length>1?'them':'it')+' to another region or remove '+(other.length>1?'them':'it')+' from the site registry';
+    if(SITE_INDEX!==1) return 'hyperscale site takes '+REGION_CODE+'\'s whole front-end and OOB /16s: number it site 1 of the region (it is site '+SITE_INDEX+')';
+    if(other.length) return 'hyperscale site takes '+REGION_CODE+'\'s whole front-end and OOB /16s, but '+other.join(', ')+(other.length>1?' are':' is')+' registered in '+REGION_CODE+': move '+(other.length>1?'them':'it')+' to another region or remove '+(other.length>1?'them':'it')+' from the site registry';
     return '';
   }
   function feSiteBase(){ return siteHyper() ? 0 : siteOctet(); }
@@ -27384,8 +27384,8 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
     var fc=null; try{ if(FE.on) fc=feCfgPlan(); }catch(e){ X.warn.push('front-end plan: '+e.message); }
     if(fc){
       var fv=function(role){ return feRoleVendor(role==='gw'?'gw':role); };
-      pfx(feSiteBlock(),'container','',siteMega()?'Front end, this site: the region /13 (multi-block site)':siteHyper()?'Front end, this site: the region /16 (region block, IP plan)':'Front end, this site (IP plan)');
-      if(siteMega()) pfx('10.'+(feMegaBase()+FE_MEGA.lo.o)+'.0.0/16','network','loopback','Front-end device loopbacks past the first 1,010 (multi-block site)');   // v562
+      pfx(feSiteBlock(),'container','',siteMega()?'Front end, this site: the region /13 (mega site)':siteHyper()?'Front end, this site: the region /16 (hyperscale, IP plan)':'Front end, this site (IP plan)');
+      if(siteMega()) pfx('10.'+(feMegaBase()+FE_MEGA.lo.o)+'.0.0/16','network','loopback','Front-end device loopbacks past the first 1,010 (mega site)');   // v562
       pfx(feBlock(0),'network','loopback','Front-end device loopbacks (edge routers .250+)');
       pfx(dpuLoBlock(),'network','loopback','DPU (HBN) VTEP loopbacks');
       pfx(feBlock(8),'network','p2p',FE_UNDERLAY==='unnumbered'?'Front-end link block: gateway /31s only; switch links unnumbered (IPv6 link-local). Reserved for numbered /31s':'Front-end fabric /31s');   // v489
@@ -27490,7 +27490,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
       (mp.segments||[]).forEach(function(s){ X.vlans.push({vid:s.vlan, name:s.name, group:'management', description:s.holds});
         pfx(s.net,'network','management',s.name+' -- '+s.holds+' (gateway '+s.gw+')', {vlan:s.vlan, vrf:'mgmt'}); });
       if(mp.zones){   // HS v1.01: routed OOB zones
-        pfx(mp.zones.block,'container','','Out-of-band multi-block range: routed zones and the OOB fabric');
+        pfx(mp.zones.block,'container','','Out-of-band mega block: routed zones and the OOB fabric');
         Object.keys(mp.zones.agg).forEach(function(k){ var A=mp.zones.agg[k]; pfx(A.net,'container','management',A.name+' summary: one /'+A.zoneLen+' per zone ('+mp.zones.zones+' zones)', {vrf:'mgmt'}); });
         mp.zones.segs.forEach(function(g){ pfx(g.net,'network','management',g.name+' -- '+g.holds+' (anycast gateway '+g.gw+' on the zone spine pair)', {vlan:g.vlan, vrf:'mgmt'}); }); }
       (mp.transit||[]).forEach(function(t){ pfx(t.net,'network','p2p','OOB core to firewall transit', {vrf:'mgmt'}); });
@@ -29576,7 +29576,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
         +'<td '+TDM+'>'+(mp.transit.length*2)+'</td><td '+TD+'>MCS \u2194 firewall /31s. From the reserved range; needs adding to the IP plan</td></tr>';
       t+='</table>';
       t+='<div class="bom-note" style="margin-bottom:14px">'
-        +'Derived from region <b>'+REGION_CODE+'</b> and site <b>'+SITE_INDEX+'</b>: '+OOB_SUPERNET+' \u2192 /16 per region \u2192 '+(siteHyper()?'<b>the whole /16 (region-block site)</b>'+(oobDpuBlock()?', with MGMT-DPU in its own '+oobDpuBlock():''):'/19 per site')+' \u2192 fixed segment offsets. '
+        +'Derived from region <b>'+REGION_CODE+'</b> and site <b>'+SITE_INDEX+'</b>: '+OOB_SUPERNET+' \u2192 /16 per region \u2192 '+(siteHyper()?'<b>the whole /16 (hyperscale site)</b>'+(oobDpuBlock()?', with MGMT-DPU in its own '+oobDpuBlock():''):'/19 per site')+' \u2192 fixed segment offsets. '
         +'<b>'+nEnd+'</b> endpoints: '+Object.keys(comp).sort().map(function(k){return comp[k]+' '+k;}).join(' \u00b7 ')+'.<br>'
         +'<b>North:</b> MCS pair \u2194 firewall cluster on /31s from <code>'+mp.core+'</code>; OSPF area '+mp.ospfArea+' carries every segment north and the default south. '
         +'ZTP crosses segments: devices DHCP in MGMT-DEVICE and are relayed to the provisioning host at <code>'+mp.prov+'</code>.<br>'
@@ -29694,7 +29694,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
         +'are standards-based templates: VLAN and IRB addressing, ESI values and LACP system-ids are <b>starting points marked TUNE</b> '
         +'and must be reconciled with the tenancy plan before deploy. Frontend addressing is allocated clear of the backend '
         +'('+REGION_CODE+' site '+SITE_INDEX+' ASN block '+siteAsnBase()+'\u2013'+siteAsnTop()
-        +' &middot; lo '+feBlock(0)+' &middot; p2p '+(FE_UNDERLAY==='unnumbered'?'unnumbered switch links, gateway /31s from ':'')+feBlock(8)+(siteHyper()?' &middot; <b>region block: the region /16</b>':'')+').'+rtWarn+feOverrideNote();   // v482: the site /19 template
+        +' &middot; lo '+feBlock(0)+' &middot; p2p '+(FE_UNDERLAY==='unnumbered'?'unnumbered switch links, gateway /31s from ':'')+feBlock(8)+(siteHyper()?' &middot; <b>hyperscale: the region /16</b>':'')+').'+rtWarn+feOverrideNote();   // v482: the site /19 template
       var grp={spine:[],leaf:[],border:[],gw:[]};
       fd.forEach(function(x){grp[x.role].push(x);});
       var fh=circuitsForPlane('fe').length?'<div class="cfg-grp">Edge routers</div>':'<div class="cfg-grp">Edge routers \u2014 none (spoke site: the hub\'s serve it)</div>';
@@ -32454,7 +32454,7 @@ devs=b.devs;links=b.links;seq=(b.seq&&typeof b.seq==='object')?b.seq:{};sel=null
         +'#     Border leaf    : '+FE_ASN.border+'\n'
         +'#     FW contexts    : from '+asnFor('fwCtx')+'\n'
         +'#   Loopbacks        : '+feBlock(0)+'  (site template, IP plan)\n'
-        +'#   P2P              : '+(FE_UNDERLAY==='unnumbered'?'switch links unnumbered (IPv6 link-local, RFC 8950); gateway /31s from ':'')+feBlock(8)+'  ('+(siteHyper()?'region block: the region /16':'site /19 template')+', IP plan)\n'
+        +'#   P2P              : '+(FE_UNDERLAY==='unnumbered'?'switch links unnumbered (IPv6 link-local, RFC 8950); gateway /31s from ':'')+feBlock(8)+'  ('+(siteHyper()?'hyperscale: the region /16':'site /19 template')+', IP plan)\n'
         +'#   Stretched VNIs   : L2 1,xxx,xxx / L3 2,xxx,xxx \u2014 NO site component, identical\n'
         +'#                      at every site, so DCI stitching translates nothing.\n'
         +'#   Site-local VNIs  : 9,xxx,xxx band, reserved \u2014 MUST NOT cross the DCI.\n'
