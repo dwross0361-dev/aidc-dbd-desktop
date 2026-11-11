@@ -1,3 +1,10 @@
+# AIDC DBD Desktop 2.1.5 (builder HS-v2.06, site runner 1.11.0)
+
+- **The acceptance-script release check** (`provgo/acctest/`). Every acceptance test of the reference designs is run on a simulated site (mock SSH, RDMA, NIC counters, perftest, mpirun, iperf3, fio, hey, kubectl, curl, lldpctl), first correct and then with each fault planted, and scored by both engines. Every verdict must be the expected one (pass, fail for the planted cause, or a setup failure naming why), the engines must agree, and the console's cable plan must equal `cabling-expected.csv` link for link. It runs before every release with the differential test; a change to an acceptance script or its scoring updates its case in the same commit.
+- First run on the seven reference designs: 4,257 cases across Juniper, Arista, Cisco, Nokia, NVIDIA and the inference design.
+- The builder is HS-v2.05 with its version advanced and the standards it names updated.
+- Standards: HS-DEP-001 and HS-DEP-002 2.9.
+
 # AIDC DBD Desktop 2.1.4 (builder HS-v2.05, site runner 1.11.0)
 
 Every acceptance test was audited on a simulated site (mock SSH, RDMA, NIC counters, perftest, mpirun, iperf3, fio, hey, kubectl and LLDP), for every platform, first with a correct site and then with each fault injected. A test now fails only for what it tests; a test that cannot run prints a setup failure naming the cause and records no result.
