@@ -462,6 +462,9 @@ def run_plan(args, run, rep):
 
     def cmp(what, f, view=lambda r: r):
         a, b = both(f)
+        if os.environ.get("DIFFTEST_DUMP"):   # the Python side of each comparison, for inspection
+            with open(os.environ["DIFFTEST_DUMP"], "a") as fh:
+                fh.write(json.dumps({"what": what, "py": a}, default=str) + "\n")
         rep.same(what, view(a), view(b))
         return a, b
 
@@ -685,6 +688,31 @@ def run_plan(args, run, rep):
         time.sleep(STEP_WAIT)
         cmp("logout", lambda E: resp_view(E.con("POST", "/api/logout", {}, cookie=opck[E.name])))
         cmp("after logout", lambda E: resp_view(E.con("GET", "/api/whoami", cookie=opck[E.name], csrf=False)))
+        # ---- reports (HS v2.02): while building, and after marking and overriding (the closed build is covered by the P2 scenarios)
+        def reports(E, c=None):
+            c = c or ck[E.name]
+            g = lambda q: resp_view(E.con("GET", q, cookie=c, csrf=False))
+            out = {"ready": g("/api/reports")}
+            for k in ("progress", "final", "post", "cert"):
+                for f in ("json", "csv", "html"):
+                    out[k + " " + f] = g("/api/report?kind=%s&format=%s" % (k, f))
+            out["bad kind"] = g("/api/report?kind=zz")
+            out["bad format"] = g("/api/report?kind=progress&format=pdf")
+            return out
+        cmp("reports while building", reports)
+        cmp("reports as viewer", lambda E: reports(E, E.login("view1", "x")[1]))
+        def close_build(E):
+            out = []
+            for d in plan["devices"]:
+                out.append(resp_view(E.con("POST", "/api/mark-configured", {"device": d["name"], "note": "closed for the report test"}, cookie=ck[E.name]))["status"])
+            time.sleep(STEP_WAIT)
+            for _ in range(len(plan["builds"]) + 1):
+                for b in plan["builds"]:
+                    E.con("POST", "/api/gate/override", {"build": b["key"], "reason": "closed for the report test"}, cookie=ck[E.name])
+                time.sleep(STEP_WAIT)
+            return out
+        cmp("mark every device configured, override every gate", close_build)
+        cmp("reports after overrides", reports)
         cmp("final console reads", lambda E: console_reads(E, ck[E.name], plan))
         py_final = console_reads(PY, ck["python"], plan)
         a, b = both(lambda E: open(E.conf and json.load(open(E.conf))["kea_live"]).read())

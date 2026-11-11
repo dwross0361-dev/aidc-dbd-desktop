@@ -1,3 +1,14 @@
+# AIDC DBD Desktop 2.1.1 (builder HS-v2.02, site runner 1.11.0)
+
+- **Build reports and the Certificate of Conformance.** The Deployment Console has a **Reports** menu, generated on the provisioning host from the console's own record, so no build data leaves the site:
+  - **Progress build report**, any time and for every login (for example once a shift): each build with its devices by state and its gate, completion by floor row, blocked devices, open RMAs, devices held, the pace over the last eight hours with the time left at that pace, and console activity by login.
+  - **Final build report**, once every build has passed its gate: every gate result, the deviations (gate overrides with who and why, accepted warnings, set-aside devices), open items, identities not from the inventory, RMAs and software releases.
+  - **Post-deployment report**, at the same point: every acceptance check with its evidence, NCCL results against target, the tuning record and software, with the final build report; the certificate is its last page.
+  - **Certificate of Conformance**: conformant, conformant with deviations, or not issued (with the reasons). It names each standard and revision, the builder release, the design fingerprint, racks and GPUs, the acceptance requirements and results, the deviations and waivers ("None" when there are none), and the SHA-256 of the post-deployment report it rests on. Signed by the DWR delivery lead; the customer's signature is optional.
+  - Until the build is closed, the final report, post-deployment report and certificate are grayed, with what is still missing. They are run by an admin. Each opens as a page to print or save as PDF, or downloads as JSON or CSV; the hand-over export carries all three in `reports/`.
+- **The plan carries what the certificate names:** the design fingerprint, racks, GPUs, workload and the standards library with each revision (HS-DEP-001, HS-DEP-002 and HS-DEP-003 at rev 2.5).
+- Both engines (Python and aidc-prov) produce identical reports: the parity tests add four report scenarios (building, closed, an override withdrawn, conformant with deviations), byte-identical to the certificate hash, and the differential test covers the Reports menu and every report format.
+
 # AIDC DBD Desktop 2.1.0 (builder HS-v2.01, site runner 1.11.0)
 
 - **Site class names restored:** standard, hyperscale and mega, as before 2.0.99. Classes are still decided by IP and ASN reach; nothing else changes. The builder is HS-v1.99 with its version advanced.

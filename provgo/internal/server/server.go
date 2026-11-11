@@ -659,6 +659,44 @@ func ConsoleHandler(est *estate.Estate, html []byte, isTLS bool) http.Handler {
 				return
 			}
 			j(w, 200, est.DeviceView(n))
+		case path == "/api/reports": // HS v2.02: what the Reports menu offers now
+			j(w, 200, est.ReportsReady())
+		case path == "/api/report": // HS v2.02: ?kind=progress|final|post|cert&format=html|json|csv
+			kind, format := qv("kind", ""), qv("format", "html")
+			if _, ok := estate.ReportTitles[kind]; !ok || (format != "html" && format != "json" && format != "csv") {
+				j(w, 404, pyjson.O("error", "unknown report"))
+				return
+			}
+			if kind != "progress" {
+				if u.Role != "admin" {
+					j(w, 403, pyjson.O("error", "the reports after the build are run by an admin"))
+					return
+				}
+				if rd := est.ReportsReady().M(kind); !rd.Truthy("ok") {
+					j(w, 409, pyjson.O("error", rd.V("why")))
+					return
+				}
+			}
+			R := est.Report(kind, u.User)
+			est.Audit(u.User, "report", kind, format)
+			name := fmt.Sprintf("%s-%s-%s.%s", est.Plan.M("site").Str("code"), estate.ReportFiles[kind], time.Now().UTC().Format("20060102T150405Z"), format)
+			switch format {
+			case "json":
+				send(w, 200, pyjson.Canon(R), "application/json", map[string]string{"Content-Disposition": "attachment; filename=" + name})
+			case "csv":
+				send(w, 200, estate.ReportCSV(R), "text/csv", map[string]string{"Content-Disposition": "attachment; filename=" + name})
+			default:
+				var cert *pyjson.Map
+				if kind == "post" {
+					cert = est.ReportCertFor(R, u.User)
+				}
+				h, ok := est.ReportHTML(R, cert)
+				if !ok {
+					j(w, 404, pyjson.O("error", "the report page is missing from console.html"))
+					return
+				}
+				send(w, 200, h, "text/html; charset=utf-8", map[string]string{"Content-Disposition": "inline; filename=" + name})
+			}
 		case path == "/api/handover/export.zip":
 			if u.Role != "admin" || u.Org != "customer" {
 				j(w, 403, pyjson.O("ok", false, "msg", "the hand-over export is downloaded by a customer admin"))

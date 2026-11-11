@@ -29,3 +29,11 @@ func TestRoundTripKeepsOrderAndKinds(t *testing.T) {
 
 func pt1() float64 { return 0.1 }
 func pt2() float64 { return 0.2 }
+
+func TestCanon(t *testing.T) {
+	v := O("b", 1.5, "a", []any{int64(2), "é", nil, true}, "A", O("z", 400.0, "y", ""))
+	got, want := Canon(v), `{"A":{"y":"","z":400.0},"a":[2,"\u00e9",null,true],"b":1.5}`
+	if got != want {
+		t.Fatalf("Canon = %s, want %s", got, want)
+	}
+}

@@ -7826,6 +7826,3823 @@
     "s5"
    ]
   ],
+  "reports": [
+   {
+    "cert": {
+     "acceptance": [
+      {
+       "build": "Test",
+       "item": "Servers confirmed",
+       "result": "needs confirmation"
+      },
+      {
+       "build": "Test",
+       "item": "Ingress isolation per tenant",
+       "result": "running"
+      },
+      {
+       "build": "Test",
+       "item": "NCCL all-reduce at target",
+       "result": "running"
+      }
+     ],
+     "by": "admin",
+     "dates": {
+      "accepted": "",
+      "issued": "2026-11-11T00:00:00Z",
+      "started": ""
+     },
+     "deviations": [
+      {
+       "build": "Test",
+       "by": "",
+       "detail": "lab",
+       "item": "T-NOIP",
+       "type": "set aside",
+       "when": ""
+      },
+      {
+       "build": "Test",
+       "by": "",
+       "detail": "",
+       "item": "T-CUM-SP3",
+       "type": "set aside",
+       "when": ""
+      }
+     ],
+     "generated": "<T>",
+     "kind": "cert",
+     "post_sha256": "266fbc35a185e3d8a2adb8e25d2b5335498b09e1f1e203831d0b7486a4ca78fa",
+     "reasons": [
+      "not every build has passed its gate",
+      "4 device(s) not built",
+      "5 gate item(s) open"
+     ],
+     "site": {
+      "build": "TST-512-001",
+      "builder": "HS-v2.02",
+      "code": "TST",
+      "customer": "Test Co",
+      "delivered_by": "DWR Networking",
+      "fingerprint": "0123456789abcdef",
+      "gpus": 512,
+      "plan_digest": "",
+      "racks": 8,
+      "region": "",
+      "region_name": "Test region \u00e9",
+      "workload": "training"
+     },
+     "standards": [
+      {
+       "id": "HS-ARC-001",
+       "rev": "2.6",
+       "title": "Architecture Overview"
+      },
+      {
+       "id": "HS-DEP-001",
+       "rev": "2.5",
+       "title": "Deployment and Acceptance"
+      }
+     ],
+     "status": "not issued",
+     "title": "Certificate of Conformance",
+     "totals": {
+      "built": 22,
+      "devices": 28,
+      "gpus": 512,
+      "racks": 8,
+      "set_aside": 2
+     }
+    },
+    "cert csv": "item,value\r\nstatus,not issued\r\nsite,TST-512-001\r\naccepted,\r\nissued,2026-11-11T00:00:00Z\r\npost_sha256,266fbc35a185e3d8a2adb8e25d2b5335498b09e1f1e203831d0b7486a4ca78fa\r\n",
+    "final": {
+     "asbuilt": [
+      {
+       "device": "T-CUM-A",
+       "identity": "SN123",
+       "source": "as-built"
+      },
+      {
+       "device": "T-CUM-B",
+       "identity": "aa:bb:cc:dd:ee:ff",
+       "source": "bind"
+      }
+     ],
+     "builds": [
+      {
+       "counts": {
+        "active": 2,
+        "done": 22,
+        "flagged": 1,
+        "set_aside": 2,
+        "total": 28,
+        "waiting": 1
+       },
+       "gate": [
+        {
+         "key": "done",
+         "kind": "",
+         "label": "Every device done",
+         "note": "22 of 26 done (2 set aside); T-EOS-B Expected, T-SRL-B Config, T-NOREL failed, T-CUM-SP4 Bootstrap",
+         "result": "blocked",
+         "type": "devices_done"
+        },
+        {
+         "key": "reach",
+         "kind": "",
+         "label": "Management reachable",
+         "note": "22 of 26 answer on their management ports (2 set aside)",
+         "result": "running",
+         "type": "reachable"
+        },
+        {
+         "key": "srv",
+         "kind": "",
+         "label": "Servers confirmed",
+         "note": "by the site lead",
+         "result": "needs confirmation",
+         "type": "confirm"
+        },
+        {
+         "key": "iso",
+         "kind": "isolation",
+         "label": "Ingress isolation per tenant",
+         "note": "automatic check queued",
+         "result": "running",
+         "type": "auto"
+        },
+        {
+         "key": "nccl",
+         "kind": "nccl",
+         "label": "NCCL all-reduce at target",
+         "note": "automatic check queued",
+         "result": "running",
+         "type": "auto"
+        }
+       ],
+       "key": "be",
+       "name": "Test",
+       "override": null,
+       "passed": "",
+       "state": "building",
+       "waves": 1,
+       "waves_open": 1
+      }
+     ],
+     "by": "admin",
+     "completed": "",
+     "counts": {
+      "active": 2,
+      "done": 22,
+      "flagged": 1,
+      "set_aside": 2,
+      "total": 28,
+      "waiting": 1
+     },
+     "deviations": [
+      {
+       "build": "Test",
+       "by": "",
+       "detail": "lab",
+       "item": "T-NOIP",
+       "type": "set aside",
+       "when": ""
+      },
+      {
+       "build": "Test",
+       "by": "",
+       "detail": "",
+       "item": "T-CUM-SP3",
+       "type": "set aside",
+       "when": ""
+      }
+     ],
+     "generated": "<T>",
+     "kind": "final",
+     "not_done": [
+      "T-EOS-B",
+      "T-SRL-B",
+      "T-NOREL",
+      "T-CUM-SP4"
+     ],
+     "not_done_n": 4,
+     "open": [
+      {
+       "build": "Test",
+       "detail": "22 of 26 done (2 set aside); T-EOS-B Expected, T-SRL-B Config, T-NOREL failed, T-CUM-SP4 Bootstrap",
+       "item": "Every device done",
+       "result": "blocked"
+      },
+      {
+       "build": "Test",
+       "detail": "22 of 26 answer on their management ports (2 set aside)",
+       "item": "Management reachable",
+       "result": "running"
+      },
+      {
+       "build": "Test",
+       "detail": "by the site lead",
+       "item": "Servers confirmed",
+       "result": "needs confirmation"
+      },
+      {
+       "build": "Test",
+       "detail": "automatic check queued",
+       "item": "Ingress isolation per tenant",
+       "result": "running"
+      },
+      {
+       "build": "Test",
+       "detail": "automatic check queued",
+       "item": "NCCL all-reduce at target",
+       "result": "running"
+      }
+     ],
+     "rmas": [
+      {
+       "device": "T-XE-A",
+       "state": "open",
+       "ticket": "RMA-1"
+      }
+     ],
+     "run": {
+      "started": "",
+      "state": "idle"
+     },
+     "site": {
+      "build": "TST-512-001",
+      "builder": "HS-v2.02",
+      "code": "TST",
+      "customer": "Test Co",
+      "delivered_by": "DWR Networking",
+      "fingerprint": "0123456789abcdef",
+      "gpus": 512,
+      "plan_digest": "",
+      "racks": 8,
+      "region": "",
+      "region_name": "Test region \u00e9",
+      "workload": "training"
+     },
+     "software": [
+      {
+       "devices": 4,
+       "os": "cumulus",
+       "release": ""
+      },
+      {
+       "devices": 2,
+       "os": "cumulus",
+       "release": "5.18.3"
+      },
+      {
+       "devices": 2,
+       "os": "eos",
+       "release": "4.33.2F"
+      },
+      {
+       "devices": 2,
+       "os": "ftd",
+       "release": "7.6.0"
+      },
+      {
+       "devices": 2,
+       "os": "iosxe",
+       "release": "17.12.04"
+      },
+      {
+       "devices": 2,
+       "os": "iosxr",
+       "release": "24.4.2"
+      },
+      {
+       "devices": 2,
+       "os": "junos",
+       "release": ""
+      },
+      {
+       "devices": 1,
+       "os": "junos",
+       "release": "1.0"
+      },
+      {
+       "devices": 2,
+       "os": "junos",
+       "release": "24.4R2-S3"
+      },
+      {
+       "devices": 2,
+       "os": "junos",
+       "release": "25.2X100-D30"
+      },
+      {
+       "devices": 2,
+       "os": "nxos",
+       "release": "10.4(5)"
+      },
+      {
+       "devices": 2,
+       "os": "srl",
+       "release": "24.10.1"
+      },
+      {
+       "devices": 2,
+       "os": "sros",
+       "release": "26.7.R1"
+      },
+      {
+       "devices": 1,
+       "os": "weka",
+       "release": "1.0"
+      }
+     ],
+     "standards": [
+      {
+       "id": "HS-ARC-001",
+       "rev": "2.6",
+       "title": "Architecture Overview"
+      },
+      {
+       "id": "HS-DEP-001",
+       "rev": "2.5",
+       "title": "Deployment and Acceptance"
+      }
+     ],
+     "title": "Final build report"
+    },
+    "final csv": "type,build,item,detail,by,when\r\nset aside,Test,T-NOIP,lab,,\r\nset aside,Test,T-CUM-SP3,,,\r\n",
+    "post": {
+     "acceptance": [
+      {
+       "build": "Test",
+       "detail": "by the site lead",
+       "evidence": [],
+       "item": "Servers confirmed",
+       "result": "needs confirmation"
+      },
+      {
+       "build": "Test",
+       "detail": "automatic check queued",
+       "evidence": [
+        {
+         "check": "t1 bind",
+         "note": "bound",
+         "ok": true
+        },
+        {
+         "check": "t1 snat",
+         "note": "",
+         "ok": true
+        },
+        {
+         "check": "t1 cross",
+         "note": "refused",
+         "ok": true
+        },
+        {
+         "check": "t2 bind",
+         "note": "",
+         "ok": true
+        },
+        {
+         "check": "t2 snat",
+         "note": "pool",
+         "ok": true
+        },
+        {
+         "check": "t2 cross",
+         "note": "",
+         "ok": true
+        }
+       ],
+       "item": "Ingress isolation per tenant",
+       "result": "running"
+      },
+      {
+       "build": "Test",
+       "detail": "automatic check queued",
+       "evidence": [],
+       "item": "NCCL all-reduce at target",
+       "result": "running"
+      }
+     ],
+     "by": "admin",
+     "completed": "",
+     "counts": {
+      "active": 2,
+      "done": 22,
+      "flagged": 1,
+      "set_aside": 2,
+      "total": 28,
+      "waiting": 1
+     },
+     "deviations": [
+      {
+       "build": "Test",
+       "by": "",
+       "detail": "lab",
+       "item": "T-NOIP",
+       "type": "set aside",
+       "when": ""
+      },
+      {
+       "build": "Test",
+       "by": "",
+       "detail": "",
+       "item": "T-CUM-SP3",
+       "type": "set aside",
+       "when": ""
+      }
+     ],
+     "final_build": {
+      "asbuilt": [
+       {
+        "device": "T-CUM-A",
+        "identity": "SN123",
+        "source": "as-built"
+       },
+       {
+        "device": "T-CUM-B",
+        "identity": "aa:bb:cc:dd:ee:ff",
+        "source": "bind"
+       }
+      ],
+      "builds": [
+       {
+        "counts": {
+         "active": 2,
+         "done": 22,
+         "flagged": 1,
+         "set_aside": 2,
+         "total": 28,
+         "waiting": 1
+        },
+        "gate": [
+         {
+          "key": "done",
+          "kind": "",
+          "label": "Every device done",
+          "note": "22 of 26 done (2 set aside); T-EOS-B Expected, T-SRL-B Config, T-NOREL failed, T-CUM-SP4 Bootstrap",
+          "result": "blocked",
+          "type": "devices_done"
+         },
+         {
+          "key": "reach",
+          "kind": "",
+          "label": "Management reachable",
+          "note": "22 of 26 answer on their management ports (2 set aside)",
+          "result": "running",
+          "type": "reachable"
+         },
+         {
+          "key": "srv",
+          "kind": "",
+          "label": "Servers confirmed",
+          "note": "by the site lead",
+          "result": "needs confirmation",
+          "type": "confirm"
+         },
+         {
+          "key": "iso",
+          "kind": "isolation",
+          "label": "Ingress isolation per tenant",
+          "note": "automatic check queued",
+          "result": "running",
+          "type": "auto"
+         },
+         {
+          "key": "nccl",
+          "kind": "nccl",
+          "label": "NCCL all-reduce at target",
+          "note": "automatic check queued",
+          "result": "running",
+          "type": "auto"
+         }
+        ],
+        "key": "be",
+        "name": "Test",
+        "override": null,
+        "passed": "",
+        "state": "building",
+        "waves": 1,
+        "waves_open": 1
+       }
+      ],
+      "by": "admin",
+      "completed": "",
+      "counts": {
+       "active": 2,
+       "done": 22,
+       "flagged": 1,
+       "set_aside": 2,
+       "total": 28,
+       "waiting": 1
+      },
+      "deviations": [
+       {
+        "build": "Test",
+        "by": "",
+        "detail": "lab",
+        "item": "T-NOIP",
+        "type": "set aside",
+        "when": ""
+       },
+       {
+        "build": "Test",
+        "by": "",
+        "detail": "",
+        "item": "T-CUM-SP3",
+        "type": "set aside",
+        "when": ""
+       }
+      ],
+      "generated": "2026-11-11T00:00:00Z",
+      "kind": "final",
+      "not_done": [
+       "T-EOS-B",
+       "T-SRL-B",
+       "T-NOREL",
+       "T-CUM-SP4"
+      ],
+      "not_done_n": 4,
+      "open": [
+       {
+        "build": "Test",
+        "detail": "22 of 26 done (2 set aside); T-EOS-B Expected, T-SRL-B Config, T-NOREL failed, T-CUM-SP4 Bootstrap",
+        "item": "Every device done",
+        "result": "blocked"
+       },
+       {
+        "build": "Test",
+        "detail": "22 of 26 answer on their management ports (2 set aside)",
+        "item": "Management reachable",
+        "result": "running"
+       },
+       {
+        "build": "Test",
+        "detail": "by the site lead",
+        "item": "Servers confirmed",
+        "result": "needs confirmation"
+       },
+       {
+        "build": "Test",
+        "detail": "automatic check queued",
+        "item": "Ingress isolation per tenant",
+        "result": "running"
+       },
+       {
+        "build": "Test",
+        "detail": "automatic check queued",
+        "item": "NCCL all-reduce at target",
+        "result": "running"
+       }
+      ],
+      "rmas": [
+       {
+        "device": "T-XE-A",
+        "state": "open",
+        "ticket": "RMA-1"
+       }
+      ],
+      "run": {
+       "started": "",
+       "state": "idle"
+      },
+      "site": {
+       "build": "TST-512-001",
+       "builder": "HS-v2.02",
+       "code": "TST",
+       "customer": "Test Co",
+       "delivered_by": "DWR Networking",
+       "fingerprint": "0123456789abcdef",
+       "gpus": 512,
+       "plan_digest": "",
+       "racks": 8,
+       "region": "",
+       "region_name": "Test region \u00e9",
+       "workload": "training"
+      },
+      "software": [
+       {
+        "devices": 4,
+        "os": "cumulus",
+        "release": ""
+       },
+       {
+        "devices": 2,
+        "os": "cumulus",
+        "release": "5.18.3"
+       },
+       {
+        "devices": 2,
+        "os": "eos",
+        "release": "4.33.2F"
+       },
+       {
+        "devices": 2,
+        "os": "ftd",
+        "release": "7.6.0"
+       },
+       {
+        "devices": 2,
+        "os": "iosxe",
+        "release": "17.12.04"
+       },
+       {
+        "devices": 2,
+        "os": "iosxr",
+        "release": "24.4.2"
+       },
+       {
+        "devices": 2,
+        "os": "junos",
+        "release": ""
+       },
+       {
+        "devices": 1,
+        "os": "junos",
+        "release": "1.0"
+       },
+       {
+        "devices": 2,
+        "os": "junos",
+        "release": "24.4R2-S3"
+       },
+       {
+        "devices": 2,
+        "os": "junos",
+        "release": "25.2X100-D30"
+       },
+       {
+        "devices": 2,
+        "os": "nxos",
+        "release": "10.4(5)"
+       },
+       {
+        "devices": 2,
+        "os": "srl",
+        "release": "24.10.1"
+       },
+       {
+        "devices": 2,
+        "os": "sros",
+        "release": "26.7.R1"
+       },
+       {
+        "devices": 1,
+        "os": "weka",
+        "release": "1.0"
+       }
+      ],
+      "standards": [
+       {
+        "id": "HS-ARC-001",
+        "rev": "2.6",
+        "title": "Architecture Overview"
+       },
+       {
+        "id": "HS-DEP-001",
+        "rev": "2.5",
+        "title": "Deployment and Acceptance"
+       }
+      ],
+      "title": "Final build report"
+     },
+     "generated": "2026-11-11T00:00:00Z",
+     "kind": "post",
+     "open": [
+      {
+       "build": "Test",
+       "detail": "22 of 26 done (2 set aside); T-EOS-B Expected, T-SRL-B Config, T-NOREL failed, T-CUM-SP4 Bootstrap",
+       "item": "Every device done",
+       "result": "blocked"
+      },
+      {
+       "build": "Test",
+       "detail": "22 of 26 answer on their management ports (2 set aside)",
+       "item": "Management reachable",
+       "result": "running"
+      },
+      {
+       "build": "Test",
+       "detail": "by the site lead",
+       "item": "Servers confirmed",
+       "result": "needs confirmation"
+      },
+      {
+       "build": "Test",
+       "detail": "automatic check queued",
+       "item": "Ingress isolation per tenant",
+       "result": "running"
+      },
+      {
+       "build": "Test",
+       "detail": "automatic check queued",
+       "item": "NCCL all-reduce at target",
+       "result": "running"
+      }
+     ],
+     "results": [
+      {
+       "busbw": 412.5,
+       "by": "op1",
+       "target": 380.0,
+       "test": "nccl",
+       "when": "2023-11-14T22:13:20Z"
+      }
+     ],
+     "site": {
+      "build": "TST-512-001",
+      "builder": "HS-v2.02",
+      "code": "TST",
+      "customer": "Test Co",
+      "delivered_by": "DWR Networking",
+      "fingerprint": "0123456789abcdef",
+      "gpus": 512,
+      "plan_digest": "",
+      "racks": 8,
+      "region": "",
+      "region_name": "Test region \u00e9",
+      "workload": "training"
+     },
+     "software": [
+      {
+       "devices": 4,
+       "os": "cumulus",
+       "release": ""
+      },
+      {
+       "devices": 2,
+       "os": "cumulus",
+       "release": "5.18.3"
+      },
+      {
+       "devices": 2,
+       "os": "eos",
+       "release": "4.33.2F"
+      },
+      {
+       "devices": 2,
+       "os": "ftd",
+       "release": "7.6.0"
+      },
+      {
+       "devices": 2,
+       "os": "iosxe",
+       "release": "17.12.04"
+      },
+      {
+       "devices": 2,
+       "os": "iosxr",
+       "release": "24.4.2"
+      },
+      {
+       "devices": 2,
+       "os": "junos",
+       "release": ""
+      },
+      {
+       "devices": 1,
+       "os": "junos",
+       "release": "1.0"
+      },
+      {
+       "devices": 2,
+       "os": "junos",
+       "release": "24.4R2-S3"
+      },
+      {
+       "devices": 2,
+       "os": "junos",
+       "release": "25.2X100-D30"
+      },
+      {
+       "devices": 2,
+       "os": "nxos",
+       "release": "10.4(5)"
+      },
+      {
+       "devices": 2,
+       "os": "srl",
+       "release": "24.10.1"
+      },
+      {
+       "devices": 2,
+       "os": "sros",
+       "release": "26.7.R1"
+      },
+      {
+       "devices": 1,
+       "os": "weka",
+       "release": "1.0"
+      }
+     ],
+     "standards": [
+      {
+       "id": "HS-ARC-001",
+       "rev": "2.6",
+       "title": "Architecture Overview"
+      },
+      {
+       "id": "HS-DEP-001",
+       "rev": "2.5",
+       "title": "Deployment and Acceptance"
+      }
+     ],
+     "title": "Post-deployment report",
+     "tuning": {
+      "approved": null,
+      "switches": 0,
+      "versions": 0
+     }
+    },
+    "post canon": "{\"acceptance\":[{\"build\":\"Test\",\"detail\":\"by the site lead\",\"evidence\":[],\"item\":\"Servers confirmed\",\"result\":\"needs confirmation\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"evidence\":[{\"check\":\"t1 bind\",\"note\":\"bound\",\"ok\":true},{\"check\":\"t1 snat\",\"note\":\"\",\"ok\":true},{\"check\":\"t1 cross\",\"note\":\"refused\",\"ok\":true},{\"check\":\"t2 bind\",\"note\":\"\",\"ok\":true},{\"check\":\"t2 snat\",\"note\":\"pool\",\"ok\":true},{\"check\":\"t2 cross\",\"note\":\"\",\"ok\":true}],\"item\":\"Ingress isolation per tenant\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"evidence\":[],\"item\":\"NCCL all-reduce at target\",\"result\":\"running\"}],\"by\":\"admin\",\"completed\":\"\",\"counts\":{\"active\":2,\"done\":22,\"flagged\":1,\"set_aside\":2,\"total\":28,\"waiting\":1},\"deviations\":[{\"build\":\"Test\",\"by\":\"\",\"detail\":\"lab\",\"item\":\"T-NOIP\",\"type\":\"set aside\",\"when\":\"\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"\",\"item\":\"T-CUM-SP3\",\"type\":\"set aside\",\"when\":\"\"}],\"final_build\":{\"asbuilt\":[{\"device\":\"T-CUM-A\",\"identity\":\"SN123\",\"source\":\"as-built\"},{\"device\":\"T-CUM-B\",\"identity\":\"aa:bb:cc:dd:ee:ff\",\"source\":\"bind\"}],\"builds\":[{\"counts\":{\"active\":2,\"done\":22,\"flagged\":1,\"set_aside\":2,\"total\":28,\"waiting\":1},\"gate\":[{\"key\":\"done\",\"kind\":\"\",\"label\":\"Every device done\",\"note\":\"22 of 26 done (2 set aside); T-EOS-B Expected, T-SRL-B Config, T-NOREL failed, T-CUM-SP4 Bootstrap\",\"result\":\"blocked\",\"type\":\"devices_done\"},{\"key\":\"reach\",\"kind\":\"\",\"label\":\"Management reachable\",\"note\":\"22 of 26 answer on their management ports (2 set aside)\",\"result\":\"running\",\"type\":\"reachable\"},{\"key\":\"srv\",\"kind\":\"\",\"label\":\"Servers confirmed\",\"note\":\"by the site lead\",\"result\":\"needs confirmation\",\"type\":\"confirm\"},{\"key\":\"iso\",\"kind\":\"isolation\",\"label\":\"Ingress isolation per tenant\",\"note\":\"automatic check queued\",\"result\":\"running\",\"type\":\"auto\"},{\"key\":\"nccl\",\"kind\":\"nccl\",\"label\":\"NCCL all-reduce at target\",\"note\":\"automatic check queued\",\"result\":\"running\",\"type\":\"auto\"}],\"key\":\"be\",\"name\":\"Test\",\"override\":null,\"passed\":\"\",\"state\":\"building\",\"waves\":1,\"waves_open\":1}],\"by\":\"admin\",\"completed\":\"\",\"counts\":{\"active\":2,\"done\":22,\"flagged\":1,\"set_aside\":2,\"total\":28,\"waiting\":1},\"deviations\":[{\"build\":\"Test\",\"by\":\"\",\"detail\":\"lab\",\"item\":\"T-NOIP\",\"type\":\"set aside\",\"when\":\"\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"\",\"item\":\"T-CUM-SP3\",\"type\":\"set aside\",\"when\":\"\"}],\"generated\":\"2026-11-11T00:00:00Z\",\"kind\":\"final\",\"not_done\":[\"T-EOS-B\",\"T-SRL-B\",\"T-NOREL\",\"T-CUM-SP4\"],\"not_done_n\":4,\"open\":[{\"build\":\"Test\",\"detail\":\"22 of 26 done (2 set aside); T-EOS-B Expected, T-SRL-B Config, T-NOREL failed, T-CUM-SP4 Bootstrap\",\"item\":\"Every device done\",\"result\":\"blocked\"},{\"build\":\"Test\",\"detail\":\"22 of 26 answer on their management ports (2 set aside)\",\"item\":\"Management reachable\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"by the site lead\",\"item\":\"Servers confirmed\",\"result\":\"needs confirmation\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"item\":\"Ingress isolation per tenant\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"item\":\"NCCL all-reduce at target\",\"result\":\"running\"}],\"rmas\":[{\"device\":\"T-XE-A\",\"state\":\"open\",\"ticket\":\"RMA-1\"}],\"run\":{\"started\":\"\",\"state\":\"idle\"},\"site\":{\"build\":\"TST-512-001\",\"builder\":\"HS-v2.02\",\"code\":\"TST\",\"customer\":\"Test Co\",\"delivered_by\":\"DWR Networking\",\"fingerprint\":\"0123456789abcdef\",\"gpus\":512,\"plan_digest\":\"\",\"racks\":8,\"region\":\"\",\"region_name\":\"Test region \\u00e9\",\"workload\":\"training\"},\"software\":[{\"devices\":4,\"os\":\"cumulus\",\"release\":\"\"},{\"devices\":2,\"os\":\"cumulus\",\"release\":\"5.18.3\"},{\"devices\":2,\"os\":\"eos\",\"release\":\"4.33.2F\"},{\"devices\":2,\"os\":\"ftd\",\"release\":\"7.6.0\"},{\"devices\":2,\"os\":\"iosxe\",\"release\":\"17.12.04\"},{\"devices\":2,\"os\":\"iosxr\",\"release\":\"24.4.2\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"\"},{\"devices\":1,\"os\":\"junos\",\"release\":\"1.0\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"24.4R2-S3\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"25.2X100-D30\"},{\"devices\":2,\"os\":\"nxos\",\"release\":\"10.4(5)\"},{\"devices\":2,\"os\":\"srl\",\"release\":\"24.10.1\"},{\"devices\":2,\"os\":\"sros\",\"release\":\"26.7.R1\"},{\"devices\":1,\"os\":\"weka\",\"release\":\"1.0\"}],\"standards\":[{\"id\":\"HS-ARC-001\",\"rev\":\"2.6\",\"title\":\"Architecture Overview\"},{\"id\":\"HS-DEP-001\",\"rev\":\"2.5\",\"title\":\"Deployment and Acceptance\"}],\"title\":\"Final build report\"},\"generated\":\"2026-11-11T00:00:00Z\",\"kind\":\"post\",\"open\":[{\"build\":\"Test\",\"detail\":\"22 of 26 done (2 set aside); T-EOS-B Expected, T-SRL-B Config, T-NOREL failed, T-CUM-SP4 Bootstrap\",\"item\":\"Every device done\",\"result\":\"blocked\"},{\"build\":\"Test\",\"detail\":\"22 of 26 answer on their management ports (2 set aside)\",\"item\":\"Management reachable\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"by the site lead\",\"item\":\"Servers confirmed\",\"result\":\"needs confirmation\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"item\":\"Ingress isolation per tenant\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"item\":\"NCCL all-reduce at target\",\"result\":\"running\"}],\"results\":[{\"busbw\":412.5,\"by\":\"op1\",\"target\":380.0,\"test\":\"nccl\",\"when\":\"2023-11-14T22:13:20Z\"}],\"site\":{\"build\":\"TST-512-001\",\"builder\":\"HS-v2.02\",\"code\":\"TST\",\"customer\":\"Test Co\",\"delivered_by\":\"DWR Networking\",\"fingerprint\":\"0123456789abcdef\",\"gpus\":512,\"plan_digest\":\"\",\"racks\":8,\"region\":\"\",\"region_name\":\"Test region \\u00e9\",\"workload\":\"training\"},\"software\":[{\"devices\":4,\"os\":\"cumulus\",\"release\":\"\"},{\"devices\":2,\"os\":\"cumulus\",\"release\":\"5.18.3\"},{\"devices\":2,\"os\":\"eos\",\"release\":\"4.33.2F\"},{\"devices\":2,\"os\":\"ftd\",\"release\":\"7.6.0\"},{\"devices\":2,\"os\":\"iosxe\",\"release\":\"17.12.04\"},{\"devices\":2,\"os\":\"iosxr\",\"release\":\"24.4.2\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"\"},{\"devices\":1,\"os\":\"junos\",\"release\":\"1.0\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"24.4R2-S3\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"25.2X100-D30\"},{\"devices\":2,\"os\":\"nxos\",\"release\":\"10.4(5)\"},{\"devices\":2,\"os\":\"srl\",\"release\":\"24.10.1\"},{\"devices\":2,\"os\":\"sros\",\"release\":\"26.7.R1\"},{\"devices\":1,\"os\":\"weka\",\"release\":\"1.0\"}],\"standards\":[{\"id\":\"HS-ARC-001\",\"rev\":\"2.6\",\"title\":\"Architecture Overview\"},{\"id\":\"HS-DEP-001\",\"rev\":\"2.5\",\"title\":\"Deployment and Acceptance\"}],\"title\":\"Post-deployment report\",\"tuning\":{\"approved\":null,\"switches\":0,\"versions\":0}}",
+    "post csv": "build,item,result,detail\r\nTest,Servers confirmed,needs confirmation,by the site lead\r\nTest,Ingress isolation per tenant,running,automatic check queued\r\nTest,NCCL all-reduce at target,running,automatic check queued\r\n",
+    "progress": {
+     "activity_12h": [
+      {
+       "actions": 11,
+       "user": "op1"
+      }
+     ],
+     "blocked": [
+      {
+       "build": "Test",
+       "detail": "image refused: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+       "device": "T-NOREL",
+       "flag": "failed"
+      }
+     ],
+     "blocked_n": 1,
+     "builds": [
+      {
+       "counts": {
+        "active": 2,
+        "done": 22,
+        "flagged": 1,
+        "set_aside": 2,
+        "total": 28,
+        "waiting": 1
+       },
+       "gate": [
+        {
+         "key": "done",
+         "kind": "",
+         "label": "Every device done",
+         "note": "22 of 26 done (2 set aside); T-EOS-B Expected, T-SRL-B Config, T-NOREL failed, T-CUM-SP4 Bootstrap",
+         "result": "blocked",
+         "type": "devices_done"
+        },
+        {
+         "key": "reach",
+         "kind": "",
+         "label": "Management reachable",
+         "note": "22 of 26 answer on their management ports (2 set aside)",
+         "result": "running",
+         "type": "reachable"
+        },
+        {
+         "key": "srv",
+         "kind": "",
+         "label": "Servers confirmed",
+         "note": "by the site lead",
+         "result": "needs confirmation",
+         "type": "confirm"
+        },
+        {
+         "key": "iso",
+         "kind": "isolation",
+         "label": "Ingress isolation per tenant",
+         "note": "automatic check queued",
+         "result": "running",
+         "type": "auto"
+        },
+        {
+         "key": "nccl",
+         "kind": "nccl",
+         "label": "NCCL all-reduce at target",
+         "note": "automatic check queued",
+         "result": "running",
+         "type": "auto"
+        }
+       ],
+       "key": "be",
+       "name": "Test",
+       "override": null,
+       "passed": "",
+       "state": "building",
+       "waves": 1,
+       "waves_open": 1
+      }
+     ],
+     "by": "admin",
+     "counts": {
+      "active": 2,
+      "done": 22,
+      "flagged": 1,
+      "set_aside": 2,
+      "total": 28,
+      "waiting": 1
+     },
+     "generated": "<T>",
+     "holds": [],
+     "kind": "progress",
+     "pace": {
+      "done_last_8h": 0,
+      "eta_hours": null,
+      "remaining": 4
+     },
+     "rmas": [
+      {
+       "device": "T-XE-A",
+       "ticket": "RMA-1"
+      }
+     ],
+     "rows": [],
+     "run": {
+      "started": "",
+      "state": "idle"
+     },
+     "site": {
+      "build": "TST-512-001",
+      "builder": "HS-v2.02",
+      "code": "TST",
+      "customer": "Test Co",
+      "delivered_by": "DWR Networking",
+      "fingerprint": "0123456789abcdef",
+      "gpus": 512,
+      "plan_digest": "",
+      "racks": 8,
+      "region": "",
+      "region_name": "Test region \u00e9",
+      "workload": "training"
+     },
+     "standards": [
+      {
+       "id": "HS-ARC-001",
+       "rev": "2.6",
+       "title": "Architecture Overview"
+      },
+      {
+       "id": "HS-DEP-001",
+       "rev": "2.5",
+       "title": "Deployment and Acceptance"
+      }
+     ],
+     "title": "Progress build report"
+    },
+    "progress csv": "build,state,total,done,active,waiting,flagged,set_aside\r\nTest,building,28,22,2,1,1,2\r\n",
+    "ready": {
+     "cert": {
+      "ok": false,
+      "why": "gate not passed: Test"
+     },
+     "final": {
+      "ok": false,
+      "why": "gate not passed: Test"
+     },
+     "post": {
+      "ok": false,
+      "why": "gate not passed: Test"
+     },
+     "progress": {
+      "ok": true,
+      "why": ""
+     }
+    }
+   },
+   {
+    "cert": {
+     "acceptance": [
+      {
+       "build": "Test",
+       "item": "Servers confirmed",
+       "result": "confirmed"
+      },
+      {
+       "build": "Test",
+       "item": "Ingress isolation per tenant",
+       "result": "running"
+      },
+      {
+       "build": "Test",
+       "item": "NCCL all-reduce at target",
+       "result": "running"
+      }
+     ],
+     "by": "admin",
+     "dates": {
+      "accepted": "2023-11-14T23:13:20Z",
+      "issued": "2026-11-11T00:00:00Z",
+      "started": ""
+     },
+     "deviations": [
+      {
+       "build": "Test",
+       "by": "admin",
+       "detail": "lab without hosts",
+       "item": "build gate",
+       "type": "gate override",
+       "when": "2023-11-14T23:03:20Z"
+      },
+      {
+       "build": "Test",
+       "by": "",
+       "detail": "lab",
+       "item": "T-NOIP",
+       "type": "set aside",
+       "when": ""
+      },
+      {
+       "build": "Test",
+       "by": "",
+       "detail": "",
+       "item": "T-CUM-SP3",
+       "type": "set aside",
+       "when": ""
+      }
+     ],
+     "generated": "<T>",
+     "kind": "cert",
+     "post_sha256": "30ca26365592ed0be9a2d40844bd74617170425f45dd56a1bfba6ca03e2d390e",
+     "reasons": [
+      "1 device(s) not built"
+     ],
+     "site": {
+      "build": "TST-512-001",
+      "builder": "HS-v2.02",
+      "code": "TST",
+      "customer": "Test Co",
+      "delivered_by": "DWR Networking",
+      "fingerprint": "0123456789abcdef",
+      "gpus": 512,
+      "plan_digest": "",
+      "racks": 8,
+      "region": "",
+      "region_name": "Test region \u00e9",
+      "workload": "training"
+     },
+     "standards": [
+      {
+       "id": "HS-ARC-001",
+       "rev": "2.6",
+       "title": "Architecture Overview"
+      },
+      {
+       "id": "HS-DEP-001",
+       "rev": "2.5",
+       "title": "Deployment and Acceptance"
+      }
+     ],
+     "status": "not issued",
+     "title": "Certificate of Conformance",
+     "totals": {
+      "built": 25,
+      "devices": 28,
+      "gpus": 512,
+      "racks": 8,
+      "set_aside": 2
+     }
+    },
+    "cert csv": "item,value\r\nstatus,not issued\r\nsite,TST-512-001\r\naccepted,2023-11-14T23:13:20Z\r\nissued,2026-11-11T00:00:00Z\r\npost_sha256,30ca26365592ed0be9a2d40844bd74617170425f45dd56a1bfba6ca03e2d390e\r\n",
+    "final": {
+     "asbuilt": [
+      {
+       "device": "T-CUM-A",
+       "identity": "SN123",
+       "source": "as-built"
+      },
+      {
+       "device": "T-CUM-B",
+       "identity": "aa:bb:cc:dd:ee:ff",
+       "source": "bind"
+      }
+     ],
+     "builds": [
+      {
+       "counts": {
+        "active": 1,
+        "done": 25,
+        "flagged": 0,
+        "set_aside": 2,
+        "total": 28,
+        "waiting": 0
+       },
+       "gate": [
+        {
+         "key": "done",
+         "kind": "",
+         "label": "Every device done",
+         "note": "25 of 26 done (2 set aside); T-CUM-SP4 Bootstrap",
+         "result": "running",
+         "type": "devices_done"
+        },
+        {
+         "key": "reach",
+         "kind": "",
+         "label": "Management reachable",
+         "note": "25 of 26 answer on their management ports (2 set aside)",
+         "result": "running",
+         "type": "reachable"
+        },
+        {
+         "key": "srv",
+         "kind": "",
+         "label": "Servers confirmed",
+         "note": "admin: checked by J. Doe",
+         "result": "confirmed",
+         "type": "confirm"
+        },
+        {
+         "key": "iso",
+         "kind": "isolation",
+         "label": "Ingress isolation per tenant",
+         "note": "automatic check queued",
+         "result": "running",
+         "type": "auto"
+        },
+        {
+         "key": "nccl",
+         "kind": "nccl",
+         "label": "NCCL all-reduce at target",
+         "note": "automatic check queued",
+         "result": "running",
+         "type": "auto"
+        }
+       ],
+       "key": "be",
+       "name": "Test",
+       "override": {
+        "by": "admin",
+        "reason": "lab without hosts",
+        "when": "2023-11-14T23:03:20Z"
+       },
+       "passed": "2023-11-14T23:13:20Z",
+       "state": "complete",
+       "waves": 1,
+       "waves_open": 1
+      }
+     ],
+     "by": "admin",
+     "completed": "2023-11-14T23:13:20Z",
+     "counts": {
+      "active": 1,
+      "done": 25,
+      "flagged": 0,
+      "set_aside": 2,
+      "total": 28,
+      "waiting": 0
+     },
+     "deviations": [
+      {
+       "build": "Test",
+       "by": "admin",
+       "detail": "lab without hosts",
+       "item": "build gate",
+       "type": "gate override",
+       "when": "2023-11-14T23:03:20Z"
+      },
+      {
+       "build": "Test",
+       "by": "",
+       "detail": "lab",
+       "item": "T-NOIP",
+       "type": "set aside",
+       "when": ""
+      },
+      {
+       "build": "Test",
+       "by": "",
+       "detail": "",
+       "item": "T-CUM-SP3",
+       "type": "set aside",
+       "when": ""
+      }
+     ],
+     "generated": "<T>",
+     "kind": "final",
+     "not_done": [
+      "T-CUM-SP4"
+     ],
+     "not_done_n": 1,
+     "open": [],
+     "rmas": [
+      {
+       "device": "T-XE-A",
+       "state": "closed",
+       "ticket": "RMA-1"
+      }
+     ],
+     "run": {
+      "started": "",
+      "state": "idle"
+     },
+     "site": {
+      "build": "TST-512-001",
+      "builder": "HS-v2.02",
+      "code": "TST",
+      "customer": "Test Co",
+      "delivered_by": "DWR Networking",
+      "fingerprint": "0123456789abcdef",
+      "gpus": 512,
+      "plan_digest": "",
+      "racks": 8,
+      "region": "",
+      "region_name": "Test region \u00e9",
+      "workload": "training"
+     },
+     "software": [
+      {
+       "devices": 4,
+       "os": "cumulus",
+       "release": ""
+      },
+      {
+       "devices": 2,
+       "os": "cumulus",
+       "release": "5.18.3"
+      },
+      {
+       "devices": 2,
+       "os": "eos",
+       "release": "4.33.2F"
+      },
+      {
+       "devices": 2,
+       "os": "ftd",
+       "release": "7.6.0"
+      },
+      {
+       "devices": 2,
+       "os": "iosxe",
+       "release": "17.12.04"
+      },
+      {
+       "devices": 2,
+       "os": "iosxr",
+       "release": "24.4.2"
+      },
+      {
+       "devices": 2,
+       "os": "junos",
+       "release": ""
+      },
+      {
+       "devices": 1,
+       "os": "junos",
+       "release": "1.0"
+      },
+      {
+       "devices": 2,
+       "os": "junos",
+       "release": "24.4R2-S3"
+      },
+      {
+       "devices": 2,
+       "os": "junos",
+       "release": "25.2X100-D30"
+      },
+      {
+       "devices": 2,
+       "os": "nxos",
+       "release": "10.4(5)"
+      },
+      {
+       "devices": 2,
+       "os": "srl",
+       "release": "24.10.1"
+      },
+      {
+       "devices": 2,
+       "os": "sros",
+       "release": "26.7.R1"
+      },
+      {
+       "devices": 1,
+       "os": "weka",
+       "release": "1.0"
+      }
+     ],
+     "standards": [
+      {
+       "id": "HS-ARC-001",
+       "rev": "2.6",
+       "title": "Architecture Overview"
+      },
+      {
+       "id": "HS-DEP-001",
+       "rev": "2.5",
+       "title": "Deployment and Acceptance"
+      }
+     ],
+     "title": "Final build report"
+    },
+    "final csv": "type,build,item,detail,by,when\r\ngate override,Test,build gate,lab without hosts,admin,2023-11-14T23:03:20Z\r\nset aside,Test,T-NOIP,lab,,\r\nset aside,Test,T-CUM-SP3,,,\r\n",
+    "post": {
+     "acceptance": [
+      {
+       "build": "Test",
+       "detail": "admin: checked by J. Doe",
+       "evidence": [],
+       "item": "Servers confirmed",
+       "result": "confirmed"
+      },
+      {
+       "build": "Test",
+       "detail": "automatic check queued",
+       "evidence": [
+        {
+         "check": "t1 bind",
+         "note": "bound",
+         "ok": true
+        },
+        {
+         "check": "t1 snat",
+         "note": "",
+         "ok": true
+        },
+        {
+         "check": "t1 cross",
+         "note": "refused",
+         "ok": true
+        },
+        {
+         "check": "t2 bind",
+         "note": "",
+         "ok": true
+        },
+        {
+         "check": "t2 snat",
+         "note": "pool",
+         "ok": true
+        },
+        {
+         "check": "t2 cross",
+         "note": "",
+         "ok": true
+        }
+       ],
+       "item": "Ingress isolation per tenant",
+       "result": "running"
+      },
+      {
+       "build": "Test",
+       "detail": "automatic check queued",
+       "evidence": [],
+       "item": "NCCL all-reduce at target",
+       "result": "running"
+      }
+     ],
+     "by": "admin",
+     "completed": "2023-11-14T23:13:20Z",
+     "counts": {
+      "active": 1,
+      "done": 25,
+      "flagged": 0,
+      "set_aside": 2,
+      "total": 28,
+      "waiting": 0
+     },
+     "deviations": [
+      {
+       "build": "Test",
+       "by": "admin",
+       "detail": "lab without hosts",
+       "item": "build gate",
+       "type": "gate override",
+       "when": "2023-11-14T23:03:20Z"
+      },
+      {
+       "build": "Test",
+       "by": "",
+       "detail": "lab",
+       "item": "T-NOIP",
+       "type": "set aside",
+       "when": ""
+      },
+      {
+       "build": "Test",
+       "by": "",
+       "detail": "",
+       "item": "T-CUM-SP3",
+       "type": "set aside",
+       "when": ""
+      }
+     ],
+     "final_build": {
+      "asbuilt": [
+       {
+        "device": "T-CUM-A",
+        "identity": "SN123",
+        "source": "as-built"
+       },
+       {
+        "device": "T-CUM-B",
+        "identity": "aa:bb:cc:dd:ee:ff",
+        "source": "bind"
+       }
+      ],
+      "builds": [
+       {
+        "counts": {
+         "active": 1,
+         "done": 25,
+         "flagged": 0,
+         "set_aside": 2,
+         "total": 28,
+         "waiting": 0
+        },
+        "gate": [
+         {
+          "key": "done",
+          "kind": "",
+          "label": "Every device done",
+          "note": "25 of 26 done (2 set aside); T-CUM-SP4 Bootstrap",
+          "result": "running",
+          "type": "devices_done"
+         },
+         {
+          "key": "reach",
+          "kind": "",
+          "label": "Management reachable",
+          "note": "25 of 26 answer on their management ports (2 set aside)",
+          "result": "running",
+          "type": "reachable"
+         },
+         {
+          "key": "srv",
+          "kind": "",
+          "label": "Servers confirmed",
+          "note": "admin: checked by J. Doe",
+          "result": "confirmed",
+          "type": "confirm"
+         },
+         {
+          "key": "iso",
+          "kind": "isolation",
+          "label": "Ingress isolation per tenant",
+          "note": "automatic check queued",
+          "result": "running",
+          "type": "auto"
+         },
+         {
+          "key": "nccl",
+          "kind": "nccl",
+          "label": "NCCL all-reduce at target",
+          "note": "automatic check queued",
+          "result": "running",
+          "type": "auto"
+         }
+        ],
+        "key": "be",
+        "name": "Test",
+        "override": {
+         "by": "admin",
+         "reason": "lab without hosts",
+         "when": "2023-11-14T23:03:20Z"
+        },
+        "passed": "2023-11-14T23:13:20Z",
+        "state": "complete",
+        "waves": 1,
+        "waves_open": 1
+       }
+      ],
+      "by": "admin",
+      "completed": "2023-11-14T23:13:20Z",
+      "counts": {
+       "active": 1,
+       "done": 25,
+       "flagged": 0,
+       "set_aside": 2,
+       "total": 28,
+       "waiting": 0
+      },
+      "deviations": [
+       {
+        "build": "Test",
+        "by": "admin",
+        "detail": "lab without hosts",
+        "item": "build gate",
+        "type": "gate override",
+        "when": "2023-11-14T23:03:20Z"
+       },
+       {
+        "build": "Test",
+        "by": "",
+        "detail": "lab",
+        "item": "T-NOIP",
+        "type": "set aside",
+        "when": ""
+       },
+       {
+        "build": "Test",
+        "by": "",
+        "detail": "",
+        "item": "T-CUM-SP3",
+        "type": "set aside",
+        "when": ""
+       }
+      ],
+      "generated": "2026-11-11T00:00:00Z",
+      "kind": "final",
+      "not_done": [
+       "T-CUM-SP4"
+      ],
+      "not_done_n": 1,
+      "open": [],
+      "rmas": [
+       {
+        "device": "T-XE-A",
+        "state": "closed",
+        "ticket": "RMA-1"
+       }
+      ],
+      "run": {
+       "started": "",
+       "state": "idle"
+      },
+      "site": {
+       "build": "TST-512-001",
+       "builder": "HS-v2.02",
+       "code": "TST",
+       "customer": "Test Co",
+       "delivered_by": "DWR Networking",
+       "fingerprint": "0123456789abcdef",
+       "gpus": 512,
+       "plan_digest": "",
+       "racks": 8,
+       "region": "",
+       "region_name": "Test region \u00e9",
+       "workload": "training"
+      },
+      "software": [
+       {
+        "devices": 4,
+        "os": "cumulus",
+        "release": ""
+       },
+       {
+        "devices": 2,
+        "os": "cumulus",
+        "release": "5.18.3"
+       },
+       {
+        "devices": 2,
+        "os": "eos",
+        "release": "4.33.2F"
+       },
+       {
+        "devices": 2,
+        "os": "ftd",
+        "release": "7.6.0"
+       },
+       {
+        "devices": 2,
+        "os": "iosxe",
+        "release": "17.12.04"
+       },
+       {
+        "devices": 2,
+        "os": "iosxr",
+        "release": "24.4.2"
+       },
+       {
+        "devices": 2,
+        "os": "junos",
+        "release": ""
+       },
+       {
+        "devices": 1,
+        "os": "junos",
+        "release": "1.0"
+       },
+       {
+        "devices": 2,
+        "os": "junos",
+        "release": "24.4R2-S3"
+       },
+       {
+        "devices": 2,
+        "os": "junos",
+        "release": "25.2X100-D30"
+       },
+       {
+        "devices": 2,
+        "os": "nxos",
+        "release": "10.4(5)"
+       },
+       {
+        "devices": 2,
+        "os": "srl",
+        "release": "24.10.1"
+       },
+       {
+        "devices": 2,
+        "os": "sros",
+        "release": "26.7.R1"
+       },
+       {
+        "devices": 1,
+        "os": "weka",
+        "release": "1.0"
+       }
+      ],
+      "standards": [
+       {
+        "id": "HS-ARC-001",
+        "rev": "2.6",
+        "title": "Architecture Overview"
+       },
+       {
+        "id": "HS-DEP-001",
+        "rev": "2.5",
+        "title": "Deployment and Acceptance"
+       }
+      ],
+      "title": "Final build report"
+     },
+     "generated": "2026-11-11T00:00:00Z",
+     "kind": "post",
+     "open": [],
+     "results": [
+      {
+       "busbw": 412.5,
+       "by": "op1",
+       "target": 380.0,
+       "test": "nccl",
+       "when": "2023-11-14T22:13:20Z"
+      }
+     ],
+     "site": {
+      "build": "TST-512-001",
+      "builder": "HS-v2.02",
+      "code": "TST",
+      "customer": "Test Co",
+      "delivered_by": "DWR Networking",
+      "fingerprint": "0123456789abcdef",
+      "gpus": 512,
+      "plan_digest": "",
+      "racks": 8,
+      "region": "",
+      "region_name": "Test region \u00e9",
+      "workload": "training"
+     },
+     "software": [
+      {
+       "devices": 4,
+       "os": "cumulus",
+       "release": ""
+      },
+      {
+       "devices": 2,
+       "os": "cumulus",
+       "release": "5.18.3"
+      },
+      {
+       "devices": 2,
+       "os": "eos",
+       "release": "4.33.2F"
+      },
+      {
+       "devices": 2,
+       "os": "ftd",
+       "release": "7.6.0"
+      },
+      {
+       "devices": 2,
+       "os": "iosxe",
+       "release": "17.12.04"
+      },
+      {
+       "devices": 2,
+       "os": "iosxr",
+       "release": "24.4.2"
+      },
+      {
+       "devices": 2,
+       "os": "junos",
+       "release": ""
+      },
+      {
+       "devices": 1,
+       "os": "junos",
+       "release": "1.0"
+      },
+      {
+       "devices": 2,
+       "os": "junos",
+       "release": "24.4R2-S3"
+      },
+      {
+       "devices": 2,
+       "os": "junos",
+       "release": "25.2X100-D30"
+      },
+      {
+       "devices": 2,
+       "os": "nxos",
+       "release": "10.4(5)"
+      },
+      {
+       "devices": 2,
+       "os": "srl",
+       "release": "24.10.1"
+      },
+      {
+       "devices": 2,
+       "os": "sros",
+       "release": "26.7.R1"
+      },
+      {
+       "devices": 1,
+       "os": "weka",
+       "release": "1.0"
+      }
+     ],
+     "standards": [
+      {
+       "id": "HS-ARC-001",
+       "rev": "2.6",
+       "title": "Architecture Overview"
+      },
+      {
+       "id": "HS-DEP-001",
+       "rev": "2.5",
+       "title": "Deployment and Acceptance"
+      }
+     ],
+     "title": "Post-deployment report",
+     "tuning": {
+      "approved": null,
+      "switches": 0,
+      "versions": 0
+     }
+    },
+    "post canon": "{\"acceptance\":[{\"build\":\"Test\",\"detail\":\"admin: checked by J. Doe\",\"evidence\":[],\"item\":\"Servers confirmed\",\"result\":\"confirmed\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"evidence\":[{\"check\":\"t1 bind\",\"note\":\"bound\",\"ok\":true},{\"check\":\"t1 snat\",\"note\":\"\",\"ok\":true},{\"check\":\"t1 cross\",\"note\":\"refused\",\"ok\":true},{\"check\":\"t2 bind\",\"note\":\"\",\"ok\":true},{\"check\":\"t2 snat\",\"note\":\"pool\",\"ok\":true},{\"check\":\"t2 cross\",\"note\":\"\",\"ok\":true}],\"item\":\"Ingress isolation per tenant\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"evidence\":[],\"item\":\"NCCL all-reduce at target\",\"result\":\"running\"}],\"by\":\"admin\",\"completed\":\"2023-11-14T23:13:20Z\",\"counts\":{\"active\":1,\"done\":25,\"flagged\":0,\"set_aside\":2,\"total\":28,\"waiting\":0},\"deviations\":[{\"build\":\"Test\",\"by\":\"admin\",\"detail\":\"lab without hosts\",\"item\":\"build gate\",\"type\":\"gate override\",\"when\":\"2023-11-14T23:03:20Z\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"lab\",\"item\":\"T-NOIP\",\"type\":\"set aside\",\"when\":\"\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"\",\"item\":\"T-CUM-SP3\",\"type\":\"set aside\",\"when\":\"\"}],\"final_build\":{\"asbuilt\":[{\"device\":\"T-CUM-A\",\"identity\":\"SN123\",\"source\":\"as-built\"},{\"device\":\"T-CUM-B\",\"identity\":\"aa:bb:cc:dd:ee:ff\",\"source\":\"bind\"}],\"builds\":[{\"counts\":{\"active\":1,\"done\":25,\"flagged\":0,\"set_aside\":2,\"total\":28,\"waiting\":0},\"gate\":[{\"key\":\"done\",\"kind\":\"\",\"label\":\"Every device done\",\"note\":\"25 of 26 done (2 set aside); T-CUM-SP4 Bootstrap\",\"result\":\"running\",\"type\":\"devices_done\"},{\"key\":\"reach\",\"kind\":\"\",\"label\":\"Management reachable\",\"note\":\"25 of 26 answer on their management ports (2 set aside)\",\"result\":\"running\",\"type\":\"reachable\"},{\"key\":\"srv\",\"kind\":\"\",\"label\":\"Servers confirmed\",\"note\":\"admin: checked by J. Doe\",\"result\":\"confirmed\",\"type\":\"confirm\"},{\"key\":\"iso\",\"kind\":\"isolation\",\"label\":\"Ingress isolation per tenant\",\"note\":\"automatic check queued\",\"result\":\"running\",\"type\":\"auto\"},{\"key\":\"nccl\",\"kind\":\"nccl\",\"label\":\"NCCL all-reduce at target\",\"note\":\"automatic check queued\",\"result\":\"running\",\"type\":\"auto\"}],\"key\":\"be\",\"name\":\"Test\",\"override\":{\"by\":\"admin\",\"reason\":\"lab without hosts\",\"when\":\"2023-11-14T23:03:20Z\"},\"passed\":\"2023-11-14T23:13:20Z\",\"state\":\"complete\",\"waves\":1,\"waves_open\":1}],\"by\":\"admin\",\"completed\":\"2023-11-14T23:13:20Z\",\"counts\":{\"active\":1,\"done\":25,\"flagged\":0,\"set_aside\":2,\"total\":28,\"waiting\":0},\"deviations\":[{\"build\":\"Test\",\"by\":\"admin\",\"detail\":\"lab without hosts\",\"item\":\"build gate\",\"type\":\"gate override\",\"when\":\"2023-11-14T23:03:20Z\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"lab\",\"item\":\"T-NOIP\",\"type\":\"set aside\",\"when\":\"\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"\",\"item\":\"T-CUM-SP3\",\"type\":\"set aside\",\"when\":\"\"}],\"generated\":\"2026-11-11T00:00:00Z\",\"kind\":\"final\",\"not_done\":[\"T-CUM-SP4\"],\"not_done_n\":1,\"open\":[],\"rmas\":[{\"device\":\"T-XE-A\",\"state\":\"closed\",\"ticket\":\"RMA-1\"}],\"run\":{\"started\":\"\",\"state\":\"idle\"},\"site\":{\"build\":\"TST-512-001\",\"builder\":\"HS-v2.02\",\"code\":\"TST\",\"customer\":\"Test Co\",\"delivered_by\":\"DWR Networking\",\"fingerprint\":\"0123456789abcdef\",\"gpus\":512,\"plan_digest\":\"\",\"racks\":8,\"region\":\"\",\"region_name\":\"Test region \\u00e9\",\"workload\":\"training\"},\"software\":[{\"devices\":4,\"os\":\"cumulus\",\"release\":\"\"},{\"devices\":2,\"os\":\"cumulus\",\"release\":\"5.18.3\"},{\"devices\":2,\"os\":\"eos\",\"release\":\"4.33.2F\"},{\"devices\":2,\"os\":\"ftd\",\"release\":\"7.6.0\"},{\"devices\":2,\"os\":\"iosxe\",\"release\":\"17.12.04\"},{\"devices\":2,\"os\":\"iosxr\",\"release\":\"24.4.2\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"\"},{\"devices\":1,\"os\":\"junos\",\"release\":\"1.0\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"24.4R2-S3\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"25.2X100-D30\"},{\"devices\":2,\"os\":\"nxos\",\"release\":\"10.4(5)\"},{\"devices\":2,\"os\":\"srl\",\"release\":\"24.10.1\"},{\"devices\":2,\"os\":\"sros\",\"release\":\"26.7.R1\"},{\"devices\":1,\"os\":\"weka\",\"release\":\"1.0\"}],\"standards\":[{\"id\":\"HS-ARC-001\",\"rev\":\"2.6\",\"title\":\"Architecture Overview\"},{\"id\":\"HS-DEP-001\",\"rev\":\"2.5\",\"title\":\"Deployment and Acceptance\"}],\"title\":\"Final build report\"},\"generated\":\"2026-11-11T00:00:00Z\",\"kind\":\"post\",\"open\":[],\"results\":[{\"busbw\":412.5,\"by\":\"op1\",\"target\":380.0,\"test\":\"nccl\",\"when\":\"2023-11-14T22:13:20Z\"}],\"site\":{\"build\":\"TST-512-001\",\"builder\":\"HS-v2.02\",\"code\":\"TST\",\"customer\":\"Test Co\",\"delivered_by\":\"DWR Networking\",\"fingerprint\":\"0123456789abcdef\",\"gpus\":512,\"plan_digest\":\"\",\"racks\":8,\"region\":\"\",\"region_name\":\"Test region \\u00e9\",\"workload\":\"training\"},\"software\":[{\"devices\":4,\"os\":\"cumulus\",\"release\":\"\"},{\"devices\":2,\"os\":\"cumulus\",\"release\":\"5.18.3\"},{\"devices\":2,\"os\":\"eos\",\"release\":\"4.33.2F\"},{\"devices\":2,\"os\":\"ftd\",\"release\":\"7.6.0\"},{\"devices\":2,\"os\":\"iosxe\",\"release\":\"17.12.04\"},{\"devices\":2,\"os\":\"iosxr\",\"release\":\"24.4.2\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"\"},{\"devices\":1,\"os\":\"junos\",\"release\":\"1.0\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"24.4R2-S3\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"25.2X100-D30\"},{\"devices\":2,\"os\":\"nxos\",\"release\":\"10.4(5)\"},{\"devices\":2,\"os\":\"srl\",\"release\":\"24.10.1\"},{\"devices\":2,\"os\":\"sros\",\"release\":\"26.7.R1\"},{\"devices\":1,\"os\":\"weka\",\"release\":\"1.0\"}],\"standards\":[{\"id\":\"HS-ARC-001\",\"rev\":\"2.6\",\"title\":\"Architecture Overview\"},{\"id\":\"HS-DEP-001\",\"rev\":\"2.5\",\"title\":\"Deployment and Acceptance\"}],\"title\":\"Post-deployment report\",\"tuning\":{\"approved\":null,\"switches\":0,\"versions\":0}}",
+    "post csv": "build,item,result,detail\r\nTest,Servers confirmed,confirmed,admin: checked by J. Doe\r\nTest,Ingress isolation per tenant,running,automatic check queued\r\nTest,NCCL all-reduce at target,running,automatic check queued\r\n",
+    "progress": {
+     "activity_12h": [
+      {
+       "actions": 11,
+       "user": "op1"
+      }
+     ],
+     "blocked": [],
+     "blocked_n": 0,
+     "builds": [
+      {
+       "counts": {
+        "active": 1,
+        "done": 25,
+        "flagged": 0,
+        "set_aside": 2,
+        "total": 28,
+        "waiting": 0
+       },
+       "gate": [
+        {
+         "key": "done",
+         "kind": "",
+         "label": "Every device done",
+         "note": "25 of 26 done (2 set aside); T-CUM-SP4 Bootstrap",
+         "result": "running",
+         "type": "devices_done"
+        },
+        {
+         "key": "reach",
+         "kind": "",
+         "label": "Management reachable",
+         "note": "25 of 26 answer on their management ports (2 set aside)",
+         "result": "running",
+         "type": "reachable"
+        },
+        {
+         "key": "srv",
+         "kind": "",
+         "label": "Servers confirmed",
+         "note": "admin: checked by J. Doe",
+         "result": "confirmed",
+         "type": "confirm"
+        },
+        {
+         "key": "iso",
+         "kind": "isolation",
+         "label": "Ingress isolation per tenant",
+         "note": "automatic check queued",
+         "result": "running",
+         "type": "auto"
+        },
+        {
+         "key": "nccl",
+         "kind": "nccl",
+         "label": "NCCL all-reduce at target",
+         "note": "automatic check queued",
+         "result": "running",
+         "type": "auto"
+        }
+       ],
+       "key": "be",
+       "name": "Test",
+       "override": {
+        "by": "admin",
+        "reason": "lab without hosts",
+        "when": "2023-11-14T23:03:20Z"
+       },
+       "passed": "2023-11-14T23:13:20Z",
+       "state": "complete",
+       "waves": 1,
+       "waves_open": 1
+      }
+     ],
+     "by": "admin",
+     "counts": {
+      "active": 1,
+      "done": 25,
+      "flagged": 0,
+      "set_aside": 2,
+      "total": 28,
+      "waiting": 0
+     },
+     "generated": "<T>",
+     "holds": [],
+     "kind": "progress",
+     "pace": {
+      "done_last_8h": 0,
+      "eta_hours": null,
+      "remaining": 1
+     },
+     "rmas": [],
+     "rows": [],
+     "run": {
+      "started": "",
+      "state": "idle"
+     },
+     "site": {
+      "build": "TST-512-001",
+      "builder": "HS-v2.02",
+      "code": "TST",
+      "customer": "Test Co",
+      "delivered_by": "DWR Networking",
+      "fingerprint": "0123456789abcdef",
+      "gpus": 512,
+      "plan_digest": "",
+      "racks": 8,
+      "region": "",
+      "region_name": "Test region \u00e9",
+      "workload": "training"
+     },
+     "standards": [
+      {
+       "id": "HS-ARC-001",
+       "rev": "2.6",
+       "title": "Architecture Overview"
+      },
+      {
+       "id": "HS-DEP-001",
+       "rev": "2.5",
+       "title": "Deployment and Acceptance"
+      }
+     ],
+     "title": "Progress build report"
+    },
+    "progress csv": "build,state,total,done,active,waiting,flagged,set_aside\r\nTest,complete,28,25,1,0,0,2\r\n",
+    "ready": {
+     "cert": {
+      "ok": false,
+      "why": "1 device(s) not built"
+     },
+     "final": {
+      "ok": true,
+      "why": ""
+     },
+     "post": {
+      "ok": true,
+      "why": ""
+     },
+     "progress": {
+      "ok": true,
+      "why": ""
+     }
+    }
+   },
+   {
+    "cert": {
+     "acceptance": [
+      {
+       "build": "Test",
+       "item": "Servers confirmed",
+       "result": "confirmed"
+      },
+      {
+       "build": "Test",
+       "item": "Ingress isolation per tenant",
+       "result": "running"
+      },
+      {
+       "build": "Test",
+       "item": "NCCL all-reduce at target",
+       "result": "running"
+      }
+     ],
+     "by": "admin",
+     "dates": {
+      "accepted": "2023-11-14T23:13:20Z",
+      "issued": "2026-11-11T00:00:00Z",
+      "started": ""
+     },
+     "deviations": [
+      {
+       "build": "Test",
+       "by": "",
+       "detail": "lab",
+       "item": "T-NOIP",
+       "type": "set aside",
+       "when": ""
+      },
+      {
+       "build": "Test",
+       "by": "",
+       "detail": "",
+       "item": "T-CUM-SP3",
+       "type": "set aside",
+       "when": ""
+      }
+     ],
+     "generated": "<T>",
+     "kind": "cert",
+     "post_sha256": "91429888a3324a324efe2c3eb1c6aa82962be1c80361fc98a7c38c4062934511",
+     "reasons": [
+      "1 device(s) not built",
+      "4 gate item(s) open"
+     ],
+     "site": {
+      "build": "TST-512-001",
+      "builder": "HS-v2.02",
+      "code": "TST",
+      "customer": "Test Co",
+      "delivered_by": "DWR Networking",
+      "fingerprint": "0123456789abcdef",
+      "gpus": 512,
+      "plan_digest": "",
+      "racks": 8,
+      "region": "",
+      "region_name": "Test region \u00e9",
+      "workload": "training"
+     },
+     "standards": [
+      {
+       "id": "HS-ARC-001",
+       "rev": "2.6",
+       "title": "Architecture Overview"
+      },
+      {
+       "id": "HS-DEP-001",
+       "rev": "2.5",
+       "title": "Deployment and Acceptance"
+      }
+     ],
+     "status": "not issued",
+     "title": "Certificate of Conformance",
+     "totals": {
+      "built": 25,
+      "devices": 28,
+      "gpus": 512,
+      "racks": 8,
+      "set_aside": 2
+     }
+    },
+    "cert csv": "item,value\r\nstatus,not issued\r\nsite,TST-512-001\r\naccepted,2023-11-14T23:13:20Z\r\nissued,2026-11-11T00:00:00Z\r\npost_sha256,91429888a3324a324efe2c3eb1c6aa82962be1c80361fc98a7c38c4062934511\r\n",
+    "final": {
+     "asbuilt": [
+      {
+       "device": "T-CUM-A",
+       "identity": "SN123",
+       "source": "as-built"
+      },
+      {
+       "device": "T-CUM-B",
+       "identity": "aa:bb:cc:dd:ee:ff",
+       "source": "bind"
+      }
+     ],
+     "builds": [
+      {
+       "counts": {
+        "active": 1,
+        "done": 25,
+        "flagged": 0,
+        "set_aside": 2,
+        "total": 28,
+        "waiting": 0
+       },
+       "gate": [
+        {
+         "key": "done",
+         "kind": "",
+         "label": "Every device done",
+         "note": "25 of 26 done (2 set aside); T-CUM-SP4 Bootstrap",
+         "result": "running",
+         "type": "devices_done"
+        },
+        {
+         "key": "reach",
+         "kind": "",
+         "label": "Management reachable",
+         "note": "25 of 26 answer on their management ports (2 set aside)",
+         "result": "running",
+         "type": "reachable"
+        },
+        {
+         "key": "srv",
+         "kind": "",
+         "label": "Servers confirmed",
+         "note": "admin: checked by J. Doe",
+         "result": "confirmed",
+         "type": "confirm"
+        },
+        {
+         "key": "iso",
+         "kind": "isolation",
+         "label": "Ingress isolation per tenant",
+         "note": "automatic check queued",
+         "result": "running",
+         "type": "auto"
+        },
+        {
+         "key": "nccl",
+         "kind": "nccl",
+         "label": "NCCL all-reduce at target",
+         "note": "automatic check queued",
+         "result": "running",
+         "type": "auto"
+        }
+       ],
+       "key": "be",
+       "name": "Test",
+       "override": null,
+       "passed": "2023-11-14T23:13:20Z",
+       "state": "complete",
+       "waves": 1,
+       "waves_open": 1
+      }
+     ],
+     "by": "admin",
+     "completed": "2023-11-14T23:13:20Z",
+     "counts": {
+      "active": 1,
+      "done": 25,
+      "flagged": 0,
+      "set_aside": 2,
+      "total": 28,
+      "waiting": 0
+     },
+     "deviations": [
+      {
+       "build": "Test",
+       "by": "",
+       "detail": "lab",
+       "item": "T-NOIP",
+       "type": "set aside",
+       "when": ""
+      },
+      {
+       "build": "Test",
+       "by": "",
+       "detail": "",
+       "item": "T-CUM-SP3",
+       "type": "set aside",
+       "when": ""
+      }
+     ],
+     "generated": "<T>",
+     "kind": "final",
+     "not_done": [
+      "T-CUM-SP4"
+     ],
+     "not_done_n": 1,
+     "open": [
+      {
+       "build": "Test",
+       "detail": "25 of 26 done (2 set aside); T-CUM-SP4 Bootstrap",
+       "item": "Every device done",
+       "result": "running"
+      },
+      {
+       "build": "Test",
+       "detail": "25 of 26 answer on their management ports (2 set aside)",
+       "item": "Management reachable",
+       "result": "running"
+      },
+      {
+       "build": "Test",
+       "detail": "automatic check queued",
+       "item": "Ingress isolation per tenant",
+       "result": "running"
+      },
+      {
+       "build": "Test",
+       "detail": "automatic check queued",
+       "item": "NCCL all-reduce at target",
+       "result": "running"
+      }
+     ],
+     "rmas": [
+      {
+       "device": "T-XE-A",
+       "state": "closed",
+       "ticket": "RMA-1"
+      }
+     ],
+     "run": {
+      "started": "",
+      "state": "idle"
+     },
+     "site": {
+      "build": "TST-512-001",
+      "builder": "HS-v2.02",
+      "code": "TST",
+      "customer": "Test Co",
+      "delivered_by": "DWR Networking",
+      "fingerprint": "0123456789abcdef",
+      "gpus": 512,
+      "plan_digest": "",
+      "racks": 8,
+      "region": "",
+      "region_name": "Test region \u00e9",
+      "workload": "training"
+     },
+     "software": [
+      {
+       "devices": 4,
+       "os": "cumulus",
+       "release": ""
+      },
+      {
+       "devices": 2,
+       "os": "cumulus",
+       "release": "5.18.3"
+      },
+      {
+       "devices": 2,
+       "os": "eos",
+       "release": "4.33.2F"
+      },
+      {
+       "devices": 2,
+       "os": "ftd",
+       "release": "7.6.0"
+      },
+      {
+       "devices": 2,
+       "os": "iosxe",
+       "release": "17.12.04"
+      },
+      {
+       "devices": 2,
+       "os": "iosxr",
+       "release": "24.4.2"
+      },
+      {
+       "devices": 2,
+       "os": "junos",
+       "release": ""
+      },
+      {
+       "devices": 1,
+       "os": "junos",
+       "release": "1.0"
+      },
+      {
+       "devices": 2,
+       "os": "junos",
+       "release": "24.4R2-S3"
+      },
+      {
+       "devices": 2,
+       "os": "junos",
+       "release": "25.2X100-D30"
+      },
+      {
+       "devices": 2,
+       "os": "nxos",
+       "release": "10.4(5)"
+      },
+      {
+       "devices": 2,
+       "os": "srl",
+       "release": "24.10.1"
+      },
+      {
+       "devices": 2,
+       "os": "sros",
+       "release": "26.7.R1"
+      },
+      {
+       "devices": 1,
+       "os": "weka",
+       "release": "1.0"
+      }
+     ],
+     "standards": [
+      {
+       "id": "HS-ARC-001",
+       "rev": "2.6",
+       "title": "Architecture Overview"
+      },
+      {
+       "id": "HS-DEP-001",
+       "rev": "2.5",
+       "title": "Deployment and Acceptance"
+      }
+     ],
+     "title": "Final build report"
+    },
+    "final csv": "type,build,item,detail,by,when\r\nset aside,Test,T-NOIP,lab,,\r\nset aside,Test,T-CUM-SP3,,,\r\n",
+    "post": {
+     "acceptance": [
+      {
+       "build": "Test",
+       "detail": "admin: checked by J. Doe",
+       "evidence": [],
+       "item": "Servers confirmed",
+       "result": "confirmed"
+      },
+      {
+       "build": "Test",
+       "detail": "automatic check queued",
+       "evidence": [
+        {
+         "check": "t1 bind",
+         "note": "bound",
+         "ok": true
+        },
+        {
+         "check": "t1 snat",
+         "note": "",
+         "ok": true
+        },
+        {
+         "check": "t1 cross",
+         "note": "refused",
+         "ok": true
+        },
+        {
+         "check": "t2 bind",
+         "note": "",
+         "ok": true
+        },
+        {
+         "check": "t2 snat",
+         "note": "pool",
+         "ok": true
+        },
+        {
+         "check": "t2 cross",
+         "note": "",
+         "ok": true
+        }
+       ],
+       "item": "Ingress isolation per tenant",
+       "result": "running"
+      },
+      {
+       "build": "Test",
+       "detail": "automatic check queued",
+       "evidence": [],
+       "item": "NCCL all-reduce at target",
+       "result": "running"
+      }
+     ],
+     "by": "admin",
+     "completed": "2023-11-14T23:13:20Z",
+     "counts": {
+      "active": 1,
+      "done": 25,
+      "flagged": 0,
+      "set_aside": 2,
+      "total": 28,
+      "waiting": 0
+     },
+     "deviations": [
+      {
+       "build": "Test",
+       "by": "",
+       "detail": "lab",
+       "item": "T-NOIP",
+       "type": "set aside",
+       "when": ""
+      },
+      {
+       "build": "Test",
+       "by": "",
+       "detail": "",
+       "item": "T-CUM-SP3",
+       "type": "set aside",
+       "when": ""
+      }
+     ],
+     "final_build": {
+      "asbuilt": [
+       {
+        "device": "T-CUM-A",
+        "identity": "SN123",
+        "source": "as-built"
+       },
+       {
+        "device": "T-CUM-B",
+        "identity": "aa:bb:cc:dd:ee:ff",
+        "source": "bind"
+       }
+      ],
+      "builds": [
+       {
+        "counts": {
+         "active": 1,
+         "done": 25,
+         "flagged": 0,
+         "set_aside": 2,
+         "total": 28,
+         "waiting": 0
+        },
+        "gate": [
+         {
+          "key": "done",
+          "kind": "",
+          "label": "Every device done",
+          "note": "25 of 26 done (2 set aside); T-CUM-SP4 Bootstrap",
+          "result": "running",
+          "type": "devices_done"
+         },
+         {
+          "key": "reach",
+          "kind": "",
+          "label": "Management reachable",
+          "note": "25 of 26 answer on their management ports (2 set aside)",
+          "result": "running",
+          "type": "reachable"
+         },
+         {
+          "key": "srv",
+          "kind": "",
+          "label": "Servers confirmed",
+          "note": "admin: checked by J. Doe",
+          "result": "confirmed",
+          "type": "confirm"
+         },
+         {
+          "key": "iso",
+          "kind": "isolation",
+          "label": "Ingress isolation per tenant",
+          "note": "automatic check queued",
+          "result": "running",
+          "type": "auto"
+         },
+         {
+          "key": "nccl",
+          "kind": "nccl",
+          "label": "NCCL all-reduce at target",
+          "note": "automatic check queued",
+          "result": "running",
+          "type": "auto"
+         }
+        ],
+        "key": "be",
+        "name": "Test",
+        "override": null,
+        "passed": "2023-11-14T23:13:20Z",
+        "state": "complete",
+        "waves": 1,
+        "waves_open": 1
+       }
+      ],
+      "by": "admin",
+      "completed": "2023-11-14T23:13:20Z",
+      "counts": {
+       "active": 1,
+       "done": 25,
+       "flagged": 0,
+       "set_aside": 2,
+       "total": 28,
+       "waiting": 0
+      },
+      "deviations": [
+       {
+        "build": "Test",
+        "by": "",
+        "detail": "lab",
+        "item": "T-NOIP",
+        "type": "set aside",
+        "when": ""
+       },
+       {
+        "build": "Test",
+        "by": "",
+        "detail": "",
+        "item": "T-CUM-SP3",
+        "type": "set aside",
+        "when": ""
+       }
+      ],
+      "generated": "2026-11-11T00:00:00Z",
+      "kind": "final",
+      "not_done": [
+       "T-CUM-SP4"
+      ],
+      "not_done_n": 1,
+      "open": [
+       {
+        "build": "Test",
+        "detail": "25 of 26 done (2 set aside); T-CUM-SP4 Bootstrap",
+        "item": "Every device done",
+        "result": "running"
+       },
+       {
+        "build": "Test",
+        "detail": "25 of 26 answer on their management ports (2 set aside)",
+        "item": "Management reachable",
+        "result": "running"
+       },
+       {
+        "build": "Test",
+        "detail": "automatic check queued",
+        "item": "Ingress isolation per tenant",
+        "result": "running"
+       },
+       {
+        "build": "Test",
+        "detail": "automatic check queued",
+        "item": "NCCL all-reduce at target",
+        "result": "running"
+       }
+      ],
+      "rmas": [
+       {
+        "device": "T-XE-A",
+        "state": "closed",
+        "ticket": "RMA-1"
+       }
+      ],
+      "run": {
+       "started": "",
+       "state": "idle"
+      },
+      "site": {
+       "build": "TST-512-001",
+       "builder": "HS-v2.02",
+       "code": "TST",
+       "customer": "Test Co",
+       "delivered_by": "DWR Networking",
+       "fingerprint": "0123456789abcdef",
+       "gpus": 512,
+       "plan_digest": "",
+       "racks": 8,
+       "region": "",
+       "region_name": "Test region \u00e9",
+       "workload": "training"
+      },
+      "software": [
+       {
+        "devices": 4,
+        "os": "cumulus",
+        "release": ""
+       },
+       {
+        "devices": 2,
+        "os": "cumulus",
+        "release": "5.18.3"
+       },
+       {
+        "devices": 2,
+        "os": "eos",
+        "release": "4.33.2F"
+       },
+       {
+        "devices": 2,
+        "os": "ftd",
+        "release": "7.6.0"
+       },
+       {
+        "devices": 2,
+        "os": "iosxe",
+        "release": "17.12.04"
+       },
+       {
+        "devices": 2,
+        "os": "iosxr",
+        "release": "24.4.2"
+       },
+       {
+        "devices": 2,
+        "os": "junos",
+        "release": ""
+       },
+       {
+        "devices": 1,
+        "os": "junos",
+        "release": "1.0"
+       },
+       {
+        "devices": 2,
+        "os": "junos",
+        "release": "24.4R2-S3"
+       },
+       {
+        "devices": 2,
+        "os": "junos",
+        "release": "25.2X100-D30"
+       },
+       {
+        "devices": 2,
+        "os": "nxos",
+        "release": "10.4(5)"
+       },
+       {
+        "devices": 2,
+        "os": "srl",
+        "release": "24.10.1"
+       },
+       {
+        "devices": 2,
+        "os": "sros",
+        "release": "26.7.R1"
+       },
+       {
+        "devices": 1,
+        "os": "weka",
+        "release": "1.0"
+       }
+      ],
+      "standards": [
+       {
+        "id": "HS-ARC-001",
+        "rev": "2.6",
+        "title": "Architecture Overview"
+       },
+       {
+        "id": "HS-DEP-001",
+        "rev": "2.5",
+        "title": "Deployment and Acceptance"
+       }
+      ],
+      "title": "Final build report"
+     },
+     "generated": "2026-11-11T00:00:00Z",
+     "kind": "post",
+     "open": [
+      {
+       "build": "Test",
+       "detail": "25 of 26 done (2 set aside); T-CUM-SP4 Bootstrap",
+       "item": "Every device done",
+       "result": "running"
+      },
+      {
+       "build": "Test",
+       "detail": "25 of 26 answer on their management ports (2 set aside)",
+       "item": "Management reachable",
+       "result": "running"
+      },
+      {
+       "build": "Test",
+       "detail": "automatic check queued",
+       "item": "Ingress isolation per tenant",
+       "result": "running"
+      },
+      {
+       "build": "Test",
+       "detail": "automatic check queued",
+       "item": "NCCL all-reduce at target",
+       "result": "running"
+      }
+     ],
+     "results": [
+      {
+       "busbw": 412.5,
+       "by": "op1",
+       "target": 380.0,
+       "test": "nccl",
+       "when": "2023-11-14T22:13:20Z"
+      }
+     ],
+     "site": {
+      "build": "TST-512-001",
+      "builder": "HS-v2.02",
+      "code": "TST",
+      "customer": "Test Co",
+      "delivered_by": "DWR Networking",
+      "fingerprint": "0123456789abcdef",
+      "gpus": 512,
+      "plan_digest": "",
+      "racks": 8,
+      "region": "",
+      "region_name": "Test region \u00e9",
+      "workload": "training"
+     },
+     "software": [
+      {
+       "devices": 4,
+       "os": "cumulus",
+       "release": ""
+      },
+      {
+       "devices": 2,
+       "os": "cumulus",
+       "release": "5.18.3"
+      },
+      {
+       "devices": 2,
+       "os": "eos",
+       "release": "4.33.2F"
+      },
+      {
+       "devices": 2,
+       "os": "ftd",
+       "release": "7.6.0"
+      },
+      {
+       "devices": 2,
+       "os": "iosxe",
+       "release": "17.12.04"
+      },
+      {
+       "devices": 2,
+       "os": "iosxr",
+       "release": "24.4.2"
+      },
+      {
+       "devices": 2,
+       "os": "junos",
+       "release": ""
+      },
+      {
+       "devices": 1,
+       "os": "junos",
+       "release": "1.0"
+      },
+      {
+       "devices": 2,
+       "os": "junos",
+       "release": "24.4R2-S3"
+      },
+      {
+       "devices": 2,
+       "os": "junos",
+       "release": "25.2X100-D30"
+      },
+      {
+       "devices": 2,
+       "os": "nxos",
+       "release": "10.4(5)"
+      },
+      {
+       "devices": 2,
+       "os": "srl",
+       "release": "24.10.1"
+      },
+      {
+       "devices": 2,
+       "os": "sros",
+       "release": "26.7.R1"
+      },
+      {
+       "devices": 1,
+       "os": "weka",
+       "release": "1.0"
+      }
+     ],
+     "standards": [
+      {
+       "id": "HS-ARC-001",
+       "rev": "2.6",
+       "title": "Architecture Overview"
+      },
+      {
+       "id": "HS-DEP-001",
+       "rev": "2.5",
+       "title": "Deployment and Acceptance"
+      }
+     ],
+     "title": "Post-deployment report",
+     "tuning": {
+      "approved": null,
+      "switches": 0,
+      "versions": 0
+     }
+    },
+    "post canon": "{\"acceptance\":[{\"build\":\"Test\",\"detail\":\"admin: checked by J. Doe\",\"evidence\":[],\"item\":\"Servers confirmed\",\"result\":\"confirmed\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"evidence\":[{\"check\":\"t1 bind\",\"note\":\"bound\",\"ok\":true},{\"check\":\"t1 snat\",\"note\":\"\",\"ok\":true},{\"check\":\"t1 cross\",\"note\":\"refused\",\"ok\":true},{\"check\":\"t2 bind\",\"note\":\"\",\"ok\":true},{\"check\":\"t2 snat\",\"note\":\"pool\",\"ok\":true},{\"check\":\"t2 cross\",\"note\":\"\",\"ok\":true}],\"item\":\"Ingress isolation per tenant\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"evidence\":[],\"item\":\"NCCL all-reduce at target\",\"result\":\"running\"}],\"by\":\"admin\",\"completed\":\"2023-11-14T23:13:20Z\",\"counts\":{\"active\":1,\"done\":25,\"flagged\":0,\"set_aside\":2,\"total\":28,\"waiting\":0},\"deviations\":[{\"build\":\"Test\",\"by\":\"\",\"detail\":\"lab\",\"item\":\"T-NOIP\",\"type\":\"set aside\",\"when\":\"\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"\",\"item\":\"T-CUM-SP3\",\"type\":\"set aside\",\"when\":\"\"}],\"final_build\":{\"asbuilt\":[{\"device\":\"T-CUM-A\",\"identity\":\"SN123\",\"source\":\"as-built\"},{\"device\":\"T-CUM-B\",\"identity\":\"aa:bb:cc:dd:ee:ff\",\"source\":\"bind\"}],\"builds\":[{\"counts\":{\"active\":1,\"done\":25,\"flagged\":0,\"set_aside\":2,\"total\":28,\"waiting\":0},\"gate\":[{\"key\":\"done\",\"kind\":\"\",\"label\":\"Every device done\",\"note\":\"25 of 26 done (2 set aside); T-CUM-SP4 Bootstrap\",\"result\":\"running\",\"type\":\"devices_done\"},{\"key\":\"reach\",\"kind\":\"\",\"label\":\"Management reachable\",\"note\":\"25 of 26 answer on their management ports (2 set aside)\",\"result\":\"running\",\"type\":\"reachable\"},{\"key\":\"srv\",\"kind\":\"\",\"label\":\"Servers confirmed\",\"note\":\"admin: checked by J. Doe\",\"result\":\"confirmed\",\"type\":\"confirm\"},{\"key\":\"iso\",\"kind\":\"isolation\",\"label\":\"Ingress isolation per tenant\",\"note\":\"automatic check queued\",\"result\":\"running\",\"type\":\"auto\"},{\"key\":\"nccl\",\"kind\":\"nccl\",\"label\":\"NCCL all-reduce at target\",\"note\":\"automatic check queued\",\"result\":\"running\",\"type\":\"auto\"}],\"key\":\"be\",\"name\":\"Test\",\"override\":null,\"passed\":\"2023-11-14T23:13:20Z\",\"state\":\"complete\",\"waves\":1,\"waves_open\":1}],\"by\":\"admin\",\"completed\":\"2023-11-14T23:13:20Z\",\"counts\":{\"active\":1,\"done\":25,\"flagged\":0,\"set_aside\":2,\"total\":28,\"waiting\":0},\"deviations\":[{\"build\":\"Test\",\"by\":\"\",\"detail\":\"lab\",\"item\":\"T-NOIP\",\"type\":\"set aside\",\"when\":\"\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"\",\"item\":\"T-CUM-SP3\",\"type\":\"set aside\",\"when\":\"\"}],\"generated\":\"2026-11-11T00:00:00Z\",\"kind\":\"final\",\"not_done\":[\"T-CUM-SP4\"],\"not_done_n\":1,\"open\":[{\"build\":\"Test\",\"detail\":\"25 of 26 done (2 set aside); T-CUM-SP4 Bootstrap\",\"item\":\"Every device done\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"25 of 26 answer on their management ports (2 set aside)\",\"item\":\"Management reachable\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"item\":\"Ingress isolation per tenant\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"item\":\"NCCL all-reduce at target\",\"result\":\"running\"}],\"rmas\":[{\"device\":\"T-XE-A\",\"state\":\"closed\",\"ticket\":\"RMA-1\"}],\"run\":{\"started\":\"\",\"state\":\"idle\"},\"site\":{\"build\":\"TST-512-001\",\"builder\":\"HS-v2.02\",\"code\":\"TST\",\"customer\":\"Test Co\",\"delivered_by\":\"DWR Networking\",\"fingerprint\":\"0123456789abcdef\",\"gpus\":512,\"plan_digest\":\"\",\"racks\":8,\"region\":\"\",\"region_name\":\"Test region \\u00e9\",\"workload\":\"training\"},\"software\":[{\"devices\":4,\"os\":\"cumulus\",\"release\":\"\"},{\"devices\":2,\"os\":\"cumulus\",\"release\":\"5.18.3\"},{\"devices\":2,\"os\":\"eos\",\"release\":\"4.33.2F\"},{\"devices\":2,\"os\":\"ftd\",\"release\":\"7.6.0\"},{\"devices\":2,\"os\":\"iosxe\",\"release\":\"17.12.04\"},{\"devices\":2,\"os\":\"iosxr\",\"release\":\"24.4.2\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"\"},{\"devices\":1,\"os\":\"junos\",\"release\":\"1.0\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"24.4R2-S3\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"25.2X100-D30\"},{\"devices\":2,\"os\":\"nxos\",\"release\":\"10.4(5)\"},{\"devices\":2,\"os\":\"srl\",\"release\":\"24.10.1\"},{\"devices\":2,\"os\":\"sros\",\"release\":\"26.7.R1\"},{\"devices\":1,\"os\":\"weka\",\"release\":\"1.0\"}],\"standards\":[{\"id\":\"HS-ARC-001\",\"rev\":\"2.6\",\"title\":\"Architecture Overview\"},{\"id\":\"HS-DEP-001\",\"rev\":\"2.5\",\"title\":\"Deployment and Acceptance\"}],\"title\":\"Final build report\"},\"generated\":\"2026-11-11T00:00:00Z\",\"kind\":\"post\",\"open\":[{\"build\":\"Test\",\"detail\":\"25 of 26 done (2 set aside); T-CUM-SP4 Bootstrap\",\"item\":\"Every device done\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"25 of 26 answer on their management ports (2 set aside)\",\"item\":\"Management reachable\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"item\":\"Ingress isolation per tenant\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"item\":\"NCCL all-reduce at target\",\"result\":\"running\"}],\"results\":[{\"busbw\":412.5,\"by\":\"op1\",\"target\":380.0,\"test\":\"nccl\",\"when\":\"2023-11-14T22:13:20Z\"}],\"site\":{\"build\":\"TST-512-001\",\"builder\":\"HS-v2.02\",\"code\":\"TST\",\"customer\":\"Test Co\",\"delivered_by\":\"DWR Networking\",\"fingerprint\":\"0123456789abcdef\",\"gpus\":512,\"plan_digest\":\"\",\"racks\":8,\"region\":\"\",\"region_name\":\"Test region \\u00e9\",\"workload\":\"training\"},\"software\":[{\"devices\":4,\"os\":\"cumulus\",\"release\":\"\"},{\"devices\":2,\"os\":\"cumulus\",\"release\":\"5.18.3\"},{\"devices\":2,\"os\":\"eos\",\"release\":\"4.33.2F\"},{\"devices\":2,\"os\":\"ftd\",\"release\":\"7.6.0\"},{\"devices\":2,\"os\":\"iosxe\",\"release\":\"17.12.04\"},{\"devices\":2,\"os\":\"iosxr\",\"release\":\"24.4.2\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"\"},{\"devices\":1,\"os\":\"junos\",\"release\":\"1.0\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"24.4R2-S3\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"25.2X100-D30\"},{\"devices\":2,\"os\":\"nxos\",\"release\":\"10.4(5)\"},{\"devices\":2,\"os\":\"srl\",\"release\":\"24.10.1\"},{\"devices\":2,\"os\":\"sros\",\"release\":\"26.7.R1\"},{\"devices\":1,\"os\":\"weka\",\"release\":\"1.0\"}],\"standards\":[{\"id\":\"HS-ARC-001\",\"rev\":\"2.6\",\"title\":\"Architecture Overview\"},{\"id\":\"HS-DEP-001\",\"rev\":\"2.5\",\"title\":\"Deployment and Acceptance\"}],\"title\":\"Post-deployment report\",\"tuning\":{\"approved\":null,\"switches\":0,\"versions\":0}}",
+    "post csv": "build,item,result,detail\r\nTest,Servers confirmed,confirmed,admin: checked by J. Doe\r\nTest,Ingress isolation per tenant,running,automatic check queued\r\nTest,NCCL all-reduce at target,running,automatic check queued\r\n",
+    "progress": {
+     "activity_12h": [
+      {
+       "actions": 11,
+       "user": "op1"
+      }
+     ],
+     "blocked": [],
+     "blocked_n": 0,
+     "builds": [
+      {
+       "counts": {
+        "active": 1,
+        "done": 25,
+        "flagged": 0,
+        "set_aside": 2,
+        "total": 28,
+        "waiting": 0
+       },
+       "gate": [
+        {
+         "key": "done",
+         "kind": "",
+         "label": "Every device done",
+         "note": "25 of 26 done (2 set aside); T-CUM-SP4 Bootstrap",
+         "result": "running",
+         "type": "devices_done"
+        },
+        {
+         "key": "reach",
+         "kind": "",
+         "label": "Management reachable",
+         "note": "25 of 26 answer on their management ports (2 set aside)",
+         "result": "running",
+         "type": "reachable"
+        },
+        {
+         "key": "srv",
+         "kind": "",
+         "label": "Servers confirmed",
+         "note": "admin: checked by J. Doe",
+         "result": "confirmed",
+         "type": "confirm"
+        },
+        {
+         "key": "iso",
+         "kind": "isolation",
+         "label": "Ingress isolation per tenant",
+         "note": "automatic check queued",
+         "result": "running",
+         "type": "auto"
+        },
+        {
+         "key": "nccl",
+         "kind": "nccl",
+         "label": "NCCL all-reduce at target",
+         "note": "automatic check queued",
+         "result": "running",
+         "type": "auto"
+        }
+       ],
+       "key": "be",
+       "name": "Test",
+       "override": null,
+       "passed": "2023-11-14T23:13:20Z",
+       "state": "complete",
+       "waves": 1,
+       "waves_open": 1
+      }
+     ],
+     "by": "admin",
+     "counts": {
+      "active": 1,
+      "done": 25,
+      "flagged": 0,
+      "set_aside": 2,
+      "total": 28,
+      "waiting": 0
+     },
+     "generated": "<T>",
+     "holds": [],
+     "kind": "progress",
+     "pace": {
+      "done_last_8h": 0,
+      "eta_hours": null,
+      "remaining": 1
+     },
+     "rmas": [],
+     "rows": [],
+     "run": {
+      "started": "",
+      "state": "idle"
+     },
+     "site": {
+      "build": "TST-512-001",
+      "builder": "HS-v2.02",
+      "code": "TST",
+      "customer": "Test Co",
+      "delivered_by": "DWR Networking",
+      "fingerprint": "0123456789abcdef",
+      "gpus": 512,
+      "plan_digest": "",
+      "racks": 8,
+      "region": "",
+      "region_name": "Test region \u00e9",
+      "workload": "training"
+     },
+     "standards": [
+      {
+       "id": "HS-ARC-001",
+       "rev": "2.6",
+       "title": "Architecture Overview"
+      },
+      {
+       "id": "HS-DEP-001",
+       "rev": "2.5",
+       "title": "Deployment and Acceptance"
+      }
+     ],
+     "title": "Progress build report"
+    },
+    "progress csv": "build,state,total,done,active,waiting,flagged,set_aside\r\nTest,complete,28,25,1,0,0,2\r\n",
+    "ready": {
+     "cert": {
+      "ok": false,
+      "why": "1 device(s) not built"
+     },
+     "final": {
+      "ok": true,
+      "why": ""
+     },
+     "post": {
+      "ok": true,
+      "why": ""
+     },
+     "progress": {
+      "ok": true,
+      "why": ""
+     }
+    }
+   },
+   {
+    "cert": {
+     "acceptance": [
+      {
+       "build": "Test",
+       "item": "Servers confirmed",
+       "result": "confirmed"
+      },
+      {
+       "build": "Test",
+       "item": "Ingress isolation per tenant",
+       "result": "running"
+      },
+      {
+       "build": "Test",
+       "item": "NCCL all-reduce at target",
+       "result": "running"
+      }
+     ],
+     "by": "admin",
+     "dates": {
+      "accepted": "2023-11-14T23:13:20Z",
+      "issued": "2026-11-11T00:00:00Z",
+      "started": ""
+     },
+     "deviations": [
+      {
+       "build": "Test",
+       "by": "admin",
+       "detail": "hosts not racked: accepted by the customer",
+       "item": "build gate",
+       "type": "gate override",
+       "when": "2023-11-14T23:05:00Z"
+      },
+      {
+       "build": "Test",
+       "by": "",
+       "detail": "26 of 26 done (2 set aside), every identity matched to TST",
+       "item": "Every device done",
+       "type": "accepted warning",
+       "when": ""
+      },
+      {
+       "build": "Test",
+       "by": "",
+       "detail": "26 of 26 answer on their management ports (2 set aside)",
+       "item": "Management reachable",
+       "type": "accepted warning",
+       "when": ""
+      },
+      {
+       "build": "Test",
+       "by": "",
+       "detail": "lab",
+       "item": "T-NOIP",
+       "type": "set aside",
+       "when": ""
+      },
+      {
+       "build": "Test",
+       "by": "",
+       "detail": "",
+       "item": "T-CUM-SP3",
+       "type": "set aside",
+       "when": ""
+      }
+     ],
+     "generated": "<T>",
+     "kind": "cert",
+     "post_sha256": "af339869216761976cb22385d21a090fa54fa9cd6347ca0460d5076fa110efc0",
+     "reasons": [],
+     "site": {
+      "build": "TST-512-001",
+      "builder": "HS-v2.02",
+      "code": "TST",
+      "customer": "Test Co",
+      "delivered_by": "DWR Networking",
+      "fingerprint": "0123456789abcdef",
+      "gpus": 512,
+      "plan_digest": "",
+      "racks": 8,
+      "region": "",
+      "region_name": "Test region \u00e9",
+      "workload": "training"
+     },
+     "standards": [
+      {
+       "id": "HS-ARC-001",
+       "rev": "2.6",
+       "title": "Architecture Overview"
+      },
+      {
+       "id": "HS-DEP-001",
+       "rev": "2.5",
+       "title": "Deployment and Acceptance"
+      }
+     ],
+     "status": "conformant with deviations",
+     "title": "Certificate of Conformance",
+     "totals": {
+      "built": 26,
+      "devices": 28,
+      "gpus": 512,
+      "racks": 8,
+      "set_aside": 2
+     }
+    },
+    "cert csv": "item,value\r\nstatus,conformant with deviations\r\nsite,TST-512-001\r\naccepted,2023-11-14T23:13:20Z\r\nissued,2026-11-11T00:00:00Z\r\npost_sha256,af339869216761976cb22385d21a090fa54fa9cd6347ca0460d5076fa110efc0\r\n",
+    "final": {
+     "asbuilt": [
+      {
+       "device": "T-CUM-A",
+       "identity": "SN123",
+       "source": "as-built"
+      },
+      {
+       "device": "T-CUM-B",
+       "identity": "aa:bb:cc:dd:ee:ff",
+       "source": "bind"
+      }
+     ],
+     "builds": [
+      {
+       "counts": {
+        "active": 0,
+        "done": 26,
+        "flagged": 0,
+        "set_aside": 2,
+        "total": 28,
+        "waiting": 0
+       },
+       "gate": [
+        {
+         "key": "done",
+         "kind": "",
+         "label": "Every device done",
+         "note": "26 of 26 done (2 set aside), every identity matched to TST",
+         "result": "warn",
+         "type": "devices_done"
+        },
+        {
+         "key": "reach",
+         "kind": "",
+         "label": "Management reachable",
+         "note": "26 of 26 answer on their management ports (2 set aside)",
+         "result": "warn",
+         "type": "reachable"
+        },
+        {
+         "key": "srv",
+         "kind": "",
+         "label": "Servers confirmed",
+         "note": "admin: checked by J. Doe",
+         "result": "confirmed",
+         "type": "confirm"
+        },
+        {
+         "key": "iso",
+         "kind": "isolation",
+         "label": "Ingress isolation per tenant",
+         "note": "automatic check queued",
+         "result": "running",
+         "type": "auto"
+        },
+        {
+         "key": "nccl",
+         "kind": "nccl",
+         "label": "NCCL all-reduce at target",
+         "note": "automatic check queued",
+         "result": "running",
+         "type": "auto"
+        }
+       ],
+       "key": "be",
+       "name": "Test",
+       "override": {
+        "by": "admin",
+        "reason": "hosts not racked: accepted by the customer",
+        "when": "2023-11-14T23:05:00Z"
+       },
+       "passed": "2023-11-14T23:13:20Z",
+       "state": "complete",
+       "waves": 1,
+       "waves_open": 1
+      }
+     ],
+     "by": "admin",
+     "completed": "2023-11-14T23:13:20Z",
+     "counts": {
+      "active": 0,
+      "done": 26,
+      "flagged": 0,
+      "set_aside": 2,
+      "total": 28,
+      "waiting": 0
+     },
+     "deviations": [
+      {
+       "build": "Test",
+       "by": "admin",
+       "detail": "hosts not racked: accepted by the customer",
+       "item": "build gate",
+       "type": "gate override",
+       "when": "2023-11-14T23:05:00Z"
+      },
+      {
+       "build": "Test",
+       "by": "",
+       "detail": "26 of 26 done (2 set aside), every identity matched to TST",
+       "item": "Every device done",
+       "type": "accepted warning",
+       "when": ""
+      },
+      {
+       "build": "Test",
+       "by": "",
+       "detail": "26 of 26 answer on their management ports (2 set aside)",
+       "item": "Management reachable",
+       "type": "accepted warning",
+       "when": ""
+      },
+      {
+       "build": "Test",
+       "by": "",
+       "detail": "lab",
+       "item": "T-NOIP",
+       "type": "set aside",
+       "when": ""
+      },
+      {
+       "build": "Test",
+       "by": "",
+       "detail": "",
+       "item": "T-CUM-SP3",
+       "type": "set aside",
+       "when": ""
+      }
+     ],
+     "generated": "<T>",
+     "kind": "final",
+     "not_done": [],
+     "not_done_n": 0,
+     "open": [],
+     "rmas": [
+      {
+       "device": "T-XE-A",
+       "state": "closed",
+       "ticket": "RMA-1"
+      }
+     ],
+     "run": {
+      "started": "",
+      "state": "idle"
+     },
+     "site": {
+      "build": "TST-512-001",
+      "builder": "HS-v2.02",
+      "code": "TST",
+      "customer": "Test Co",
+      "delivered_by": "DWR Networking",
+      "fingerprint": "0123456789abcdef",
+      "gpus": 512,
+      "plan_digest": "",
+      "racks": 8,
+      "region": "",
+      "region_name": "Test region \u00e9",
+      "workload": "training"
+     },
+     "software": [
+      {
+       "devices": 4,
+       "os": "cumulus",
+       "release": ""
+      },
+      {
+       "devices": 2,
+       "os": "cumulus",
+       "release": "5.18.3"
+      },
+      {
+       "devices": 2,
+       "os": "eos",
+       "release": "4.33.2F"
+      },
+      {
+       "devices": 2,
+       "os": "ftd",
+       "release": "7.6.0"
+      },
+      {
+       "devices": 2,
+       "os": "iosxe",
+       "release": "17.12.04"
+      },
+      {
+       "devices": 2,
+       "os": "iosxr",
+       "release": "24.4.2"
+      },
+      {
+       "devices": 2,
+       "os": "junos",
+       "release": ""
+      },
+      {
+       "devices": 1,
+       "os": "junos",
+       "release": "1.0"
+      },
+      {
+       "devices": 2,
+       "os": "junos",
+       "release": "24.4R2-S3"
+      },
+      {
+       "devices": 2,
+       "os": "junos",
+       "release": "25.2X100-D30"
+      },
+      {
+       "devices": 2,
+       "os": "nxos",
+       "release": "10.4(5)"
+      },
+      {
+       "devices": 2,
+       "os": "srl",
+       "release": "24.10.1"
+      },
+      {
+       "devices": 2,
+       "os": "sros",
+       "release": "26.7.R1"
+      },
+      {
+       "devices": 1,
+       "os": "weka",
+       "release": "1.0"
+      }
+     ],
+     "standards": [
+      {
+       "id": "HS-ARC-001",
+       "rev": "2.6",
+       "title": "Architecture Overview"
+      },
+      {
+       "id": "HS-DEP-001",
+       "rev": "2.5",
+       "title": "Deployment and Acceptance"
+      }
+     ],
+     "title": "Final build report"
+    },
+    "final csv": "type,build,item,detail,by,when\r\ngate override,Test,build gate,hosts not racked: accepted by the customer,admin,2023-11-14T23:05:00Z\r\naccepted warning,Test,Every device done,\"26 of 26 done (2 set aside), every identity matched to TST\",,\r\naccepted warning,Test,Management reachable,26 of 26 answer on their management ports (2 set aside),,\r\nset aside,Test,T-NOIP,lab,,\r\nset aside,Test,T-CUM-SP3,,,\r\n",
+    "post": {
+     "acceptance": [
+      {
+       "build": "Test",
+       "detail": "admin: checked by J. Doe",
+       "evidence": [],
+       "item": "Servers confirmed",
+       "result": "confirmed"
+      },
+      {
+       "build": "Test",
+       "detail": "automatic check queued",
+       "evidence": [
+        {
+         "check": "t1 bind",
+         "note": "bound",
+         "ok": true
+        },
+        {
+         "check": "t1 snat",
+         "note": "",
+         "ok": true
+        },
+        {
+         "check": "t1 cross",
+         "note": "refused",
+         "ok": true
+        },
+        {
+         "check": "t2 bind",
+         "note": "",
+         "ok": true
+        },
+        {
+         "check": "t2 snat",
+         "note": "pool",
+         "ok": true
+        },
+        {
+         "check": "t2 cross",
+         "note": "",
+         "ok": true
+        }
+       ],
+       "item": "Ingress isolation per tenant",
+       "result": "running"
+      },
+      {
+       "build": "Test",
+       "detail": "automatic check queued",
+       "evidence": [],
+       "item": "NCCL all-reduce at target",
+       "result": "running"
+      }
+     ],
+     "by": "admin",
+     "completed": "2023-11-14T23:13:20Z",
+     "counts": {
+      "active": 0,
+      "done": 26,
+      "flagged": 0,
+      "set_aside": 2,
+      "total": 28,
+      "waiting": 0
+     },
+     "deviations": [
+      {
+       "build": "Test",
+       "by": "admin",
+       "detail": "hosts not racked: accepted by the customer",
+       "item": "build gate",
+       "type": "gate override",
+       "when": "2023-11-14T23:05:00Z"
+      },
+      {
+       "build": "Test",
+       "by": "",
+       "detail": "26 of 26 done (2 set aside), every identity matched to TST",
+       "item": "Every device done",
+       "type": "accepted warning",
+       "when": ""
+      },
+      {
+       "build": "Test",
+       "by": "",
+       "detail": "26 of 26 answer on their management ports (2 set aside)",
+       "item": "Management reachable",
+       "type": "accepted warning",
+       "when": ""
+      },
+      {
+       "build": "Test",
+       "by": "",
+       "detail": "lab",
+       "item": "T-NOIP",
+       "type": "set aside",
+       "when": ""
+      },
+      {
+       "build": "Test",
+       "by": "",
+       "detail": "",
+       "item": "T-CUM-SP3",
+       "type": "set aside",
+       "when": ""
+      }
+     ],
+     "final_build": {
+      "asbuilt": [
+       {
+        "device": "T-CUM-A",
+        "identity": "SN123",
+        "source": "as-built"
+       },
+       {
+        "device": "T-CUM-B",
+        "identity": "aa:bb:cc:dd:ee:ff",
+        "source": "bind"
+       }
+      ],
+      "builds": [
+       {
+        "counts": {
+         "active": 0,
+         "done": 26,
+         "flagged": 0,
+         "set_aside": 2,
+         "total": 28,
+         "waiting": 0
+        },
+        "gate": [
+         {
+          "key": "done",
+          "kind": "",
+          "label": "Every device done",
+          "note": "26 of 26 done (2 set aside), every identity matched to TST",
+          "result": "warn",
+          "type": "devices_done"
+         },
+         {
+          "key": "reach",
+          "kind": "",
+          "label": "Management reachable",
+          "note": "26 of 26 answer on their management ports (2 set aside)",
+          "result": "warn",
+          "type": "reachable"
+         },
+         {
+          "key": "srv",
+          "kind": "",
+          "label": "Servers confirmed",
+          "note": "admin: checked by J. Doe",
+          "result": "confirmed",
+          "type": "confirm"
+         },
+         {
+          "key": "iso",
+          "kind": "isolation",
+          "label": "Ingress isolation per tenant",
+          "note": "automatic check queued",
+          "result": "running",
+          "type": "auto"
+         },
+         {
+          "key": "nccl",
+          "kind": "nccl",
+          "label": "NCCL all-reduce at target",
+          "note": "automatic check queued",
+          "result": "running",
+          "type": "auto"
+         }
+        ],
+        "key": "be",
+        "name": "Test",
+        "override": {
+         "by": "admin",
+         "reason": "hosts not racked: accepted by the customer",
+         "when": "2023-11-14T23:05:00Z"
+        },
+        "passed": "2023-11-14T23:13:20Z",
+        "state": "complete",
+        "waves": 1,
+        "waves_open": 1
+       }
+      ],
+      "by": "admin",
+      "completed": "2023-11-14T23:13:20Z",
+      "counts": {
+       "active": 0,
+       "done": 26,
+       "flagged": 0,
+       "set_aside": 2,
+       "total": 28,
+       "waiting": 0
+      },
+      "deviations": [
+       {
+        "build": "Test",
+        "by": "admin",
+        "detail": "hosts not racked: accepted by the customer",
+        "item": "build gate",
+        "type": "gate override",
+        "when": "2023-11-14T23:05:00Z"
+       },
+       {
+        "build": "Test",
+        "by": "",
+        "detail": "26 of 26 done (2 set aside), every identity matched to TST",
+        "item": "Every device done",
+        "type": "accepted warning",
+        "when": ""
+       },
+       {
+        "build": "Test",
+        "by": "",
+        "detail": "26 of 26 answer on their management ports (2 set aside)",
+        "item": "Management reachable",
+        "type": "accepted warning",
+        "when": ""
+       },
+       {
+        "build": "Test",
+        "by": "",
+        "detail": "lab",
+        "item": "T-NOIP",
+        "type": "set aside",
+        "when": ""
+       },
+       {
+        "build": "Test",
+        "by": "",
+        "detail": "",
+        "item": "T-CUM-SP3",
+        "type": "set aside",
+        "when": ""
+       }
+      ],
+      "generated": "2026-11-11T00:00:00Z",
+      "kind": "final",
+      "not_done": [],
+      "not_done_n": 0,
+      "open": [],
+      "rmas": [
+       {
+        "device": "T-XE-A",
+        "state": "closed",
+        "ticket": "RMA-1"
+       }
+      ],
+      "run": {
+       "started": "",
+       "state": "idle"
+      },
+      "site": {
+       "build": "TST-512-001",
+       "builder": "HS-v2.02",
+       "code": "TST",
+       "customer": "Test Co",
+       "delivered_by": "DWR Networking",
+       "fingerprint": "0123456789abcdef",
+       "gpus": 512,
+       "plan_digest": "",
+       "racks": 8,
+       "region": "",
+       "region_name": "Test region \u00e9",
+       "workload": "training"
+      },
+      "software": [
+       {
+        "devices": 4,
+        "os": "cumulus",
+        "release": ""
+       },
+       {
+        "devices": 2,
+        "os": "cumulus",
+        "release": "5.18.3"
+       },
+       {
+        "devices": 2,
+        "os": "eos",
+        "release": "4.33.2F"
+       },
+       {
+        "devices": 2,
+        "os": "ftd",
+        "release": "7.6.0"
+       },
+       {
+        "devices": 2,
+        "os": "iosxe",
+        "release": "17.12.04"
+       },
+       {
+        "devices": 2,
+        "os": "iosxr",
+        "release": "24.4.2"
+       },
+       {
+        "devices": 2,
+        "os": "junos",
+        "release": ""
+       },
+       {
+        "devices": 1,
+        "os": "junos",
+        "release": "1.0"
+       },
+       {
+        "devices": 2,
+        "os": "junos",
+        "release": "24.4R2-S3"
+       },
+       {
+        "devices": 2,
+        "os": "junos",
+        "release": "25.2X100-D30"
+       },
+       {
+        "devices": 2,
+        "os": "nxos",
+        "release": "10.4(5)"
+       },
+       {
+        "devices": 2,
+        "os": "srl",
+        "release": "24.10.1"
+       },
+       {
+        "devices": 2,
+        "os": "sros",
+        "release": "26.7.R1"
+       },
+       {
+        "devices": 1,
+        "os": "weka",
+        "release": "1.0"
+       }
+      ],
+      "standards": [
+       {
+        "id": "HS-ARC-001",
+        "rev": "2.6",
+        "title": "Architecture Overview"
+       },
+       {
+        "id": "HS-DEP-001",
+        "rev": "2.5",
+        "title": "Deployment and Acceptance"
+       }
+      ],
+      "title": "Final build report"
+     },
+     "generated": "2026-11-11T00:00:00Z",
+     "kind": "post",
+     "open": [],
+     "results": [
+      {
+       "busbw": 412.5,
+       "by": "op1",
+       "target": 380.0,
+       "test": "nccl",
+       "when": "2023-11-14T22:13:20Z"
+      }
+     ],
+     "site": {
+      "build": "TST-512-001",
+      "builder": "HS-v2.02",
+      "code": "TST",
+      "customer": "Test Co",
+      "delivered_by": "DWR Networking",
+      "fingerprint": "0123456789abcdef",
+      "gpus": 512,
+      "plan_digest": "",
+      "racks": 8,
+      "region": "",
+      "region_name": "Test region \u00e9",
+      "workload": "training"
+     },
+     "software": [
+      {
+       "devices": 4,
+       "os": "cumulus",
+       "release": ""
+      },
+      {
+       "devices": 2,
+       "os": "cumulus",
+       "release": "5.18.3"
+      },
+      {
+       "devices": 2,
+       "os": "eos",
+       "release": "4.33.2F"
+      },
+      {
+       "devices": 2,
+       "os": "ftd",
+       "release": "7.6.0"
+      },
+      {
+       "devices": 2,
+       "os": "iosxe",
+       "release": "17.12.04"
+      },
+      {
+       "devices": 2,
+       "os": "iosxr",
+       "release": "24.4.2"
+      },
+      {
+       "devices": 2,
+       "os": "junos",
+       "release": ""
+      },
+      {
+       "devices": 1,
+       "os": "junos",
+       "release": "1.0"
+      },
+      {
+       "devices": 2,
+       "os": "junos",
+       "release": "24.4R2-S3"
+      },
+      {
+       "devices": 2,
+       "os": "junos",
+       "release": "25.2X100-D30"
+      },
+      {
+       "devices": 2,
+       "os": "nxos",
+       "release": "10.4(5)"
+      },
+      {
+       "devices": 2,
+       "os": "srl",
+       "release": "24.10.1"
+      },
+      {
+       "devices": 2,
+       "os": "sros",
+       "release": "26.7.R1"
+      },
+      {
+       "devices": 1,
+       "os": "weka",
+       "release": "1.0"
+      }
+     ],
+     "standards": [
+      {
+       "id": "HS-ARC-001",
+       "rev": "2.6",
+       "title": "Architecture Overview"
+      },
+      {
+       "id": "HS-DEP-001",
+       "rev": "2.5",
+       "title": "Deployment and Acceptance"
+      }
+     ],
+     "title": "Post-deployment report",
+     "tuning": {
+      "approved": null,
+      "switches": 0,
+      "versions": 0
+     }
+    },
+    "post canon": "{\"acceptance\":[{\"build\":\"Test\",\"detail\":\"admin: checked by J. Doe\",\"evidence\":[],\"item\":\"Servers confirmed\",\"result\":\"confirmed\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"evidence\":[{\"check\":\"t1 bind\",\"note\":\"bound\",\"ok\":true},{\"check\":\"t1 snat\",\"note\":\"\",\"ok\":true},{\"check\":\"t1 cross\",\"note\":\"refused\",\"ok\":true},{\"check\":\"t2 bind\",\"note\":\"\",\"ok\":true},{\"check\":\"t2 snat\",\"note\":\"pool\",\"ok\":true},{\"check\":\"t2 cross\",\"note\":\"\",\"ok\":true}],\"item\":\"Ingress isolation per tenant\",\"result\":\"running\"},{\"build\":\"Test\",\"detail\":\"automatic check queued\",\"evidence\":[],\"item\":\"NCCL all-reduce at target\",\"result\":\"running\"}],\"by\":\"admin\",\"completed\":\"2023-11-14T23:13:20Z\",\"counts\":{\"active\":0,\"done\":26,\"flagged\":0,\"set_aside\":2,\"total\":28,\"waiting\":0},\"deviations\":[{\"build\":\"Test\",\"by\":\"admin\",\"detail\":\"hosts not racked: accepted by the customer\",\"item\":\"build gate\",\"type\":\"gate override\",\"when\":\"2023-11-14T23:05:00Z\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"26 of 26 done (2 set aside), every identity matched to TST\",\"item\":\"Every device done\",\"type\":\"accepted warning\",\"when\":\"\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"26 of 26 answer on their management ports (2 set aside)\",\"item\":\"Management reachable\",\"type\":\"accepted warning\",\"when\":\"\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"lab\",\"item\":\"T-NOIP\",\"type\":\"set aside\",\"when\":\"\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"\",\"item\":\"T-CUM-SP3\",\"type\":\"set aside\",\"when\":\"\"}],\"final_build\":{\"asbuilt\":[{\"device\":\"T-CUM-A\",\"identity\":\"SN123\",\"source\":\"as-built\"},{\"device\":\"T-CUM-B\",\"identity\":\"aa:bb:cc:dd:ee:ff\",\"source\":\"bind\"}],\"builds\":[{\"counts\":{\"active\":0,\"done\":26,\"flagged\":0,\"set_aside\":2,\"total\":28,\"waiting\":0},\"gate\":[{\"key\":\"done\",\"kind\":\"\",\"label\":\"Every device done\",\"note\":\"26 of 26 done (2 set aside), every identity matched to TST\",\"result\":\"warn\",\"type\":\"devices_done\"},{\"key\":\"reach\",\"kind\":\"\",\"label\":\"Management reachable\",\"note\":\"26 of 26 answer on their management ports (2 set aside)\",\"result\":\"warn\",\"type\":\"reachable\"},{\"key\":\"srv\",\"kind\":\"\",\"label\":\"Servers confirmed\",\"note\":\"admin: checked by J. Doe\",\"result\":\"confirmed\",\"type\":\"confirm\"},{\"key\":\"iso\",\"kind\":\"isolation\",\"label\":\"Ingress isolation per tenant\",\"note\":\"automatic check queued\",\"result\":\"running\",\"type\":\"auto\"},{\"key\":\"nccl\",\"kind\":\"nccl\",\"label\":\"NCCL all-reduce at target\",\"note\":\"automatic check queued\",\"result\":\"running\",\"type\":\"auto\"}],\"key\":\"be\",\"name\":\"Test\",\"override\":{\"by\":\"admin\",\"reason\":\"hosts not racked: accepted by the customer\",\"when\":\"2023-11-14T23:05:00Z\"},\"passed\":\"2023-11-14T23:13:20Z\",\"state\":\"complete\",\"waves\":1,\"waves_open\":1}],\"by\":\"admin\",\"completed\":\"2023-11-14T23:13:20Z\",\"counts\":{\"active\":0,\"done\":26,\"flagged\":0,\"set_aside\":2,\"total\":28,\"waiting\":0},\"deviations\":[{\"build\":\"Test\",\"by\":\"admin\",\"detail\":\"hosts not racked: accepted by the customer\",\"item\":\"build gate\",\"type\":\"gate override\",\"when\":\"2023-11-14T23:05:00Z\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"26 of 26 done (2 set aside), every identity matched to TST\",\"item\":\"Every device done\",\"type\":\"accepted warning\",\"when\":\"\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"26 of 26 answer on their management ports (2 set aside)\",\"item\":\"Management reachable\",\"type\":\"accepted warning\",\"when\":\"\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"lab\",\"item\":\"T-NOIP\",\"type\":\"set aside\",\"when\":\"\"},{\"build\":\"Test\",\"by\":\"\",\"detail\":\"\",\"item\":\"T-CUM-SP3\",\"type\":\"set aside\",\"when\":\"\"}],\"generated\":\"2026-11-11T00:00:00Z\",\"kind\":\"final\",\"not_done\":[],\"not_done_n\":0,\"open\":[],\"rmas\":[{\"device\":\"T-XE-A\",\"state\":\"closed\",\"ticket\":\"RMA-1\"}],\"run\":{\"started\":\"\",\"state\":\"idle\"},\"site\":{\"build\":\"TST-512-001\",\"builder\":\"HS-v2.02\",\"code\":\"TST\",\"customer\":\"Test Co\",\"delivered_by\":\"DWR Networking\",\"fingerprint\":\"0123456789abcdef\",\"gpus\":512,\"plan_digest\":\"\",\"racks\":8,\"region\":\"\",\"region_name\":\"Test region \\u00e9\",\"workload\":\"training\"},\"software\":[{\"devices\":4,\"os\":\"cumulus\",\"release\":\"\"},{\"devices\":2,\"os\":\"cumulus\",\"release\":\"5.18.3\"},{\"devices\":2,\"os\":\"eos\",\"release\":\"4.33.2F\"},{\"devices\":2,\"os\":\"ftd\",\"release\":\"7.6.0\"},{\"devices\":2,\"os\":\"iosxe\",\"release\":\"17.12.04\"},{\"devices\":2,\"os\":\"iosxr\",\"release\":\"24.4.2\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"\"},{\"devices\":1,\"os\":\"junos\",\"release\":\"1.0\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"24.4R2-S3\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"25.2X100-D30\"},{\"devices\":2,\"os\":\"nxos\",\"release\":\"10.4(5)\"},{\"devices\":2,\"os\":\"srl\",\"release\":\"24.10.1\"},{\"devices\":2,\"os\":\"sros\",\"release\":\"26.7.R1\"},{\"devices\":1,\"os\":\"weka\",\"release\":\"1.0\"}],\"standards\":[{\"id\":\"HS-ARC-001\",\"rev\":\"2.6\",\"title\":\"Architecture Overview\"},{\"id\":\"HS-DEP-001\",\"rev\":\"2.5\",\"title\":\"Deployment and Acceptance\"}],\"title\":\"Final build report\"},\"generated\":\"2026-11-11T00:00:00Z\",\"kind\":\"post\",\"open\":[],\"results\":[{\"busbw\":412.5,\"by\":\"op1\",\"target\":380.0,\"test\":\"nccl\",\"when\":\"2023-11-14T22:13:20Z\"}],\"site\":{\"build\":\"TST-512-001\",\"builder\":\"HS-v2.02\",\"code\":\"TST\",\"customer\":\"Test Co\",\"delivered_by\":\"DWR Networking\",\"fingerprint\":\"0123456789abcdef\",\"gpus\":512,\"plan_digest\":\"\",\"racks\":8,\"region\":\"\",\"region_name\":\"Test region \\u00e9\",\"workload\":\"training\"},\"software\":[{\"devices\":4,\"os\":\"cumulus\",\"release\":\"\"},{\"devices\":2,\"os\":\"cumulus\",\"release\":\"5.18.3\"},{\"devices\":2,\"os\":\"eos\",\"release\":\"4.33.2F\"},{\"devices\":2,\"os\":\"ftd\",\"release\":\"7.6.0\"},{\"devices\":2,\"os\":\"iosxe\",\"release\":\"17.12.04\"},{\"devices\":2,\"os\":\"iosxr\",\"release\":\"24.4.2\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"\"},{\"devices\":1,\"os\":\"junos\",\"release\":\"1.0\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"24.4R2-S3\"},{\"devices\":2,\"os\":\"junos\",\"release\":\"25.2X100-D30\"},{\"devices\":2,\"os\":\"nxos\",\"release\":\"10.4(5)\"},{\"devices\":2,\"os\":\"srl\",\"release\":\"24.10.1\"},{\"devices\":2,\"os\":\"sros\",\"release\":\"26.7.R1\"},{\"devices\":1,\"os\":\"weka\",\"release\":\"1.0\"}],\"standards\":[{\"id\":\"HS-ARC-001\",\"rev\":\"2.6\",\"title\":\"Architecture Overview\"},{\"id\":\"HS-DEP-001\",\"rev\":\"2.5\",\"title\":\"Deployment and Acceptance\"}],\"title\":\"Post-deployment report\",\"tuning\":{\"approved\":null,\"switches\":0,\"versions\":0}}",
+    "post csv": "build,item,result,detail\r\nTest,Servers confirmed,confirmed,admin: checked by J. Doe\r\nTest,Ingress isolation per tenant,running,automatic check queued\r\nTest,NCCL all-reduce at target,running,automatic check queued\r\n",
+    "progress": {
+     "activity_12h": [
+      {
+       "actions": 11,
+       "user": "op1"
+      }
+     ],
+     "blocked": [],
+     "blocked_n": 0,
+     "builds": [
+      {
+       "counts": {
+        "active": 0,
+        "done": 26,
+        "flagged": 0,
+        "set_aside": 2,
+        "total": 28,
+        "waiting": 0
+       },
+       "gate": [
+        {
+         "key": "done",
+         "kind": "",
+         "label": "Every device done",
+         "note": "26 of 26 done (2 set aside), every identity matched to TST",
+         "result": "warn",
+         "type": "devices_done"
+        },
+        {
+         "key": "reach",
+         "kind": "",
+         "label": "Management reachable",
+         "note": "26 of 26 answer on their management ports (2 set aside)",
+         "result": "warn",
+         "type": "reachable"
+        },
+        {
+         "key": "srv",
+         "kind": "",
+         "label": "Servers confirmed",
+         "note": "admin: checked by J. Doe",
+         "result": "confirmed",
+         "type": "confirm"
+        },
+        {
+         "key": "iso",
+         "kind": "isolation",
+         "label": "Ingress isolation per tenant",
+         "note": "automatic check queued",
+         "result": "running",
+         "type": "auto"
+        },
+        {
+         "key": "nccl",
+         "kind": "nccl",
+         "label": "NCCL all-reduce at target",
+         "note": "automatic check queued",
+         "result": "running",
+         "type": "auto"
+        }
+       ],
+       "key": "be",
+       "name": "Test",
+       "override": {
+        "by": "admin",
+        "reason": "hosts not racked: accepted by the customer",
+        "when": "2023-11-14T23:05:00Z"
+       },
+       "passed": "2023-11-14T23:13:20Z",
+       "state": "complete",
+       "waves": 1,
+       "waves_open": 1
+      }
+     ],
+     "by": "admin",
+     "counts": {
+      "active": 0,
+      "done": 26,
+      "flagged": 0,
+      "set_aside": 2,
+      "total": 28,
+      "waiting": 0
+     },
+     "generated": "<T>",
+     "holds": [],
+     "kind": "progress",
+     "pace": {
+      "done_last_8h": 0,
+      "eta_hours": null,
+      "remaining": 0
+     },
+     "rmas": [],
+     "rows": [],
+     "run": {
+      "started": "",
+      "state": "idle"
+     },
+     "site": {
+      "build": "TST-512-001",
+      "builder": "HS-v2.02",
+      "code": "TST",
+      "customer": "Test Co",
+      "delivered_by": "DWR Networking",
+      "fingerprint": "0123456789abcdef",
+      "gpus": 512,
+      "plan_digest": "",
+      "racks": 8,
+      "region": "",
+      "region_name": "Test region \u00e9",
+      "workload": "training"
+     },
+     "standards": [
+      {
+       "id": "HS-ARC-001",
+       "rev": "2.6",
+       "title": "Architecture Overview"
+      },
+      {
+       "id": "HS-DEP-001",
+       "rev": "2.5",
+       "title": "Deployment and Acceptance"
+      }
+     ],
+     "title": "Progress build report"
+    },
+    "progress csv": "build,state,total,done,active,waiting,flagged,set_aside\r\nTest,complete,28,26,0,0,0,2\r\n",
+    "ready": {
+     "cert": {
+      "ok": true,
+      "why": ""
+     },
+     "final": {
+      "ok": true,
+      "why": ""
+     },
+     "post": {
+      "ok": true,
+      "why": ""
+     },
+     "progress": {
+      "ok": true,
+      "why": ""
+     }
+    }
+   }
+  ],
   "results": [
    {
     "eval": {

@@ -51,7 +51,7 @@ mark{ background:var(--mark); color:inherit; }
 <body>
 <header>
   <h1>AIDC DBD User Guide</h1>
-  <span class="ver">Builder HS-v2.01 &middot; DWR Networking</span>
+  <span class="ver">Builder HS-v2.02 &middot; DWR Networking</span>
   <input id="q" type="search" placeholder="Search the guide" aria-label="Search the guide">
 </header>
 <div class="wrap">
@@ -404,6 +404,7 @@ platform.be_switch,NV-SN5610,,dry run</code></pre></li>
 <tr><td class="ui">Start build / Pause</td><td>Runs the builds plane by plane (OOB, Edge, Front end, Back end), opening one wave of devices at a time.</td></tr>
 <tr><td class="ui">Push credential&hellip;</td><td>The login the push uses. Until it is set, devices that need a push wait.</td></tr>
 <tr><td class="ui">Readiness&hellip;</td><td>What must hold before Start build; each item confirmed with its evidence.</td></tr>
+<tr><td class="ui">Reports&hellip;</td><td>The progress build report at any time; the final build report, post-deployment report and Certificate of Conformance once the build is closed (below).</td></tr>
 <tr><td class="ui">Logins&hellip;</td><td>Personal logins, the planes each operator acts on and, optionally, its Floor view rows: Add login, Edit, Reset password, Enable/Disable.</td></tr>
 <tr><td class="ui">Hand-over&hellip;</td><td>The final backup, the customer's export and the release of vendor access (below).</td></tr>
 <tr><td class="ui">My password&hellip; / Sign out</td><td>Your own login.</td></tr>
@@ -436,10 +437,20 @@ platform.be_switch,NV-SN5610,,dry run</code></pre></li>
 <p><span class="ui">Propose&hellip;</span> new lossless values within their limits &rarr; <span class="ui">Apply / roll back&hellip;</span> to the test pod &rarr; run the tests again &rarr; <span class="ui">Approve&hellip;</span> &rarr; <span class="ui">Roll out</span> pod by pod (a smoke test per pod). <span class="ui">Export profile&hellip;</span> saves the approved values as a tuned profile for the Fabric Designer.</p>
 <h3>Backups</h3>
 <p>Every Done device is backed up after its build and then every 6 hours by default. <span class="ui">Back up now</span>, <span class="ui">Diff vs planned</span> and <span class="ui">Diff vs previous</span> are on each device.</p>
+<h3>Reports</h3>
+<p>Generated on the provisioning host from the console's record. Each opens as a page to print or save as PDF, or downloads as JSON or CSV.</p>
+<table>
+<tr><th>Report</th><th>When</th><th>Holds</th></tr>
+<tr><td class="ui">Progress build report</td><td>Any time, any login (for example once a shift)</td><td>Builds and gates, floor rows, blocked devices, open RMAs, held devices, pace and time left, activity by login.</td></tr>
+<tr><td class="ui">Final build report</td><td>Every build has passed its gate; an admin</td><td>Every gate result, deviations (overrides with reason, accepted warnings, set-aside devices), open items, as-built identities, RMAs, software.</td></tr>
+<tr><td class="ui">Post-deployment report</td><td>As above</td><td>Acceptance with its evidence, NCCL results, tuning, software and the final build report; the certificate is its last page.</td></tr>
+<tr><td class="ui">Certificate of Conformance</td><td>As above; issued once every device is built or set aside</td><td>Conformant, conformant with deviations, or not issued (with the reasons); each standard and revision, the builder release, design fingerprint, acceptance results, deviations and waivers, and the SHA-256 of the post-deployment report.</td></tr>
+</table>
+<p>Until the build is closed the last three are grayed, with what is still missing. The hand-over export carries them in <code>reports/</code>.</p>
 <h3>Hand-over</h3>
 <ol>
   <li><span class="ui">Take the final backup</span>.</li>
-  <li>The customer's admin clicks <span class="ui">Download the hand-over export</span> (as-built, SoT status, audit, events, readiness, tuning, the newest backup per device and <code>apply_asbuilt.py</code>) and checks its SHA-256; <span class="ui">Confirm receipt&hellip;</span> records it.</li>
+  <li>The customer's admin clicks <span class="ui">Download the hand-over export</span> (as-built, SoT status, audit, events, readiness, tuning, the reports and certificate, the newest backup per device and <code>apply_asbuilt.py</code>) and checks its SHA-256; <span class="ui">Confirm receipt&hellip;</span> records it.</li>
   <li><span class="ui">Release DWR access&hellip;</span> needs the receipt, two customer admins, four confirmations and the netadmin password. It removes the vendor account on every device, disables the vendor logins, locks the recorded host accounts and clears the push credential.</li>
 </ol>
 <p>The CSV records are also at <code>https://&lt;prov IP&gt;:8443/api/export/</code> (<code>asbuilt</code>, <code>readiness</code>, <code>sot-status</code>, <code>audit</code>, <code>events</code>). Then retire the host with <code>sudo ./setup.sh --decommission</code>.</p>
@@ -593,7 +604,7 @@ sudo python3 /opt/estate-build/estate_build.py start --plane be</code></pre></li
 <!-- REF:BEGIN (generated by tools/gen-help-ref.js; do not edit) -->
 <section id="ref-sheet">
 <h2>Reference: input sheet keys</h2>
-<p>Every row the input sheet takes, as builder HS-v2.01 reads it. A numbered row (<code>constraint.6</code>, <code>site.obstruction.4</code>) is read like its family.</p>
+<p>Every row the input sheet takes, as builder HS-v2.02 reads it. A numbered row (<code>constraint.6</code>, <code>site.obstruction.4</code>) is read like its family.</p>
 <h3>Site &amp; footprint</h3>
 <table>
 <tr><th>Key</th><th>Row</th><th>What it is</th><th>Takes</th></tr>
@@ -813,7 +824,7 @@ sudo python3 /opt/estate-build/estate_build.py start --plane be</code></pre></li
 </section>
 <section id="ref-platforms">
 <h2>Reference: platforms</h2>
-<p>The catalogs in builder HS-v2.01. A figure marked CONFIRM is still to confirm with the vendor.</p>
+<p>The catalogs in builder HS-v2.02. A figure marked CONFIRM is still to confirm with the vendor.</p>
 <h3>Compute platforms</h3>
 <table>
 <tr><th>Platform</th><th>Per rack</th><th>Back end and DPU</th><th>Notes</th></tr>

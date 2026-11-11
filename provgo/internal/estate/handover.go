@@ -46,6 +46,9 @@ tuning.json       the back-end tuning record: each version, its values and lines
 apply_asbuilt.py  applies sot-asbuilt.csv to NetBox or Nautobot over the API, after the Final package's source of truth is
                   loaded (HS-DEP-003 step 6.2):  python3 apply_asbuilt.py netbox https://netbox.example TOKEN --dry-run
 backups/          the newest configuration of each device: the baseline for the customer's own backup system
+reports/          the final build report, the post-deployment report (its last page the Certificate of Conformance) and
+                  the certificate: each as a page to print or save as PDF, and as JSON (the certificate carries the
+                  SHA-256 of post-deployment-report.json)
 audit.csv, events.csv   the console's audit log and event history
 
 From this download on, the console takes no scheduled backups: configuration backups are the customer's backup
@@ -258,6 +261,9 @@ func (e *Estate) HandoverZip(user string) (string, []byte) {
 	}
 	add("sot-asbuilt.csv", e.asbuiltOverlay())
 	add("apply_asbuilt.py", applyAsbuilt)
+	for _, f := range e.reportFiles(user) { // HS v2.02: the final build report, post-deployment report and certificate
+		add("reports/"+f.name, f.text)
+	}
 	nb := 0
 	for _, n := range e.DevOrder {
 		if b := e.backups(n); len(b) > 0 {

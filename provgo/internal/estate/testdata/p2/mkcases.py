@@ -135,6 +135,40 @@ diff = [
     {"dev": "T-EOS-A", "backups": []},
     {"dev": "T-NXOS-A", "backups": [["20261031T0%05dZ.cfg" % i, "line %d\n" % (i // 3) + "".join("x%d\n" % j for j in range(i % 7, 30))] for i in range(3)]},
 ]
-json.dump({"checks": checks, "parsers": P, "counters": counters, "acc_score": acc, "results": results, "tuned": tuned, "swap": swap, "diff": diff},
+# HS v2.02: the reports, while building and once closed (fixed timestamps, so the pace and the hash do not move)
+reports = {
+    "site": {"build": "TST-512-001", "customer": "Test Co", "delivered_by": "DWR Networking", "builder": "HS-v2.02",
+             "fingerprint": "0123456789abcdef", "racks": 8, "gpus": 512, "workload": "training", "region_name": "Test region \u00e9"},
+    "standards": [{"id": "HS-ARC-001", "title": "Architecture Overview", "rev": "2.6"}, {"id": "HS-DEP-001", "title": "Deployment and Acceptance", "rev": "2.5"}],
+    "gate": [{"key": "done", "type": "devices_done", "label": "Every device done"},
+             {"key": "reach", "type": "reachable", "label": "Management reachable"},
+             {"key": "srv", "type": "confirm", "label": "Servers confirmed", "note": "by the site lead"},
+             {"key": "iso", "type": "auto", "kind": "isolation", "label": "Ingress isolation per tenant"},
+             {"key": "nccl", "type": "auto", "kind": "nccl", "label": "NCCL all-reduce at target"}],
+    "isolation": [{"tenant": "t1"}, {"tenant": "t2"}],
+    "results": {"nccl": {"busbw": 412.5, "target": 380.0, "by": "op1", "ts": 1700000000.0, "text": "x"},
+                "isolation": {"tests": {"t1": {"result": "pass", "checks": {"bind": {"ok": True, "note": "bound"}, "snat": {"ok": True, "note": ""}, "cross": {"ok": True, "note": "refused"}}},
+                                        "t2": {"result": "pass", "checks": {"bind": {"ok": True, "note": ""}, "snat": {"ok": True, "note": "pool"}, "cross": {"ok": True, "note": ""}}}},
+                              "by": "op1", "ts": 1700000000.0}},
+    "phases": [
+        {"bstate": {"state": "building", "open_waves": 1},
+         "st": {"T-NOREL": {"stage": 3, "flag": "failed", "detail": "image refused: " + "x" * 200},
+                "T-NOIP": {"stage": 2, "flag": "quarantined", "detail": "lab"},
+                "T-XE-A": {"rma": {"state": "open", "ticket": "RMA-1"}},
+                "T-EOS-B": {"stage": 0, "flag": ""}, "T-SRL-B": {"stage": 4, "flag": ""}},
+         "ident": {"T-CUM-A": {"kind": "serial", "value": "SN123", "source": "as-built"}, "T-CUM-B": {"kind": "mac", "value": "aa:bb:cc:dd:ee:ff", "source": "bind"}},
+         "gate_res": []},
+        {"bstate": {"state": "complete", "open_waves": 1, "passed": 1700003600.5,
+                    "override": {"user": "admin", "reason": "lab without hosts", "ts": 1700003000.0}},
+         "st": {"T-NOREL": {"stage": 6, "flag": "", "detail": ""}, "T-EOS-B": {"stage": 6}, "T-SRL-B": {"stage": 6},
+                "T-XE-A": {"rma": {"state": "closed", "ticket": "RMA-1"}}},
+         "ident": {}, "gate_res": [["be", "srv", "admin", "checked by J. Doe"]]},
+        {"bstate": {"override": None}, "st": {}, "ident": {}, "gate_res": []},
+        {"bstate": {"override": {"user": "admin", "reason": "hosts not racked: accepted by the customer", "ts": 1700003100.0}},
+         "st": {"T-CUM-SP4": {"stage": 6, "flag": ""}}, "ident": {}, "gate_res": []},
+    ],
+}
+json.dump({"checks": checks, "parsers": P, "counters": counters, "acc_score": acc, "results": results, "tuned": tuned, "swap": swap, "diff": diff,
+           "reports": reports},
           open(os.path.join(HERE, "cases.json"), "w"), indent=1)
 print("cases:", len(checks), "check steps")

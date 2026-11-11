@@ -128,6 +128,7 @@ type Estate struct {
 	ForeignSync *pyjson.Map
 	LastSync    any
 	Role        string
+	ReportTpl   string // HS v2.02: the report page (console.html carries it)
 
 	KeaDirty  bool
 	KeaStatus string

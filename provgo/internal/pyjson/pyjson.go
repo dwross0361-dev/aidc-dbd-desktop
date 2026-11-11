@@ -551,3 +551,72 @@ func FloatRepr(f float64) string {
 	}
 	return out
 }
+
+// Canon is json.dumps(v, sort_keys=True, separators=(",", ":")): the canonical form a report's SHA-256 is taken over.
+func Canon(v any) string {
+	var b strings.Builder
+	canon(&b, v)
+	return b.String()
+}
+
+func canon(b *strings.Builder, v any) {
+	switch x := v.(type) {
+	case []any:
+		b.WriteByte('[')
+		for i, e := range x {
+			if i > 0 {
+				b.WriteByte(',')
+			}
+			canon(b, e)
+		}
+		b.WriteByte(']')
+	case []string:
+		l := make([]any, len(x))
+		for i := range x {
+			l[i] = x[i]
+		}
+		canon(b, l)
+	case []*Map:
+		l := make([]any, len(x))
+		for i := range x {
+			l[i] = x[i]
+		}
+		canon(b, l)
+	case *Map:
+		if x == nil {
+			b.WriteString("null")
+			return
+		}
+		keys := append([]string(nil), x.keys...)
+		sort.Slice(keys, func(i, j int) bool { return utf16Less(keys[i], keys[j]) })
+		b.WriteByte('{')
+		for i, k := range keys {
+			if i > 0 {
+				b.WriteByte(',')
+			}
+			Quote(b, k)
+			b.WriteByte(':')
+			canon(b, x.m[k])
+		}
+		b.WriteByte('}')
+	case map[string]any:
+		o := NewMap()
+		for k, e := range x {
+			o.Set(k, e)
+		}
+		canon(b, o)
+	default:
+		enc(b, v, -1, 0)
+	}
+}
+
+// utf16Less orders strings as Python compares str (by code point).
+func utf16Less(a, b string) bool {
+	ra, rb := []rune(a), []rune(b)
+	for i := 0; i < len(ra) && i < len(rb); i++ {
+		if ra[i] != rb[i] {
+			return ra[i] < rb[i]
+		}
+	}
+	return len(ra) < len(rb)
+}

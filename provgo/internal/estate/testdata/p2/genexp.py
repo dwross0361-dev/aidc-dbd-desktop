@@ -7,7 +7,7 @@ Loads estate_build.py as a module (nothing runs at import), then: every parser o
 kind on every fixture device (reader_sim_dir = FIXTURES_DIR/sim); a fixed list of scenarios for the counters, the
 acceptance scoring, isolation, tuning and the difference view. The Go test replays the same list (cases.json).
 """
-import importlib.util, json, os, shutil, sys, tempfile, time
+import copy, importlib.util, json, os, shutil, sys, tempfile, time
 
 PY, FX, OUT = sys.argv[1], sys.argv[2], sys.argv[3]
 spec = importlib.util.spec_from_file_location("eb", PY)
@@ -176,6 +176,43 @@ for sc in CASES["diff"]:
     for name, text in sc["backups"]:
         open(os.path.join(d, name), "w").write(text)
     S["diff"].append([est.diff(n), est.diff(n, vs="prev")])
+
+# HS v2.02: the reports, phase by phase ("generated" masked; the certificate rests on a post report with it fixed)
+def _mask(v):
+    if isinstance(v, dict):
+        return {k: ("<T>" if k == "generated" else _mask(x)) for k, x in v.items()}
+    if isinstance(v, list):
+        return [_mask(x) for x in v]
+    return v
+RC = CASES["reports"]
+est.plan["site"].update(RC["site"])
+est.plan["standards"] = RC["standards"]
+est.plan["isolation"] = {"tenants": RC["isolation"]}
+est.build_by_key["be"]["gate"] = RC["gate"]
+est.results = copy.deepcopy(RC["results"])
+S["reports"] = []
+for ph in RC["phases"]:
+    for k, v in ph["bstate"].items():
+        if v is None:
+            est.bstate["be"].pop(k, None)
+        else:
+            est.bstate["be"][k] = v
+    for n, v in ph["st"].items():
+        est.st[n].update(copy.deepcopy(v))
+    for n, v in ph["ident"].items():
+        est.ident[n] = dict(v)
+    for k, c, u, note in ph["gate_res"]:
+        est.gate_res[(k, c)] = {"build": k, "chk": c, "result": "confirmed", "user": u, "note": note}
+    R = {"ready": est.reports_ready()}
+    for kind in ("progress", "final"):
+        R[kind] = _mask(est.report(kind, "admin"))
+        R[kind + " csv"] = est.report_csv(est.report(kind, "admin"))
+    P = est.report("post", "admin")
+    P["generated"] = P["final_build"]["generated"] = "2026-11-11T00:00:00Z"
+    C = est.report_cert_for(P, "admin")
+    R["post"], R["post csv"], R["post canon"] = P, est.report_csv(P), est.canon(P)
+    R["cert"], R["cert csv"] = _mask(C), est.report_csv(C)
+    S["reports"].append(R)
 
 json.dump(out, open(OUT, "w"), indent=1, sort_keys=True)
 print("expected values: %d parser outputs, %d check steps" % (len(out["parsers"]), len(out["checks"])))

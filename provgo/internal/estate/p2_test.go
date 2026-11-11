@@ -470,6 +470,81 @@ func TestP2Scenarios(t *testing.T) {
 		got := []any{gj(t, e.Diff(n, "")), gj(t, e.Diff(n, "prev"))}
 		d.same(fmt.Sprintf("diff %d %s", i, n), exp["diff"].([]any)[i], got)
 	}
+	// reports (HS v2.02), phase by phase: "generated" masked; the certificate rests on a post report with it fixed
+	raw, err := os.ReadFile(filepath.Join(p2dir, "cases.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	all, err := pyjson.LoadsMap(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	RC := all.M("reports")
+	e.Plan.M("site").Update(RC.M("site"))
+	e.Plan.Set("standards", RC.V("standards"))
+	e.Plan.Set("isolation", pyjson.O("tenants", RC.V("isolation")))
+	e.BuildByKey["be"].Set("gate", RC.V("gate"))
+	e.Results = pyjson.DeepCopy(RC.M("results")).(*pyjson.Map)
+	var mask func(v any) any
+	mask = func(v any) any {
+		switch x := v.(type) {
+		case map[string]any:
+			out := map[string]any{}
+			for k, y := range x {
+				if k == "generated" {
+					out[k] = "<T>"
+				} else {
+					out[k] = mask(y)
+				}
+			}
+			return out
+		case []any:
+			out := make([]any, len(x))
+			for i := range x {
+				out[i] = mask(x[i])
+			}
+			return out
+		}
+		return v
+	}
+	expR := exp["reports"].([]any)
+	for i, phv := range RC.L("phases") {
+		ph := phv.(*pyjson.Map)
+		bs := e.bstate("be")
+		for _, k := range ph.M("bstate").Keys() {
+			if v := ph.M("bstate").V(k); v == nil {
+				bs.Delete(k)
+			} else {
+				bs.Set(k, pyjson.DeepCopy(v))
+			}
+		}
+		for _, n := range ph.M("st").Keys() {
+			e.St[n].Update(pyjson.DeepCopy(ph.M("st").V(n)).(*pyjson.Map))
+		}
+		for _, n := range ph.M("ident").Keys() {
+			m := ph.M("ident").M(n)
+			e.Ident.Set(n, Identity{m.Str("kind"), m.Str("value"), m.Str("source")})
+		}
+		for _, gv := range ph.L("gate_res") {
+			g := pyjson.StrList(gv)
+			e.GateRes[[2]string{g[0], g[1]}] = pyjson.O("build", g[0], "chk", g[1], "result", "confirmed", "user", g[2], "note", g[3])
+		}
+		want := expR[i].(map[string]any)
+		d.same(fmt.Sprintf("reports %d ready", i), want["ready"], gj(t, e.ReportsReady()))
+		for _, kind := range []string{"progress", "final"} {
+			d.same(fmt.Sprintf("reports %d %s", i, kind), want[kind], mask(gj(t, e.Report(kind, "admin"))))
+			d.same(fmt.Sprintf("reports %d %s csv", i, kind), want[kind+" csv"], ReportCSV(e.Report(kind, "admin")))
+		}
+		P := e.Report("post", "admin")
+		P.Set("generated", "2026-11-11T00:00:00Z")
+		P.M("final_build").Set("generated", "2026-11-11T00:00:00Z")
+		C := e.ReportCertFor(P, "admin")
+		d.same(fmt.Sprintf("reports %d post", i), want["post"], gj(t, P))
+		d.same(fmt.Sprintf("reports %d post csv", i), want["post csv"], ReportCSV(P))
+		d.same(fmt.Sprintf("reports %d post canon", i), want["post canon"], pyjson.Canon(P))
+		d.same(fmt.Sprintf("reports %d cert", i), want["cert"], mask(gj(t, C)))
+		d.same(fmt.Sprintf("reports %d cert csv", i), want["cert csv"], ReportCSV(C))
+	}
 	t.Logf("scenarios: %d comparisons, %d mismatches", d.n, d.f)
 }
 

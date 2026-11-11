@@ -416,6 +416,7 @@ func serve(est *estate.Estate, a *opts) int {
 		}
 		html = []byte(strings.ReplaceAll(strings.ReplaceAll(string(b), "\r\n", "\n"), "\r", "\n"))
 	}
+	est.ReportTpl = estate.ReportTemplate(string(html)) // HS v2.02
 	c := est.Conf
 	bl, baddr, err := server.Listen(est, "http_bind", c.Int("http_port"))
 	if err != nil {
