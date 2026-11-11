@@ -545,6 +545,51 @@ func TestP2Scenarios(t *testing.T) {
 		d.same(fmt.Sprintf("reports %d cert", i), want["cert"], mask(gj(t, C)))
 		d.same(fmt.Sprintf("reports %d cert csv", i), want["cert csv"], ReportCSV(C))
 	}
+	// resilience (HS v2.04): failover, soak, alerts -- plan, submitted text, stored record, evaluations
+	expRZ := exp["rz"].([]any)
+	for i, cv := range all.L("rz") {
+		c := cv.(*pyjson.Map)
+		kind := c.Str("kind")
+		e.Plan.Set("resilience", pyjson.O(kind, pyjson.DeepCopy(c.V("plan"))))
+		e.Results.Delete(kind)
+		if c.Truthy("target") {
+			e.Conf.Set("TARGET_BUSBW", c.V("target"))
+		} else {
+			e.Conf.Delete("TARGET_BUSBW")
+		}
+		var ok bool
+		var msg string
+		evs := []any{}
+		switch kind {
+		case "failover":
+			ok, msg = e.SubmitFailoverText(c.Str("text"), "op1")
+			for _, pv := range c.L("planes") {
+				e.Mu.Lock()
+				evs = append(evs, e.gateKindEval("failover", pyjson.StrList(pv)))
+				e.Mu.Unlock()
+			}
+		case "soak":
+			sw, _ := pyjson.DeepCopy(c.V("switch")).(*pyjson.Map)
+			ok, msg = e.SubmitSoakText(c.Str("text"), "op1", sw)
+			e.Mu.Lock()
+			evs = append(evs, e.gateKindEval("soak", nil))
+			e.Mu.Unlock()
+		default:
+			ok, msg = e.SubmitAlertsText(c.Str("text"), "op1")
+			e.Mu.Lock()
+			evs = append(evs, e.gateKindEval("alerts", nil))
+			e.Mu.Unlock()
+		}
+		stored := pyjson.NewMap()
+		if r := e.Results.M(kind); r != nil {
+			stored = r.Copy()
+			stored.Delete("ts")
+		}
+		want := expRZ[i].(map[string]any)
+		d.same(fmt.Sprintf("rz %d ret", i), want["ret"], gj(t, []any{ok, msg}))
+		d.same(fmt.Sprintf("rz %d eval", i), want["eval"], gj(t, evs))
+		d.same(fmt.Sprintf("rz %d stored", i), want["stored"], gj(t, stored))
+	}
 	t.Logf("scenarios: %d comparisons, %d mismatches", d.n, d.f)
 }
 

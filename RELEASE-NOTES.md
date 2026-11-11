@@ -1,3 +1,12 @@
+# AIDC DBD Desktop 2.1.3 (builder HS-v2.04, site runner 1.11.0)
+
+- **Failover with traffic running** (`acceptance/failover.sh`, `failover-cases.csv`). Each device in the plan is taken down with 32 UDP streams running on distinct ports, then brought back in a second run; the worst stream's outage must be within the case's target both ways, and every stream must recover. Cases: a back-end spine, a front-end leaf and spine, a border leaf, a border gateway, the active firewall node and an edge router. Targets: 1 s for fabric devices, 2 s for a firewall node, 3 s for an edge router, as starting points. `FAILOVER_DOWN`/`FAILOVER_UP` take a device down and up, or the script asks you to.
+- **Soak** (`acceptance/soak.sh`): 24 hours of NCCL load over every host. Every run must stay within 5% of the median and at target, with no host link flaps, no uncorrectable errors and no loss. Run by the console, the switches' lossless drop and watchdog counters are read before and after.
+- **Alert path** (`acceptance/alerts.sh`): a fabric link down and a BGP session reset must each raise their alert in the customer's monitoring within 120 s and clear, and every network device must report to the collector (`ALERT_QUERY`, `TELEMETRY_QUERY`).
+- The back-end gate holds for failover and the soak; the front-end gate for failover and alerts. Each is scored identically by both engines, run by the console (`failover_cmd`, `soak_cmd`, `alerts_cmd`) or uploaded. The post-deployment report and the certificate carry the results.
+- **Fix:** `storage_lossless.sh` (2.1.2) sent RDMA between hosts' storage interfaces, which the DPU filters to the storage block. S1 and S2 are now driven by the storage client's own load (reads, then writes) from every host at once: the spread between hosts, no loss, and notifications wherever there were pauses.
+- Standards: HS-DEP-001, HS-DEP-002 and HS-DEP-003 2.7.
+
 # AIDC DBD Desktop 2.1.2 (builder HS-v2.03, site runner 1.11.0)
 
 - **Elephant flows and load balancing, proved at acceptance.** A new lossless acceptance test, **T7**, runs on every back end with two or more pods: host pairs on different rail leaves (pod 1 to pod 2, `acceptance/t7_pairs.txt`), one queue pair per flow on every rail at once, started a fraction of a second apart. Every flow must reach 90% of line rate (of line rate divided by the oversubscription at 2:1) and the spread must stay within 10%. Static hashing fails it; working dynamic load balancing or adaptive routing passes. Both engines score it in the back-end gate.

@@ -708,18 +708,8 @@ func (e *Estate) RunAuto(k string, c *pyjson.Map) {
 		e.autoSet(k, key, withTS(res, Now()))
 		e.Mu.Unlock()
 		return
-	case "accept", "tuned", "isolation", "inference":
-		var res *pyjson.Map
-		switch kind {
-		case "accept":
-			res = e.acceptEval()
-		case "tuned":
-			res = e.tunedEval()
-		case "inference":
-			res = e.inferenceEval()
-		default:
-			res = e.isolationEval()
-		}
+	case "accept", "tuned", "isolation", "inference", "failover", "soak", "alerts": // HS v2.04: result-backed checks
+		res := e.gateKindEval(kind, pyjson.StrList(c.V("planes")))
 		e.autoSet(k, key, withTS(res, Now()))
 		e.Mu.Unlock()
 		return

@@ -844,8 +844,14 @@ func ConsoleHandler(est *estate.Estate, html []byte, isTLS bool) http.Handler {
 			need = s(dstr(data, "build", ""))
 		case p == "/api/run":
 			need = s(dstr(data, "plane", "all"))
-		case p == "/api/result" && (dstr(data, "kind", "") == "isolation" || dstr(data, "kind", "") == "inference"):
+		case p == "/api/result" && (dstr(data, "kind", "") == "isolation" || dstr(data, "kind", "") == "inference" || dstr(data, "kind", "") == "alerts"):
 			need = s("fe")
+		case p == "/api/result" && dstr(data, "kind", "") == "failover": // HS v2.04: the plane whose gate it is
+			pl := dstr(data, "plane", "")
+			if pl == "" {
+				pl = "any"
+			}
+			need = s(pl)
 		case p == "/api/result" || p == "/api/tuning/propose" || p == "/api/tuning/apply" || p == "/api/tuning/rollout" || p == "/api/tuning/profile":
 			need = s("be")
 		case p == "/api/tuning/approve":
@@ -985,6 +991,16 @@ func ConsoleHandler(est *estate.Estate, html []byte, isTLS bool) http.Handler {
 				okv, msg = est.SubmitIsolationText(pyHeadS(estate.PyStr(dval(data, "text", "")), 2000000), user)
 			case kind == "inference":
 				okv, msg = est.SubmitInferenceText(pyHeadS(estate.PyStr(dval(data, "text", "")), 2000000), user)
+			case kind == "failover" || kind == "soak" || kind == "alerts": // HS v2.04
+				t := pyHeadS(estate.PyStr(dval(data, "text", "")), 20000000)
+				switch kind {
+				case "failover":
+					okv, msg = est.SubmitFailoverText(t, user)
+				case "soak":
+					okv, msg = est.SubmitSoakText(t, user, nil)
+				default:
+					okv, msg = est.SubmitAlertsText(t, user)
+				}
 			case kind == "accept":
 				var crit *pyjson.Map
 				if acc := est.Plan.M("acceptance"); acc != nil && acc.Truthy("criteria") {

@@ -175,7 +175,35 @@ reports = {
          "st": {"T-CUM-SP4": {"stage": 6, "flag": ""}}, "ident": {}, "gate_res": []},
     ],
 }
+# HS v2.04: resilience -- failover, soak, alerts: the plan, the text submitted, and (soak) the switch counters and TARGET_BUSBW
+FO_PLAN = {"cases": [{"id": "be-spine", "plane": "be", "label": "Back-end spine lost", "target_ms": 1000},
+                     {"id": "fe-leaf", "plane": "fe", "label": "Front-end leaf lost", "target_ms": 1000},
+                     {"id": "sec-fw", "plane": "fe", "label": "Active firewall node lost", "target_ms": 2000}]}
+SOAK_LINES = "\n".join("SOAK iter=%d busbw=%s" % (i + 1, b) for i, b in enumerate(["400.1", "401.2", "399.8", "402.0", "400.6"]))
+rz = [
+    {"kind": "failover", "plan": FO_PLAN, "planes": [[], ["be"], ["fe"]], "text":
+        "# probe\nFAILOVER be-spine down_ms=412 up_ms=37 streams=32 restored=1\nFAILOVER fe-leaf down_ms=880 up_ms=0 streams=32 restored=1\nFAILOVER sec-fw down_ms=1650 up_ms=120 streams=32 restored=1\n"},
+    {"kind": "failover", "plan": FO_PLAN, "planes": [[], ["fe"]], "text":
+        "FAILOVER be-spine down_ms=1412 up_ms=37 streams=32 restored=1\nFAILOVER fe-leaf error=FAILOVER_TENANT_NET_not_set\n"},
+    {"kind": "failover", "plan": FO_PLAN, "planes": [["be"]], "text": "FAILOVER be-spine down_ms=12 up_ms=30000 streams=32 restored=0 note=x\n"},
+    {"kind": "failover", "plan": {"cases": []}, "planes": [["be"]], "text": "FAILOVER be-spine down_ms=12 up_ms=3 streams=32 restored=1\n"},
+    {"kind": "failover", "plan": FO_PLAN, "planes": [[]], "text": "nothing here\n"},
+    {"kind": "soak", "plan": {"hours": 24, "drift_pct": 5}, "target": "380", "switch": {"drops": 0.0, "wd": 0.0, "seen": ["drops", "pfc_tx", "wd"], "unread": 0},
+     "text": SOAK_LINES + "\nSOAK host link_down_events_phy 0\nSOAK host rx_symbol_err_phy 0\nSOAK host rx_discards_phy 0\nSOAK host out_of_sequence 0\nSOAK host packet_seq_err 0\nSOAK done hours=24.31 iters=5\n"},
+    {"kind": "soak", "plan": {"hours": 24, "drift_pct": 5}, "target": None, "switch": None,
+     "text": SOAK_LINES + "\nSOAK iter=6 busbw=350.4\nSOAK host link_down_events_phy 2\nSOAK host rx_symbol_err_phy 0\nSOAK host out_of_sequence 3\nSOAK done hours=3.2 iters=6\n"},
+    {"kind": "soak", "plan": {}, "target": "500", "switch": {"drops": 4.0, "wd": 0.0, "seen": ["pfc_tx"], "unread": 2}, "text": SOAK_LINES + "\n"},
+    {"kind": "soak", "plan": {"hours": 1}, "target": None, "switch": None, "text": "SOAK done hours=1.5 iters=0\n"},
+    {"kind": "soak", "plan": {}, "target": None, "switch": None, "text": "no soak\n"},
+    {"kind": "alerts", "plan": {"cases": [{"id": "alert-link", "label": "A fabric link down", "target_s": 120}, {"id": "alert-bgp", "label": "A BGP session reset", "target_s": 60}], "telemetry": True},
+     "text": "ALERT alert-link detected=1 delay_s=45 cleared=1\nALERT alert-bgp detected=1 delay_s=30 cleared=1\nTELEMETRY expected=180 seen=180 missing=-\n"},
+    {"kind": "alerts", "plan": {"cases": [{"id": "alert-link", "label": "A fabric link down", "target_s": 120}, {"id": "alert-bgp", "label": "A BGP session reset", "target_s": 60}], "telemetry": True},
+     "text": "ALERT alert-link detected=1 delay_s=145 cleared=0\nTELEMETRY expected=180 seen=177 missing=ACME-FEF-LF03,ACME-FEF-LF04,ACME-EDG-ER02\n"},
+    {"kind": "alerts", "plan": {"cases": [{"id": "alert-link", "label": "A fabric link down"}], "telemetry": True},
+     "text": "ALERT alert-link error=ALERT_QUERY_not_set\n"},
+    {"kind": "alerts", "plan": {"cases": [{"id": "alert-link", "label": "A fabric link down", "target_s": 120}]}, "text": "ALERT alert-link detected=0 delay_s=0 cleared=1\n"},
+]
 json.dump({"checks": checks, "parsers": P, "counters": counters, "acc_score": acc, "results": results, "tuned": tuned, "swap": swap, "diff": diff,
-           "reports": reports},
+           "reports": reports, "rz": rz},
           open(os.path.join(HERE, "cases.json"), "w"), indent=1)
 print("cases:", len(checks), "check steps")

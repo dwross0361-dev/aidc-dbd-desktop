@@ -12624,6 +12624,597 @@
     ]
    }
   ],
+  "rz": [
+   {
+    "eval": [
+     {
+      "evidence": {
+       "be-spine": {
+        "note": "Back-end spine lost: down 412 ms, back 37 ms (target 1000 ms), 32 streams",
+        "ok": true
+       },
+       "fe-leaf": {
+        "note": "Front-end leaf lost: down 880 ms, back 0 ms (target 1000 ms), 32 streams",
+        "ok": true
+       },
+       "sec-fw": {
+        "note": "Active firewall node lost: down 1650 ms, back 120 ms (target 2000 ms), 32 streams",
+        "ok": true
+       }
+      },
+      "note": "3 failover case(s) within target (op1)",
+      "result": "pass"
+     },
+     {
+      "evidence": {
+       "be-spine": {
+        "note": "Back-end spine lost: down 412 ms, back 37 ms (target 1000 ms), 32 streams",
+        "ok": true
+       }
+      },
+      "note": "1 failover case(s) within target (op1)",
+      "result": "pass"
+     },
+     {
+      "evidence": {
+       "fe-leaf": {
+        "note": "Front-end leaf lost: down 880 ms, back 0 ms (target 1000 ms), 32 streams",
+        "ok": true
+       },
+       "sec-fw": {
+        "note": "Active firewall node lost: down 1650 ms, back 120 ms (target 2000 ms), 32 streams",
+        "ok": true
+       }
+      },
+      "note": "2 failover case(s) within target (op1)",
+      "result": "pass"
+     }
+    ],
+    "ret": [
+     true,
+     "recorded"
+    ],
+    "stored": {
+     "by": "op1",
+     "cases": {
+      "be-spine": {
+       "down_ms": 412.0,
+       "restored": 1.0,
+       "streams": 32.0,
+       "up_ms": 37.0
+      },
+      "fe-leaf": {
+       "down_ms": 880.0,
+       "restored": 1.0,
+       "streams": 32.0,
+       "up_ms": 0.0
+      },
+      "sec-fw": {
+       "down_ms": 1650.0,
+       "restored": 1.0,
+       "streams": 32.0,
+       "up_ms": 120.0
+      }
+     }
+    }
+   },
+   {
+    "eval": [
+     {
+      "evidence": {
+       "be-spine": {
+        "note": "Back-end spine lost: down 1412 ms, back 37 ms (target 1000 ms), 32 streams",
+        "ok": false
+       },
+       "fe-leaf": {
+        "note": "Front-end leaf lost: FAILOVER_TENANT_NET_not_set",
+        "ok": false
+       },
+       "sec-fw": {
+        "note": "confirm: Active firewall node lost: not run",
+        "ok": false
+       }
+      },
+      "note": "2 failing: be-spine, fe-leaf (op1)",
+      "result": "blocked"
+     },
+     {
+      "evidence": {
+       "fe-leaf": {
+        "note": "Front-end leaf lost: FAILOVER_TENANT_NET_not_set",
+        "ok": false
+       },
+       "sec-fw": {
+        "note": "confirm: Active firewall node lost: not run",
+        "ok": false
+       }
+      },
+      "note": "1 failing: fe-leaf (op1)",
+      "result": "blocked"
+     }
+    ],
+    "ret": [
+     true,
+     "recorded"
+    ],
+    "stored": {
+     "by": "op1",
+     "cases": {
+      "be-spine": {
+       "down_ms": 1412.0,
+       "restored": 1.0,
+       "streams": 32.0,
+       "up_ms": 37.0
+      },
+      "fe-leaf": {
+       "error": "FAILOVER_TENANT_NET_not_set"
+      }
+     }
+    }
+   },
+   {
+    "eval": [
+     {
+      "evidence": {
+       "be-spine": {
+        "note": "Back-end spine lost: down 12 ms, back 30000 ms (target 1000 ms), 32 streams, NOT restored",
+        "ok": false
+       }
+      },
+      "note": "1 failing: be-spine (op1)",
+      "result": "blocked"
+     }
+    ],
+    "ret": [
+     true,
+     "recorded"
+    ],
+    "stored": {
+     "by": "op1",
+     "cases": {
+      "be-spine": {
+       "down_ms": 12.0,
+       "note": "x",
+       "restored": 0.0,
+       "streams": 32.0,
+       "up_ms": 30000.0
+      }
+     }
+    }
+   },
+   {
+    "eval": [
+     {
+      "evidence": {},
+      "note": "no failover cases for this plane",
+      "result": "pass"
+     }
+    ],
+    "ret": [
+     true,
+     "recorded"
+    ],
+    "stored": {
+     "by": "op1",
+     "cases": {
+      "be-spine": {
+       "down_ms": 12.0,
+       "restored": 1.0,
+       "streams": 32.0,
+       "up_ms": 3.0
+      }
+     }
+    }
+   },
+   {
+    "eval": [
+     {
+      "evidence": {},
+      "note": "waiting for the failover run (runner or uploaded results)",
+      "result": "waiting"
+     }
+    ],
+    "ret": [
+     false,
+     "no FAILOVER lines in the text (paste the output of acceptance/failover.sh)"
+    ],
+    "stored": {}
+   },
+   {
+    "eval": [
+     {
+      "evidence": {
+       "bus bandwidth at target": {
+        "note": "lowest 399.8 GB/s against 380.0",
+        "ok": true
+       },
+       "bus bandwidth steady through the soak": {
+        "note": "lowest 399.8 GB/s against a median of 400.6 (within 5%), 5 runs",
+        "ok": true
+       },
+       "no PFC watchdog events": {
+        "note": "0 events",
+        "ok": true
+       },
+       "no link flaps on the host links": {
+        "note": "0 link-down events",
+        "ok": true
+       },
+       "no loss at the hosts": {
+        "note": "0 discards and sequence errors",
+        "ok": true
+       },
+       "no lossless drops at the switches": {
+        "note": "0 dropped",
+        "ok": true
+       },
+       "no uncorrectable errors on the host links": {
+        "note": "0 symbol errors",
+        "ok": true
+       },
+       "soak ran its full duration": {
+        "note": "24.3 of 24 hours",
+        "ok": true
+       }
+      },
+      "note": "24-hour soak clean (op1)",
+      "result": "pass"
+     }
+    ],
+    "ret": [
+     true,
+     "recorded"
+    ],
+    "stored": {
+     "by": "op1",
+     "done": true,
+     "host": {
+      "link_down_events_phy": 0.0,
+      "out_of_sequence": 0.0,
+      "packet_seq_err": 0.0,
+      "rx_discards_phy": 0.0,
+      "rx_symbol_err_phy": 0.0
+     },
+     "hours": 24.31,
+     "iters": [
+      400.1,
+      401.2,
+      399.8,
+      402.0,
+      400.6
+     ],
+     "switch": {
+      "drops": 0.0,
+      "seen": [
+       "drops",
+       "pfc_tx",
+       "wd"
+      ],
+      "unread": 0,
+      "wd": 0.0
+     }
+    }
+   },
+   {
+    "eval": [
+     {
+      "evidence": {
+       "bus bandwidth at target": {
+        "note": "lowest 350.4 GB/s against 380.0",
+        "ok": false
+       },
+       "bus bandwidth steady through the soak": {
+        "note": "lowest 350.4 GB/s against a median of 400.4 (within 5%), 6 runs",
+        "ok": false
+       },
+       "no link flaps on the host links": {
+        "note": "2 link-down events",
+        "ok": false
+       },
+       "no loss at the hosts": {
+        "note": "3 discards and sequence errors",
+        "ok": false
+       },
+       "no uncorrectable errors on the host links": {
+        "note": "0 symbol errors",
+        "ok": true
+       },
+       "soak ran its full duration": {
+        "note": "3.2 of 24 hours",
+        "ok": false
+       },
+       "switch counters": {
+        "note": "confirm: uploaded by hand: confirm no lossless drops and no watchdog events from the switches",
+        "ok": false
+       }
+      },
+      "note": "5 failing: soak ran its full duration, bus bandwidth steady through the soak, bus bandwidth at target, no link flaps on the host links +1 more (op1)",
+      "result": "blocked"
+     }
+    ],
+    "ret": [
+     true,
+     "recorded"
+    ],
+    "stored": {
+     "by": "op1",
+     "done": true,
+     "host": {
+      "link_down_events_phy": 2.0,
+      "out_of_sequence": 3.0,
+      "rx_symbol_err_phy": 0.0
+     },
+     "hours": 3.2,
+     "iters": [
+      400.1,
+      401.2,
+      399.8,
+      402.0,
+      400.6,
+      350.4
+     ],
+     "switch": null
+    }
+   },
+   {
+    "eval": [
+     {
+      "evidence": {
+       "bus bandwidth at target": {
+        "note": "lowest 399.8 GB/s against 500.0",
+        "ok": false
+       },
+       "bus bandwidth steady through the soak": {
+        "note": "lowest 399.8 GB/s against a median of 400.6 (within 5%), 5 runs",
+        "ok": true
+       },
+       "host counters": {
+        "note": "confirm: no SOAK host lines: confirm the host links by hand",
+        "ok": false
+       },
+       "no PFC watchdog events": {
+        "note": "confirm: watchdog counters not understood: confirm by hand",
+        "ok": false
+       },
+       "no lossless drops at the switches": {
+        "note": "confirm: drop counters not understood: confirm by hand",
+        "ok": false
+       },
+       "soak ran its full duration": {
+        "note": "0.0 of 24 hours (no end line)",
+        "ok": false
+       }
+      },
+      "note": "2 failing: soak ran its full duration, bus bandwidth at target (op1)",
+      "result": "blocked"
+     }
+    ],
+    "ret": [
+     true,
+     "recorded"
+    ],
+    "stored": {
+     "by": "op1",
+     "done": false,
+     "host": {},
+     "hours": 0.0,
+     "iters": [
+      400.1,
+      401.2,
+      399.8,
+      402.0,
+      400.6
+     ],
+     "switch": {
+      "drops": 4.0,
+      "seen": [
+       "pfc_tx"
+      ],
+      "unread": 2,
+      "wd": 0.0
+     }
+    }
+   },
+   {
+    "eval": [
+     {
+      "evidence": {
+       "bus bandwidth steady through the soak": {
+        "note": "no NCCL runs reported",
+        "ok": false
+       },
+       "host counters": {
+        "note": "confirm: no SOAK host lines: confirm the host links by hand",
+        "ok": false
+       },
+       "soak ran its full duration": {
+        "note": "1.5 of 1 hours",
+        "ok": true
+       },
+       "switch counters": {
+        "note": "confirm: uploaded by hand: confirm no lossless drops and no watchdog events from the switches",
+        "ok": false
+       }
+      },
+      "note": "1 failing: bus bandwidth steady through the soak (op1)",
+      "result": "blocked"
+     }
+    ],
+    "ret": [
+     true,
+     "recorded"
+    ],
+    "stored": {
+     "by": "op1",
+     "done": true,
+     "host": {},
+     "hours": 1.5,
+     "iters": [],
+     "switch": null
+    }
+   },
+   {
+    "eval": [
+     {
+      "evidence": {},
+      "note": "waiting for the soak (runner or uploaded results)",
+      "result": "waiting"
+     }
+    ],
+    "ret": [
+     false,
+     "no SOAK lines in the text (paste the output of acceptance/soak.sh)"
+    ],
+    "stored": {}
+   },
+   {
+    "eval": [
+     {
+      "evidence": {
+       "alert-bgp": {
+        "note": "A BGP session reset: alert in 30 s (target 60 s)",
+        "ok": true
+       },
+       "alert-link": {
+        "note": "A fabric link down: alert in 45 s (target 120 s)",
+        "ok": true
+       },
+       "telemetry coverage": {
+        "note": "180 of 180 devices reporting",
+        "ok": true
+       }
+      },
+      "note": "alerts arrive and clear; every device reporting (op1)",
+      "result": "pass"
+     }
+    ],
+    "ret": [
+     true,
+     "recorded"
+    ],
+    "stored": {
+     "by": "op1",
+     "cases": {
+      "alert-bgp": {
+       "cleared": 1.0,
+       "delay_s": 30.0,
+       "detected": 1.0
+      },
+      "alert-link": {
+       "cleared": 1.0,
+       "delay_s": 45.0,
+       "detected": 1.0
+      }
+     },
+     "telemetry": {
+      "expected": 180.0,
+      "missing": "-",
+      "seen": 180.0
+     }
+    }
+   },
+   {
+    "eval": [
+     {
+      "evidence": {
+       "alert-bgp": {
+        "note": "confirm: A BGP session reset: not run",
+        "ok": false
+       },
+       "alert-link": {
+        "note": "A fabric link down: alert in 145 s (target 120 s), not cleared",
+        "ok": false
+       },
+       "telemetry coverage": {
+        "note": "177 of 180 devices reporting; missing ACME-FEF-LF03,ACME-FEF-LF04,ACME-EDG-ER02",
+        "ok": false
+       }
+      },
+      "note": "2 failing: alert-link, telemetry coverage (op1)",
+      "result": "blocked"
+     }
+    ],
+    "ret": [
+     true,
+     "recorded"
+    ],
+    "stored": {
+     "by": "op1",
+     "cases": {
+      "alert-link": {
+       "cleared": 0.0,
+       "delay_s": 145.0,
+       "detected": 1.0
+      }
+     },
+     "telemetry": {
+      "expected": 180.0,
+      "missing": "ACME-FEF-LF03,ACME-FEF-LF04,ACME-EDG-ER02",
+      "seen": 177.0
+     }
+    }
+   },
+   {
+    "eval": [
+     {
+      "evidence": {
+       "alert-link": {
+        "note": "A fabric link down: ALERT_QUERY_not_set",
+        "ok": false
+       },
+       "telemetry coverage": {
+        "note": "confirm: no TELEMETRY line: confirm every device reports to the collector",
+        "ok": false
+       }
+      },
+      "note": "1 failing: alert-link (op1)",
+      "result": "blocked"
+     }
+    ],
+    "ret": [
+     true,
+     "recorded"
+    ],
+    "stored": {
+     "by": "op1",
+     "cases": {
+      "alert-link": {
+       "error": "ALERT_QUERY_not_set"
+      }
+     },
+     "telemetry": null
+    }
+   },
+   {
+    "eval": [
+     {
+      "evidence": {
+       "alert-link": {
+        "note": "A fabric link down: no alert",
+        "ok": false
+       }
+      },
+      "note": "1 failing: alert-link (op1)",
+      "result": "blocked"
+     }
+    ],
+    "ret": [
+     true,
+     "recorded"
+    ],
+    "stored": {
+     "by": "op1",
+     "cases": {
+      "alert-link": {
+       "cleared": 1.0,
+       "delay_s": 0.0,
+       "detected": 0.0
+      }
+     },
+     "telemetry": null
+    }
+   }
+  ],
   "same_dev": [
    true,
    true,

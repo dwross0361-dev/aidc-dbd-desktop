@@ -25,7 +25,7 @@ var ReportTitles = map[string]string{"progress": "Progress build report", "final
 var ReportFiles = map[string]string{"progress": "progress-build-report", "final": "final-build-report",
 	"post": "post-deployment-report", "cert": "certificate-of-conformance"}
 
-var acceptKinds = map[string]bool{"accept": true, "tuned": true, "isolation": true, "inference": true}
+var acceptKinds = map[string]bool{"accept": true, "tuned": true, "isolation": true, "inference": true, "failover": true, "soak": true, "alerts": true}
 
 type repDev struct{ n, build string }
 
@@ -356,17 +356,7 @@ func (e *Estate) repPost(user string) *pyjson.Map {
 			}
 			evl := []any{}
 			if k := g.Str("kind"); acceptKinds[k] {
-				var r *pyjson.Map
-				switch k {
-				case "accept":
-					r = e.acceptEval()
-				case "tuned":
-					r = e.tunedEval()
-				case "inference":
-					r = e.inferenceEval()
-				default:
-					r = e.isolationEval()
-				}
+				r := e.gateKindEval(k, nil)
 				if ev := r.M("evidence"); ev != nil {
 					for _, c := range ev.Keys() {
 						x, _ := ev.V(c).(*pyjson.Map)

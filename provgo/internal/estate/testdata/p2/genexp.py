@@ -214,5 +214,27 @@ for ph in RC["phases"]:
     R["cert"], R["cert csv"] = _mask(C), est.report_csv(C)
     S["reports"].append(R)
 
+# HS v2.04: resilience scoring
+S["rz"] = []
+for c in CASES["rz"]:
+    est.plan["resilience"] = {c["kind"]: c["plan"]}
+    est.results.pop(c["kind"], None)
+    if c.get("target"):
+        est.conf["TARGET_BUSBW"] = c["target"]
+    else:
+        est.conf.pop("TARGET_BUSBW", None)
+    if c["kind"] == "failover":
+        ret = est.submit_failover_text(c["text"], "op1")
+        ev = [est.gate_kind_eval("failover", p) for p in c["planes"]]
+    elif c["kind"] == "soak":
+        ret = est.submit_soak_text(c["text"], "op1", c.get("switch"))
+        ev = [est.gate_kind_eval("soak")]
+    else:
+        ret = est.submit_alerts_text(c["text"], "op1")
+        ev = [est.gate_kind_eval("alerts")]
+    stored = dict(est.results.get(c["kind"]) or {})
+    stored.pop("ts", None)
+    S["rz"].append({"ret": list(ret), "eval": ev, "stored": stored})
+
 json.dump(out, open(OUT, "w"), indent=1, sort_keys=True)
 print("expected values: %d parser outputs, %d check steps" % (len(out["parsers"]), len(out["checks"])))

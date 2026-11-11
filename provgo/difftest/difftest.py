@@ -700,6 +700,14 @@ def run_plan(args, run, rep):
             out["bad format"] = g("/api/report?kind=progress&format=pdf")
             return out
         cmp("reports while building", reports)
+        def rz(E):   # HS v2.04: resilience results through the console
+            out = {}
+            for k, t in (("failover", "FAILOVER be-spine down_ms=412 up_ms=37 streams=32 restored=1\nFAILOVER fe-leaf error=x\n"),
+                         ("soak", "SOAK iter=1 busbw=400.5\nSOAK iter=2 busbw=399.0\nSOAK done hours=24.2 iters=2\n"),
+                         ("alerts", "ALERT alert-link detected=1 delay_s=40 cleared=1\nTELEMETRY expected=3 seen=3 missing=-\n"), ("alerts", "")):
+                out[k + str(len(t))] = resp_view(E.con("POST", "/api/result", {"kind": k, "plane": "be", "text": t}, cookie=ck[E.name]))
+            return out
+        cmp("resilience results", rz)
         cmp("reports as viewer", lambda E: reports(E, E.login("view1", "x")[1]))
         def close_build(E):
             out = []

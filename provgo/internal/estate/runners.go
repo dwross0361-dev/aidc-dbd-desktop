@@ -338,6 +338,8 @@ func (e *Estate) runRunner(r *pyjson.Map) {
 			ok, note, err = e.runIsolation(r, sec, logf)
 		case "inference":
 			ok, note, err = e.runInference(r, sec, logf)
+		case "failover", "soak", "alerts": // HS v2.04
+			ok, note, err = e.runRZ(kind, r, sec, logf)
 		case "nccl":
 			ok, note, err = e.runNCCL(r, sec, logf)
 		}
