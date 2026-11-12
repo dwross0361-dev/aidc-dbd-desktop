@@ -1,3 +1,7 @@
+# AIDC DBD Desktop 2.1.7 (builder HS-v2.08, site runner 1.11.0)
+
+- **Toolbar.** The Back end row wraps after Total racks when the window is narrower than the row (Workload and the BE switch move to a second line), instead of running off the right edge. Every toolbar group now stays within the window.
+
 # AIDC DBD Desktop 2.1.6 (builder HS-v2.07, site runner 1.11.0)
 
 - **Setup on large sites.** Rendering the secrets into the device files now shows its progress (`[..] rendering secrets: 41,200 of 184,711 files (25%), about 6 min left`, estimated by bytes, so the large configurations going first do not skew it; one line per 10% when unattended) and reports its time. It is about three times faster: lines without a token are passed straight through. The rendered files are byte-identical to before.

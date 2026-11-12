@@ -500,7 +500,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   .lset label{margin-left:4px !important}
   .lset .lsetl{margin-right:4px}
   #buildfab{background:#2E8B57;border-color:#2E8B57;color:#fff;font-weight:600;padding:6px 14px}#buildfab:hover{background:#24724A}   /* 2.0.73: an action, green */
-  .tg2{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px}
+  .tg2{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px;max-width:100%}
+.tg2 .tgw{display:inline-flex;flex-wrap:wrap;align-items:center;gap:7px}
   .tbt{display:inline-flex;align-items:center;height:30px;padding:0 18px 0 12px;background:#3B72B9;color:#fff;font:700 11px var(--body);letter-spacing:.06em;text-transform:uppercase;border-radius:7px 0 0 7px;clip-path:polygon(0 0,calc(100% - 8px) 0,100% 50%,calc(100% - 8px) 100%,0 100%);cursor:default;user-select:none}
   .bar-2 .tg2 .btn,.bar-2 .tg2 .btn.dl{background:#2E8B57;border-color:#2E8B57;color:#fff;font-weight:600}
   .bar-2 .tg2 .btn:hover,.bar-2 .tg2 .btn.dl:hover{background:#24724A}
@@ -696,12 +697,12 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     <label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600" title="How many compute racks the site has. This is what sizes the build.">Total racks
       <input id="rackcount" type="number" min="1" max="4096" value="8" style="width:80px;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 8px;font-family:var(--mono);margin:0 4px" autocomplete="off"> racks
     </label>
-    <label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600;margin-left:22px" title="Workload the site is built for. Training: the back end is non-blocking (1:1) and acceptance proves NCCL bus bandwidth. Inference: the back end may run 2:1 at the leaf, the ingress nodes can be sized from the request load, and acceptance adds a load test through each tenant's published path (request rate and p99 latency).">Workload
+    <span class="tgw"><label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600;margin-left:22px" title="Workload the site is built for. Training: the back end is non-blocking (1:1) and acceptance proves NCCL bus bandwidth. Inference: the back end may run 2:1 at the leaf, the ingress nodes can be sized from the request load, and acceptance adds a load test through each tenant's published path (request rate and p99 latency).">Workload
       <select id="workload" style="height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;margin:0 4px;font-family:var(--body)" autocomplete="off"><option value="training">Training</option><option value="inference">Inference</option></select><select id="be-ratio" class="inf-dep" title="Back-end leaf oversubscription for an inference site. 1:1: non-blocking, for serving that spans racks over the back end (disaggregated prefill and decode, KV-cache transfer, models larger than one rack). 2:1: each rail leaf has half as many spine uplinks as host links, so the spine tier, its optics and any super-spine tier are halved; the leaf ports this frees stay unused. Collectives that cross the spines run at up to half the bus bandwidth. No back end: for serving that stays within one NVLink domain (an NVL72 rack, or an HGX node); no back-end switches, cables or optics, the hosts' back-end NICs stay uncabled and disabled, and acceptance tests NCCL inside each NVLink domain. Serving that crosses racks needs a back end." style="display:none;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;margin:0 4px;font-family:var(--body)" autocomplete="off"><option value="1">Back end 1:1</option><option value="2">Back end 2:1</option><option value="0">No back end</option></select>
     </label>
     <label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600;margin-left:22px" title="One switch model for every back-end tier: leaf, spine and super-spine. The same radix and lane speed throughout keep the fabric 1:1 non-blocking and the plane count, breakouts, optics and spares uniform. Sets the vendor for back-end port naming and configs.">BE switch (leaf &middot; spine &middot; super-spine)
       <select id="be-model" style="height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:0 6px;font-family:var(--mono);font-size:11px;margin:0 4px" autocomplete="off"></select>
-    </label>
+    </label></span>
   </span>
   <span class="tg2 r1g" data-tg="Front end" id="fe-grp"><span class="tbt">Front end</span>
     <label class="lbl" style="font-size:12px;color:var(--ink-soft);font-weight:600;cursor:pointer">
@@ -1005,7 +1006,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <script>
 (function(){
-  var BUILDER_VER='HS-v2.07';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
+  var BUILDER_VER='HS-v2.08';   // v515: the one place the release is set (packages, documents, and the service's VERSION)
   // HS v1.59: Vera Rubin NVL72 at 2 planes x 800G, NVIDIA's public reference layout (Owner decision D11); see the VR profile.
   // HS v1.58: the customer input sheet and importer (inputSheetImport, the SESSION_IN overlay); see the input sheet block.
   // HS v1.57 (release identity): the release is identified by the SHA-256 of this file, not by the string above (HS-v1.56 r1, r2
