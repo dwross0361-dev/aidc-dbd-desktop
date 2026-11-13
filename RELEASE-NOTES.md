@@ -1,3 +1,10 @@
+# AIDC DBD Desktop 2.1.8 (builder HS-v2.09, site runner 1.11.0)
+
+- **Vendor model names.** The source-of-truth import (NetBox and Nautobot device types) and the deployment package now carry each platform's vendor model (`DCS-7060X6-64PE`, `N9364E-SG2-O`, `SN5610`, `7220 IXR-H5-64O`), not the builder's internal catalog key.
+- **Part numbers in the bill of materials.** A new Part number column gives the orderable part number for port-side intake where the vendor's ordering information confirms it (for example `DCS-7060X6-64PE-F`, `920-9N42F-00RI-3C1`, `QFX5240-64OD-AO`, `FPR4245-NGFW-K9`); the rest read "to confirm". Cisco Nexus airflow is set by the fan and power-supply PIDs, which the row names.
+- **Discovery matches reported models.** The console compares the model a switch reports with the planned one without vendor prefixes (DCS-, CCS-, N9K-C, MSN), so `DCS-7060X6-64PE-F` matches `DCS-7060X6-64PE`. Both engines, with a test.
+- **Standards library 3.2.** HS-DCI-001 Data Center Interconnect 1.0; HS-EDG-001 2.4 and HS-ARC-001 2.7 point to it.
+
 # AIDC DBD Desktop 2.1.7 (builder HS-v2.08, site runner 1.11.0)
 
 - **Toolbar.** The Back end row wraps after Total racks when the window is narrower than the row (Workload and the BE switch move to a second line), instead of running off the right edge. Every toolbar group now stays within the window.

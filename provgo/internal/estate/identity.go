@@ -13,10 +13,11 @@ import (
 )
 
 var (
-	circSplit = regexp.MustCompile(`[:|]`)
-	ciscoRE   = regexp.MustCompile(`^Cisco\s+(\S+)`)
-	aristaRE  = regexp.MustCompile(`\b((?:DCS|CCS)-\S+)`)
-	nmRE      = regexp.MustCompile(`[^a-z0-9]`)
+	circSplit  = regexp.MustCompile(`[:|]`)
+	ciscoRE    = regexp.MustCompile(`^Cisco\s+(\S+)`)
+	aristaRE   = regexp.MustCompile(`\b((?:DCS|CCS)-\S+)`)
+	nmRE       = regexp.MustCompile(`[^a-z0-9]`)
+	modelPfxRE = regexp.MustCompile(`^(?:cisco|arista|juniper|nvidia|mellanox|nokia)?(?:n9kc|n9k|dcs|ccs|msn)?`)
 )
 
 // identMatch returns (device, how) or ("", why).
@@ -255,14 +256,14 @@ func (e *Estate) suggest(u *pyjson.Map) []any {
 			}
 		}
 	}
-	model := strings.ToLower(u.Str("model"))
+	model := u.Str("model")
 	if len(out) < 3 {
 		for _, n := range e.DevOrder {
 			if has(n) {
 				continue
 			}
 			d := e.Devs[n]
-			if e.stage(n) == 0 && e.waveOpen(n) && model != "" && strings.Contains(strings.ToLower(d.Str("model")), model) {
+			if e.stage(n) == 0 && e.waveOpen(n) && model != "" && modelMatch(d.Str("model"), model) {
 				out = append(out, pyjson.O("device", n, "why", "same model, open wave, not yet called in"))
 			}
 			if len(out) >= 5 {
@@ -290,9 +291,8 @@ func (e *Estate) discover(n string, ev *pyjson.Map) {
 		dz = pyjson.NewMap()
 		s.Set("disc", dz)
 	}
-	nm := func(x string) string { return nmRE.ReplaceAllString(strings.ToLower(x), "") }
 	if seen != "" && d.Truthy("model") {
-		ok := strings.Contains(nm(seen), nm(d.Str("model"))) || strings.Contains(nm(d.Str("model")), nm(seen))
+		ok := modelMatch(d.Str("model"), seen)
 		dz.Set("model", pyjson.O("seen", seen, "planned", d.V("model"), "ok", ok))
 	}
 	circ := ev.Str("circuit")
@@ -491,3 +491,15 @@ func ParseDHCP(frame []byte) *pyjson.Map {
 }
 
 var _ = strconv.Itoa
+
+// modelKey is a model as compared (HS v2.09): letters and digits only, without a vendor name or the PID prefixes a
+// device may or may not report (DCS-, CCS-, N9K-C, MSN), so DCS-7060X6-64PE-F matches DCS-7060X6-64PE.
+func modelKey(x string) string {
+	return modelPfxRE.ReplaceAllString(nmRE.ReplaceAllString(strings.ToLower(x), ""), "")
+}
+
+// modelMatch: the planned and the seen model, either within the other.
+func modelMatch(planned, seen string) bool {
+	a, b := modelKey(planned), modelKey(seen)
+	return a != "" && b != "" && (strings.Contains(b, a) || strings.Contains(a, b))
+}
