@@ -24,7 +24,9 @@ def sh(cmd, env, cwd, timeout=900, stdin=None):
         r = subprocess.run(["bash", "-c", cmd], cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout, input=stdin)
         return r.returncode, r.stdout + r.stderr
     except subprocess.TimeoutExpired as e:
-        return 124, (e.stdout or b"").decode() if isinstance(e.stdout, bytes) else (e.stdout or "")
+        o = e.stdout or ""
+        o = o.decode(errors="replace") if isinstance(o, bytes) else o
+        return 124, o + "\n[acctest: timed out after %d s]" % timeout
 
 
 # ------------------------------------------------------------------------------------------------ the installer
@@ -310,13 +312,15 @@ class Suite:
         env = dict(SOAK_HOURS=0.01)
         sw = None
         planes = None
-        rc, out = self.run("bash soak.sh", timeout=300, **env)
+        # the mock soak takes about 0.5 s a host on a 2-core machine: allow for the largest reference design (576 hosts)
+        tmo = max(300, 2 * len(S.hosts))
+        rc, out = self.run("bash soak.sh", timeout=tmo, **env)
         self.engine("soak.sh (36 s), steady at target", "pass", {"op": "rz", "kind": "soak", "text": out, "plan": {"hours": 0.01}, "target": "380", "switch": sw})
         S.put("fake/%s/eth.eth1.inc" % S.hosts[0], "link_down_events_phy 2\n")
-        rc, out = self.run("bash soak.sh", timeout=300, **env)
+        rc, out = self.run("bash soak.sh", timeout=tmo, **env)
         self.engine("soak.sh, a host link flapping", ("fail", "flap|link_down"), {"op": "rz", "kind": "soak", "text": out, "plan": {"hours": 0.01}, "target": "380", "switch": sw})
         S.rm("fake/%s/eth.eth1.inc" % S.hosts[0])
-        rc, out = self.run("bash soak.sh", timeout=120, RAIL_NET="192.0.2.0/24", **env)
+        rc, out = self.run("bash soak.sh", timeout=tmo, RAIL_NET="192.0.2.0/24", **env)
         self.engine("soak.sh, no rail NIC in the rail block", ("fail", "soak.sh stopped: no rail RDMA device"), {"op": "rz", "kind": "soak", "text": out, "plan": {"hours": 0.01}, "target": "380", "switch": sw})
 
     def storage(self):
