@@ -1,3 +1,9 @@
+# AIDC DBD Desktop 2.1.9 (builder HS-v2.10, site runner 1.11.0)
+
+- **Cable-position identity.** A unit no longer needs its serial or MAC loaded beforehand. Its OOB access switch stamps its own name and port on the unit's DHCP request (option 82), and the console binds the unit to the device planned on that port and serves that device's configuration. A serial or MAC in the inventory is a pin and wins over cable position. A unit is held under Unclaimed, with the reason, when its port is planned for no device or for several, when another unit already holds that position, or when it reports another model. A unit an operator dismissed is never bound by position. Both engines, with cases in the engine comparison.
+- **Unclaimed suggestions read the port from the last field** of the option 82 circuit ID, so a relay that adds an interface name still points at the right device.
+- **User guide.** Cable position is described in the Console section and the bring-up steps.
+
 # AIDC DBD Desktop 2.1.8 (builder HS-v2.09, site runner 1.11.0)
 
 - **Vendor model names.** The source-of-truth import (NetBox and Nautobot device types) and the deployment package now carry each platform's vendor model (`DCS-7060X6-64PE`, `N9364E-SG2-O`, `SN5610`, `7220 IXR-H5-64O`), not the builder's internal catalog key.

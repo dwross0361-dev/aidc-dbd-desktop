@@ -577,6 +577,15 @@ def run_plan(args, run, rep):
                     "circuit": ("%s:%s" % (d["mgmt_link"]["switch"], d["mgmt_link"]["port"])) if d.get("mgmt_link") else ""}
                    for k, d in enumerate(devs[:12])]
         cmp("hook unknown", lambda E: [resp_view(hook(E, [x])) for x in unknown])
+        # HS v2.10: cable-position binding -- a second unit on a taken position, a port planned for no device, and a unit
+        # reporting another model are each held with the reason; the state shows who bound what
+        pos = [x for x in unknown if x["circuit"]]
+        if pos:
+            taken = dict(pos[0], mac="02:ef:00:00:00:01", ip="10.9.8.1")
+            nowhere = {"ip": "10.9.8.2", "mac": "02:ef:00:00:00:02", "circuit": pos[0]["circuit"].split(":")[0] + ":ge-9/9/99"}
+            cmp("hook position taken", lambda E: resp_view(hook(E, [taken])))
+            cmp("hook position planned for no device", lambda E: resp_view(hook(E, [nowhere])))
+        cmp("state after position binding", lambda E: resp_view(E.con("GET", "/api/state", cookie=ck[E.name], csrf=False)))
         cmp("hook renew + serial client-id", lambda E: resp_view(E.internal_post("/hook/lease?event=lease4_renew",
             b"LEASE4_ADDRESS=10.8.8.8\nLEASE4_HWADDR=\nLEASE4_CLIENT_ID=00:46:4f:58:31:32:33\n", TOKEN)))
         cmp("local status", lambda E: resp_view(E.req(E.internal, "GET", "/local/status")))

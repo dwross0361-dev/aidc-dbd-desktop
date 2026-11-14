@@ -89,8 +89,24 @@ func (e *Estate) evidence(ev *pyjson.Map, source string) {
 		if !ev.Truthy("mac") && !ev.Truthy("serial") {
 			return
 		}
+		// HS v2.10: no pin -- bind by cable position (option 82: the OOB access switch and port it called in on)
+		pn, pwhy := e.positionMatch(ev)
+		if pn == "" {
+			e.noteUnclaimed(ev, pwhy, source)
+			return
+		}
 		e.noteUnclaimed(ev, how, source)
-		return
+		key := ev.Str("mac")
+		if key == "" {
+			key = ev.Str("serial")
+		}
+		if u := e.Unclaimed.M(key); u != nil && u.Str("state") == "dismissed" {
+			return // dismissed by an operator: never bound by position
+		}
+		if ok, _ := e.bind(key, pn, "estate (cable position)"); !ok {
+			return
+		}
+		n, how = pn, "cable position"
 	}
 	s := e.St[n]
 	for _, k := range []string{"mac", "serial", "client_id", "circuit"} {
@@ -241,13 +257,11 @@ func (e *Estate) suggest(u *pyjson.Map) []any {
 	circ := u.Str("circuit")
 	if circ != "" {
 		parts := circSplit.Split(circ, -1)
-		sw, port := "", ""
+		sw := ""
 		if len(parts) > 1 {
 			sw = parts[0]
-			port = NormPort(parts[1])
-		} else {
-			port = NormPort(parts[0])
 		}
+		port := NormPort(parts[len(parts)-1]) // HS v2.10: the port is the last field (a relay may add an interface between)
 		for _, n := range e.DevOrder {
 			ml := e.Devs[n].M("mgmt_link")
 			if ml != nil && ml.Len() > 0 && NormPort(ml.Str("port")) == port &&
@@ -502,4 +516,46 @@ func modelKey(x string) string {
 func modelMatch(planned, seen string) bool {
 	a, b := modelKey(planned), modelKey(seen)
 	return a != "" && b != "" && (strings.Contains(b, a) || strings.Contains(a, b))
+}
+
+// positionMatch (HS v2.10): the device planned on the port this unit called in on (option 82), or "" and why it is held.
+func (e *Estate) positionMatch(ev *pyjson.Map) (string, string) {
+	circ := ev.Str("circuit")
+	if circ == "" {
+		return "", "not in inventory"
+	}
+	parts := circSplit.Split(circ, -1)
+	sw := ""
+	if len(parts) > 1 {
+		sw = parts[0]
+	}
+	last := parts[len(parts)-1]
+	port := NormPort(last)
+	at := last
+	if sw != "" {
+		at = sw + " " + last
+	}
+	var cand []string
+	for _, n := range e.DevOrder {
+		ml := e.Devs[n].M("mgmt_link")
+		if ml != nil && ml.Truthy("port") && NormPort(ml.Str("port")) == port &&
+			(sw == "" || strings.Contains(strings.ToLower(ml.Str("switch")), strings.ToLower(sw))) {
+			cand = append(cand, n)
+		}
+	}
+	if len(cand) == 0 {
+		return "", fmt.Sprintf("not in inventory; %s is planned for no device", at)
+	}
+	if len(cand) > 1 {
+		return "", fmt.Sprintf("not in inventory; %s matches %d planned devices: bind it by hand", at, len(cand))
+	}
+	n := cand[0]
+	d := e.Devs[n]
+	if cur, ok := e.Ident.Get(n); ok {
+		return "", fmt.Sprintf("held: %s is %s's position, already held by %s %s", at, e.short(n), idWord(cur.Kind), cur.Value)
+	}
+	if ev.Truthy("model") && d.Truthy("model") && !modelMatch(d.Str("model"), ev.Str("model")) {
+		return "", fmt.Sprintf("held: on %s, %s's position, but reports model %s, planned %s", at, e.short(n), ev.Str("model"), d.Str("model"))
+	}
+	return n, "cable position"
 }
