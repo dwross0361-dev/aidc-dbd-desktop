@@ -579,7 +579,10 @@ def run_plan(args, run, rep):
         cmp("hook unknown", lambda E: [resp_view(hook(E, [x])) for x in unknown])
         # HS v2.10: cable-position binding -- a second unit on a taken position, a port planned for no device, and a unit
         # reporting another model are each held with the reason; the state shows who bound what
-        pos = [x for x in unknown if x["circuit"]]
+        # devices with a planned management cable (the first twelve above are OOB switches, which have none)
+        pos = [{"ip": "10.9.7.%d" % k, "mac": "02:ed:00:00:00:%02x" % k, "circuit": "%s:%s" % (d["mgmt_link"]["switch"], d["mgmt_link"]["port"])}
+               for k, d in enumerate([d for d in devs if d.get("mgmt_link")][:6])]
+        cmp("hook position", lambda E: [resp_view(hook(E, [x])) for x in pos])
         if pos:
             taken = dict(pos[0], mac="02:ef:00:00:00:01", ip="10.9.8.1")
             nowhere = {"ip": "10.9.8.2", "mac": "02:ef:00:00:00:02", "circuit": pos[0]["circuit"].split(":")[0] + ":ge-9/9/99"}
